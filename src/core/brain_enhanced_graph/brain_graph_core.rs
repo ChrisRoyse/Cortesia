@@ -259,9 +259,9 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// Get memory usage
-    pub fn get_memory_usage(&self) -> BrainMemoryUsage {
+    pub async fn get_memory_usage(&self) -> BrainMemoryUsage {
         let core_usage = self.core_graph.memory_usage();
-        let sdr_usage = self.sdr_storage.memory_usage();
+        let sdr_usage = self.sdr_storage.memory_usage().await;
         
         BrainMemoryUsage {
             core_graph_bytes: core_usage.total_bytes(),

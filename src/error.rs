@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum GraphError {
     #[error("Entity not found: {id}")]
     EntityNotFound { id: u32 },
@@ -80,6 +80,9 @@ pub enum GraphError {
     #[error("Invalid weight value: {0}")]
     InvalidWeight(f32),
     
+    #[error("Invalid relationship weight: {0}")]
+    InvalidRelationshipWeight(f32),
+    
     #[error("Invalid data: {0}")]
     InvalidData(String),
     
@@ -120,6 +123,21 @@ pub enum GraphError {
     
     #[error("Processing error: {0}")]
     ProcessingError(String),
+    
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
+}
+
+impl From<anyhow::Error> for GraphError {
+    fn from(err: anyhow::Error) -> Self {
+        GraphError::ProcessingError(err.to_string())
+    }
+}
+
+impl From<GraphError> for String {
+    fn from(err: GraphError) -> Self {
+        err.to_string()
+    }
 }
 
 pub type Result<T> = std::result::Result<T, GraphError>;

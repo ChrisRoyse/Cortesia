@@ -3,7 +3,6 @@
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
 use crate::core::types::{EntityKey, EntityData, Relationship};
-// use crate::core::sdr_storage::SDREntry; // Unused
 use crate::error::Result;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -11,7 +10,7 @@ use std::time::Instant;
 impl BrainEnhancedKnowledgeGraph {
     /// Insert brain entity with neural activation
     pub async fn insert_brain_entity(&self, id: u32, data: EntityData) -> Result<EntityKey> {
-        let start_time = Instant::now();
+        let _start_time = Instant::now();
         
         // Insert into core graph
         let entity_key = self.core_graph.insert_entity(id, data.clone())?;

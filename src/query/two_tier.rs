@@ -1,5 +1,5 @@
 use crate::core::graph::KnowledgeGraph;
-use crate::core::types::ContextEntity;
+use crate::core::types::{ContextEntity, EntityKey};
 use crate::error::{GraphError, Result};
 use crate::query::clustering::ClusterHierarchy;
 use crate::query::summarization::CommunitySummarizer;
@@ -122,7 +122,7 @@ impl TwoTierQueryEngine {
             rag_context.entities
         } else {
             rag_context.entities.into_iter()
-                .filter(|e| e.id == entity_id)
+                .filter(|e| e.id == EntityKey::from_u32(entity_id))
                 .collect()
         };
 

@@ -111,7 +111,7 @@ impl LearningCoordinator {
             strategy_type,
             priority_areas: assessment.learning_opportunities.clone(),
             resource_allocation: self.calculate_resource_allocation(&coordination_approach),
-            coordination_approach,
+            coordination_approach: coordination_approach.clone(),
             safety_level: self.calculate_safety_level(assessment),
             expected_duration: self.estimate_duration(&coordination_approach),
         }

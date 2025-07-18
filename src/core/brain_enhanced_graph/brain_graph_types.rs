@@ -351,6 +351,10 @@ impl BrainEnhancedConfig {
             enable_neural_plasticity: true,
             memory_consolidation_threshold: 0.6,
             synaptic_strength_decay: 0.95,
+            embedding_dim: 128,
+            activation_config: ActivationConfig::default(),
+            enable_temporal_tracking: true,
+            enable_sdr_storage: false,
         }
     }
 
@@ -367,6 +371,10 @@ impl BrainEnhancedConfig {
             enable_neural_plasticity: true,
             memory_consolidation_threshold: 0.9,
             synaptic_strength_decay: 0.99,
+            embedding_dim: 256,
+            activation_config: ActivationConfig::default(),
+            enable_temporal_tracking: true,
+            enable_sdr_storage: true,
         }
     }
 
@@ -383,6 +391,10 @@ impl BrainEnhancedConfig {
             enable_neural_plasticity: true,
             memory_consolidation_threshold: 0.7,
             synaptic_strength_decay: 0.98,
+            embedding_dim: 192,
+            activation_config: ActivationConfig::default(),
+            enable_temporal_tracking: true,
+            enable_sdr_storage: true,
         }
     }
 

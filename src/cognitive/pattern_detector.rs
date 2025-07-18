@@ -1,12 +1,13 @@
 /// Advanced pattern detection for abstract thinking
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use ahash::AHashMap;
 use tokio::sync::RwLock;
 
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::types::EntityKey;
 use crate::core::brain_types::RelationType;
+use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::Result;
 
@@ -48,14 +49,33 @@ impl NeuralPatternDetector {
         
         // Get entities to analyze
         let entity_keys = self.get_entities_for_scope(scope).await?;
-        let all_entities = self.graph.get_all_entities().await;
+        let _all_entities = self.graph.get_all_entities().await;
         
         // Build relationships map from neighbors
-        let mut relationships = HashMap::new();
+        let mut relationships = AHashMap::new();
         for key in &entity_keys {
-            let neighbors = self.graph.get_neighbors(*key).await;
+            let neighbors = self.graph.get_neighbors_with_weights(*key).await;
             for (neighbor, weight) in neighbors {
-                relationships.insert((*key, neighbor), weight);
+                // Create a BrainInspiredRelationship with the weight and default values
+                let relationship = crate::core::brain_types::BrainInspiredRelationship {
+                    source: *key,
+                    target: neighbor,
+                    source_key: *key,
+                    target_key: neighbor,
+                    relation_type: RelationType::RelatedTo, // Default to general relationship
+                    weight,
+                    strength: weight,
+                    is_inhibitory: false,
+                    temporal_decay: 0.1,
+                    last_strengthened: std::time::SystemTime::now(),
+                    last_update: std::time::SystemTime::now(),
+                    activation_count: 0,
+                    usage_count: 0,
+                    creation_time: std::time::SystemTime::now(),
+                    ingestion_time: std::time::SystemTime::now(),
+                    metadata: HashMap::new(),
+                };
+                relationships.insert((*key, neighbor), relationship);
             }
         }
         
@@ -300,13 +320,13 @@ impl NeuralPatternDetector {
     async fn group_entities_by_semantics(
         &self,
         entity_keys: &[EntityKey],
-        entities: &slotmap::SlotMap<crate::core::types::EntityKey, crate::core::brain_types::BrainInspiredEntity>,
+        entities: &Vec<(EntityKey, crate::core::types::EntityData, f32)>,
     ) -> Result<HashMap<String, Vec<EntityKey>>> {
         let mut groups = HashMap::new();
         
         for &entity_key in entity_keys {
-            if let Some(entity) = entities.get(entity_key) {
-                let category = self.extract_semantic_category(&entity.concept_id);
+            if let Some((_, entity_data, _)) = entities.iter().find(|(k, _, _)| k == &entity_key) {
+                let category = self.extract_semantic_category(&entity_data.properties);
                 groups.entry(category).or_insert(Vec::new()).push(entity_key);
             }
         }

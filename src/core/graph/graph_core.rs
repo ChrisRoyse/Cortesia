@@ -3,7 +3,6 @@
 use crate::core::entity::EntityStore;
 use crate::core::memory::{GraphArena, EpochManager};
 use crate::core::types::{EntityKey, Relationship};
-// use crate::core::parallel::{ParallelProcessor, ParallelOperation}; // Unused
 use crate::storage::csr::CSRGraph;
 use crate::storage::bloom::BloomFilter;
 use crate::storage::spatial_index::SpatialIndex;
@@ -133,6 +132,17 @@ impl KnowledgeGraph {
     pub fn get_entity_key(&self, id: u32) -> Option<EntityKey> {
         self.entity_id_map.read().get(&id).copied()
     }
+    
+    /// Get entity ID by key (reverse lookup)
+    pub fn get_entity_id(&self, key: EntityKey) -> Option<u32> {
+        let id_map = self.entity_id_map.read();
+        for (id, &stored_key) in id_map.iter() {
+            if stored_key == key {
+                return Some(*id);
+            }
+        }
+        None
+    }
 
     /// Clear all cached data
     pub fn clear_caches(&self) {
@@ -142,7 +152,7 @@ impl KnowledgeGraph {
     /// Get cache statistics
     pub fn cache_stats(&self) -> (usize, usize, f64) {
         let cache = self.similarity_cache.read();
-        (cache.size(), cache.capacity(), cache.hit_rate())
+        (cache.len(), cache.capacity(), cache.hit_rate())
     }
 
     /// Validate embedding dimension
@@ -172,7 +182,9 @@ impl KnowledgeGraph {
         let mut graph = self.graph.write();
         
         for relationship in buffer.drain(..) {
-            graph.add_edge(relationship.from, relationship.to, relationship.weight)?;
+            if let (Some(from_id), Some(to_id)) = (self.get_entity_id(relationship.from), self.get_entity_id(relationship.to)) {
+                graph.add_edge(from_id, to_id, relationship.weight)?;
+            }
         }
         
         Ok(())

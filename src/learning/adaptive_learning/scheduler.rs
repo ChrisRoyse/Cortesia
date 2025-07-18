@@ -47,7 +47,7 @@ impl LearningScheduler {
     ) -> Result<Uuid> {
         let task = ScheduledLearningTask {
             task_id: Uuid::new_v4(),
-            task_type,
+            task_type: task_type.clone(),
             priority,
             scheduled_time,
             estimated_resources: self.estimate_resources(&task_type),
@@ -78,7 +78,7 @@ impl LearningScheduler {
         
         let task = ScheduledLearningTask {
             task_id: Uuid::new_v4(),
-            task_type,
+            task_type: task_type.clone(),
             priority,
             scheduled_time,
             estimated_resources: self.estimate_emergency_resources(&task_type, emergency_context),

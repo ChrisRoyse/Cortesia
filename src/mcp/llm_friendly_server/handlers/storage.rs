@@ -1,10 +1,9 @@
 //! Storage-related request handlers
 
-use crate::core::triple::{Triple, NodeType};
+use crate::core::triple::Triple;
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
-use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
@@ -43,10 +42,10 @@ pub async fn handle_store_fact(
         subject.to_string(),
         predicate.to_string(),
         object.to_string(),
-    );
+    ).map_err(|e| format!("Failed to create triple: {}", e))?;
     
     let mut engine = knowledge_engine.write().await;
-    match engine.add_triple(triple.clone()) {
+    match engine.store_triple(triple, None) {
         Ok(_) => {
             // Update stats
             let _ = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 5).await;
@@ -125,32 +124,34 @@ pub async fn handle_store_knowledge(
         chunk_id.clone(),
         "is".to_string(),
         "knowledge_chunk".to_string(),
-    );
+    ).map_err(|e| format!("Failed to create chunk triple: {}", e))?;
     
-    match engine.add_triple(chunk_triple) {
+    match engine.store_triple(chunk_triple, None) {
         Ok(_) => {
             // Store extracted entities and relationships
             let mut stored_count = 0;
             
             for entity in &extracted_entities {
-                let entity_triple = Triple::new(
+                if let Ok(entity_triple) = Triple::new(
                     entity.clone(),
                     "mentioned_in".to_string(),
                     chunk_id.clone(),
-                );
-                if engine.add_triple(entity_triple).is_ok() {
-                    stored_count += 1;
+                ) {
+                    if engine.store_triple(entity_triple, None).is_ok() {
+                        stored_count += 1;
+                    }
                 }
             }
             
             for (subj, pred, obj) in &extracted_relationships {
-                let rel_triple = Triple::new(
+                if let Ok(rel_triple) = Triple::new(
                     subj.clone(),
                     pred.clone(),
                     obj.clone(),
-                );
-                if engine.add_triple(rel_triple).is_ok() {
-                    stored_count += 1;
+                ) {
+                    if engine.store_triple(rel_triple, None).is_ok() {
+                        stored_count += 1;
+                    }
                 }
             }
             

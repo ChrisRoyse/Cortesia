@@ -126,9 +126,12 @@ impl KnowledgeGraph {
     /// Query entities within a specific property range
     pub fn query_by_property_range(&self, query_embedding: &[f32], property: &str, min_value: f32, max_value: f32, k: usize) -> Result<QueryResult> {
         self.query_filtered(query_embedding, k, |_, data| {
-            if let Some(value_str) = data.properties.get(property) {
-                if let Ok(value) = value_str.parse::<f32>() {
-                    return value >= min_value && value <= max_value;
+            // Parse the properties string as JSON and look for the property
+            if let Ok(props) = serde_json::from_str::<serde_json::Value>(&data.properties) {
+                if let Some(value) = props.get(property) {
+                    if let Some(num) = value.as_f64() {
+                        return num as f32 >= min_value && num as f32 <= max_value;
+                    }
                 }
             }
             false

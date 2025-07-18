@@ -67,6 +67,10 @@ impl<K: Clone + Eq + Hash, V: Clone> LruCache<K, V> {
         self.map.is_empty()
     }
 
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
+
     pub fn clear(&mut self) {
         self.map.clear();
         self.access_order.clear();

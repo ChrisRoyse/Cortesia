@@ -66,6 +66,38 @@ pub struct KnowledgeResult {
     pub total_found: usize,
 }
 
+impl KnowledgeResult {
+    pub fn iter(&self) -> std::slice::Iter<Triple> {
+        self.triples.iter()
+    }
+    
+    pub fn len(&self) -> usize {
+        self.triples.len()
+    }
+    
+    pub fn is_empty(&self) -> bool {
+        self.triples.is_empty()
+    }
+}
+
+impl IntoIterator for KnowledgeResult {
+    type Item = Triple;
+    type IntoIter = std::vec::IntoIter<Triple>;
+    
+    fn into_iter(self) -> Self::IntoIter {
+        self.triples.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a KnowledgeResult {
+    type Item = &'a Triple;
+    type IntoIter = std::slice::Iter<'a, Triple>;
+    
+    fn into_iter(self) -> Self::IntoIter {
+        self.triples.iter()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EntityContext {
     pub entity_name: String,

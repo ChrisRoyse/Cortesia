@@ -64,7 +64,7 @@ impl AdaptiveThinking {
             &ensemble_result,
         ).await?;
         
-        let execution_time = start_time.elapsed();
+        let _execution_time = start_time.elapsed();
         
         Ok(AdaptiveResult {
             final_answer: ensemble_result.merged_answer,
@@ -75,14 +75,14 @@ impl AdaptiveThinking {
         })
     }
     
-    async fn analyze_query_characteristics(&self, query: &str, context: Option<&str>) -> Result<QueryCharacteristics> {
+    async fn analyze_query_characteristics(&self, query: &str, _context: Option<&str>) -> Result<QueryCharacteristics> {
         // Analyze query to determine optimal patterns
         let word_count = query.split_whitespace().count();
         let has_creative_words = query.to_lowercase().contains("creative") || 
                                  query.to_lowercase().contains("innovative");
         let has_factual_words = query.to_lowercase().contains("what is") || 
                                query.to_lowercase().contains("define");
-        let has_divergent_words = query.to_lowercase().contains("types") || 
+        let _has_divergent_words = query.to_lowercase().contains("types") || 
                                  query.to_lowercase().contains("examples") ||
                                  query.to_lowercase().contains("kinds") ||
                                  query.to_lowercase().contains("varieties");

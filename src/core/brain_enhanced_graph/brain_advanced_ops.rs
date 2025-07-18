@@ -5,7 +5,7 @@ use super::brain_graph_types::*;
 use crate::core::types::EntityKey;
 use crate::core::sdr_storage::{SDRQuery, SDR};
 use crate::error::Result;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 impl BrainEnhancedKnowledgeGraph {
     /// Create concept structure from related entities
@@ -76,7 +76,7 @@ impl BrainEnhancedKnowledgeGraph {
             
             // Convert results
             let mut similar_concepts = Vec::new();
-            for (pattern_id, similarity_score) in sdr_results {
+            for (pattern_id, _similarity_score) in sdr_results {
                 // Check if this ID corresponds to a concept
                 if let Some(other_concept) = self.get_concept_structure(&pattern_id).await {
                     let similarity = self.calculate_concept_similarity(&concept_structure, &other_concept).await;
@@ -341,7 +341,7 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// Calculate concept similarity
-    async fn calculate_concept_similarity(&self, concept1: &ConceptStructure, concept2: &ConceptStructure) -> f32 {
+    async fn calculate_concept_similarity(&self, _concept1: &ConceptStructure, _concept2: &ConceptStructure) -> f32 {
         // Use simple placeholder embeddings for now
         let embedding1 = vec![0.0; 384];
         let embedding2 = vec![0.0; 384];
@@ -407,7 +407,7 @@ impl BrainEnhancedKnowledgeGraph {
         let entity_keys = self.core_graph.get_all_entity_keys();
         
         for entity_key in entity_keys {
-            let neighbors = BrainEnhancedKnowledgeGraph::get_neighbors(self, entity_key).await;
+            let neighbors = self.get_neighbors_with_weights(entity_key).await;
             let entity_activation = self.get_entity_activation(entity_key).await;
             
             for (neighbor_key, _) in neighbors {

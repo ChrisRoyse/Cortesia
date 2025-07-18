@@ -2,14 +2,13 @@
 
 use crate::cognitive::inhibitory::{
     CompetitiveInhibitionSystem, CompetitionGroup, CompetitionType,
-    GroupCompetitionResult, InhibitionConfig, TemporalDynamics
+    GroupCompetitionResult, InhibitionConfig
 };
 use crate::core::brain_types::ActivationPattern;
 use crate::core::types::EntityKey;
 use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use std::collections::HashMap;
 
 /// Apply group-based competition to the activation pattern
 pub async fn apply_group_competition(
@@ -116,7 +115,7 @@ async fn apply_semantic_competition(
     
     Ok(GroupCompetitionResult {
         group_id: group.group_id.clone(),
-        pre_competition,
+        pre_competition: pre_competition.clone(),
         post_competition,
         winner: Some(*winner),
         competition_intensity: max_strength * group.inhibition_strength,
@@ -153,13 +152,15 @@ async fn apply_temporal_competition(
         }
     }
     
+    let winner = post_competition.iter()
+        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+        .map(|(entity, _)| *entity);
+    
     Ok(GroupCompetitionResult {
         group_id: group.group_id.clone(),
         pre_competition,
         post_competition,
-        winner: post_competition.iter()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .map(|(entity, _)| *entity),
+        winner,
         competition_intensity: group.inhibition_strength,
         suppressed_entities,
     })
@@ -202,13 +203,15 @@ async fn apply_hierarchical_competition(
         }
     }
     
+    let winner = post_competition.iter()
+        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+        .map(|(entity, _)| *entity);
+    
     Ok(GroupCompetitionResult {
         group_id: group.group_id.clone(),
         pre_competition,
         post_competition,
-        winner: post_competition.iter()
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .map(|(entity, _)| *entity),
+        winner,
         competition_intensity: group.inhibition_strength * config.hierarchical_inhibition_strength,
         suppressed_entities,
     })

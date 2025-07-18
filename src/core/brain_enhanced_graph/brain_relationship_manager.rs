@@ -1,14 +1,13 @@
 //! Relationship management for brain-enhanced knowledge graph
 
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
-use super::brain_graph_types::*;
 use crate::core::types::{EntityKey, Relationship};
 use crate::error::Result;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 
 impl BrainEnhancedKnowledgeGraph {
     /// Get neighbors with synaptic weights
-    pub async fn get_neighbors(&self, entity: EntityKey) -> Vec<(EntityKey, f32)> {
+    pub async fn get_neighbors_with_weights(&self, entity: EntityKey) -> Vec<(EntityKey, f32)> {
         let core_neighbors = self.core_graph.get_neighbors(entity);
         let mut neighbors_with_weights = Vec::new();
         
@@ -181,7 +180,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Generate path signature for deduplication
     fn generate_path_signature(&self, path: &[EntityKey]) -> String {
         path.iter()
-            .map(|key| key.0.to_string())
+            .map(|key| key.data().as_ffi().to_string())
             .collect::<Vec<_>>()
             .join("-")
     }
@@ -380,7 +379,7 @@ impl BrainEnhancedKnowledgeGraph {
 
     /// Check if entity is a bridge (connects different clusters)
     async fn is_bridge_entity(&self, entity: EntityKey) -> bool {
-        let neighbors = <BrainEnhancedKnowledgeGraph>::get_neighbors(self, entity).await;
+        let neighbors = self.get_neighbors_with_weights(entity).await;
         
         if neighbors.len() < 2 {
             return false;
@@ -404,7 +403,7 @@ impl BrainEnhancedKnowledgeGraph {
 
     /// Calculate clustering coefficient for entity
     pub async fn calculate_clustering_coefficient(&self, entity: EntityKey) -> f32 {
-        let neighbors = <BrainEnhancedKnowledgeGraph>::get_neighbors(self, entity).await;
+        let neighbors = self.get_neighbors_with_weights(entity).await;
         let neighbor_keys: Vec<EntityKey> = neighbors.iter().map(|(key, _)| *key).collect();
         
         if neighbor_keys.len() < 2 {

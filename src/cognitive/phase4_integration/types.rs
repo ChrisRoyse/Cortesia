@@ -4,7 +4,6 @@ use crate::cognitive::types::CognitivePatternType;
 use crate::core::types::EntityKey;
 use std::time::{Duration, SystemTime};
 use std::collections::HashMap;
-use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
 /// Learning insights from Hebbian and other learning systems

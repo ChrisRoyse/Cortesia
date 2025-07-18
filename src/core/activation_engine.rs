@@ -156,7 +156,7 @@ impl ActivationPropagationEngine {
         entities: &AHashMap<EntityKey, BrainInspiredEntity>,
         relationships: &AHashMap<(EntityKey, EntityKey), BrainInspiredRelationship>,
         trace: &mut Vec<ActivationStep>,
-        iteration: usize,
+        _iteration: usize,
     ) -> Result<()> {
         let mut updates = HashMap::new();
 
@@ -215,7 +215,7 @@ impl ActivationPropagationEngine {
         entities: &AHashMap<EntityKey, BrainInspiredEntity>,
         gates: &AHashMap<EntityKey, LogicGate>,
         trace: &mut Vec<ActivationStep>,
-        iteration: usize,
+        _iteration: usize,
     ) -> Result<()> {
         for (gate_key, gate) in gates.iter() {
             // Collect input activations
@@ -273,7 +273,7 @@ impl ActivationPropagationEngine {
         activations: &mut HashMap<EntityKey, f32>,
         relationships: &AHashMap<(EntityKey, EntityKey), BrainInspiredRelationship>,
         trace: &mut Vec<ActivationStep>,
-        iteration: usize,
+        _iteration: usize,
     ) -> Result<()> {
         let mut inhibition_updates = HashMap::new();
 

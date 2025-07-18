@@ -4,7 +4,7 @@ use super::types::*;
 use crate::core::types::EntityKey;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::error::Result;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Optimization strategy implementations
 pub struct OptimizationStrategies;
@@ -220,16 +220,16 @@ impl OptimizationStrategies {
         for (child_key, _) in children {
             if let Some(child_data) = graph.get_entity_data(*child_key) {
                 if first_child {
-                    // Initialize with first child's attributes
-                    for (key, value) in &child_data.properties {
-                        common_attributes.insert(key.clone(), value.clone());
-                    }
+                    // Initialize with first child's properties string as a single attribute
+                    common_attributes.insert("properties".to_string(), child_data.properties.clone());
                     first_child = false;
                 } else {
-                    // Keep only common attributes
-                    common_attributes.retain(|key, value| {
-                        child_data.properties.get(key).map_or(false, |child_value| child_value == value)
-                    });
+                    // Keep only if properties match
+                    if let Some(existing_props) = common_attributes.get("properties") {
+                        if existing_props != &child_data.properties {
+                            common_attributes.remove("properties");
+                        }
+                    }
                 }
             }
         }
@@ -239,8 +239,8 @@ impl OptimizationStrategies {
 
     /// Apply attribute bubbling optimization
     async fn apply_attribute_bubbling(
-        graph: &BrainEnhancedKnowledgeGraph,
-        parent_entity: EntityKey,
+        _graph: &BrainEnhancedKnowledgeGraph,
+        _parent_entity: EntityKey,
         children: &[(EntityKey, f32)],
         common_attributes: &HashMap<String, String>,
     ) -> Result<bool> {
@@ -260,7 +260,7 @@ impl OptimizationStrategies {
         child_entity: EntityKey,
     ) -> Result<bool> {
         // Check if consolidation would create cycles
-        let has_cycle = graph.has_path(child_entity, parent_entity);
+        let has_cycle = graph.core_graph.has_path(child_entity, parent_entity);
         
         // Check if child has critical dependencies
         let child_neighbors = graph.get_neighbors(child_entity);
@@ -271,9 +271,9 @@ impl OptimizationStrategies {
 
     /// Apply hierarchy consolidation
     async fn apply_hierarchy_consolidation(
-        graph: &BrainEnhancedKnowledgeGraph,
-        parent_entity: EntityKey,
-        child_entity: EntityKey,
+        _graph: &BrainEnhancedKnowledgeGraph,
+        _parent_entity: EntityKey,
+        _child_entity: EntityKey,
     ) -> Result<bool> {
         // In a real implementation, this would:
         // 1. Merge child entity into parent
@@ -298,7 +298,7 @@ impl OptimizationStrategies {
             
             if neighbors.len() >= 2 {
                 // Create pattern signature
-                let mut signature = neighbors.iter().map(|(k, _)| k.0).collect::<Vec<_>>();
+                let mut signature = neighbors.iter().map(|k| format!("{:?}", k)).collect::<Vec<_>>();
                 signature.sort();
                 let sig_string = format!("{:?}", signature);
                 
@@ -318,7 +318,7 @@ impl OptimizationStrategies {
 
     /// Apply subgraph factorization
     async fn apply_subgraph_factorization(
-        graph: &BrainEnhancedKnowledgeGraph,
+        _graph: &BrainEnhancedKnowledgeGraph,
         pattern: &[EntityKey],
     ) -> Result<f32> {
         // In a real implementation, this would:
@@ -336,11 +336,11 @@ impl OptimizationStrategies {
         graph: &BrainEnhancedKnowledgeGraph,
         entity_key: EntityKey,
     ) -> Result<f32> {
-        let neighbors = graph.get_neighbors(entity_key);
+        let neighbors = graph.get_neighbors_with_weights(entity_key).await;
         let weak_threshold = 0.1;
         
         let mut pruned_count = 0;
-        for (neighbor_key, weight) in neighbors {
+        for (_neighbor_key, weight) in neighbors {
             if weight < weak_threshold {
                 // In a real implementation, this would remove the connection
                 pruned_count += 1;
@@ -486,7 +486,7 @@ impl OptimizationStrategies {
 
     /// Validate optimization prerequisites
     pub fn validate_prerequisites(
-        optimization_type: &OptimizationType,
+        _optimization_type: &OptimizationType,
         affected_entities: &[EntityKey],
         prerequisites: &[String],
         current_metrics: &PerformanceMetrics,

@@ -64,6 +64,7 @@ pub use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, Tempo
 
 #[cfg(feature = "native")]
 pub use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
+#[cfg(feature = "native")]
 pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent};
 
 // Text processing exports

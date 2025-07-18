@@ -1,4 +1,5 @@
 use crate::core::graph::KnowledgeGraph;
+use crate::core::types::EntityKey;
 use crate::error::Result;
 use crate::query::clustering::Community;
 use crate::text::TextCompressor;
@@ -60,11 +61,11 @@ impl CommunitySummarizer {
         let mut entity_infos = Vec::with_capacity(community.entities.len());
         
         for &entity_id in &community.entities {
-            if let Ok((_meta, data)) = graph.get_entity(entity_id) {
-                let neighbors = graph.get_neighbors(entity_id);
+            if let Some((_meta, data)) = graph.get_entity(EntityKey::from_u32(entity_id)) {
+                let neighbors = graph.get_neighbors(EntityKey::from_u32(entity_id));
                 
                 let internal_connections = neighbors.iter()
-                    .filter(|n| community.entities.contains(n))
+                    .filter(|n| community.entities.contains(&n.as_u32()))
                     .count();
                 
                 let external_connections = neighbors.len() - internal_connections;

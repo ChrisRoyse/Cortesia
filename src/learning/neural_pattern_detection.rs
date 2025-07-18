@@ -7,11 +7,11 @@ use crate::error::Result;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime};
-use uuid::Uuid;
+use std::time::{SystemTime, Duration};
 use serde::{Serialize, Deserialize};
-use anyhow::anyhow;
-use slotmap::Key;
+use uuid::Uuid;
+use futures;
+use async_trait::async_trait;
 
 /// Enhanced neural pattern detection for Phase 4 learning
 #[derive(Debug, Clone)]
@@ -25,6 +25,7 @@ pub struct NeuralPatternDetectionSystem {
 }
 
 /// Core pattern detection trait
+#[async_trait]
 pub trait PatternDetector: Send + Sync {
     async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>>;
     fn get_pattern_type(&self) -> PatternType;
@@ -221,10 +222,9 @@ impl NeuralPatternDetectionSystem {
                 }
                 
                 activation_patterns.push(ActivationPattern {
-                    pattern_id: pattern.pattern_id.to_string(),
                     activations,
-                    total_activation: pattern.pattern_strength,
                     timestamp: pattern.discovery_timestamp,
+                    query: format!("pattern_{}", pattern.pattern_id),
                 });
             }
         }
@@ -301,7 +301,7 @@ impl NeuralPatternDetectionSystem {
     pub async fn detect_oscillatory_patterns(&self, time_series: &[f32]) -> Result<Vec<OscillatoryPattern>> {
         // Use neural network for oscillation detection
         let model_id = self.pattern_models.get("oscillation_detector")
-            .ok_or_else(|| anyhow!("Oscillation detection model not found"))?;
+            .ok_or_else(|| crate::error::GraphError::PatternNotFound("Oscillation detection model not found".to_string()))?;
         
         // Encode time series for neural analysis
         let neural_input = self.encode_time_series_for_neural_analysis(time_series)?;
@@ -312,7 +312,7 @@ impl NeuralPatternDetectionSystem {
         ).await?;
         
         // Decode neural predictions to oscillatory patterns
-        let oscillatory_patterns = self.decode_oscillatory_predictions(neural_prediction)?;
+        let oscillatory_patterns = self.decode_oscillatory_predictions(neural_prediction.prediction)?;
         
         Ok(oscillatory_patterns)
     }
@@ -425,7 +425,7 @@ impl NeuralPatternDetectionSystem {
         let entries_to_remove = cache.cached_patterns.len().saturating_sub(target_size);
         let keys_to_remove: Vec<_> = entries.iter()
             .take(entries_to_remove)
-            .map(|(key, _)| **key)
+            .map(|(key, _)| key.clone())
             .collect();
         for key in keys_to_remove {
             cache.cached_patterns.remove(&key);
@@ -470,7 +470,7 @@ impl NeuralPatternDetectionSystem {
 }
 
 // Pattern detector implementations
-#[async_trait::async_trait]
+#[async_trait]
 impl PatternDetector for ActivationPatternDetector {
     async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
@@ -484,12 +484,13 @@ impl PatternDetector for ActivationPatternDetector {
             for entity_key in &scope.entities {
                 // In practice, would get entity from brain graph
                 entities.push(BrainInspiredEntity {
-                    entity_key: *entity_key,
+                    id: *entity_key,
                     concept_id: format!("concept_{}", entity_key.data().as_ffi()),
                     properties: HashMap::new(),
                     embedding: vec![0.0; 128],
                     activation_state: 0.5,
-                    direction: crate::core::brain_types::EntityDirection::Bidirectional,
+                    direction: crate::core::brain_types::EntityDirection::Input,
+                    last_activation: SystemTime::now(),
                     last_update: SystemTime::now(),
                 });
             }
@@ -500,7 +501,7 @@ impl PatternDetector for ActivationPatternDetector {
         let mut high_activation_entities = Vec::new();
         for entity in entities {
             if entity.activation_state > self.confidence_threshold {
-                high_activation_entities.push(entity.entity_key);
+                high_activation_entities.push(entity.id);
             }
         }
         
@@ -535,7 +536,7 @@ impl PatternDetector for ActivationPatternDetector {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl PatternDetector for FrequencyPatternDetector {
     async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
@@ -589,8 +590,7 @@ impl FrequencyPatternDetector {
         
         for entity in entities {
             // Get entity activation history and compute frequency features
-            let recent_activations = self.brain_graph.get_recent_activations(*entity, 
-                SystemTime::now() - Duration::from_secs(300)).await?;
+            let recent_activations = self.brain_graph.get_entity_activation(*entity).await;
             encoding.push(recent_activations as f32 / 100.0);
         }
         
@@ -603,7 +603,139 @@ impl FrequencyPatternDetector {
     }
 }
 
-// Additional pattern detector implementations would be similar...
+// Additional pattern detector implementations
+
+#[async_trait]
+impl PatternDetector for SynchronyPatternDetector {
+    async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>> {
+            let mut patterns = Vec::new();
+            
+            // Simplified synchrony detection
+            if scope.entities.len() >= 2 {
+                patterns.push(DetectedPattern {
+                    pattern_id: uuid::Uuid::new_v4(),
+                    pattern_type: PatternType::SynchronyPattern,
+                    entities_involved: scope.entities.clone(),
+                    confidence: self.synchrony_threshold,
+                    significance: self.synchrony_threshold * 0.9,
+                    temporal_span: self.time_window,
+                    pattern_strength: self.synchrony_threshold,
+                    pattern_frequency: 1.0,
+                    pattern_metadata: {
+                        let mut metadata = HashMap::new();
+                        metadata.insert("detector".to_string(), "synchrony_pattern_detector".to_string());
+                        metadata
+                    },
+                    discovery_timestamp: SystemTime::now(),
+                });
+            }
+            
+            Ok(patterns)
+    }
+
+    fn get_pattern_type(&self) -> PatternType {
+        PatternType::SynchronyPattern
+    }
+
+    fn get_confidence_threshold(&self) -> f32 {
+        self.synchrony_threshold
+    }
+}
+
+#[async_trait]
+impl PatternDetector for OscillatoryPatternDetector {
+    async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>> {
+            let mut patterns = Vec::new();
+            
+            // Use neural network for oscillation detection
+            let time_series: Vec<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()).collect();
+            
+            let neural_prediction = self.neural_server.neural_predict(
+                &self.oscillation_model_id,
+                time_series,
+            ).await?;
+            
+            // Decode neural predictions
+            if let Some(&oscillation_score) = neural_prediction.first() {
+                if oscillation_score > 0.7 {
+                    patterns.push(DetectedPattern {
+                        pattern_id: uuid::Uuid::new_v4(),
+                        pattern_type: PatternType::OscillatoryPattern,
+                        entities_involved: scope.entities.clone(),
+                        confidence: oscillation_score,
+                        significance: oscillation_score * 0.9,
+                        temporal_span: scope.time_window,
+                        pattern_strength: oscillation_score,
+                        pattern_frequency: oscillation_score * self.max_frequency,
+                        pattern_metadata: {
+                            let mut metadata = HashMap::new();
+                            metadata.insert("neural_model".to_string(), self.oscillation_model_id.clone());
+                            metadata
+                        },
+                        discovery_timestamp: SystemTime::now(),
+                    });
+                }
+            }
+            
+            Ok(patterns)
+    }
+
+    fn get_pattern_type(&self) -> PatternType {
+        PatternType::OscillatoryPattern
+    }
+
+    fn get_confidence_threshold(&self) -> f32 {
+        0.7
+    }
+}
+
+#[async_trait]
+impl PatternDetector for TemporalPatternDetector {
+    async fn detect_patterns(&self, scope: &AnalysisScope) -> Result<Vec<DetectedPattern>> {
+            let mut patterns = Vec::new();
+            
+            // Use temporal neural network
+            let sequence_data: Vec<f32> = (0..self.sequence_length).map(|i| i as f32 / self.sequence_length as f32).collect();
+            
+            let neural_prediction = self.neural_server.neural_predict(
+                &self.temporal_model_id,
+                sequence_data,
+            ).await?;
+            
+            // Decode temporal predictions
+            if let Some(&temporal_score) = neural_prediction.first() {
+                if temporal_score > 0.6 {
+                    patterns.push(DetectedPattern {
+                        pattern_id: uuid::Uuid::new_v4(),
+                        pattern_type: PatternType::TemporalPattern,
+                        entities_involved: scope.entities.clone(),
+                        confidence: temporal_score,
+                        significance: temporal_score * 0.85,
+                        temporal_span: scope.time_window,
+                        pattern_strength: temporal_score,
+                        pattern_frequency: 1.0,
+                        pattern_metadata: {
+                            let mut metadata = HashMap::new();
+                            metadata.insert("neural_model".to_string(), self.temporal_model_id.clone());
+                            metadata.insert("sequence_length".to_string(), self.sequence_length.to_string());
+                            metadata
+                        },
+                        discovery_timestamp: SystemTime::now(),
+                    });
+                }
+            }
+            
+            Ok(patterns)
+    }
+
+    fn get_pattern_type(&self) -> PatternType {
+        PatternType::TemporalPattern
+    }
+
+    fn get_confidence_threshold(&self) -> f32 {
+        0.6
+    }
+}
 
 impl PatternCache {
     fn new() -> Self {

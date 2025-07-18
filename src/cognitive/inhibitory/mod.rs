@@ -24,7 +24,6 @@ use crate::cognitive::critical::CriticalThinking;
 use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use ahash::AHashMap;
 use std::collections::HashMap;
 
 #[derive(Clone)]

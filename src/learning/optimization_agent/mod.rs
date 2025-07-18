@@ -12,24 +12,10 @@ pub mod scheduling;
 pub use types::*;
 pub use pattern_analysis::*;
 pub use optimization_strategies::*;
-pub use performance_analysis::*;
-pub use safety_validation::*;
-pub use execution_engine::*;
-pub use scheduling::*;
 
-use crate::core::types::EntityKey;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::learning::types::{
-    PerformanceBottleneck as LearningPerformanceBottleneck,
-    SatisfactionAnalysis as LearningSatisfactionAnalysis,
-    CorrelationAnalysis as LearningCorrelationAnalysis,
-    LearningTarget as LearningLearningTarget,
-    BottleneckType as LearningBottleneckType,
-    LearningTargetType as LearningLearningTargetType
-};
 use crate::error::Result;
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock, Mutex};
 use std::time::{Duration, Instant};
 
 /// Main graph optimization agent

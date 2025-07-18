@@ -385,13 +385,13 @@ impl Phase3IntegratedCognitiveSystem {
         let inhibitory_logic = Arc::new(CompetitiveInhibitionSystem::new(
             activation_engine.clone(),
             critical_thinking.clone(),
-        ).await?);
+        ));
 
         let unified_memory = Arc::new(UnifiedMemorySystem::new(
             working_memory.clone(),
             sdr_storage.clone(),
             brain_graph.clone(),
-        ).await?);
+        ));
 
         // Initialize cognitive patterns
         let convergent_thinking = Arc::new(ConvergentThinking::new(
@@ -593,7 +593,8 @@ impl Phase3IntegratedCognitiveSystem {
         let mut activation_pattern = ActivationPattern::new(format!("initial_inhibition_{}", _query));
         
         let _result = self.inhibitory_logic.apply_competitive_inhibition(
-            &mut activation_pattern,
+            &activation_pattern,
+            None, // No specific domain context
         ).await?;
 
         Ok(InhibitionEvent {
@@ -824,7 +825,7 @@ impl Phase3IntegratedCognitiveSystem {
 
     async fn consolidate_reasoning_memory(&self, response: &str, confidence: f32) -> Result<MemoryConsolidation> {
         // Consolidate the reasoning results to long-term memory
-        let _result = self.unified_memory.consolidate_memories().await?;
+        let _result = self.unified_memory.consolidate_memories(None).await?;
 
         Ok(MemoryConsolidation {
             source_memory: "working_memory".to_string(),
@@ -1013,6 +1014,11 @@ impl Phase3IntegratedCognitiveSystem {
         }
         
         Ok(result)
+    }
+
+    /// Get the base orchestrator for Phase 4 integration
+    pub fn get_base_orchestrator(&self) -> Result<Arc<CognitiveOrchestrator>> {
+        Ok(self.orchestrator.clone())
     }
 }
 

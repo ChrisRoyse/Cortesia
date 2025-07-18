@@ -475,7 +475,7 @@ impl WorkingMemorySystem {
         
         // Remove items until we have space
         let mut removed_count = 0;
-        for (index, _, item) in forgetting_candidates {
+        for (index, _, _item) in forgetting_candidates {
             if buffer.len() <= 1 {
                 break;
             }
@@ -836,6 +836,7 @@ impl WorkingMemorySystem {
             buffer_states,
         })
     }
+
 }
 
 impl MemoryStorageResult {

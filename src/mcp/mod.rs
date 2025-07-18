@@ -323,7 +323,7 @@ impl LLMKGMCPServer {
         // For now, return a placeholder response
         MCPResponse {
             content: vec![MCPContent {
-                r#type: "text".to_string(),
+                type_: "text".to_string(),
                 text: format!(
                     "# Connection Analysis\n\nSearching for connections between '{}' and '{}' with maximum path length {}.\n\n*Connection analysis not yet fully implemented*",
                     entity_a, entity_b, max_path_length
@@ -415,7 +415,7 @@ impl LLMKGMCPServer {
         
         MCPResponse {
             content: vec![MCPContent {
-                r#type: "text".to_string(),
+                type_: "text".to_string(),
                 text: format!("# Knowledge Graph Statistics\n\n```json\n{}\n```", 
                              serde_json::to_string_pretty(&stats).unwrap_or_default()),
             }],

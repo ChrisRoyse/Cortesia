@@ -76,13 +76,14 @@ impl KnowledgeGraph {
     /// Legacy relationship insertion with string IDs
     pub fn insert_relationship_by_id(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
         let source_key = self.get_entity_key(source_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound(crate::core::types::EntityKey::new(source_id as u64)))?;
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
         let target_key = self.get_entity_key(target_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound(crate::core::types::EntityKey::new(target_id as u64)))?;
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
         
         let relationship = crate::core::types::Relationship {
-            source: source_key,
-            target: target_key,
+            from: source_key,
+            to: target_key,
+            rel_type: 0,
             weight,
         };
         
@@ -197,10 +198,10 @@ impl KnowledgeGraph {
                 self.update_entity(key, data)?;
                 Ok(())
             } else {
-                Err(crate::error::GraphError::EntityNotFound(key))
+                Err(crate::error::GraphError::EntityKeyNotFound { key })
             }
         } else {
-            Err(crate::error::GraphError::EntityNotFound(crate::core::types::EntityKey::new(id as u64)))
+            Err(crate::error::GraphError::EntityNotFound { id })
         }
     }
 
@@ -258,9 +259,9 @@ impl KnowledgeGraph {
     /// Legacy relationship removal by ID
     pub fn remove_relationship_by_id(&self, source_id: u32, target_id: u32) -> Result<bool> {
         let source_key = self.get_entity_key(source_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound(crate::core::types::EntityKey::new(source_id as u64)))?;
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
         let target_key = self.get_entity_key(target_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound(crate::core::types::EntityKey::new(target_id as u64)))?;
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
         
         self.remove_relationship(source_key, target_key)
     }
@@ -314,7 +315,7 @@ impl KnowledgeGraph {
         for (id, key) in id_map.iter() {
             let relationships = self.get_outgoing_relationships(*key);
             for relationship in relationships {
-                if let Some(target_id) = key_to_id.get(&relationship.target) {
+                if let Some(target_id) = key_to_id.get(&relationship.to) {
                     exported.push((*id, *target_id, relationship.weight));
                 }
             }

@@ -8,9 +8,12 @@ use crate::cognitive::orchestrator::CognitiveOrchestrator;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
-use crate::learning::hebbian::HebbianLearningEngine;
+use crate::learning::hebbian::{HebbianLearningEngine, CoactivationTracker, LearningStatistics};
 use crate::learning::optimization_agent::GraphOptimizationAgent;
 use crate::learning::types::*;
+use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
+use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use crate::core::activation_engine::ActivationPropagationEngine;
 
 use std::collections::VecDeque;
 use std::sync::{Arc, RwLock, Mutex};
@@ -39,13 +42,29 @@ impl AdaptiveLearningSystem {
     pub fn new() -> Result<Self> {
         let config = AdaptiveLearningConfig::default();
         
+        // Note: This is a simplified initialization
+        // In a real implementation, these components would be properly initialized
+        // with their required dependencies (brain graph, activation engine, etc.)
         Ok(Self {
-            integrated_cognitive_system: Arc::new(Phase3IntegratedCognitiveSystem::new()?),
-            working_memory: Arc::new(WorkingMemorySystem::new()),
-            attention_manager: Arc::new(AttentionManager::new()),
-            orchestrator: Arc::new(CognitiveOrchestrator::new()?),
-            hebbian_engine: Arc::new(Mutex::new(HebbianLearningEngine::new_stub()?)),
-            optimization_agent: Arc::new(Mutex::new(GraphOptimizationAgent::new_stub()?)),
+            integrated_cognitive_system: Arc::new(Phase3IntegratedCognitiveSystem::default()),
+            working_memory: Arc::new(WorkingMemorySystem::default()),
+            attention_manager: Arc::new(AttentionManager::default()),
+            orchestrator: Arc::new(CognitiveOrchestrator::default()),
+            // These would need proper initialization in production
+            hebbian_engine: Arc::new(Mutex::new(HebbianLearningEngine {
+                brain_graph: Arc::new(BrainEnhancedKnowledgeGraph::default()),
+                activation_engine: Arc::new(ActivationPropagationEngine::default()),
+                inhibition_system: Arc::new(CompetitiveInhibitionSystem::default()),
+                learning_rate: 0.01,
+                decay_constant: 0.001,
+                strengthening_threshold: 0.7,
+                weakening_threshold: 0.3,
+                max_weight: 1.0,
+                min_weight: 0.0,
+                learning_statistics: Arc::new(RwLock::new(LearningStatistics::new())),
+                coactivation_tracker: Arc::new(RwLock::new(CoactivationTracker::new())),
+            })),
+            optimization_agent: Arc::new(Mutex::new(GraphOptimizationAgent::default())),
             performance_monitor: Arc::new(PerformanceMonitor::default()),
             feedback_aggregator: Arc::new(FeedbackAggregator::default()),
             learning_scheduler: Arc::new(LearningScheduler::default()),
@@ -271,7 +290,8 @@ impl AdaptiveLearningSystem {
         
         // Keep only recent history (last 1000 adaptations)
         if history.len() > 1000 {
-            history.drain(0..history.len() - 1000);
+            let len = history.len();
+            history.drain(0..len - 1000);
         }
         
         Ok(())
@@ -346,7 +366,7 @@ impl AdaptiveLearningSystem {
         
         Ok(EmergencyAdaptationResult {
             task_id,
-            adaptation_record,
+            adaptation_record: adaptation_record.clone(),
             response_time: duration,
             emergency_resolved: adaptation_record.success,
         })
@@ -490,60 +510,19 @@ pub struct SystemStatus {
     pub completed_adaptations: usize,
 }
 
-/// Fallback implementations for stub components
-impl HebbianLearningEngine {
-    fn new_stub() -> Result<Self> {
-        // Stub implementation - would be properly implemented
-        Ok(Self {
-            // Stub fields
-        })
-    }
-}
+// Removed stub implementations - using actual implementations from respective modules
 
-impl GraphOptimizationAgent {
-    fn new_stub() -> Result<Self> {
-        // Stub implementation - would be properly implemented
-        Ok(Self {
-            // Stub fields
-        })
-    }
-}
+// Removed duplicate impl block for Phase3IntegratedCognitiveSystem 
+// The proper implementation is in cognitive/phase3_integration.rs
 
-impl Phase3IntegratedCognitiveSystem {
-    fn new() -> Result<Self> {
-        // Stub implementation - would be properly implemented
-        Ok(Self {
-            // Stub fields
-        })
-    }
-}
+// Removed duplicate impl block for WorkingMemorySystem
+// The proper implementation is in cognitive/working_memory.rs
 
-impl WorkingMemorySystem {
-    fn new() -> Self {
-        // Stub implementation - would be properly implemented
-        Self {
-            // Stub fields
-        }
-    }
-}
+// Removed duplicate impl block for AttentionManager
+// The proper implementation is in cognitive/attention_manager.rs
 
-impl AttentionManager {
-    fn new() -> Self {
-        // Stub implementation - would be properly implemented
-        Self {
-            // Stub fields
-        }
-    }
-}
-
-impl CognitiveOrchestrator {
-    fn new() -> Result<Self> {
-        // Stub implementation - would be properly implemented
-        Ok(Self {
-            // Stub fields
-        })
-    }
-}
+// Removed duplicate impl block for CognitiveOrchestrator
+// The proper implementation is in cognitive/orchestrator.rs
 
 impl Default for super::feedback::FeedbackSummary {
     fn default() -> Self {

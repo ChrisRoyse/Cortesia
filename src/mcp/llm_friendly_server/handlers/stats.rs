@@ -1,6 +1,6 @@
 //! Statistics and performance handlers
 
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, MemoryStats};
+use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, MemoryStats, KnowledgeResult};
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, calculate_efficiency_score, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;
@@ -40,8 +40,8 @@ pub async fn handle_get_stats(
         },
         "memory": {
             "total_bytes": memory_stats.total_bytes,
-            "entity_count": memory_stats.entity_count,
-            "relationship_count": memory_stats.relationship_count,
+            "entity_count": memory_stats.total_nodes,
+            "relationship_count": memory_stats.total_triples,
             "memory_efficiency": efficiency_score
         },
         "usage": {
@@ -106,7 +106,7 @@ pub async fn handle_get_stats(
         memory_stats.total_bytes as f64 / 1_048_576.0,
         efficiency_score * 100.0,
         if memory_stats.total_bytes > 0 {
-            memory_stats.entity_count as f64 / (memory_stats.total_bytes as f64 / 1_048_576.0)
+            memory_stats.total_nodes as f64 / (memory_stats.total_bytes as f64 / 1_048_576.0)
         } else {
             0.0
         },
@@ -137,9 +137,10 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
             subject: None,
             predicate: None,
             object: None,
-            confidence_threshold: None,
-        },
-        Some(10000), // Limit for performance
+            limit: 10000,
+            min_confidence: 0.0,
+            include_chunks: false,
+        }
     )?;
     
     let total_triples = all_triples.len();
@@ -148,7 +149,7 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
     let mut entities = std::collections::HashSet::new();
     let mut predicates = std::collections::HashSet::new();
     
-    for triple in &all_triples {
+    for triple in &all_triples.triples {
         entities.insert(&triple.subject);
         entities.insert(&triple.object);
         predicates.insert(&triple.predicate);
@@ -194,14 +195,15 @@ async fn collect_detailed_stats(engine: &KnowledgeEngine) -> Result<DetailedStat
             subject: None,
             predicate: None,
             object: None,
-            confidence_threshold: None,
-        },
-        Some(5000),
+            limit: 5000,
+            min_confidence: 0.0,
+            include_chunks: false,
+        }
     )?;
     
     // Count entity types
     let mut entity_types = HashMap::new();
-    for triple in &all_triples {
+    for triple in &all_triples.triples {
         if triple.predicate == "is" {
             *entity_types.entry(triple.object.clone()).or_insert(0) += 1;
         }
@@ -209,13 +211,13 @@ async fn collect_detailed_stats(engine: &KnowledgeEngine) -> Result<DetailedStat
     
     // Count relationship types
     let mut relationship_types = HashMap::new();
-    for triple in &all_triples {
+    for triple in &all_triples.triples {
         *relationship_types.entry(triple.predicate.clone()).or_insert(0) += 1;
     }
     
     // Find top entities by number of connections
     let mut entity_connections = HashMap::new();
-    for triple in &all_triples {
+    for triple in &all_triples.triples {
         *entity_connections.entry(triple.subject.clone()).or_insert(0) += 1;
         *entity_connections.entry(triple.object.clone()).or_insert(0) += 1;
     }
@@ -248,9 +250,10 @@ async fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
             subject: None,
             predicate: None,
             object: None,
-            confidence_threshold: None,
-        },
-        Some(10000),
+            limit: 10000,
+            min_confidence: 0.0,
+            include_chunks: false,
+        }
     ).unwrap_or_else(|_| KnowledgeResult {
         nodes: Vec::new(),
         triples: Vec::new(),
@@ -262,15 +265,18 @@ async fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
     let estimated_bytes = all_triples.len() * 200; // Rough estimate: 200 bytes per triple
     
     let mut entities = std::collections::HashSet::new();
-    for triple in &all_triples {
+    for triple in &all_triples.triples {
         entities.insert(&triple.subject);
         entities.insert(&triple.object);
     }
     
     MemoryStats {
+        total_nodes: entities.len(),
+        total_triples: all_triples.len(),
         total_bytes: estimated_bytes,
-        entity_count: entities.len(),
-        relationship_count: all_triples.len(),
+        bytes_per_node: if entities.len() > 0 { estimated_bytes as f64 / entities.len() as f64 } else { 0.0 },
+        cache_hits: 0,
+        cache_misses: 0,
     }
 }
 

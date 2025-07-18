@@ -468,7 +468,7 @@ impl AttentionManager {
     async fn apply_attention_to_activation(
         &self,
         attention_weights: &AHashMap<EntityKey, f32>,
-        current_focus: &AttentionFocus,
+        _current_focus: &AttentionFocus,
     ) -> Result<ActivationModulation> {
         let mut focused_entities = Vec::new();
         let mut memory_updates = Vec::new();
@@ -499,7 +499,7 @@ impl AttentionManager {
         attention_weights: &AHashMap<EntityKey, f32>,
     ) -> Result<()> {
         // Update working memory with attention focus
-        for (&entity, &weight) in attention_weights {
+        for (&_entity, &weight) in attention_weights {
             if weight > 0.3 {
                 // Store focused entity in working memory
                 // This would require integration with working memory system
@@ -556,8 +556,8 @@ impl AttentionManager {
 
     async fn update_memory_during_shift(
         &self,
-        fade_out: &AttentionFadeResult,
-        fade_in: &AttentionFadeResult,
+        _fade_out: &AttentionFadeResult,
+        _fade_in: &AttentionFadeResult,
     ) -> Result<()> {
         // Update working memory during attention shift
         // This would coordinate with the working memory system
@@ -584,7 +584,7 @@ impl AttentionManager {
     async fn analyze_attention_needs(
         &self,
         pattern_type: CognitivePatternType,
-        query: &str,
+        _query: &str,
     ) -> Result<AttentionRequirements> {
         let requirements = match pattern_type {
             CognitivePatternType::Convergent => AttentionRequirements {
@@ -618,7 +618,7 @@ impl AttentionManager {
 
     async fn configure_attention_for_pattern(
         &self,
-        pattern_type: CognitivePatternType,
+        _pattern_type: CognitivePatternType,
         requirements: AttentionRequirements,
     ) -> Result<AttentionConfiguration> {
         // This would analyze the current context and configure attention appropriately
@@ -642,12 +642,12 @@ impl AttentionManager {
         }
     }
 
-    async fn apply_inhibition_to_distractors(&self, distractors: Vec<EntityKey>) -> Result<()> {
+    async fn apply_inhibition_to_distractors(&self, _distractors: Vec<EntityKey>) -> Result<()> {
         // Apply inhibition to prevent distraction
         Ok(())
     }
 
-    async fn boost_attention_to_target(&self, target: EntityKey, boost_factor: f32) -> Result<()> {
+    async fn boost_attention_to_target(&self, _target: EntityKey, _boost_factor: f32) -> Result<()> {
         // Boost attention to a specific target
         Ok(())
     }
@@ -724,7 +724,7 @@ impl AttentionManager {
         match command {
             ExecutiveCommand::SwitchFocus { from, to, urgency } => {
                 // Use memory-aware attention shifting
-                let shift_result = self.shift_attention_with_memory_preservation(
+                let _shift_result = self.shift_attention_with_memory_preservation(
                     vec![from],
                     vec![to],
                     urgency,

@@ -147,6 +147,8 @@ pub struct EntityMeta {
     pub embedding_offset: u32,
     pub property_offset: u32,
     pub degree: u16,
+    #[serde(skip, default = "std::time::Instant::now")]
+    pub last_accessed: std::time::Instant,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

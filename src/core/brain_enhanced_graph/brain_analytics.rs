@@ -4,7 +4,7 @@ use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
 use crate::core::types::EntityKey;
 use crate::error::Result;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 impl BrainEnhancedKnowledgeGraph {
     /// Get comprehensive brain statistics
@@ -265,10 +265,10 @@ impl BrainEnhancedKnowledgeGraph {
         // This is a simplified implementation
         // In a real scenario, you'd track actual usage over time
         for entity_key in entity_keys {
-            let neighbors = self.get_neighbors(entity_key).await;
-            for (neighbor_key, weight) in neighbors {
-                // Simulate usage frequency based on synaptic weight
-                let usage = (weight * 100.0) as u32;
+            let neighbors = self.get_neighbors(entity_key);
+            for neighbor_key in neighbors {
+                // Simulate usage frequency with default weight since get_neighbors doesn't return weights
+                let usage = 50u32; // Default frequency
                 usage_frequency.insert((entity_key, neighbor_key), usage);
             }
         }
@@ -311,7 +311,7 @@ impl BrainEnhancedKnowledgeGraph {
         // Analyze degree distribution
         let mut degree_distribution = HashMap::new();
         for entity_key in &entity_keys {
-            let degree = self.get_neighbors(*entity_key).await.len();
+            let degree = self.get_neighbors(*entity_key).len();
             *degree_distribution.entry(degree).or_insert(0) += 1;
         }
         pattern_analysis.degree_distribution = degree_distribution;
@@ -319,7 +319,7 @@ impl BrainEnhancedKnowledgeGraph {
         // Find hub entities (high degree)
         let mut hub_entities = Vec::new();
         for entity_key in &entity_keys {
-            let degree = self.get_neighbors(*entity_key).await.len();
+            let degree = self.get_neighbors(*entity_key).len();
             if degree > 10 { // Threshold for hub
                 hub_entities.push((*entity_key, degree));
             }
@@ -330,7 +330,7 @@ impl BrainEnhancedKnowledgeGraph {
         // Find isolated entities
         let mut isolated_entities = Vec::new();
         for entity_key in &entity_keys {
-            let degree = self.get_neighbors(*entity_key).await.len();
+            let degree = self.get_neighbors(*entity_key).len();
             if degree == 0 {
                 isolated_entities.push(*entity_key);
             }

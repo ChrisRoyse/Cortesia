@@ -99,6 +99,44 @@ impl BloomFilter {
     pub fn memory_usage(&self) -> usize {
         self.bit_array.capacity() * std::mem::size_of::<u64>()
     }
+    
+    /// Get the capacity of the bloom filter (in bits)
+    pub fn capacity(&self) -> usize {
+        self.bit_count
+    }
+    
+    /// Add edge (not applicable - BloomFilter is a probabilistic data structure)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> crate::error::Result<()> {
+        Err(crate::error::GraphError::UnsupportedOperation(
+            "BloomFilter is a probabilistic data structure, not a graph. Use CSRGraph for edges.".to_string()
+        ))
+    }
+    
+    /// Update entity (not applicable - BloomFilter only tracks membership)
+    pub fn update_entity(&mut self, _id: u32, _data: Vec<u8>) -> crate::error::Result<()> {
+        Err(crate::error::GraphError::UnsupportedOperation(
+            "BloomFilter only tracks membership, cannot update entities.".to_string()
+        ))
+    }
+    
+    /// Remove (not supported - BloomFilter doesn't support deletion)
+    pub fn remove(&mut self, _id: u32) -> crate::error::Result<()> {
+        Err(crate::error::GraphError::UnsupportedOperation(
+            "Standard BloomFilter does not support removal. Use CountingBloomFilter instead.".to_string()
+        ))
+    }
+    
+    /// Check if filter contains an entity (wrapper around contains)
+    pub fn contains_entity(&self, id: u32) -> bool {
+        self.contains(&id)
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        // Size needed to serialize this bloom filter
+        std::mem::size_of::<usize>() * 3 + // bit_count, hash_count, array length
+        self.bit_array.len() * std::mem::size_of::<u64>()
+    }
 }
 
 pub struct CountingBloomFilter {

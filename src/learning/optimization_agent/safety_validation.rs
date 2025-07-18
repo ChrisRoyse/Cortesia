@@ -371,7 +371,7 @@ impl SafetyValidator {
                 let entity2 = affected_entities[j];
                 
                 // Check if there's a path from entity1 to entity2 and back
-                if graph.has_path(entity1, entity2) && graph.has_path(entity2, entity1) {
+                if graph.core_graph.has_path(entity1, entity2) && graph.core_graph.has_path(entity2, entity1) {
                     return Ok(Some(format!("Potential cycle detected between {:?} and {:?}", entity1, entity2)));
                 }
             }
@@ -389,7 +389,7 @@ impl SafetyValidator {
         let mut orphaned_count = 0;
         
         for &entity_key in affected_entities {
-            let neighbors = graph.get_neighbors(entity_key).await;
+            let neighbors = graph.get_neighbors(entity_key);
             if neighbors.is_empty() {
                 orphaned_count += 1;
             }
@@ -411,7 +411,7 @@ impl SafetyValidator {
         let mut high_traffic = Vec::new();
         
         for &entity_key in affected_entities {
-            let neighbors = graph.get_neighbors(entity_key).await;
+            let neighbors = graph.get_neighbors(entity_key);
             if neighbors.len() > 50 {
                 high_traffic.push(entity_key);
             }

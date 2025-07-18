@@ -117,10 +117,31 @@ impl Phase4CognitiveSystem {
     /// Integrate learning feedback into cognitive system
     pub async fn integrate_learning_feedback(&self, feedback: LearningFeedback) -> Result<()> {
         // Process cognitive feedback
+        // Convert cognitive PerformanceData to LearningPerformanceData
+        let learning_perf_data = crate::learning::types::PerformanceData {
+            query_latencies: feedback.performance_data.query_latencies.clone(),
+            memory_usage: feedback.performance_data.memory_usage.clone(),
+            accuracy_scores: feedback.performance_data.accuracy_scores.clone(),
+            user_satisfaction: feedback.performance_data.user_satisfaction.clone(),
+            system_stability: feedback.performance_data.system_stability,
+            error_rates: feedback.performance_data.error_rates.clone(),
+            throughput_metrics: LearningThroughputMetrics {
+                queries_per_second: feedback.performance_data.throughput_metrics.queries_per_second,
+                successful_queries: feedback.performance_data.throughput_metrics.successful_queries,
+                failed_queries: feedback.performance_data.throughput_metrics.failed_queries,
+                average_response_time: feedback.performance_data.throughput_metrics.average_response_time,
+            },
+            timestamp: feedback.performance_data.timestamp,
+            system_health: feedback.performance_data.system_health,
+            overall_performance_score: feedback.performance_data.overall_performance_score,
+            component_scores: feedback.performance_data.component_scores.clone(),
+            bottlenecks: feedback.performance_data.bottlenecks.clone(),
+        };
+        
         self.cognitive_learning_interface
             .process_cognitive_feedback(
                 feedback.pattern_type,
-                &feedback.performance_data,
+                &learning_perf_data,
                 &feedback.context,
             ).await?;
         
@@ -301,12 +322,8 @@ impl Default for Phase4CognitiveConfig {
 
 // Extension methods for Phase3IntegratedCognitiveSystem
 impl crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem {
-    /// Get base orchestrator for Phase 4 integration
-    pub fn get_base_orchestrator(&self) -> Result<Arc<CognitiveOrchestrator>> {
-        // This would return the actual orchestrator from Phase 3 system
-        // For now, we'll create a new one
-        Ok(Arc::new(CognitiveOrchestrator::new()?))
-    }
+    /// Get base orchestrator for Phase 4 integration (removed duplicate)
+    // Duplicate method removed - use the one in phase3_integration.rs
     
     /// Execute query with context
     pub async fn execute_query(&self, query: &str, context: &str) -> Result<crate::cognitive::phase3_integration::Phase3QueryResult> {

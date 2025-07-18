@@ -354,6 +354,100 @@ impl HnswIndex {
             avg_connections: if node_count > 0 { total_connections as f64 / node_count as f64 } else { 0.0 },
         }
     }
+    
+    /// Get the capacity of the index
+    pub fn capacity(&self) -> usize {
+        self.nodes.read().capacity()
+    }
+    
+    /// Add edge (not applicable - HnswIndex stores embeddings with internal graph structure)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation(
+            "HnswIndex manages its own internal graph structure. Use insert() to add entities.".to_string()
+        ))
+    }
+    
+    /// Update entity embedding
+    pub fn update_entity(&self, entity_id: u32, entity_key: EntityKey, embedding: Vec<f32>) -> Result<()> {
+        if embedding.len() != self.dimension {
+            return Err(GraphError::InvalidEmbeddingDimension {
+                expected: self.dimension,
+                actual: embedding.len(),
+            });
+        }
+        
+        // For HNSW, updating requires removing and re-inserting
+        // First, check if the entity exists
+        let nodes = self.nodes.read();
+        let node_id = nodes.values()
+            .find(|n| n.entity_id == entity_id)
+            .map(|n| n.id);
+        drop(nodes);
+        
+        if let Some(_id) = node_id {
+            // Remove the old node
+            self.remove(entity_id)?;
+            // Insert the new one
+            self.insert(entity_id, entity_key, embedding)?;
+            Ok(())
+        } else {
+            Err(GraphError::EntityNotFound { id: entity_id })
+        }
+    }
+    
+    /// Remove an entity from the index
+    pub fn remove(&self, entity_id: u32) -> Result<()> {
+        let mut nodes = self.nodes.write();
+        
+        // Find the node with this entity_id
+        let node_to_remove = nodes.values()
+            .find(|n| n.entity_id == entity_id)
+            .map(|n| n.id);
+            
+        if let Some(node_id) = node_to_remove {
+            // Remove connections to this node from other nodes
+            for node in nodes.values_mut() {
+                for connections in &mut node.connections {
+                    connections.retain(|&id| id != node_id);
+                }
+            }
+            
+            // Remove the node itself
+            nodes.remove(&node_id);
+            
+            // Update entry point if needed
+            let mut entry_point = self.entry_point.write();
+            if entry_point.as_ref() == Some(&node_id) {
+                *entry_point = nodes.keys().next().copied();
+            }
+            
+            Ok(())
+        } else {
+            Err(GraphError::EntityNotFound { id: entity_id })
+        }
+    }
+    
+    /// Check if index contains an entity
+    pub fn contains_entity(&self, entity_id: u32) -> bool {
+        self.nodes.read().values().any(|n| n.entity_id == entity_id)
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        let nodes = self.nodes.read();
+        let base_size = std::mem::size_of::<usize>() * 4; // dimension, max_connections, etc.
+        
+        let nodes_size = nodes.values().map(|node| {
+            std::mem::size_of::<NodeId>() +
+            std::mem::size_of::<u32>() + // entity_id
+            std::mem::size_of::<EntityKey>() +
+            node.embedding.len() * std::mem::size_of::<f32>() +
+            node.connections.iter().map(|c| c.len() * std::mem::size_of::<NodeId>()).sum::<usize>() +
+            std::mem::size_of::<usize>() // max_layer
+        }).sum::<usize>();
+        
+        base_size + nodes_size
+    }
 }
 
 #[derive(Debug)]

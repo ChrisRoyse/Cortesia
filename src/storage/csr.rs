@@ -42,10 +42,12 @@ impl CSRGraph {
         let mut adjacency_list: Vec<Vec<(u32, u8, f32)>> = vec![Vec::new(); node_count as usize];
         
         for edge in edges {
-            if edge.from >= node_count || edge.to >= node_count {
-                return Err(GraphError::EntityNotFound { id: edge.from.max(edge.to) });
+            let from_idx = edge.from.as_u32();
+            let to_idx = edge.to.as_u32();
+            if from_idx >= node_count || to_idx >= node_count {
+                return Err(GraphError::EntityNotFound { id: from_idx.max(to_idx) });
             }
-            adjacency_list[edge.from as usize].push((edge.to, edge.rel_type, edge.weight));
+            adjacency_list[from_idx as usize].push((to_idx, edge.rel_type, edge.weight));
         }
         
         // Sort adjacency lists for better cache locality
@@ -204,6 +206,70 @@ impl CSRGraph {
         self.col_idx.capacity() * std::mem::size_of::<u32>() +
         self.rel_types.capacity() * std::mem::size_of::<u8>() +
         self.weights.capacity() * std::mem::size_of::<f32>()
+    }
+    
+    /// Get the capacity of the graph
+    pub fn capacity(&self) -> usize {
+        self.col_idx.capacity()
+    }
+    
+    /// Add an edge to the graph
+    pub fn add_edge(&mut self, from: u32, to: u32, weight: f32) -> Result<()> {
+        // Note: CSR format is typically immutable after construction
+        // For dynamic updates, we would need to rebuild or use a different structure
+        // This is a placeholder that returns an error
+        Err(GraphError::UnsupportedOperation("CSRGraph does not support dynamic edge insertion. Use from_edges() to build.".to_string()))
+    }
+    
+    /// Update an entity (not applicable for CSRGraph which stores edges)
+    pub fn update_entity(&mut self, _id: u32, _data: Vec<u8>) -> Result<()> {
+        Err(GraphError::UnsupportedOperation("CSRGraph does not store entity data".to_string()))
+    }
+    
+    /// Remove an edge or entity
+    pub fn remove(&mut self, _id: u32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation("CSRGraph does not support dynamic removal. Rebuild the graph.".to_string()))
+    }
+    
+    /// Check if the graph contains an entity/node
+    pub fn contains_entity(&self, id: u32) -> bool {
+        id < self.node_count.load(Ordering::Relaxed)
+    }
+    
+    /// Get encoded size of the graph
+    pub fn encoded_size(&self) -> usize {
+        // Calculate the size needed to serialize this graph
+        std::mem::size_of::<u32>() * 2 + // node_count + edge_count
+        self.row_ptr.len() * std::mem::size_of::<u64>() +
+        self.col_idx.len() * std::mem::size_of::<u32>() +
+        self.rel_types.len() * std::mem::size_of::<u8>() +
+        self.weights.len() * std::mem::size_of::<f32>()
+    }
+    
+    /// Get the weight of an edge
+    pub fn get_edge_weight(&self, from: u32, to: u32) -> Option<f32> {
+        if from >= self.node_count.load(Ordering::Relaxed) {
+            return None;
+        }
+        
+        let start = self.row_ptr[from as usize] as usize;
+        let end = self.row_ptr[from as usize + 1] as usize;
+        
+        // Binary search for the target in sorted neighbors
+        match self.col_idx[start..end].binary_search(&to) {
+            Ok(idx) => Some(self.weights[start + idx]),
+            Err(_) => None,
+        }
+    }
+    
+    /// Remove an edge (not supported in CSR format)
+    pub fn remove_edge(&mut self, _from: u32, _to: u32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation("CSRGraph does not support dynamic edge removal. Rebuild the graph.".to_string()))
+    }
+    
+    /// Update edge weight (not supported in CSR format)
+    pub fn update_edge_weight(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation("CSRGraph does not support dynamic weight updates. Rebuild the graph.".to_string()))
     }
 }
 

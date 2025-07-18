@@ -1,7 +1,6 @@
 //! Query generation for various graph query languages
 
 use crate::error::Result;
-use serde_json::json;
 
 /// Generate a Cypher query from natural language
 pub fn generate_cypher_query(natural_query: &str, include_explanation: bool) -> Result<(String, Option<String>)> {

@@ -201,6 +201,73 @@ impl FlatVectorIndex {
         self.entity_keys.capacity() * std::mem::size_of::<EntityKey>() +
         self.embeddings.capacity() * std::mem::size_of::<f32>()
     }
+    
+    /// Get the capacity of the index
+    pub fn capacity(&self) -> usize {
+        self.entity_ids.capacity()
+    }
+    
+    /// Add edge (not applicable - FlatVectorIndex stores embeddings, not edges)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation(
+            "FlatVectorIndex stores entity embeddings, not edges. Use CSRGraph for edges.".to_string()
+        ))
+    }
+    
+    /// Update entity embedding
+    pub fn update_entity(&mut self, entity_id: u32, entity_key: EntityKey, embedding: Vec<f32>) -> Result<()> {
+        if embedding.len() != self.dimension {
+            return Err(GraphError::InvalidEmbeddingDimension {
+                expected: self.dimension,
+                actual: embedding.len(),
+            });
+        }
+        
+        // Find the entity index
+        if let Some(index) = self.entity_ids.iter().position(|&id| id == entity_id) {
+            // Update the embedding
+            let start_idx = index * self.dimension;
+            let end_idx = start_idx + self.dimension;
+            self.embeddings[start_idx..end_idx].copy_from_slice(&embedding);
+            self.entity_keys[index] = entity_key;
+            Ok(())
+        } else {
+            Err(GraphError::EntityNotFound { id: entity_id })
+        }
+    }
+    
+    /// Remove an entity from the index
+    pub fn remove(&mut self, entity_id: u32) -> Result<()> {
+        if let Some(index) = self.entity_ids.iter().position(|&id| id == entity_id) {
+            // Remove from all arrays
+            self.entity_ids.remove(index);
+            self.entity_keys.remove(index);
+            
+            // Remove embedding data
+            let start_idx = index * self.dimension;
+            let end_idx = start_idx + self.dimension;
+            self.embeddings.drain(start_idx..end_idx);
+            
+            self.count -= 1;
+            Ok(())
+        } else {
+            Err(GraphError::EntityNotFound { id: entity_id })
+        }
+    }
+    
+    /// Check if index contains an entity
+    pub fn contains_entity(&self, entity_id: u32) -> bool {
+        self.entity_ids.contains(&entity_id)
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        // Size needed to serialize this index
+        std::mem::size_of::<usize>() * 2 + // dimension, count
+        self.entity_ids.len() * std::mem::size_of::<u32>() +
+        self.entity_keys.len() * std::mem::size_of::<EntityKey>() +
+        self.embeddings.len() * std::mem::size_of::<f32>()
+    }
 
     /// SIMD-accelerated k-nearest neighbors using AVX2
     #[cfg(target_arch = "x86_64")]

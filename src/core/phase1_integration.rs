@@ -7,6 +7,7 @@ use crate::core::brain_types::{BrainInspiredEntity, EntityDirection, ActivationP
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::neural::structure_predictor::GraphStructurePredictor;
 use crate::neural::canonicalization::EnhancedNeuralCanonicalizer;
+#[cfg(feature = "native")]
 use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
 use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, TemporalUpdateBuilder, UpdateOperation, UpdateSource};
 use crate::cognitive::{CognitiveOrchestrator, CognitiveOrchestratorConfig, ReasoningStrategy, CognitivePatternType};
@@ -18,6 +19,7 @@ pub struct Phase1IntegrationLayer {
     pub neural_server: Arc<NeuralProcessingServer>,
     pub structure_predictor: Arc<GraphStructurePredictor>,
     pub canonicalizer: Arc<EnhancedNeuralCanonicalizer>,
+    #[cfg(feature = "native")]
     pub mcp_server: Arc<BrainInspiredMCPServer>,
     pub temporal_processor: Arc<IncrementalTemporalProcessor>,
     pub cognitive_orchestrator: Option<Arc<CognitiveOrchestrator>>,
@@ -86,7 +88,8 @@ impl Phase1IntegrationLayer {
             crate::versioning::temporal_graph::TemporalKnowledgeGraph::new_default()
         ));
 
-        // 6. Initialize MCP server
+        // 6. Initialize MCP server (if native feature is enabled)
+        #[cfg(feature = "native")]
         let mcp_server = Arc::new(
             BrainInspiredMCPServer::new(temporal_graph.clone(), neural_server.clone())
         );
@@ -120,6 +123,7 @@ impl Phase1IntegrationLayer {
             neural_server,
             structure_predictor,
             canonicalizer,
+            #[cfg(feature = "native")]
             mcp_server,
             temporal_processor,
             cognitive_orchestrator,
@@ -251,6 +255,7 @@ impl Phase1IntegrationLayer {
             final_activations: activation_pattern.activations.clone(),
             iterations_completed: 1,
             converged: true,
+            activation_trace: Vec::new(),
             total_energy: activation_pattern.activations.values().sum(),
         };
         
@@ -272,15 +277,24 @@ impl Phase1IntegrationLayer {
     /// Temporal query at specific point in time
     pub async fn temporal_query_at_time(
         &self,
-        query: &str,
+        _query: &str,
         valid_time: chrono::DateTime<Utc>,
         transaction_time: Option<chrono::DateTime<Utc>>,
     ) -> Result<Vec<crate::versioning::temporal_graph::TemporalEntity>> {
-        let tx_time = transaction_time.unwrap_or_else(Utc::now);
+        let _tx_time = transaction_time.unwrap_or_else(Utc::now);
         
         // Get temporal graph from MCP server (it holds the temporal graph)
-        let temporal_graph = self.mcp_server.knowledge_graph.read().await;
-        temporal_graph.query_at_time(valid_time, tx_time).await
+        #[cfg(feature = "native")]
+        {
+            let temporal_graph = self.mcp_server.knowledge_graph.read().await;
+            temporal_graph.query_at_time(valid_time, _tx_time).await
+        }
+        
+        #[cfg(not(feature = "native"))]
+        {
+            // Return empty results when MCP is not available
+            Ok(Vec::new())
+        }
     }
 
     /// Get comprehensive system statistics
@@ -288,13 +302,12 @@ impl Phase1IntegrationLayer {
         let brain_stats = self.brain_graph.get_brain_statistics().await?;
         // Create dummy activation statistics since activation_engine is not available
         let activation_stats = crate::core::activation_engine::ActivationStatistics {
-            total_activations: 0,
-            average_activation: 0.0,
-            max_activation: 0.0,
-            min_activation: 0.0,
+            total_entities: 0,
+            total_gates: 0,
+            total_relationships: 0,
             active_entities: 0,
-            propagation_steps: 0,
-            convergence_rate: 0.0,
+            inhibitory_connections: 0,
+            average_activation: 0.0,
         };
         let update_stats = self.temporal_processor.get_statistics().await;
         let queue_size = self.temporal_processor.get_queue_size().await;
@@ -446,6 +459,7 @@ impl Phase1IntegrationLayer {
                 embedding: data.embedding,
                 activation_state: 0.0,
                 last_activation: std::time::SystemTime::now(),
+                last_update: std::time::SystemTime::now(),
             }))
         } else {
             Ok(None)
@@ -485,7 +499,7 @@ impl Phase1IntegrationLayer {
         let mut info = Vec::new();
         
         for (key, activation) in activations {
-            if let Some((_, entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == key) {
+            if let Some((_, _entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == key) {
                 info.push(EntityInfo {
                     entity_key: *key,
                     concept_id: format!("entity_{:?}", key),

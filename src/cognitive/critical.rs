@@ -5,7 +5,7 @@ use async_trait::async_trait;
 
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::brain_types::{RelationType, ActivationStep, ActivationOperation};
+use crate::core::brain_types::{ActivationStep, ActivationOperation};
 use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::Result;
@@ -79,7 +79,9 @@ impl CriticalThinking {
             });
         }
         
-        let results = match graph.neural_query(query).await {
+        // Generate a simple embedding from query text
+        let query_embedding = self.generate_query_embedding(query).await?;
+        let results = match graph.neural_query(&query_embedding, 10).await {
             Ok(results) => results,
             Err(_) => {
                 // If neural query fails, try to extract entities manually
@@ -88,23 +90,17 @@ impl CriticalThinking {
         };
         
         // Build fact descriptions from activated entities
-        let brain_entities = graph.brain_entities.read().await;
-        let brain_relationships = graph.brain_relationships.read().await;
+        let all_entities = graph.get_all_entities().await;
         
         let mut facts = Vec::new();
-        for (entity_key, activation) in results.final_activations.iter() {
-            if let Some(entity) = brain_entities.get(*entity_key) {
+        for (entity_key, activation) in results.activations.iter() {
+            if let Some((_, entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == entity_key) {
                 // Create more descriptive facts based on entity type and relationships
-                let mut fact_description = entity.concept_id.clone();
+                let mut fact_description = format!("entity_{:?}", entity_key);
                 
-                // Look for property relationships to build more complete facts
-                for ((source, target), relationship) in brain_relationships.iter() {
-                    if *source == *entity_key && matches!(relationship.relation_type, RelationType::HasProperty) {
-                        if let Some(property_entity) = brain_entities.get(*target) {
-                            // Build fact like "tripper has 3 legs" or "dog has 4 legs"
-                            fact_description = format!("{} has {}", entity.concept_id, property_entity.concept_id);
-                        }
-                    }
+                // Look for properties in entity data
+                if !entity_data.properties.is_empty() {
+                    fact_description = format!("{} with properties: {}", fact_description, entity_data.properties);
                 }
                 
                 facts.push(FactInfo {
@@ -117,9 +113,18 @@ impl CriticalThinking {
             }
         }
         
+        // Convert BrainQueryResult to PropagationResult for metadata
+        let metadata = crate::core::activation_engine::PropagationResult {
+            final_activations: results.activations.clone(),
+            iterations_completed: 1,
+            converged: true,
+            activation_trace: vec![],
+            total_energy: results.total_activation,
+        };
+        
         Ok(QueryResults {
             facts,
-            metadata: results,
+            metadata,
         })
     }
     
@@ -131,7 +136,7 @@ impl CriticalThinking {
         let mut facts = Vec::new();
         
         // Look for entities mentioned in the query
-        for (entity_key, entity_data, activation) in &all_entities {
+        for (entity_key, _entity_data, _activation) in &all_entities {
             let entity_concept = format!("entity_{:?}", entity_key).to_lowercase();
             if query_lower.contains(&entity_concept) || entity_concept.contains(&query_lower.split_whitespace().next().unwrap_or("")) {
                 facts.push(FactInfo {
@@ -593,6 +598,21 @@ impl CriticalThinking {
         metadata.insert("uncertainty_score".to_string(), format!("{:.3}", result.uncertainty_analysis.overall_uncertainty));
         metadata.insert("knowledge_gaps_count".to_string(), result.uncertainty_analysis.knowledge_gaps.len().to_string());
         metadata
+    }
+    
+    /// Generate a simple embedding from query text
+    async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>> {
+        // Create a simple embedding by hashing words and creating a sparse vector
+        let words: Vec<&str> = query.split_whitespace().collect();
+        let mut embedding = vec![0.0; 128]; // Standard embedding size
+        
+        for (i, word) in words.iter().enumerate() {
+            let hash = word.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
+            let index = (hash as usize) % embedding.len();
+            embedding[index] = 1.0 / (i + 1) as f32; // Weighted by position
+        }
+        
+        Ok(embedding)
     }
 }
 

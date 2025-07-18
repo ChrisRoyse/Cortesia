@@ -226,7 +226,7 @@ impl TemporalKnowledgeGraph {
         index.index_entity(entity_key, &temporal_entity);
 
         // Update current graph with latest version
-        let mut current = self.current_graph.write().await;
+        let mut _current = self.current_graph.write().await;
         // Note: We'll need to adapt this to work with the existing KnowledgeGraph structure
         // For now, we'll store the entity ID for reference
         
@@ -237,7 +237,7 @@ impl TemporalKnowledgeGraph {
     pub async fn insert_temporal_entities(
         &self,
         entities: Vec<BrainInspiredEntity>,
-        metadata: AHashMap<String, String>,
+        _metadata: AHashMap<String, String>,
     ) -> Result<Vec<EntityKey>> {
         let mut entity_keys = Vec::new();
         let valid_time = TimeRange::new(Utc::now());
@@ -328,7 +328,7 @@ impl TemporalKnowledgeGraph {
     /// Time travel query - get the state of the graph at a specific time
     pub async fn time_travel_query(
         &self,
-        query: &str,
+        _query: &str,
         valid_time: DateTime<Utc>,
         transaction_time: DateTime<Utc>,
     ) -> Result<Vec<TemporalEntity>> {
@@ -344,7 +344,7 @@ impl TemporalKnowledgeGraph {
         end_time: DateTime<Utc>,
         pattern: &str,
     ) -> Result<Vec<(DateTime<Utc>, Vec<TemporalEntity>)>> {
-        let store = self.temporal_store.read().await;
+        let _store = self.temporal_store.read().await;
         let mut temporal_results = Vec::new();
         
         // Sample at regular intervals

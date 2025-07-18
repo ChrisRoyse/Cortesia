@@ -1,8 +1,6 @@
 //! Optimization scheduling and execution management
 
 use super::types::*;
-use crate::core::types::EntityKey;
-use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::error::Result;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};

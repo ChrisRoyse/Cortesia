@@ -1,10 +1,8 @@
 //! Type definitions for optimization agent
 
 use crate::core::types::EntityKey;
-use crate::learning::types::*;
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 
 /// Graph optimization agent for performance improvements
 #[derive(Debug, Clone)]
@@ -89,7 +87,7 @@ pub struct PerformanceBottleneck {
 }
 
 /// Types of performance bottlenecks
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum BottleneckType {
     QueryLatency,
     MemoryUsage,

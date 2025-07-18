@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 use uuid::Uuid;
+use async_trait::async_trait;
 
 /// Enum to hold different learning algorithm implementations
 #[derive(Debug, Clone)]
@@ -17,6 +18,7 @@ pub enum LearningAlgorithmImpl {
     Bayesian(BayesianOptimizationAlgorithm),
 }
 
+#[async_trait]
 impl LearningAlgorithm for LearningAlgorithmImpl {
     fn get_algorithm_id(&self) -> String {
         match self {
@@ -34,11 +36,11 @@ impl LearningAlgorithm for LearningAlgorithmImpl {
         }
     }
 
-    fn execute_learning(&self, task: &LearningTask) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<LearningResult>> + Send + '_>> {
+    async fn execute_learning(&self, task: &LearningTask) -> Result<LearningResult> {
         match self {
-            LearningAlgorithmImpl::Hebbian(alg) => alg.execute_learning(task),
-            LearningAlgorithmImpl::Reinforcement(alg) => alg.execute_learning(task),
-            LearningAlgorithmImpl::Bayesian(alg) => alg.execute_learning(task),
+            LearningAlgorithmImpl::Hebbian(alg) => alg.execute_learning(task).await,
+            LearningAlgorithmImpl::Reinforcement(alg) => alg.execute_learning(task).await,
+            LearningAlgorithmImpl::Bayesian(alg) => alg.execute_learning(task).await,
         }
     }
 
@@ -70,10 +72,11 @@ pub struct MetaLearningSystem {
     pub meta_config: MetaLearningConfig,
 }
 
+#[async_trait]
 pub trait LearningAlgorithm: Send + Sync {
     fn get_algorithm_id(&self) -> String;
     fn get_algorithm_type(&self) -> LearningAlgorithmType;
-    fn execute_learning(&self, task: &LearningTask) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<LearningResult>> + Send + '_>>;
+    async fn execute_learning(&self, task: &LearningTask) -> Result<LearningResult>;
     fn get_effectiveness(&self) -> f32;
     fn can_handle_task(&self, task: &LearningTask) -> bool;
 }
@@ -618,6 +621,7 @@ impl HebbianLearningAlgorithm {
     }
 }
 
+#[async_trait]
 impl LearningAlgorithm for HebbianLearningAlgorithm {
     fn get_algorithm_id(&self) -> String {
         self.algorithm_id.clone()
@@ -627,17 +631,15 @@ impl LearningAlgorithm for HebbianLearningAlgorithm {
         LearningAlgorithmType::ReinforcementLearning
     }
 
-    fn execute_learning(&self, _task: &LearningTask) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<LearningResult>> + Send + '_>> {
-        Box::pin(async move {
-            // Simplified Hebbian learning execution
-            Ok(LearningResult {
-                success: true,
-                performance_achieved: 0.85,
-                learning_efficiency: 0.8,
-                generalization_score: 0.75,
-                resource_efficiency: 0.9,
-                insights_gained: vec!["Connection strengthening patterns identified".to_string()],
-            })
+    async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {
+        // Simplified Hebbian learning execution
+        Ok(LearningResult {
+            success: true,
+            performance_achieved: 0.85,
+            learning_efficiency: 0.8,
+            generalization_score: 0.75,
+            resource_efficiency: 0.9,
+            insights_gained: vec!["Connection strengthening patterns identified".to_string()],
         })
     }
 
@@ -666,6 +668,7 @@ impl ReinforcementLearningAlgorithm {
     }
 }
 
+#[async_trait]
 impl LearningAlgorithm for ReinforcementLearningAlgorithm {
     fn get_algorithm_id(&self) -> String {
         self.algorithm_id.clone()
@@ -675,16 +678,14 @@ impl LearningAlgorithm for ReinforcementLearningAlgorithm {
         LearningAlgorithmType::ReinforcementLearning
     }
 
-    fn execute_learning(&self, _task: &LearningTask) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<LearningResult>> + Send + '_>> {
-        Box::pin(async move {
-            Ok(LearningResult {
-                success: true,
-                performance_achieved: 0.88,
-                learning_efficiency: 0.85,
-                generalization_score: 0.8,
-                resource_efficiency: 0.75,
-                insights_gained: vec!["Reward optimization strategies learned".to_string()],
-            })
+    async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {
+        Ok(LearningResult {
+            success: true,
+            performance_achieved: 0.88,
+            learning_efficiency: 0.85,
+            generalization_score: 0.8,
+            resource_efficiency: 0.75,
+            insights_gained: vec!["Reward optimization strategies learned".to_string()],
         })
     }
 
@@ -712,6 +713,7 @@ impl BayesianOptimizationAlgorithm {
     }
 }
 
+#[async_trait]
 impl LearningAlgorithm for BayesianOptimizationAlgorithm {
     fn get_algorithm_id(&self) -> String {
         self.algorithm_id.clone()
@@ -721,16 +723,14 @@ impl LearningAlgorithm for BayesianOptimizationAlgorithm {
         LearningAlgorithmType::BayesianOptimization
     }
 
-    fn execute_learning(&self, _task: &LearningTask) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<LearningResult>> + Send + '_>> {
-        Box::pin(async move {
-            Ok(LearningResult {
-                success: true,
-                performance_achieved: 0.92,
-                learning_efficiency: 0.9,
-                generalization_score: 0.85,
-                resource_efficiency: 0.8,
-                insights_gained: vec!["Optimal parameter configurations discovered".to_string()],
-            })
+    async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {
+        Ok(LearningResult {
+            success: true,
+            performance_achieved: 0.92,
+            learning_efficiency: 0.9,
+            generalization_score: 0.85,
+            resource_efficiency: 0.8,
+            insights_gained: vec!["Optimal parameter configurations discovered".to_string()],
         })
     }
 

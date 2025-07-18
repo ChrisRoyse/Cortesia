@@ -230,6 +230,119 @@ impl SpatialIndex {
             None => 0,
         }
     }
+    
+    /// Get the capacity (approximate based on node count)
+    pub fn capacity(&self) -> usize {
+        self.approximate_count() * 2 // Rough estimate
+    }
+    
+    /// Add edge (not applicable - SpatialIndex stores embeddings, not edges)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation(
+            "SpatialIndex stores entity embeddings, not edges. Use CSRGraph for edges.".to_string()
+        ))
+    }
+    
+    /// Update entity embedding
+    pub fn update_entity(&mut self, entity_id: u32, entity_key: EntityKey, embedding: Vec<f32>) -> Result<()> {
+        // For k-d tree, updating requires removing and re-inserting
+        // This is a simplified implementation that rebuilds the tree
+        if embedding.len() != self.dimension {
+            return Err(GraphError::InvalidEmbeddingDimension {
+                expected: self.dimension,
+                actual: embedding.len(),
+            });
+        }
+        
+        // Collect all nodes except the one to update
+        let mut all_nodes = Vec::new();
+        self.collect_all_nodes(&self.tree, &mut all_nodes);
+        
+        // Filter out the old entry and add the new one
+        let entities: Vec<(u32, EntityKey, Vec<f32>)> = all_nodes
+            .into_iter()
+            .filter(|node| node.entity_id != entity_id)
+            .map(|node| (node.entity_id, node.entity_key, node.embedding))
+            .chain(std::iter::once((entity_id, entity_key, embedding)))
+            .collect();
+            
+        self.bulk_build(entities)
+    }
+    
+    /// Remove an entity from the index
+    pub fn remove(&mut self, entity_id: u32) -> Result<()> {
+        // Collect all nodes except the one to remove
+        let mut all_nodes = Vec::new();
+        self.collect_all_nodes(&self.tree, &mut all_nodes);
+        
+        let entities: Vec<(u32, EntityKey, Vec<f32>)> = all_nodes
+            .into_iter()
+            .filter(|node| node.entity_id != entity_id)
+            .map(|node| (node.entity_id, node.entity_key, node.embedding))
+            .collect();
+            
+        if entities.is_empty() {
+            self.tree = None;
+            Ok(())
+        } else {
+            self.bulk_build(entities)
+        }
+    }
+    
+    /// Check if index contains an entity
+    pub fn contains_entity(&self, entity_id: u32) -> bool {
+        self.contains_entity_recursive(&self.tree, entity_id)
+    }
+    
+    fn contains_entity_recursive(&self, node: &Option<KDNode>, entity_id: u32) -> bool {
+        match node {
+            Some(current) => {
+                if current.entity_id == entity_id {
+                    return true;
+                }
+                let in_left = match &current.left {
+                    Some(left_node) => self.contains_entity_recursive(&Some(left_node.as_ref().clone()), entity_id),
+                    None => false,
+                };
+                let in_right = match &current.right {
+                    Some(right_node) => self.contains_entity_recursive(&Some(right_node.as_ref().clone()), entity_id),
+                    None => false,
+                };
+                in_left || in_right
+            }
+            None => false,
+        }
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        // Approximate size for serialization
+        std::mem::size_of::<usize>() + // dimension
+        self.encoded_size_recursive(&self.tree)
+    }
+    
+    fn encoded_size_recursive(&self, node: &Option<KDNode>) -> usize {
+        match node {
+            Some(current) => {
+                let node_size = std::mem::size_of::<u32>() + // entity_id
+                    std::mem::size_of::<EntityKey>() +
+                    current.embedding.len() * std::mem::size_of::<f32>() +
+                    std::mem::size_of::<usize>(); // split_dim
+                    
+                let left_size = match &current.left {
+                    Some(left_node) => self.encoded_size_recursive(&Some(left_node.as_ref().clone())),
+                    None => 0,
+                };
+                let right_size = match &current.right {
+                    Some(right_node) => self.encoded_size_recursive(&Some(right_node.as_ref().clone())),
+                    None => 0,
+                };
+                
+                node_size + left_size + right_size
+            }
+            None => 0,
+        }
+    }
 }
 
 #[inline]

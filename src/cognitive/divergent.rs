@@ -1,11 +1,11 @@
 use std::sync::Arc;
-use std::collections::{HashMap as AHashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, Instant};
 use async_trait::async_trait;
 
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, RelationType, ActivationStep, ActivationOperation};
+use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, ActivationStep, ActivationOperation, RelationType};
 use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
@@ -71,7 +71,7 @@ impl DivergentThinking {
         // 4. Rank results by relevance and novelty
         let ranked_results = self.rank_by_creativity(path_exploration).await?;
         
-        let execution_time = start_time.elapsed();
+        let _execution_time = start_time.elapsed();
         
         Ok(DivergentResult {
             explorations: ranked_results.clone(),
@@ -110,7 +110,7 @@ impl DivergentThinking {
         let mut visited = HashSet::new();
         
         for depth in 0..self.max_exploration_depth {
-            let mut next_wave = AHashMap::new();
+            let mut next_wave = HashMap::new();
             
             for (entity_key, activation) in &current_wave {
                 if visited.contains(entity_key) {
@@ -202,7 +202,7 @@ impl DivergentThinking {
         // Use breadth-first search with creativity scoring
         let mut queue = Vec::new();
         let mut visited = HashSet::new();
-        let mut parent_map = AHashMap::new();
+        let mut parent_map = HashMap::new();
         
         queue.push(start);
         visited.insert(start);
@@ -260,7 +260,7 @@ impl DivergentThinking {
     async fn neural_enhance_paths(
         &self,
         paths: Vec<ExplorationPath>,
-        exploration_map: &ExplorationMap,
+        _exploration_map: &ExplorationMap,
     ) -> Result<Vec<ExplorationPath>> {
         let mut enhanced_paths = Vec::new();
         
@@ -304,12 +304,12 @@ impl DivergentThinking {
     async fn find_typed_connections(
         &self,
         entity_key: EntityKey,
-        exploration_type: &ExplorationType,
+        _exploration_type: &ExplorationType,
     ) -> Result<Vec<(EntityKey, f32, RelationType)>> {
         let mut connections = Vec::new();
         
         // Get outgoing connections
-        let neighbors = self.graph.get_neighbors(entity_key).await;
+        let neighbors = self.graph.get_neighbors_with_weights(entity_key).await;
         for (connected_key, weight) in neighbors {
             connections.push((connected_key, weight, RelationType::RelatedTo));
         }
@@ -356,7 +356,7 @@ impl DivergentThinking {
     }
     
     /// Calculate path novelty based on concept combinations
-    async fn calculate_path_novelty(&self, path: &[EntityKey], concepts: &[String]) -> Result<f32> {
+    async fn calculate_path_novelty(&self, _path: &[EntityKey], concepts: &[String]) -> Result<f32> {
         if concepts.is_empty() {
             return Ok(0.0);
         }
@@ -448,7 +448,7 @@ impl DivergentThinking {
         let query_norm = Self::normalize_concept(concept);
         
         // First pass: exact and substring matches
-        for (key, entity_data, _) in &all_entities {
+        for (key, _entity_data, _) in &all_entities {
             let entity_concept = format!("entity_{:?}", key);
             let entity_norm = Self::normalize_concept(&entity_concept);
             
@@ -467,7 +467,7 @@ impl DivergentThinking {
         
         // If still no matches, try even more relaxed matching
         if matches.is_empty() {
-            for (key, entity_data, _) in &all_entities {
+            for (key, _entity_data, _) in &all_entities {
                 // Check if either query or entity concept contains the other as a word
                 let query_words: Vec<&str> = query_norm.split_whitespace().collect();
                 let entity_concept_lower = format!("entity_{:?}", key).to_lowercase();
@@ -476,7 +476,7 @@ impl DivergentThinking {
                 for query_word in &query_words {
                     for entity_word in &entity_words {
                         if entity_word.contains(query_word) || query_word.contains(entity_word) {
-                            matches.push((key, 0.5));
+                            matches.push((*key, 0.5));
                             break;
                         }
                     }
@@ -499,10 +499,11 @@ impl DivergentThinking {
                 id: entity_key,
                 concept_id: format!("entity_{:?}", entity_key),
                 direction: EntityDirection::Input,
-                properties: AHashMap::new(),
+                properties: HashMap::new(),
                 embedding: data.embedding.clone(),
                 activation_state: *activation,
                 last_activation: std::time::SystemTime::now(),
+                last_update: std::time::SystemTime::now(),
             })
             .ok_or(GraphError::EntityKeyNotFound { key: entity_key })
     }
@@ -941,7 +942,7 @@ impl CognitivePattern for DivergentThinking {
                 converged: false, // Divergent thinking doesn't converge
                 total_energy: result.creativity_scores.iter().sum(),
                 additional_info: {
-                    let mut info = AHashMap::new();
+                    let mut info = HashMap::new();
                     info.insert("query".to_string(), query.to_string());
                     info.insert("pattern".to_string(), "divergent".to_string());
                     info.insert("exploration_type".to_string(), format!("{:?}", exploration_type));
@@ -1041,7 +1042,7 @@ impl DivergentThinking {
     /// Get connection strength between two entities
     async fn get_connection_strength(&self, from: EntityKey, to: EntityKey) -> Result<f32> {
         // Check if there's a direct connection by looking at neighbors
-        let neighbors = self.graph.get_neighbors(from).await;
+        let neighbors = self.graph.get_neighbors_with_weights(from).await;
         
         for (neighbor, weight) in neighbors {
             if neighbor == to {

@@ -1,4 +1,4 @@
-use std::collections::HashMap as AHashMap;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 
@@ -117,7 +117,7 @@ pub struct ResultMetadata {
     pub iterations_completed: usize,
     pub converged: bool,
     pub total_energy: f32,
-    pub additional_info: AHashMap<String, String>,
+    pub additional_info: HashMap<String, String>,
 }
 
 /// Single step in activation propagation
@@ -344,7 +344,7 @@ pub struct ConfidenceInterval {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UncertaintyAnalysis {
     pub overall_uncertainty: f32,
-    pub source_reliability: AHashMap<String, f32>,
+    pub source_reliability: HashMap<String, f32>,
     pub knowledge_gaps: Vec<String>,
 }
 
@@ -604,7 +604,7 @@ pub struct ExplorationMap {
     pub total_entities_explored: usize,
     pub exploration_depth: usize,
     pub edges: Vec<ExplorationEdge>,
-    pub neighbors_cache: AHashMap<EntityKey, Vec<EntityKey>>,
+    pub neighbors_cache: HashMap<EntityKey, Vec<EntityKey>>,
 }
 
 /// Edge in exploration map
@@ -624,7 +624,7 @@ impl ExplorationMap {
             total_entities_explored: 0,
             exploration_depth: 0,
             edges: Vec::new(),
-            neighbors_cache: AHashMap::new(),
+            neighbors_cache: HashMap::new(),
         }
     }
     
@@ -729,7 +729,7 @@ pub struct HierarchyTraversal {
 /// Cache for hierarchy information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HierarchyCache {
-    pub cached_hierarchies: AHashMap<EntityKey, Vec<EntityKey>>,
+    pub cached_hierarchies: HashMap<EntityKey, Vec<EntityKey>>,
     pub cache_hits: usize,
     pub cache_misses: usize,
 }
@@ -737,7 +737,7 @@ pub struct HierarchyCache {
 impl HierarchyCache {
     pub fn new() -> Self {
         Self {
-            cached_hierarchies: AHashMap::new(),
+            cached_hierarchies: HashMap::new(),
             cache_hits: 0,
             cache_misses: 0,
         }
@@ -789,7 +789,7 @@ pub struct SubgraphPattern {
 pub struct PerformanceMetrics {
     pub total_queries_processed: u64,
     pub average_response_time_ms: f64,
-    pub pattern_usage_stats: AHashMap<CognitivePatternType, u64>,
+    pub pattern_usage_stats: HashMap<CognitivePatternType, u64>,
     pub success_rate: f64,
     pub cache_hit_rate: f64,
     pub memory_usage_mb: f64,

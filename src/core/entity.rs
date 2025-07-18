@@ -31,6 +31,7 @@ impl EntityStore {
             embedding_offset: 0, // Will be set by embedding store
             property_offset,
             degree: 0, // Will be updated as relationships are added
+            last_accessed: std::time::Instant::now(),
         };
         
         self.entities.insert(key, meta);
@@ -83,6 +84,53 @@ impl EntityStore {
         self.entities.capacity() * std::mem::size_of::<(EntityKey, EntityMeta)>() +
         self.properties.capacity() +
         self.property_offsets.capacity() * std::mem::size_of::<u32>()
+    }
+    
+    /// Get the capacity of the store
+    pub fn capacity(&self) -> usize {
+        self.entities.capacity()
+    }
+    
+    /// Add edge (not applicable - EntityStore stores entities, not edges)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation(
+            "EntityStore stores entities, not edges. Use CSRGraph for edge storage.".to_string()
+        ))
+    }
+    
+    /// Update an entity
+    pub fn update_entity(&mut self, key: EntityKey, data: &EntityData) -> Result<()> {
+        // For full update, we would need to handle property storage
+        // For now, update metadata only
+        if let Some(meta) = self.entities.get_mut(&key) {
+            meta.type_id = data.type_id;
+            Ok(())
+        } else {
+            Err(GraphError::EntityKeyNotFound { key })
+        }
+    }
+    
+    /// Remove an entity
+    pub fn remove(&mut self, key: EntityKey) -> Result<()> {
+        if self.entities.remove(&key).is_some() {
+            Ok(())
+        } else {
+            Err(GraphError::EntityKeyNotFound { key })
+        }
+    }
+    
+    /// Check if store contains an entity
+    pub fn contains_entity(&self, key: EntityKey) -> bool {
+        self.entities.contains_key(&key)
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        // Approximate size for serialization
+        std::mem::size_of::<usize>() + // entity count
+        self.entities.len() * (std::mem::size_of::<EntityKey>() + std::mem::size_of::<EntityMeta>()) +
+        self.properties.len() +
+        self.property_offsets.len() * std::mem::size_of::<u32>()
     }
 }
 

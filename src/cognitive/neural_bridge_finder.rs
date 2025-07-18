@@ -112,7 +112,7 @@ impl NeuralBridgeFinder {
             }
             
             // Find neighboring entities
-            let neighbors = self.graph.get_neighbors(current_entity).await;
+            let neighbors = self.graph.get_neighbors_with_weights(current_entity).await;
             for (neighbor, _weight) in neighbors {
                 // Avoid cycles
                 if current_path.contains(&neighbor) {
@@ -156,7 +156,7 @@ impl NeuralBridgeFinder {
         let mut concept_names = Vec::new();
         
         for &entity_key in &path {
-            if let Some((_, entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == &entity_key) {
+            if let Some((_, _entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == &entity_key) {
                 let concept_id = format!("entity_{:?}", entity_key);
                 intermediate_concepts.push(concept_id.clone());
                 concept_names.push(concept_id);
@@ -218,7 +218,7 @@ impl NeuralBridgeFinder {
         
         // Check relationship strengths along the path using neighbors
         for i in 0..path.len() - 1 {
-            let neighbors = self.graph.get_neighbors(path[i]).await;
+            let neighbors = self.graph.get_neighbors_with_weights(path[i]).await;
             let mut found_relationship = false;
             let mut max_weight: f32 = 0.0;
             

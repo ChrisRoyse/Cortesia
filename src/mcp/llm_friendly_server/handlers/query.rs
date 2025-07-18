@@ -4,7 +4,6 @@ use crate::core::triple::Triple;
 use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery};
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
-use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
@@ -33,7 +32,9 @@ pub async fn handle_find_facts(
         subject: subject.map(|s| s.to_string()),
         predicate: predicate.map(|p| p.to_string()),
         object: object.map(|o| o.to_string()),
-        confidence_threshold: None,
+        limit: 100,
+        min_confidence: 0.0,
+        include_chunks: false,
     };
     
     let engine = knowledge_engine.read().await;
@@ -67,7 +68,7 @@ pub async fn handle_find_facts(
                 format!("Found {} fact{}:\n{}", 
                     triples.len(),
                     if triples.len() == 1 { "" } else { "s" },
-                    format_facts_for_display(&triples, 5)
+                    format_facts_for_display(&triples.triples, 5)
                 )
             };
             
@@ -125,7 +126,9 @@ pub async fn handle_ask_question(
             subject: Some(term.clone()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+        min_confidence: 0.0,
+        include_chunks: false,
         };
         
         if let Ok(results) = engine.query_triples(subject_query) {
@@ -137,7 +140,9 @@ pub async fn handle_ask_question(
             subject: None,
             predicate: None,
             object: Some(term.clone()),
-            confidence_threshold: None,
+            limit: 100,
+        min_confidence: 0.0,
+        include_chunks: false,
         };
         
         if let Ok(results) = engine.query_triples(object_query) {

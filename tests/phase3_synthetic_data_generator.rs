@@ -1,5 +1,5 @@
 use llmkg::core::{
-    brain_types::{BrainInspiredEntity, BrainInspiredRelationship, LogicGateType},
+    brain_types::LogicGateType,
     types::EntityKey,
 };
 use llmkg::cognitive::{
@@ -8,7 +8,45 @@ use llmkg::cognitive::{
 };
 use rand::prelude::*;
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
+
+// Custom struct for synthetic entities in tests
+#[derive(Debug, Clone)]
+pub struct BrainInspiredEntity {
+    pub name: String,
+    pub description: String,
+    pub entity_type: String,
+    pub activation_threshold: f32,
+    pub current_activation: f32,
+    pub importance: f32,
+    pub creation_timestamp: SystemTime,
+    pub last_accessed: SystemTime,
+    pub access_count: u32,
+    pub related_entities: Vec<EntityKey>,
+    pub semantic_embedding: Vec<f32>,
+    pub logic_gate: Option<LogicGateType>,
+    pub inhibitory_connections: Vec<EntityKey>,
+    pub temporal_decay: f32,
+    pub context_sensitivity: f32,
+}
+
+// Custom struct for synthetic relationships in tests
+#[derive(Debug, Clone)]
+pub struct BrainInspiredRelationship {
+    pub name: String,
+    pub description: String,
+    pub source_entity: String,
+    pub target_entity: String,
+    pub relationship_type: String,
+    pub strength: f32,
+    pub confidence: f32,
+    pub temporal_weight: f32,
+    pub context_conditions: Vec<String>,
+    pub bidirectional: bool,
+    pub creation_timestamp: SystemTime,
+    pub last_accessed: SystemTime,
+    pub access_count: u32,
+}
 
 #[derive(Debug, Clone)]
 pub struct SyntheticDataGenerator {

@@ -3,7 +3,6 @@
 use super::types::*;
 use crate::cognitive::orchestrator::CognitiveOrchestrator;
 use crate::cognitive::types::CognitivePatternType;
-use crate::core::types::EntityKey;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use anyhow::Result;
@@ -37,7 +36,8 @@ impl LearningEnhancedOrchestrator {
         
         // Apply context-sensitive adaptations
         if let Some(adaptation) = strategies.context_sensitive_adaptations.get(context) {
-            for (pattern, base_weight) in &weights {
+            let weights_clone = weights.clone();
+            for (pattern, base_weight) in &weights_clone {
                 if let Some(&adjustment) = adaptation.adaptation_parameters.get(&format!("{:?}", pattern)) {
                     weights.insert(pattern.clone(), base_weight * adjustment);
                 }
@@ -139,7 +139,8 @@ impl LearningEnhancedOrchestrator {
         let mut strategies = self.adaptive_strategies.write().unwrap();
         
         // Update pattern selection weights based on performance
-        for (pattern, &current_weight) in &strategies.pattern_selection_weights {
+        let weights_clone = strategies.pattern_selection_weights.clone();
+        for (pattern, &current_weight) in &weights_clone {
             if let Some(&score) = performance_data.component_scores.get(&format!("{:?}", pattern)) {
                 let adjustment = if score > 0.8 {
                     1.1 // Increase weight for high-performing patterns

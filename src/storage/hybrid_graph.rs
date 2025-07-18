@@ -5,7 +5,7 @@
 //! - Efficient updates via delta storage
 //! - Periodic compaction to maintain performance
 
-use crate::core::types::Relationship;
+use crate::core::types::{Relationship, EntityKey};
 use crate::error::Result;
 use crate::storage::csr::CSRGraph;
 use std::collections::{HashMap, HashSet};
@@ -123,8 +123,8 @@ impl HybridGraph {
         for node_id in 0..self.base_csr.node_count() {
             for (to, rel_type, weight) in self.base_csr.get_edges(node_id) {
                 all_edges.push(Relationship {
-                    from: node_id,
-                    to,
+                    from: EntityKey::from_u32(node_id),
+                    to: EntityKey::from_u32(to),
                     rel_type,
                     weight,
                 });
@@ -133,15 +133,15 @@ impl HybridGraph {
         
         // Apply deletions
         let deletions = self.delta_deletions.read().await;
-        all_edges.retain(|e| !deletions.contains(&(e.from, e.to, e.rel_type)));
+        all_edges.retain(|e| !deletions.contains(&(e.from.as_u32(), e.to.as_u32(), e.rel_type)));
         
         // Add additions
         let additions = self.delta_additions.read().await;
         for (&from, edges) in additions.iter() {
             for &(to, rel_type, weight) in edges {
                 all_edges.push(Relationship {
-                    from,
-                    to,
+                    from: EntityKey::from_u32(from),
+                    to: EntityKey::from_u32(to),
                     rel_type,
                     weight,
                 });
@@ -152,6 +152,7 @@ impl HybridGraph {
         let node_count = all_edges.iter()
             .flat_map(|e| vec![e.from, e.to])
             .max()
+            .map(|k| k.as_u32())
             .unwrap_or(0) + 1;
             
         let _new_csr = CSRGraph::from_edges(all_edges, node_count)?;

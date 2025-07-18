@@ -4,6 +4,7 @@ use crate::federation::types::{FederatedQueryResult, QueryResultData, MergeStrat
 use crate::federation::router::RawQueryResult;
 use crate::error::{GraphError, Result};
 use std::collections::HashMap;
+use async_trait::async_trait;
 
 /// Result merger that combines results from multiple databases
 pub struct ResultMerger {
@@ -11,8 +12,9 @@ pub struct ResultMerger {
 }
 
 /// Trait for handling different merge strategies
+#[async_trait]
 pub trait MergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>>;
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData>;
 }
 
 impl ResultMerger {
@@ -114,9 +116,9 @@ impl ResultMerger {
 /// Handler for similarity merge operations
 struct SimilarityMergeHandler;
 
+#[async_trait]
 impl MergeHandler for SimilarityMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             let mut all_similarities = Vec::new();
             
             for result in raw_results {
@@ -133,7 +135,6 @@ impl MergeHandler for SimilarityMergeHandler {
             all_similarities.dedup_by(|a, b| a.entity == b.entity);
             
             Ok(QueryResultData::SimilarityResults(all_similarities))
-        })
     }
 }
 
@@ -159,9 +160,9 @@ impl SimilarityMergeHandler {
 /// Handler for comparison merge operations
 struct ComparisonMergeHandler;
 
+#[async_trait]
 impl MergeHandler for ComparisonMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             let mut comparisons = Vec::new();
             
             // Group results by entity ID
@@ -181,7 +182,6 @@ impl MergeHandler for ComparisonMergeHandler {
             }
             
             Ok(QueryResultData::ComparisonResults(comparisons))
-        })
     }
 }
 
@@ -291,9 +291,9 @@ impl ComparisonMergeHandler {
 /// Handler for relationship merge operations
 struct RelationshipMergeHandler;
 
+#[async_trait]
 impl MergeHandler for RelationshipMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             let mut relationships = Vec::new();
             
             for result in raw_results {
@@ -311,7 +311,6 @@ impl MergeHandler for RelationshipMergeHandler {
             });
             
             Ok(QueryResultData::RelationshipResults(relationships))
-        })
     }
 }
 
@@ -377,9 +376,9 @@ impl RelationshipMergeHandler {
 /// Handler for mathematical operation merge
 struct MathematicalMergeHandler;
 
+#[async_trait]
 impl MergeHandler for MathematicalMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             // Combine mathematical results from multiple databases
             // The specific combination depends on the operation type
             
@@ -390,16 +389,15 @@ impl MergeHandler for MathematicalMergeHandler {
             };
             
             Ok(QueryResultData::MathematicalResults(combined_result))
-        })
     }
 }
 
 /// Handler for aggregation merge operations
 struct AggregationMergeHandler;
 
+#[async_trait]
 impl MergeHandler for AggregationMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             // Aggregate numerical results from multiple databases
             let mut per_database = HashMap::new();
             let mut total_value = 0.0;
@@ -421,7 +419,6 @@ impl MergeHandler for AggregationMergeHandler {
             };
             
             Ok(QueryResultData::AggregateResults(aggregate_result))
-        })
     }
 }
 
@@ -455,9 +452,9 @@ impl AggregationMergeHandler {
 /// Handler for union merge operations
 struct UnionMergeHandler;
 
+#[async_trait]
 impl MergeHandler for UnionMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             // Union of all results - combine all unique entities
             let mut all_entities = std::collections::HashSet::new();
             let mut similarity_results = Vec::new();
@@ -486,16 +483,15 @@ impl MergeHandler for UnionMergeHandler {
             }
             
             Ok(QueryResultData::SimilarityResults(similarity_results))
-        })
     }
 }
 
 /// Handler for intersection merge operations
 struct IntersectionMergeHandler;
 
+#[async_trait]
 impl MergeHandler for IntersectionMergeHandler {
-    fn merge(&self, raw_results: Vec<RawQueryResult>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResultData>> + Send + '_>> {
-        Box::pin(async move {
+    async fn merge(&self, raw_results: Vec<RawQueryResult>) -> Result<QueryResultData> {
             // Find common results across all databases
             if raw_results.is_empty() {
                 return Ok(QueryResultData::SimilarityResults(Vec::new()));
@@ -537,6 +533,5 @@ impl MergeHandler for IntersectionMergeHandler {
             }
             
             Ok(QueryResultData::SimilarityResults(intersection_results))
-        })
     }
 }

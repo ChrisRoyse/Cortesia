@@ -1,15 +1,14 @@
 //! Memory consolidation operations for unified memory system
 
 use super::types::*;
-use super::hierarchy::MemoryHierarchy;
 use super::coordinator::MemoryCoordinator;
-use crate::cognitive::working_memory::{WorkingMemorySystem, MemoryItem, MemoryContent};
+use crate::cognitive::working_memory::{WorkingMemorySystem, MemoryItem};
 use crate::core::sdr_storage::SDRStorage;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::error::Result;
+use crate::error::{Result, GraphError};
 use std::sync::Arc;
+use std::time::Instant;
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 /// Memory consolidation handler
@@ -48,7 +47,7 @@ impl MemoryConsolidation {
 
         // Get active consolidation policies
         let policies = if let Some(id) = policy_id {
-            vec![self.coordinator.get_policy(id).ok_or_else(|| anyhow::anyhow!("Policy not found: {}", id))?]
+            vec![self.coordinator.get_policy(id).ok_or_else(|| GraphError::ConfigError(format!("Policy not found: {}", id)))?]
         } else {
             self.coordinator.get_active_policies()
         };
@@ -56,9 +55,9 @@ impl MemoryConsolidation {
         // Execute consolidation for each policy
         for policy in policies {
             let policy_result = self.execute_consolidation_policy(policy).await?;
-            consolidated_items.extend(policy_result.consolidated_items);
             total_count += policy_result.consolidated_items.len();
             success_count += policy_result.consolidated_items.len();
+            consolidated_items.extend(policy_result.consolidated_items);
         }
 
         // Update statistics
@@ -361,19 +360,3 @@ impl MemoryConsolidation {
     }
 }
 
-// Stub implementations for missing methods
-impl WorkingMemorySystem {
-    pub async fn get_all_items(&self) -> Result<Vec<MemoryItem>> {
-        // This would return actual items from working memory
-        Ok(vec![
-            MemoryItem {
-                content: MemoryContent::Concept("Sample working memory item".to_string()),
-                activation_level: 0.8,
-                timestamp: Instant::now(),
-                importance_score: 0.7,
-                access_count: 3,
-                decay_factor: 0.9,
-            }
-        ])
-    }
-}

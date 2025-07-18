@@ -50,6 +50,46 @@ impl GraphArena {
         self.bump_allocator.lock().unwrap().allocated_bytes() + 
         self.entity_pool.capacity() * std::mem::size_of::<EntityData>()
     }
+    
+    /// Get the capacity of the arena
+    pub fn capacity(&self) -> usize {
+        self.entity_pool.capacity()
+    }
+    
+    /// Add edge (not applicable - GraphArena stores entities, not edges)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> crate::error::Result<()> {
+        Err(crate::error::GraphError::UnsupportedOperation(
+            "GraphArena stores entities, not edges. Use CSRGraph for edge storage.".to_string()
+        ))
+    }
+    
+    /// Update an entity
+    pub fn update_entity(&mut self, key: EntityKey, data: EntityData) -> crate::error::Result<()> {
+        if let Some(entity) = self.entity_pool.get_mut(key) {
+            *entity = data;
+            Ok(())
+        } else {
+            Err(crate::error::GraphError::EntityKeyNotFound { key })
+        }
+    }
+    
+    /// Remove method (alias for remove_entity)
+    pub fn remove(&mut self, key: EntityKey) -> Option<EntityData> {
+        self.remove_entity(key)
+    }
+    
+    /// Check if arena contains an entity
+    pub fn contains_entity(&self, key: EntityKey) -> bool {
+        self.entity_pool.contains_key(key)
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        // Approximate size for serialization
+        std::mem::size_of::<u32>() + // generation counter
+        self.entity_pool.len() * (std::mem::size_of::<EntityKey>() + std::mem::size_of::<EntityData>()) +
+        self.bump_allocator.lock().unwrap().allocated_bytes()
+    }
 }
 
 // Safety: GraphArena is safe to Send/Sync because:

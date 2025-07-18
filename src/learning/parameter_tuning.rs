@@ -394,7 +394,7 @@ impl ParameterTuningSystem {
         let session_id = Uuid::new_v4();
         
         // Get attention tuning strategy
-        let strategy = self.tuning_strategies.iter()
+        let _strategy = self.tuning_strategies.iter()
             .find(|s| s.strategy_id == "attention_optimization")
             .ok_or_else(|| anyhow!("Attention optimization strategy not found"))?;
         
@@ -473,8 +473,8 @@ impl ParameterTuningSystem {
 
     async fn run_bayesian_optimization(
         &self,
-        session_id: Uuid,
-        performance_data: &PerformanceData,
+        _session_id: Uuid,
+        _performance_data: &PerformanceData,
     ) -> Result<OptimizationResult> {
         // Simplified Bayesian optimization implementation
         let mut best_parameters = HashMap::new();
@@ -492,8 +492,8 @@ impl ParameterTuningSystem {
 
     async fn run_grid_search_optimization(
         &self,
-        session_id: Uuid,
-        attention_metrics: &AttentionMetrics,
+        _session_id: Uuid,
+        _attention_metrics: &AttentionMetrics,
     ) -> Result<OptimizationResult> {
         // Simplified grid search implementation
         let mut best_parameters = HashMap::new();
@@ -528,7 +528,7 @@ impl ParameterTuningSystem {
         Ok(priorities)
     }
 
-    async fn tune_component(&self, component: &str, system_state: &SystemState) -> Result<ComponentUpdate> {
+    async fn tune_component(&self, component: &str, _system_state: &SystemState) -> Result<ComponentUpdate> {
         // Component-specific tuning
         match component {
             "hebbian_learning" => {

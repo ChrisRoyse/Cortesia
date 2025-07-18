@@ -129,7 +129,7 @@ impl LeidenClustering {
     }
 
     fn cluster(&self, adjacency: &AdjacencyMatrix, resolution: f64, min_size: usize) -> Result<HashMap<u32, Community>> {
-        let n = adjacency.size();
+        let n = adjacency.len();
         let mut communities = HashMap::new();
         let mut node_to_community = vec![0u32; n];
         

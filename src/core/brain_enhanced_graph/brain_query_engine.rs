@@ -2,7 +2,7 @@
 
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
-use crate::core::types::{EntityKey, EntityData, QueryResult, ContextEntity};
+use crate::core::types::{EntityKey, QueryResult, ContextEntity};
 use crate::core::sdr_storage::{SDRQuery, SDR};
 use crate::error::Result;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -62,14 +62,14 @@ impl BrainEnhancedKnowledgeGraph {
         
         // Update statistics
         self.update_learning_stats(|stats| {
-            stats.avg_activation = (stats.avg_activation * 0.9 + result.get_average_activation() * 0.1);
+            stats.avg_activation = stats.avg_activation * 0.9 + result.get_average_activation() * 0.1;
         }).await;
         
         Ok(result)
     }
 
     /// Standard query (compatibility wrapper)
-    pub async fn query(&self, query_embedding: &[f32], context_entities: &[ContextEntity], k: usize) -> Result<QueryResult> {
+    pub async fn query(&self, query_embedding: &[f32], _context_entities: &[ContextEntity], k: usize) -> Result<QueryResult> {
         let brain_result = self.neural_query(query_embedding, k).await?;
         
         // Convert to standard QueryResult
@@ -311,7 +311,7 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// SDR-based query
-    pub async fn sdr_query(&self, query: &str, k: usize) -> Result<BrainQueryResult> {
+    pub async fn sdr_query(&self, _query: &str, k: usize) -> Result<BrainQueryResult> {
         let start_time = Instant::now();
         
         // Generate query embedding

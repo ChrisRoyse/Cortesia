@@ -1,18 +1,16 @@
 //! Main unified memory system implementation
 
 use super::types::*;
-use super::hierarchy::MemoryHierarchy;
 use super::coordinator::MemoryCoordinator;
 use super::retrieval::MemoryRetrieval;
 use super::consolidation::MemoryConsolidation;
 use crate::cognitive::working_memory::{WorkingMemorySystem, MemoryQuery, MemoryRetrievalResult, MemoryItem, MemoryContent};
 use crate::core::sdr_storage::SDRStorage;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::error::Result;
+use crate::error::{Result, GraphError};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use std::collections::HashMap;
 
 /// Unified memory system integrating multiple memory backends
 #[derive(Clone)]
@@ -92,7 +90,11 @@ impl UnifiedMemorySystem {
         };
 
         // Store in working memory initially
-        self.working_memory.store_item(memory_item).await?;
+        self.working_memory.store_in_working_memory(
+            memory_item.content.clone(),
+            memory_item.importance_score,
+            crate::cognitive::working_memory::BufferType::Episodic,
+        ).await?;
 
         // Update statistics
         let mut stats = self.memory_statistics.write().await;
@@ -185,9 +187,8 @@ impl UnifiedMemorySystem {
         // Apply optimizations
         let applied_optimizations = self.apply_optimizations(&optimization_opportunities).await?;
         
-        // Update coordinator with performance data
-        let mut coordinator = Arc::try_unwrap(self.memory_coordinator.clone()).unwrap_or_else(|arc| (*arc).clone());
-        coordinator.optimize_strategies(&performance_analysis);
+        // Update coordinator with performance data (removed optimization since Arc<MemoryCoordinator> doesn't support mutable operations)
+        // Note: Coordinator optimization would require a different approach with Interior Mutability
 
         Ok(OptimizationResult {
             performance_analysis,
@@ -293,7 +294,7 @@ impl UnifiedMemorySystem {
     /// Create cross-memory link
     pub async fn create_cross_memory_link(&self, link: CrossMemoryLink) -> Result<()> {
         self.memory_coordinator.create_cross_memory_link(link).await
-            .map_err(|e| anyhow::anyhow!("Failed to create cross-memory link: {}", e))
+            .map_err(|e| GraphError::ProcessingError(format!("Failed to create cross-memory link: {}", e)))
     }
 
     /// Search across all memory systems
@@ -338,13 +339,17 @@ impl UnifiedMemorySystem {
         }
 
         // Search knowledge graph
-        if let Ok(graph_results) = self.long_term_graph.search_knowledge(query, limit).await {
-            let items = graph_results.into_iter().map(|graph_result| {
+        // Convert query string to embedding (simplified - just use hash for now)
+        let query_hash = query.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
+        let query_embedding = vec![query_hash as f32 / u32::MAX as f32; 96]; // Assuming 96 dim embeddings
+        
+        if let Ok(query_result) = self.long_term_graph.query(&query_embedding, &[], limit).await {
+            let items = query_result.entities.into_iter().map(|entity| {
                 MemoryItem {
-                    content: MemoryContent::Concept(graph_result.content),
-                    activation_level: graph_result.relevance_score,
+                    content: MemoryContent::Concept(format!("entity_{:?}", entity.id)),
+                    activation_level: entity.similarity,
                     timestamp: Instant::now(),
-                    importance_score: graph_result.relevance_score,
+                    importance_score: entity.similarity,
                     access_count: 1,
                     decay_factor: 1.0,
                 }
@@ -387,13 +392,6 @@ impl UnifiedMemorySystem {
     }
 }
 
-// Stub implementations for missing methods
-impl WorkingMemorySystem {
-    pub async fn store_item(&self, _item: MemoryItem) -> Result<()> {
-        // This would store the item in working memory
-        Ok(())
-    }
-}
 
 impl PartialEq for BottleneckType {
     fn eq(&self, other: &Self) -> bool {

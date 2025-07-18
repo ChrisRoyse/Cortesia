@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use std::sync::Arc;
+use async_trait::async_trait;
 
 /// Circuit breaker implementation for error handling
 pub struct CircuitBreaker {
@@ -185,9 +186,10 @@ pub struct HealthChecker {
     check_interval: Duration,
 }
 
+#[async_trait]
 pub trait HealthCheck {
     fn name(&self) -> &str;
-    fn check(&self) -> Box<dyn std::future::Future<Output = HealthStatus> + Send + Unpin>;
+    async fn check(&self) -> HealthStatus;
 }
 
 #[derive(Debug, Clone)]

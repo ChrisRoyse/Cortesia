@@ -6,7 +6,6 @@ use crate::cognitive::inhibitory::{
     HierarchicalInhibitionResult
 };
 use crate::core::brain_types::ActivationPattern;
-use crate::core::types::EntityKey;
 use crate::error::Result;
 use std::collections::HashMap;
 

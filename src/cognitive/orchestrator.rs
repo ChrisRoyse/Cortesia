@@ -244,7 +244,7 @@ impl CognitiveOrchestrator {
         pattern_types: Vec<CognitivePatternType>,
     ) -> Result<ReasoningResult> {
         let mut pattern_results = Vec::new();
-        let mut tasks: Vec<tokio::task::JoinHandle<Result<PatternResult>>> = Vec::new();
+        let mut _tasks: Vec<tokio::task::JoinHandle<Result<PatternResult>>> = Vec::new();
         
         // Execute patterns in parallel (up to max_parallel_patterns)
         for chunk in pattern_types.chunks(self.config.max_parallel_patterns) {

@@ -185,7 +185,7 @@ impl PerformanceDashboard {
     
     async fn start_metrics_collection(&self) -> Result<(), Box<dyn std::error::Error>> {
         let registry = self.registry.clone();
-        let collectors = self.collectors.iter().map(|c| c.name().to_string()).collect::<Vec<_>>();
+        let _collectors = self.collectors.iter().map(|c| c.name().to_string()).collect::<Vec<_>>();
         let history = self.metrics_history.clone();
         let clients = self.websocket_clients.clone();
         let is_running = self.is_running.clone();
@@ -267,7 +267,7 @@ impl PerformanceDashboard {
                                                     DashboardMessage::Ping => {
                                                         // Handle ping
                                                     }
-                                                    DashboardMessage::HistoryRequest { start_time, end_time } => {
+                                                    DashboardMessage::HistoryRequest { start_time: _start_time, end_time: _end_time } => {
                                                         // Handle history request
                                                     }
                                                     _ => {}

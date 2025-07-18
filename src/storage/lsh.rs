@@ -298,6 +298,83 @@ impl LshIndex {
         
         total_found as f64 / sample_size as f64
     }
+    
+    /// Get the capacity of the index
+    pub fn capacity(&self) -> usize {
+        self.hash_tables.read().capacity()
+    }
+    
+    /// Add edge (not applicable - LshIndex stores embeddings)
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
+        Err(GraphError::UnsupportedOperation(
+            "LshIndex stores entity embeddings, not edges. Use CSRGraph for edges.".to_string()
+        ))
+    }
+    
+    /// Update entity embedding
+    pub fn update_entity(&self, entity_id: u32, entity_key: EntityKey, embedding: Vec<f32>) -> Result<()> {
+        if embedding.len() != self.dimension {
+            return Err(GraphError::InvalidEmbeddingDimension {
+                expected: self.dimension,
+                actual: embedding.len(),
+            });
+        }
+        
+        // Remove old entries
+        self.remove(entity_id)?;
+        
+        // Insert new embedding
+        self.insert(entity_id, entity_key, embedding)
+    }
+    
+    /// Remove an entity from the index
+    pub fn remove(&self, entity_id: u32) -> Result<()> {
+        let mut hash_tables = self.hash_tables.write();
+        let mut found = false;
+        
+        // Remove from all hash tables
+        hash_tables.retain(|_, bucket| {
+            let old_len = bucket.len();
+            bucket.retain(|entity| entity.entity_id != entity_id);
+            if bucket.len() < old_len {
+                found = true;
+            }
+            !bucket.is_empty() // Remove empty buckets
+        });
+        
+        if found {
+            Ok(())
+        } else {
+            Err(GraphError::EntityNotFound { id: entity_id })
+        }
+    }
+    
+    /// Check if index contains an entity
+    pub fn contains_entity(&self, entity_id: u32) -> bool {
+        self.hash_tables.read()
+            .values()
+            .any(|bucket| bucket.iter().any(|entity| entity.entity_id == entity_id))
+    }
+    
+    /// Get encoded size
+    pub fn encoded_size(&self) -> usize {
+        let hash_tables = self.hash_tables.read();
+        
+        let base_size = std::mem::size_of::<usize>() * 3 + // dimension, num_hashes, num_tables
+            self.hyperplanes.len() * self.dimension * std::mem::size_of::<f32>();
+            
+        let entities_size = hash_tables.values()
+            .flat_map(|bucket| bucket.iter())
+            .map(|entity| {
+                std::mem::size_of::<u32>() + // entity_id
+                std::mem::size_of::<EntityKey>() +
+                entity.embedding.len() * std::mem::size_of::<f32>() +
+                std::mem::size_of::<u64>() // hash_signature
+            })
+            .sum::<usize>();
+            
+        base_size + entities_size
+    }
 }
 
 /// Generate combinations of indices for multi-probing

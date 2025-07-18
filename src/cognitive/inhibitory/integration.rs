@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 /// Integrate inhibition with cognitive patterns for pattern-specific modulation
 pub async fn integrate_with_cognitive_patterns(
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
     pattern: &mut ActivationPattern,
     active_cognitive_patterns: &[CognitivePatternType],
 ) -> Result<IntegrationResult> {
@@ -158,18 +158,21 @@ fn apply_convergent_inhibition(
     profile: &InhibitionProfile,
     affected: &mut Vec<EntityKey>,
 ) {
-    // Find the strongest activation
-    if let Some((strongest_entity, max_strength)) = pattern.activations.iter()
+    // Find the strongest activation (copy the key and value to avoid borrowing issues)
+    let (strongest_entity, max_strength) = if let Some((entity, strength)) = pattern.activations.iter()
         .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap()) {
-        
-        let threshold = max_strength * profile.critical_threshold;
-        
-        // Inhibit weaker activations
-        for (entity, strength) in pattern.activations.iter_mut() {
-            if *entity != *strongest_entity && *strength < threshold {
-                *strength *= profile.convergent_factor;
-                affected.push(*entity);
-            }
+        (*entity, *strength)
+    } else {
+        return; // No activations to process
+    };
+    
+    let threshold = max_strength * profile.critical_threshold;
+    
+    // Inhibit weaker activations
+    for (entity, strength) in pattern.activations.iter_mut() {
+        if *entity != strongest_entity && *strength < threshold {
+            *strength *= profile.convergent_factor;
+            affected.push(*entity);
         }
     }
 }
@@ -231,9 +234,9 @@ fn apply_critical_inhibition(
 
 /// Apply systems inhibition
 fn apply_systems_inhibition(
-    pattern: &mut ActivationPattern,
-    profile: &InhibitionProfile,
-    affected: &mut Vec<EntityKey>,
+    _pattern: &mut ActivationPattern,
+    _profile: &InhibitionProfile,
+    _affected: &mut Vec<EntityKey>,
 ) {
     // Preserve system relationships while inhibiting isolated nodes
     // Simplified: reduce activation of entities with few connections
@@ -242,9 +245,9 @@ fn apply_systems_inhibition(
 
 /// Apply abstract inhibition
 fn apply_abstract_inhibition(
-    pattern: &mut ActivationPattern,
-    profile: &InhibitionProfile,
-    affected: &mut Vec<EntityKey>,
+    _pattern: &mut ActivationPattern,
+    _profile: &InhibitionProfile,
+    _affected: &mut Vec<EntityKey>,
 ) {
     // Enhance abstract patterns while inhibiting concrete details
     // Simplified implementation
@@ -252,9 +255,9 @@ fn apply_abstract_inhibition(
 
 /// Apply adaptive inhibition
 fn apply_adaptive_inhibition(
-    pattern: &mut ActivationPattern,
-    profile: &InhibitionProfile,
-    affected: &mut Vec<EntityKey>,
+    _pattern: &mut ActivationPattern,
+    _profile: &InhibitionProfile,
+    _affected: &mut Vec<EntityKey>,
 ) {
     // Dynamic inhibition based on current context
     // Simplified implementation

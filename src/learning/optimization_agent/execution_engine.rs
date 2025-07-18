@@ -142,7 +142,7 @@ impl RollbackManager {
         // Count relationships
         let mut relationship_count = 0;
         for entity_key in &entity_keys {
-            let neighbors = graph.get_neighbors(*entity_key).await;
+            let neighbors = graph.get_neighbors(*entity_key);
             relationship_count += neighbors.len();
         }
         
@@ -176,7 +176,7 @@ impl RollbackManager {
         let mut hash = 0u64;
         
         for entity_key in entity_keys {
-            hash = hash.wrapping_mul(31).wrapping_add(entity_key.0 as u64);
+            hash = hash.wrapping_mul(31).wrapping_add(entity_key.data().as_ffi() as u64);
         }
         
         hash = hash.wrapping_mul(31).wrapping_add(relationship_count as u64);

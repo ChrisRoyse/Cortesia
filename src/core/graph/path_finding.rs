@@ -2,7 +2,6 @@
 
 use super::graph_core::KnowledgeGraph;
 use crate::core::types::EntityKey;
-// use crate::error::{GraphError, Result}; // Unused
 use std::collections::{HashMap, VecDeque, HashSet};
 
 impl KnowledgeGraph {
@@ -36,12 +35,18 @@ impl KnowledgeGraph {
             }
             
             // Check neighbors from main graph
-            let graph = self.graph.read();
-            for neighbor in graph.get_neighbors(current) {
-                if !visited.contains(&neighbor) {
-                    visited.insert(neighbor);
-                    parent.insert(neighbor, current);
-                    queue.push_back(neighbor);
+            if let Some(current_id) = self.get_entity_id(current) {
+                let graph = self.graph.read();
+                let neighbor_ids = graph.get_neighbors(current_id);
+                
+                for &neighbor_id in neighbor_ids {
+                    if let Some(neighbor_key) = self.get_entity_key(neighbor_id) {
+                        if !visited.contains(&neighbor_key) {
+                            visited.insert(neighbor_key);
+                            parent.insert(neighbor_key, current);
+                            queue.push_back(neighbor_key);
+                        }
+                    }
                 }
             }
             
@@ -169,7 +174,7 @@ impl KnowledgeGraph {
         let outgoing_relationships = self.get_outgoing_relationships(current);
         
         for relationship in outgoing_relationships {
-            let neighbor = relationship.target;
+            let neighbor = relationship.to;
             let edge_weight = relationship.weight;
             
             if !visited.contains(&neighbor) {
@@ -243,7 +248,7 @@ impl KnowledgeGraph {
         let outgoing_relationships = self.get_outgoing_relationships(current);
         
         for relationship in outgoing_relationships {
-            let neighbor = relationship.target;
+            let neighbor = relationship.to;
             let edge_weight = relationship.weight;
             
             if !visited.contains(&neighbor) {

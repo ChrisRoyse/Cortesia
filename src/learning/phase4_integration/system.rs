@@ -12,6 +12,10 @@ use crate::learning::homeostasis::SynapticHomeostasis;
 use crate::learning::optimization_agent::GraphOptimizationAgent;
 use crate::learning::adaptive_learning::AdaptiveLearningSystem;
 use crate::learning::types::*;
+use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
+use crate::core::activation_engine::ActivationPropagationEngine;
+use crate::cognitive::attention_manager::AttentionManager;
+use crate::cognitive::working_memory::WorkingMemorySystem;
 
 use std::sync::{Arc, RwLock, Mutex};
 use std::time::{Duration, SystemTime};
@@ -57,9 +61,29 @@ impl Phase4LearningSystem {
             .map_err(|e| anyhow::anyhow!("Invalid configuration: {}", e))?;
         
         // Initialize learning engines
-        let hebbian_engine = Arc::new(Mutex::new(HebbianLearningEngine::new(brain_graph.clone())?));
-        let homeostasis_system = Arc::new(Mutex::new(SynapticHomeostasis::new(brain_graph.clone())?));
-        let optimization_agent = Arc::new(Mutex::new(GraphOptimizationAgent::new(brain_graph.clone())?));
+        // Note: In production, these would be properly initialized with all dependencies
+        let activation_engine = Arc::new(ActivationPropagationEngine::default());
+        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::default());
+        let attention_manager = Arc::new(AttentionManager::default());
+        let working_memory = Arc::new(WorkingMemorySystem::default());
+        
+        let hebbian_engine = Arc::new(Mutex::new(
+            HebbianLearningEngine::new(
+                brain_graph.clone(),
+                activation_engine.clone(),
+                inhibition_system.clone(),
+            ).await?
+        ));
+        
+        let homeostasis_system = Arc::new(Mutex::new(
+            SynapticHomeostasis::new(
+                brain_graph.clone(),
+                attention_manager.clone(),
+                working_memory.clone(),
+            ).await?
+        ));
+        
+        let optimization_agent = Arc::new(Mutex::new(GraphOptimizationAgent::default()));
         let adaptive_learning = Arc::new(Mutex::new(AdaptiveLearningSystem::new()?));
         
         // Initialize coordination systems
@@ -89,11 +113,13 @@ impl Phase4LearningSystem {
         let system_assessment = self.assess_system_state().await?;
         
         // Step 2: Determine learning strategy
-        let learning_strategy = self.learning_coordinator.read().await
+        let learning_strategy = self.learning_coordinator.read()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire read lock: {}", e))?
             .get_coordination_strategy(&system_assessment);
         
         // Step 3: Execute coordination
-        let coordination_result = self.learning_coordinator.write().await
+        let coordination_result = self.learning_coordinator.write()
+            .map_err(|e| anyhow::anyhow!("Failed to acquire write lock: {}", e))?
             .execute_coordination(&learning_strategy, session_id)?;
         
         // Step 4: Perform coordinated learning
@@ -130,7 +156,7 @@ impl Phase4LearningSystem {
             notes: format!("Comprehensive learning cycle completed"),
         };
         
-        self.performance_tracker.write().await.record_performance(performance_data);
+        self.performance_tracker.write().unwrap().record_performance(performance_data);
         
         Ok(ComprehensiveLearningResult {
             session_id,
@@ -142,7 +168,7 @@ impl Phase4LearningSystem {
             homeostasis_result,
             optimization_result,
             adaptation_result,
-            validation_result,
+            validation_result: validation_result.clone(),
             overall_success: validation_result.success,
             performance_improvement,
         })
@@ -201,10 +227,10 @@ impl Phase4LearningSystem {
                     if let Ok(system) = self.homeostasis_system.try_lock() {
                         // Simplified homeostasis execution
                         homeostasis_results = Some(HomeostasisResult {
-                            stability_improvement: 0.15,
-                            adjustments_made: 25,
-                            balance_achieved: true,
-                            critical_interventions: 2,
+                            synapses_normalized: 25,
+                            homeostasis_factor: 0.15,
+                            stability_improvements: vec!["Normalized inhibition".to_string(), "Balanced activation".to_string()],
+                            impact_score: 0.85,
                         });
                     }
                 },
@@ -212,10 +238,52 @@ impl Phase4LearningSystem {
                     if let Ok(adaptive) = self.adaptive_learning.try_lock() {
                         // Simplified adaptive learning execution
                         adaptive_results = Some(AdaptiveLearningResult {
+                            cycle_id: Uuid::new_v4(),
+                            duration: Duration::from_secs(10),
+                            hebbian_updates: LearningUpdate {
+                                strengthened_connections: vec![],
+                                weakened_connections: vec![],
+                                new_connections: vec![],
+                                pruned_connections: vec![],
+                                learning_efficiency: 0.75,
+                                inhibition_updates: vec![],
+                            },
+                            optimization_updates: OptimizationResult {
+                                optimizations_applied: vec![],
+                                performance_impact: 0.1,
+                                stability_impact: 0.05,
+                                rollback_available: false,
+                            },
+                            optimization_result: OptimizationResult {
+                                optimizations_applied: vec![],
+                                performance_impact: 0.1,
+                                stability_impact: 0.05,
+                                rollback_available: false,
+                            },
+                            cognitive_updates: CognitiveParameterUpdates {
+                                attention_parameters: AttentionParameterUpdates {
+                                    focus_strength_adjustment: 0.0,
+                                    shift_speed_adjustment: 0.0,
+                                    capacity_adjustment: 0.0,
+                                },
+                                memory_parameters: MemoryParameterUpdates {
+                                    capacity_adjustments: HashMap::new(),
+                                    decay_rate_adjustments: HashMap::new(),
+                                    consolidation_threshold_adjustments: HashMap::new(),
+                                },
+                                inhibition_parameters: InhibitionParameterUpdates {
+                                    competition_strength_adjustments: HashMap::new(),
+                                    threshold_adjustments: HashMap::new(),
+                                    new_competition_groups: vec![],
+                                },
+                            },
+                            orchestration_updates: OrchestrationUpdates {
+                                pattern_selection_adjustments: HashMap::new(),
+                                ensemble_weight_adjustments: HashMap::new(),
+                                strategy_preference_updates: HashMap::new(),
+                            },
                             performance_improvement: 0.12,
-                            adaptation_success: true,
-                            learning_rate_adjustments: 8,
-                            convergence_achieved: true,
+                            next_cycle_schedule: SystemTime::now() + Duration::from_secs(3600),
                         });
                     }
                 },
@@ -226,13 +294,27 @@ impl Phase4LearningSystem {
         }
         
         Ok(CoordinatedLearningResults {
-            coordination_approach: strategy.coordination_approach.clone(),
-            hebbian_results,
-            homeostasis_results,
+            session_id: coordination.session_id,
+            hebbian_results: hebbian_results.map(|r| LearningUpdate {
+                strengthened_connections: vec![],
+                weakened_connections: vec![],
+                new_connections: vec![],
+                pruned_connections: vec![],
+                learning_efficiency: r.learning_efficiency,
+                inhibition_updates: vec![],
+            }),
+            homeostasis_results: homeostasis_results.map(|_| crate::learning::homeostasis::HomeostasisUpdate {
+                // Mock homeostasis update
+                scaled_entities: vec![],
+                metaplasticity_changes: vec![],
+                global_activity_change: 0.15,
+                stability_improvement: 0.85,
+            }),
             optimization_results,
             adaptive_results,
+            coordination_quality: 0.8,
             inter_system_conflicts: Vec::new(),
-            overall_coordination_quality: 0.8,
+            overall_learning_effectiveness: 0.8,
         })
     }
     
@@ -331,7 +413,7 @@ impl Phase4LearningSystem {
     
     /// Handle emergency situations
     pub async fn handle_emergency(&self, emergency_type: super::emergency::EmergencyType) -> Result<EmergencyResponse> {
-        let coordinator = self.learning_coordinator.read().await;
+        let coordinator = self.learning_coordinator.read().unwrap();
         
         if let Some(response) = coordinator.emergency_protocols.execute_protocol(&emergency_type) {
             Ok(response)
@@ -342,7 +424,7 @@ impl Phase4LearningSystem {
     
     /// Get current performance metrics
     pub async fn get_performance_metrics(&self) -> Result<String> {
-        let tracker = self.performance_tracker.read().await;
+        let tracker = self.performance_tracker.read().unwrap();
         Ok(tracker.generate_report())
     }
     

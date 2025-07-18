@@ -374,7 +374,7 @@ impl SDRStorage {
     }
 
     /// Store with metadata (placeholder implementation)
-    pub async fn store_with_metadata(&self, sdr: &SDR, content: String, importance: f32) -> Result<String> {
+    pub async fn store_with_metadata(&self, sdr: &SDR, content: String, _importance: f32) -> Result<String> {
         let pattern_id = format!("pattern_{}", uuid::Uuid::new_v4());
         let pattern = SDRPattern::new(pattern_id.clone(), sdr.clone(), content);
         self.store_pattern(pattern).await?;
@@ -407,6 +407,25 @@ impl SDRStorage {
         }
         
         Ok(results)
+    }
+
+    /// Get estimated memory usage in bytes
+    pub async fn memory_usage(&self) -> usize {
+        let patterns = self.patterns.read().await;
+        let entity_patterns = self.entity_patterns.read().await;
+        
+        let patterns_size = patterns.len() * (
+            std::mem::size_of::<String>() + // pattern_id
+            std::mem::size_of::<SDRPattern>() + // pattern data
+            self.config.total_bits / 8 // estimated SDR size
+        );
+        
+        let entity_patterns_size = entity_patterns.len() * (
+            std::mem::size_of::<EntityKey>() +
+            std::mem::size_of::<String>()
+        );
+        
+        patterns_size + entity_patterns_size + 1024 // base overhead
     }
 }
 

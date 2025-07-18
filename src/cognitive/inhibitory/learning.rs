@@ -6,10 +6,8 @@ use crate::cognitive::inhibitory::{
     AdaptationSuggestion, AdaptationType
 };
 use crate::core::brain_types::ActivationPattern;
-use crate::core::types::EntityKey;
 use crate::error::Result;
 use std::time::{Duration, SystemTime};
-use std::collections::HashMap;
 
 /// Apply adaptive learning to improve inhibition performance
 pub async fn apply_adaptive_learning(

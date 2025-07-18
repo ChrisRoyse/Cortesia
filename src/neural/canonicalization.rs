@@ -549,8 +549,8 @@ impl EnhancedNeuralCanonicalizer {
         }
 
         // Use neural model to generate context-aware embedding
-        let context_input = format!("{} in context: {}", entity_name, context);
-        let prediction = self.neural_server
+        let _context_input = format!("{} in context: {}", entity_name, context);
+        let _prediction = self.neural_server
             .neural_predict(&self.entity_embedding_model, vec![])
             .await?;
 
@@ -569,7 +569,7 @@ impl EnhancedNeuralCanonicalizer {
     /// Generate canonical embedding for an entity
     pub async fn generate_canonical_embedding(
         &self,
-        canonical_id: &str,
+        _canonical_id: &str,
     ) -> Result<Vec<f32>> {
         // Use neural server to generate stable embeddings
         let result = self.neural_server

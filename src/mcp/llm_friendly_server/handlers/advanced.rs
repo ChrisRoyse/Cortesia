@@ -1,7 +1,7 @@
 //! Advanced query and validation handlers
 
+use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, KnowledgeResult};
 use crate::core::triple::Triple;
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, KnowledgeResult, MemoryStats};
 use crate::mcp::llm_friendly_server::query_generation::{
     generate_cypher_query, generate_sparql_query, generate_gremlin_query,
     extract_entities_from_query, estimate_query_complexity
@@ -168,27 +168,16 @@ pub async fn handle_hybrid_search(
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 30).await;
     
-    let results_data: Vec<_> = final_results.iter().enumerate().map(|(i, result)| {
-        match result {
-            KnowledgeResult::Triple(t) => json!({
-                "rank": i + 1,
+    let results_data: Vec<_> = final_results.iter().enumerate().flat_map(|(i, result)| {
+        result.triples.iter().enumerate().map(move |(j, triple)| {
+            json!({
+                "rank": i * 100 + j + 1,
                 "type": "triple",
-                "subject": t.subject,
-                "predicate": t.predicate,
-                "object": t.object
-            }),
-            KnowledgeResult::Chunk(c) => json!({
-                "rank": i + 1,
-                "type": "chunk",
-                "id": c.id,
-                "title": c.metadata.get("title"),
-                "preview": &c.content[..c.content.len().min(200)]
-            }),
-            _ => json!({
-                "rank": i + 1,
-                "type": "other"
-            }),
-        }
+                "subject": triple.subject,
+                "predicate": triple.predicate,
+                "object": triple.object
+            })
+        })
     }).collect();
     
     let data = json!({
@@ -242,14 +231,18 @@ pub async fn handle_validate_knowledge(
             subject: Some(e.to_string()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         }
     } else {
         TripleQuery {
             subject: None,
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         }
     };
     
@@ -258,7 +251,7 @@ pub async fn handle_validate_knowledge(
     
     // Perform validations
     if ["consistency", "all"].contains(&validation_type) {
-        let consistency_result = validate_consistency(&triples, &triples).await
+        let consistency_result = validate_consistency(&triples.triples, &triples.triples).await
             .map_err(|e| format!("Consistency validation failed: {}", e))?;
         validation_results.insert("consistency", json!({
             "passed": consistency_result.is_valid,
@@ -269,7 +262,7 @@ pub async fn handle_validate_knowledge(
     
     if ["conflicts", "all"].contains(&validation_type) {
         // Check for conflicts (using consistency check)
-        let conflicts_result = validate_consistency(&triples, &triples).await
+        let conflicts_result = validate_consistency(&triples.triples, &triples.triples).await
             .map_err(|e| format!("Conflict validation failed: {}", e))?;
         validation_results.insert("conflicts", json!({
             "found": conflicts_result.conflicts.len(),
@@ -282,7 +275,7 @@ pub async fn handle_validate_knowledge(
         let mut quality_score = 1.0;
         let mut quality_issues = Vec::new();
         
-        for triple in &triples {
+        for triple in &triples.triples {
             let triple_validation = validate_triple(triple).await
                 .map_err(|e| format!("Triple validation failed: {}", e))?;
             quality_score *= triple_validation.confidence;
@@ -296,7 +289,7 @@ pub async fn handle_validate_knowledge(
     }
     
     if ["completeness", "all"].contains(&validation_type) && entity.is_some() {
-        let missing = validate_completeness(entity.unwrap(), &triples).await
+        let missing = validate_completeness(entity.unwrap(), &triples.triples).await
             .map_err(|e| format!("Completeness validation failed: {}", e))?;
         validation_results.insert("completeness", json!({
             "missing_info": missing,
@@ -344,11 +337,13 @@ async fn perform_semantic_search(
             subject: Some(keyword.clone()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(triples) = engine.query_triples(triple_query) {
-            results.extend(triples.into_iter().map(KnowledgeResult::Triple));
+            results.push(triples);
         }
     }
     
@@ -374,12 +369,13 @@ async fn perform_structural_search(
                 subject: None,
                 predicate: None,
                 object: None,
-                confidence_threshold: None,
-            },
-            Some(100),
+                limit: 100,
+                min_confidence: 0.0,
+                include_chunks: false,
+            }
         )?;
         
-        results.extend(all_triples.into_iter().map(KnowledgeResult::Triple));
+        results.push(all_triples);
     }
     
     results.truncate(limit);
@@ -401,21 +397,28 @@ async fn perform_keyword_search(
             subject: None,
             predicate: None,
             object: None,
-            confidence_threshold: None,
-        },
-        Some(1000),
+            limit: 1000,
+            min_confidence: 0.0,
+            include_chunks: false,
+        }
     )?;
     
-    for triple in all_triples {
-        let triple_text = format!("{} {} {}", triple.subject, triple.predicate, triple.object).to_lowercase();
-        
-        if keywords.iter().any(|k| triple_text.contains(&k.to_lowercase())) {
-            results.push(KnowledgeResult::Triple(triple));
-        }
-        
-        if results.len() >= limit {
-            break;
-        }
+    let matching_triples: Vec<Triple> = all_triples.triples.into_iter()
+        .filter(|triple| {
+            let triple_text = format!("{} {} {}", triple.subject, triple.predicate, triple.object).to_lowercase();
+            keywords.iter().any(|k| triple_text.contains(&k.to_lowercase()))
+        })
+        .take(limit)
+        .collect();
+    
+    if !matching_triples.is_empty() {
+        results.push(KnowledgeResult {
+            nodes: Vec::new(),
+            triples: matching_triples,
+            entity_context: std::collections::HashMap::new(),
+            query_time_ms: 0,
+            total_found: 0,
+        });
     }
     
     Ok(results)
@@ -423,27 +426,24 @@ async fn perform_keyword_search(
 
 /// Format search results for display
 fn format_search_results(results: &[KnowledgeResult], max_display: usize) -> String {
-    let display_count = results.len().min(max_display);
     let mut output = String::new();
+    let mut count = 0;
     
-    for (i, result) in results.iter().take(display_count).enumerate() {
-        match result {
-            KnowledgeResult::Triple(t) => {
-                output.push_str(&format!("{}. {} {} {}\n", i + 1, t.subject, t.predicate, t.object));
+    for result in results.iter() {
+        for triple in &result.triples {
+            if count >= max_display {
+                break;
             }
-            KnowledgeResult::Chunk(c) => {
-                let title = c.metadata.get("title").unwrap_or(&"Untitled".to_string());
-                output.push_str(&format!("{}. Knowledge: {} ({}...)\n", 
-                    i + 1, title, &c.content[..c.content.len().min(50)]));
-            }
-            _ => {
-                output.push_str(&format!("{}. [Other result type]\n", i + 1));
-            }
+            output.push_str(&format!("{}. {} {} {}\n", count + 1, triple.subject, triple.predicate, triple.object));
+            count += 1;
+        }
+        if count >= max_display {
+            break;
         }
     }
     
-    if results.len() > display_count {
-        output.push_str(&format!("\n... and {} more results", results.len() - display_count));
+    if count > max_display {
+        output.push_str(&format!("\n... and {} more results", count - max_display));
     }
     
     output

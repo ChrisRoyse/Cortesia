@@ -3,7 +3,7 @@
 use crate::cognitive::inhibitory::{GroupCompetitionResult, InhibitionConfig, TemporalDynamics};
 use crate::core::brain_types::ActivationPattern;
 use crate::error::Result;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// Apply temporal dynamics to the activation pattern
 pub async fn apply_temporal_dynamics(

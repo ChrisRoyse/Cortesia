@@ -1,6 +1,6 @@
 use crate::core::triple::Triple;
 use crate::core::graph::KnowledgeGraph;
-use crate::core::types::Relationship;
+use crate::core::types::{Relationship, EntityKey};
 use crate::error::{GraphError, Result};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
@@ -155,8 +155,8 @@ impl StreamingUpdateHandler {
                 let to_id = self.entity_name_to_id(&triple.object);
                 
                 let relationship = Relationship {
-                    from: from_id,
-                    to: to_id,
+                    from: EntityKey::from_u32(from_id),
+                    to: EntityKey::from_u32(to_id),
                     rel_type: 1, // Default relation type
                     weight: 1.0,
                 };
@@ -204,8 +204,8 @@ impl StreamingUpdateHandler {
                 let to_id = self.entity_name_to_id(&new_triple.object);
                 
                 let relationship = Relationship {
-                    from: from_id,
-                    to: to_id,
+                    from: EntityKey::from_u32(from_id),
+                    to: EntityKey::from_u32(to_id),
                     rel_type: 1,
                     weight: 1.0,
                 };

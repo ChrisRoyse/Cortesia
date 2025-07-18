@@ -2,7 +2,6 @@
 
 use crate::cognitive::inhibitory::InhibitionMatrix;
 use crate::core::types::EntityKey;
-use ahash::AHashMap;
 
 pub trait InhibitionMatrixOps {
     fn get_inhibition_strength(&self, source: EntityKey, target: EntityKey, inhibition_type: InhibitionType) -> f32;

@@ -13,11 +13,10 @@ pub mod utils;
 pub mod handlers;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
-use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool};
+use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};
 use crate::error::Result;
 use types::UsageStats;
 use tools::get_tools;
-use utils::update_usage_stats;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
@@ -57,14 +56,14 @@ impl LLMFriendlyMCPServer {
                 handlers::storage::handle_store_fact(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
             "store_knowledge" => {
                 handlers::storage::handle_store_knowledge(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
 
@@ -73,14 +72,14 @@ impl LLMFriendlyMCPServer {
                 handlers::query::handle_find_facts(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
             "ask_question" => {
                 handlers::query::handle_ask_question(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
 
@@ -89,14 +88,14 @@ impl LLMFriendlyMCPServer {
                 handlers::exploration::handle_explore_connections(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
             "get_suggestions" => {
                 handlers::exploration::handle_get_suggestions(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
 
@@ -105,21 +104,21 @@ impl LLMFriendlyMCPServer {
                 handlers::advanced::handle_generate_graph_query(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
             "hybrid_search" => {
                 handlers::advanced::handle_hybrid_search(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
             "validate_knowledge" => {
                 handlers::advanced::handle_validate_knowledge(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
 
@@ -128,7 +127,7 @@ impl LLMFriendlyMCPServer {
                 handlers::stats::handle_get_stats(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params.unwrap_or(serde_json::Value::Null),
+                    request.params,
                 ).await
             }
 

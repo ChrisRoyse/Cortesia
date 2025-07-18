@@ -71,7 +71,7 @@ impl ZeroCopyKnowledgeEngine {
     }
 
     /// Benchmark zero-copy vs standard access performance
-    pub async fn benchmark_against_standard(&self, query: &[f32], iterations: usize) -> Result<BenchmarkResult> {
+    pub async fn benchmark_against_standard(&self, _query: &[f32], iterations: usize) -> Result<BenchmarkResult> {
         let start = Instant::now();
         
         // Simulate zero-copy operations

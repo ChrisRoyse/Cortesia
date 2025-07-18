@@ -1,12 +1,12 @@
 use std::sync::Arc;
-use std::collections::{HashMap as AHashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::{SystemTime, Instant};
 use async_trait::async_trait;
 
 use crate::cognitive::types::*;
 use crate::cognitive::neural_bridge_finder::NeuralBridgeFinder;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, RelationType, ActivationStep, ActivationOperation};
+use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, ActivationStep, ActivationOperation, RelationType};
 use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
@@ -14,7 +14,7 @@ use crate::error::{Result, GraphError};
 /// Lateral thinking pattern - connects disparate concepts through unexpected paths
 pub struct LateralThinking {
     pub graph: Arc<BrainEnhancedKnowledgeGraph>,
-    pub bridge_models: AHashMap<String, String>,
+    pub bridge_models: HashMap<String, String>,
     pub novelty_threshold: f32,
     pub max_bridge_length: usize,
     pub creativity_boost: f32,
@@ -26,7 +26,7 @@ impl LateralThinking {
     pub fn new(
         graph: Arc<BrainEnhancedKnowledgeGraph>,
     ) -> Self {
-        let mut bridge_models = AHashMap::new();
+        let mut bridge_models = HashMap::new();
         bridge_models.insert("fedformer".to_string(), "fedformer_bridge_model".to_string());
         bridge_models.insert("stemgnn".to_string(), "stemgnn_creativity_model".to_string());
         
@@ -55,8 +55,8 @@ impl LateralThinking {
         let max_length = max_bridge_length.unwrap_or(self.max_bridge_length);
         
         // 1. Activate both endpoint concepts
-        let activation_a = self.activate_concept(concept_a).await?;
-        let activation_b = self.activate_concept(concept_b).await?;
+        let _activation_a = self.activate_concept(concept_a).await?;
+        let _activation_b = self.activate_concept(concept_b).await?;
         
         // 2. Use enhanced neural bridge finding
         let bridge_candidates = self.neural_bridge_finder.find_creative_bridges_with_length(
@@ -74,7 +74,7 @@ impl LateralThinking {
         // 5. Calculate confidence distribution
         let confidence_distribution = self.calculate_confidence_distribution(&scored_bridges);
         
-        let execution_time = start_time.elapsed();
+        let _execution_time = start_time.elapsed();
         
         Ok(LateralResult {
             bridges: scored_bridges,
@@ -231,7 +231,7 @@ impl LateralThinking {
             // Find creative connections (prefer unexpected ones)
             let connections = self.find_creative_connections_from_entity(current_entity).await?;
             
-            for (connected_entity, connection_type, creativity_score) in connections {
+            for (connected_entity, _connection_type, creativity_score) in connections {
                 if !visited.contains(&connected_entity) && current_bridge.path.len() < max_length {
                     visited.insert(connected_entity);
                     
@@ -418,7 +418,7 @@ impl LateralThinking {
         let all_entities = self.graph.get_all_entities().await;
         let mut matches = Vec::new();
         
-        for (key, entity_data, _) in &all_entities {
+        for (key, _entity_data, _) in &all_entities {
             let concept_id = format!("entity_{:?}", key);
             let relevance = self.calculate_concept_relevance(&concept_id, concept);
             if relevance > 0.2 {
@@ -437,10 +437,11 @@ impl LateralThinking {
                 id: entity_key,
                 concept_id: format!("entity_{:?}", entity_key),
                 direction: EntityDirection::Input,
-                properties: AHashMap::new(),
+                properties: HashMap::new(),
                 embedding: data.embedding.clone(),
                 activation_state: *activation,
                 last_activation: std::time::SystemTime::now(),
+                last_update: std::time::SystemTime::now(),
             })
             .ok_or(GraphError::EntityKeyNotFound { key: entity_key })
     }
@@ -494,37 +495,37 @@ impl LateralThinking {
     
     // Placeholder implementations for complex neural operations
     
-    async fn find_creative_connections_from_entity(&self, entity: EntityKey) -> Result<Vec<(EntityKey, RelationType, f32)>> {
+    async fn find_creative_connections_from_entity(&self, _entity: EntityKey) -> Result<Vec<(EntityKey, RelationType, f32)>> {
         // Implementation would find unexpected connections with high creativity scores
         Ok(Vec::new())
     }
     
-    async fn get_neural_guided_candidates(&self, current: EntityKey, target: EntityKey) -> Result<Vec<(EntityKey, f32)>> {
+    async fn get_neural_guided_candidates(&self, _current: EntityKey, _target: EntityKey) -> Result<Vec<(EntityKey, f32)>> {
         // Implementation would use neural networks to predict creative next steps
         Ok(Vec::new())
     }
     
-    async fn get_entity_embedding(&self, entity: EntityKey) -> Result<Vec<f32>> {
+    async fn get_entity_embedding(&self, _entity: EntityKey) -> Result<Vec<f32>> {
         // Implementation would get neural embedding for entity
         Ok(vec![0.0; 384])
     }
     
-    fn generate_intermediate_embeddings(&self, start: &[f32], end: &[f32], count: usize) -> Vec<Vec<f32>> {
+    fn generate_intermediate_embeddings(&self, _start: &[f32], _end: &[f32], _count: usize) -> Vec<Vec<f32>> {
         // Implementation would generate creative intermediate points in embedding space
         Vec::new()
     }
     
-    async fn build_bridge_through_embedding(&self, start: EntityKey, end: EntityKey, intermediate: &[f32], max_length: usize) -> Result<Option<BridgeCandidate>> {
+    async fn build_bridge_through_embedding(&self, _start: EntityKey, _end: EntityKey, _intermediate: &[f32], _max_length: usize) -> Result<Option<BridgeCandidate>> {
         // Implementation would build bridge through specific embedding point
         Ok(None)
     }
     
-    async fn analyze_temporal_relationships(&self, bridge: &BridgeCandidate, model: &str) -> Result<f32> {
+    async fn analyze_temporal_relationships(&self, bridge: &BridgeCandidate, _model: &str) -> Result<f32> {
         // Implementation would use FedFormer to analyze temporal aspects
         Ok(bridge.creativity_score)
     }
     
-    async fn analyze_connection_strength(&self, bridge: &BridgeCandidate, model: &str) -> Result<f32> {
+    async fn analyze_connection_strength(&self, bridge: &BridgeCandidate, _model: &str) -> Result<f32> {
         // Implementation would use StemGNN to analyze connection strength
         Ok(bridge.plausibility_score)
     }
@@ -647,7 +648,7 @@ impl CognitivePattern for LateralThinking {
                 converged: false, // Lateral thinking explores multiple paths
                 total_energy: result.novelty_analysis.overall_novelty,
                 additional_info: {
-                    let mut info = AHashMap::new();
+                    let mut info = HashMap::new();
                     info.insert("query".to_string(), query.to_string());
                     info.insert("pattern".to_string(), "lateral".to_string());
                     info.insert("concept_a".to_string(), concept_a);
@@ -690,7 +691,7 @@ impl CognitivePattern for LateralThinking {
 }
 
 impl LateralThinking {
-    async fn create_reasoning_trace(&self, result: &LateralResult, concept_a: &str, concept_b: &str) -> Result<Vec<ActivationStep>> {
+    async fn create_reasoning_trace(&self, result: &LateralResult, _concept_a: &str, _concept_b: &str) -> Result<Vec<ActivationStep>> {
         let mut trace = Vec::new();
         
         for (i, bridge) in result.bridges.iter().enumerate() {

@@ -6,7 +6,7 @@ use async_trait::async_trait;
 
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::brain_types::{RelationType, ActivationStep, ActivationOperation};
+use crate::core::brain_types::{ActivationStep, ActivationOperation};
 use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
@@ -487,10 +487,10 @@ impl SystemsThinking {
         let mut attributes = Vec::new();
         
         // Get neighbors which might have property relationships
-        let neighbors = self.graph.get_neighbors(entity_key).await;
+        let neighbors = self.graph.get_neighbors_with_weights(entity_key).await;
         
         for (neighbor_key, weight) in neighbors {
-            if let Some((_, neighbor_data, _)) = all_entities.iter().find(|(k, _, _)| k == &neighbor_key) {
+            if let Some((_, _neighbor_data, _)) = all_entities.iter().find(|(k, _, _)| k == &neighbor_key) {
                 attributes.push((
                     format!("entity_{:?}", neighbor_key),
                     "property".to_string(),

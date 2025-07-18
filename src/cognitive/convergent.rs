@@ -112,7 +112,7 @@ impl ConvergentThinking {
         }
         
         // Special handling for "how many legs" queries
-        if (query_lower.contains("how many legs") || query_lower.contains("number of legs")) {
+        if query_lower.contains("how many legs") || query_lower.contains("number of legs") {
             if query_lower.contains("dog") {
                 return Ok("dogs".to_string());
             }
@@ -310,16 +310,16 @@ impl ConvergentThinking {
                 data.properties.contains(target_concept)
             });
         
-        if let Some((target_key, entity_data, activation)) = target_entity {
+        if let Some((target_key, _entity_data, activation)) = target_entity {
             // If we found the target entity, generate answer based on it
             let answer = self.generate_answer_text(target_concept, query).await?;
-            let final_activation = result.final_activations.get(target_key).copied().unwrap_or(*activation);
+            let _final_activation = result.final_activations.get(target_key).copied().unwrap_or(*activation);
             
             // Find supporting facts
-            let supporting_facts = self.find_supporting_facts(target_key, &result.activation_trace).await?;
+            let supporting_facts = self.find_supporting_facts(*target_key, &result.activation_trace).await?;
             
             // Boost confidence if we found properties or specific answers
-            let mut final_confidence = activation;
+            let mut final_confidence = *activation;
             if answer.contains("has the following properties:") || 
                answer.contains("have four legs") || 
                answer.contains("has three legs") {
@@ -415,7 +415,7 @@ impl ConvergentThinking {
         let all_entities = self.graph.get_all_entities().await;
         let mut matches = Vec::new();
         
-        for (key, entity_data, activation) in &all_entities {
+        for (key, _entity_data, _activation) in &all_entities {
             // Extract concept from properties
             let concept_id = format!("entity_{:?}", key);
             let relevance = self.calculate_concept_relevance(&concept_id, concept);
@@ -427,7 +427,7 @@ impl ConvergentThinking {
         // If no matches with relaxed threshold, try exact substring matching
         if matches.is_empty() {
             let query_norm = Self::normalize_concept(concept);
-            for (key, entity_data, _) in &all_entities {
+            for (key, _entity_data, _) in &all_entities {
                 let concept_id = format!("entity_{:?}", key);
                 let entity_norm = Self::normalize_concept(&concept_id);
                 if entity_norm.contains(&query_norm) || query_norm.contains(&entity_norm) {
@@ -467,13 +467,14 @@ impl ConvergentThinking {
                 embedding: data.embedding.clone(),
                 activation_state: *activation,
                 last_activation: std::time::SystemTime::now(),
+                last_update: std::time::SystemTime::now(),
             });
         entity_data.ok_or(GraphError::EntityKeyNotFound { key: entity_key })
     }
     
     /// Get entities connected to a given entity
     async fn get_connected_entities(&self, entity_key: EntityKey) -> Result<Vec<(EntityKey, f32)>> {
-        let neighbors = self.graph.get_neighbors(entity_key).await;
+        let neighbors = self.graph.get_neighbors_with_weights(entity_key).await;
         let mut connected = Vec::new();
         for (neighbor, weight) in neighbors {
             connected.push((neighbor, weight));
@@ -824,7 +825,7 @@ impl ConvergentThinking {
         // For property queries, we need to get the actual properties
         let entities = self.graph.get_all_entities().await;
         // Use empty relationships for now since brain_relationships field doesn't exist
-        let relationships = Vec::new();
+        let _relationships: Vec<crate::core::brain_types::BrainInspiredRelationship> = Vec::new();
         
         // Find the entity
         let entity_key = entities.iter()
@@ -833,7 +834,7 @@ impl ConvergentThinking {
         
         if let Some(entity_key) = entity_key {
             // Find properties through HasProperty relationships
-            let mut properties = Vec::new();
+            let mut properties: Vec<String> = Vec::new();
             let mut visited_entities = std::collections::HashSet::new();
             
             // Collect all properties from this entity and all its ancestors
@@ -846,22 +847,24 @@ impl ConvergentThinking {
                 visited_entities.insert(current_key);
                 
                 // Get direct properties of this entity
-                for relationship in relationships.values() {
-                    if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::HasProperty {
-                        if let Some(property_entity) = entities.get(relationship.target) {
-                            if !properties.contains(&property_entity.concept_id) {
-                                properties.push(property_entity.concept_id.clone());
-                            }
-                        }
-                    }
-                }
+                // TODO: Implement when brain_relationships is available
+                // for relationship in relationships {
+                //     if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::HasProperty {
+                //         if let Some(property_entity) = entities.get(relationship.target) {
+                //             if !properties.contains(&property_entity.concept_id) {
+                //                 properties.push(property_entity.concept_id.clone());
+                //             }
+                //         }
+                //     }
+                // }
                 
                 // Find parent entities through IsA relationships
-                for relationship in relationships.values() {
-                    if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::IsA {
-                        entities_to_check.push(relationship.target);
-                    }
-                }
+                // TODO: Implement when brain_relationships is available
+                // for relationship in relationships {
+                //     if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::IsA {
+                //         entities_to_check.push(relationship.target);
+                //     }
+                // }
             }
             
             if !properties.is_empty() {

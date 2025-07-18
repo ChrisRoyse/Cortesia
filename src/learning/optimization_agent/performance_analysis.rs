@@ -345,7 +345,7 @@ impl BottleneckDetector {
             let entity_key = entity_keys[i];
             
             // Simulate query time check
-            let neighbors = graph.get_neighbors(entity_key).await;
+            let neighbors = graph.get_neighbors(entity_key);
             if neighbors.len() > 100 {
                 slow_entities.push(entity_key);
             }
@@ -388,7 +388,7 @@ impl BottleneckDetector {
             let entity_key = entity_keys[i];
             
             // Simulate cache performance check
-            let neighbors = graph.get_neighbors(entity_key).await;
+            let neighbors = graph.get_neighbors(entity_key);
             if neighbors.len() > 50 && neighbors.len() < 200 {
                 cache_poor.push(entity_key);
             }
@@ -409,7 +409,7 @@ impl BottleneckDetector {
             let entity_key = entity_keys[i];
             
             // Check traversal complexity
-            let neighbors = graph.get_neighbors(entity_key).await;
+            let neighbors = graph.get_neighbors(entity_key);
             if neighbors.len() > 200 {
                 complex_entities.push(entity_key);
             }

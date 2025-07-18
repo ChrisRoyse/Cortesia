@@ -1,6 +1,5 @@
 //! Exploration and suggestion request handlers
 
-use crate::core::triple::Triple;
 use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery};
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, generate_suggestions, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
@@ -226,7 +225,9 @@ async fn find_paths_between(
             subject: Some(current_entity.clone()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(triples) = engine.query_triples(query) {
@@ -286,7 +287,9 @@ async fn explore_from_entity(
             subject: Some(entity.clone()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(triples) = engine.query_triples(query) {
@@ -328,7 +331,9 @@ async fn generate_missing_facts_suggestions(
             subject: Some(entity.to_string()),
             predicate: None,
             object: None,
-            confidence_threshold: None,
+            limit: 100,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(facts) = engine.query_triples(query) {

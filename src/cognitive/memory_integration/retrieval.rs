@@ -5,7 +5,7 @@ use super::coordinator::MemoryCoordinator;
 use crate::cognitive::working_memory::{WorkingMemorySystem, MemoryQuery, MemoryRetrievalResult, MemoryContent, MemoryItem};
 use crate::core::sdr_storage::SDRStorage;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::error::Result;
+use crate::error::{Result, GraphError};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -39,7 +39,7 @@ impl MemoryRetrieval {
         
         // Get retrieval strategy
         let strategy = if let Some(id) = strategy_id {
-            self.coordinator.get_strategy(id).ok_or_else(|| anyhow::anyhow!("Strategy not found: {}", id))?
+            self.coordinator.get_strategy(id).ok_or_else(|| GraphError::ConfigError(format!("Strategy not found: {}", id)))?
         } else {
             self.coordinator.get_best_strategy(query)
         };
@@ -98,29 +98,29 @@ impl MemoryRetrieval {
         for (index, memory_type) in strategy.memory_priority.iter().enumerate() {
             match memory_type {
                 MemoryType::WorkingMemory => {
-                    if let Ok(result) = working_result {
+                    if let Ok(ref result) = working_result {
                         if index == 0 {
-                            primary_results.push(result);
+                            primary_results.push(result.clone());
                         } else {
-                            secondary_results.push(result);
+                            secondary_results.push(result.clone());
                         }
                     }
                 }
                 MemoryType::SemanticMemory => {
-                    if let Ok(result) = sdr_result {
+                    if let Ok(ref result) = sdr_result {
                         if index == 0 {
-                            primary_results.push(result);
+                            primary_results.push(result.clone());
                         } else {
-                            secondary_results.push(result);
+                            secondary_results.push(result.clone());
                         }
                     }
                 }
                 MemoryType::LongTermMemory => {
-                    if let Ok(result) = graph_result {
+                    if let Ok(ref result) = graph_result {
                         if index == 0 {
-                            primary_results.push(result);
+                            primary_results.push(result.clone());
                         } else {
-                            secondary_results.push(result);
+                            secondary_results.push(result.clone());
                         }
                     }
                 }
@@ -253,7 +253,17 @@ impl MemoryRetrieval {
     
     /// Query long-term graph
     async fn query_long_term_graph(&self, query: &str) -> Result<MemoryRetrievalResult> {
-        let graph_results = self.long_term_graph.search_knowledge(query, 10).await?;
+        // Convert query string to embedding (simplified - just use hash for now)
+        let query_hash = query.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
+        let query_embedding = vec![query_hash as f32 / u32::MAX as f32; 96]; // Assuming 96 dim embeddings
+        
+        let query_result = self.long_term_graph.query(&query_embedding, &[], 10).await?;
+        let graph_results: Vec<GraphSearchResult> = query_result.entities.into_iter().map(|entity| {
+            GraphSearchResult {
+                content: format!("entity_{:?}", entity.id),
+                relevance_score: entity.similarity,
+            }
+        }).collect();
         
         let items = graph_results.into_iter().map(|graph_result| {
             MemoryItem {
@@ -477,35 +487,6 @@ impl MemoryRetrieval {
     }
 }
 
-// Stub implementations for missing types
-impl crate::core::sdr_storage::SDRStorage {
-    pub async fn similarity_search(&self, _query: &str, _threshold: f32) -> Result<Vec<SDRSearchResult>> {
-        Ok(vec![
-            SDRSearchResult {
-                content: "Sample SDR result".to_string(),
-                similarity: 0.8,
-            }
-        ])
-    }
-}
-
-impl crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph {
-    pub async fn search_knowledge(&self, _query: &str, _limit: usize) -> Result<Vec<GraphSearchResult>> {
-        Ok(vec![
-            GraphSearchResult {
-                content: "Sample graph result".to_string(),
-                relevance_score: 0.7,
-            }
-        ])
-    }
-}
-
-/// SDR search result
-#[derive(Debug, Clone)]
-pub struct SDRSearchResult {
-    pub content: String,
-    pub similarity: f32,
-}
 
 /// Graph search result
 #[derive(Debug, Clone)]

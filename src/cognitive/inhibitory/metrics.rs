@@ -58,7 +58,7 @@ pub fn calculate_efficiency_score(competition_results: &[GroupCompetitionResult]
                     1.0 // Just right
                 };
                 
-                (winner_score * 0.4 + suppression_score * 0.3 + intensity_score * 0.3)
+                winner_score * 0.4 + suppression_score * 0.3 + intensity_score * 0.3
             }
         })
         .sum();
@@ -101,7 +101,7 @@ pub fn calculate_effectiveness_score(
     let max_activation = activations.iter().fold(0.0f32, |a, &b| a.max(b));
     let preservation_score = max_activation;
     
-    (sparsity_score * 0.4 + differentiation_score * 0.3 + preservation_score * 0.3)
+    sparsity_score * 0.4 + differentiation_score * 0.3 + preservation_score * 0.3
 }
 
 /// Calculate variance of activation values

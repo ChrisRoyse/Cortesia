@@ -85,27 +85,28 @@ impl PatternDetector {
         // Check for common attributes that can be bubbled up
         let mut common_attributes = HashMap::new();
         let mut first_child = true;
+        let children_count = children.len(); // Store length before consuming children
         
         for (child_key, _) in children {
             if let Some(child_data) = graph.get_entity_data(child_key) {
                 if first_child {
-                    // Initialize with first child's attributes
-                    for (key, value) in &child_data.properties {
-                        common_attributes.insert(key.clone(), value.clone());
-                    }
+                    // Initialize with first child's properties as a single attribute
+                    common_attributes.insert("properties".to_string(), child_data.properties.clone());
                     first_child = false;
                 } else {
-                    // Keep only common attributes
-                    common_attributes.retain(|key, value| {
-                        child_data.properties.get(key).map_or(false, |child_value| child_value == value)
-                    });
+                    // Keep only if properties match
+                    if let Some(existing_props) = common_attributes.get("properties") {
+                        if existing_props != &child_data.properties {
+                            common_attributes.remove("properties");
+                        }
+                    }
                 }
             }
         }
         
         // If we have common attributes, this is an opportunity
         if !common_attributes.is_empty() {
-            let improvement = self.calculate_bubbling_improvement(&common_attributes, children.len());
+            let improvement = self.calculate_bubbling_improvement(&common_attributes, children_count);
             
             if improvement > self.detection_threshold {
                 return Ok(Some(OptimizationOpportunity {
@@ -155,7 +156,7 @@ impl PatternDetector {
                     
                     if improvement > self.detection_threshold {
                         opportunities.push(OptimizationOpportunity {
-                            opportunity_id: format!("consolidation_{}_{}", entity_key.0, child_key.0),
+                            opportunity_id: format!("consolidation_{:?}_{:?}", entity_key, child_key),
                             optimization_type: OptimizationType::HierarchyConsolidation,
                             affected_entities: vec![entity_key, child_key],
                             estimated_improvement: improvement,
@@ -195,7 +196,7 @@ impl PatternDetector {
             
             if neighbors.len() >= 3 {
                 // Create a pattern signature for this subgraph
-                let mut pattern_signature = neighbors.iter().map(|n| n.0).collect::<Vec<_>>();
+                let mut pattern_signature = neighbors.iter().map(|n| format!("{:?}", n)).collect::<Vec<_>>();
                 pattern_signature.sort();
                 let signature = format!("{:?}", pattern_signature);
                 
@@ -242,7 +243,7 @@ impl PatternDetector {
         let entity_keys = graph.get_all_entity_keys();
         
         for entity_key in entity_keys {
-            let neighbors = graph.get_neighbors(entity_key);
+            let neighbors = graph.get_neighbors_with_weights(entity_key).await;
             
             // Look for weak connections that can be pruned
             let weak_connections: Vec<_> = neighbors.iter()
@@ -254,7 +255,7 @@ impl PatternDetector {
                 
                 if improvement > self.detection_threshold {
                     opportunities.push(OptimizationOpportunity {
-                        opportunity_id: format!("pruning_{}", entity_key.0),
+                        opportunity_id: format!("pruning_{:?}", entity_key),
                         optimization_type: OptimizationType::ConnectionPruning,
                         affected_entities: vec![entity_key],
                         estimated_improvement: improvement,
@@ -321,8 +322,8 @@ impl PatternCache {
     }
 
     /// Get cached pattern
-    pub fn get_pattern(&mut self, pattern_id: &str) -> Option<&CachedPattern> {
-        if let Some(pattern) = self.cached_patterns.get(pattern_id) {
+    pub fn get_pattern(&mut self, pattern_id: &str) -> Option<CachedPattern> {
+        if let Some(pattern) = self.cached_patterns.get(pattern_id).cloned() {
             // Check if pattern is still valid
             if pattern.expiry_time > Instant::now() {
                 self.hit_count += 1;

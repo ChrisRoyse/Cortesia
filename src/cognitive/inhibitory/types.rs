@@ -3,25 +3,24 @@
 use crate::core::brain_types::ActivationPattern;
 use crate::core::types::EntityKey;
 use crate::cognitive::types::CognitivePatternType;
-use ahash::AHashMap;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Clone)]
 pub struct InhibitionMatrix {
-    pub lateral_inhibition: AHashMap<(EntityKey, EntityKey), f32>,
-    pub hierarchical_inhibition: AHashMap<(EntityKey, EntityKey), f32>,
-    pub contextual_inhibition: AHashMap<(EntityKey, EntityKey), f32>,
-    pub temporal_inhibition: AHashMap<(EntityKey, EntityKey), f32>,
+    pub lateral_inhibition: HashMap<(EntityKey, EntityKey), f32>,
+    pub hierarchical_inhibition: HashMap<(EntityKey, EntityKey), f32>,
+    pub contextual_inhibition: HashMap<(EntityKey, EntityKey), f32>,
+    pub temporal_inhibition: HashMap<(EntityKey, EntityKey), f32>,
 }
 
 impl InhibitionMatrix {
     pub fn new() -> Self {
         Self {
-            lateral_inhibition: AHashMap::new(),
-            hierarchical_inhibition: AHashMap::new(),
-            contextual_inhibition: AHashMap::new(),
-            temporal_inhibition: AHashMap::new(),
+            lateral_inhibition: HashMap::new(),
+            hierarchical_inhibition: HashMap::new(),
+            contextual_inhibition: HashMap::new(),
+            temporal_inhibition: HashMap::new(),
         }
     }
 }

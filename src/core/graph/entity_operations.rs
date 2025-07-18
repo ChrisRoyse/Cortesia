@@ -237,7 +237,7 @@ impl KnowledgeGraph {
         // Remove from arena
         let removed = arena.remove_entity(key);
         
-        if removed {
+        if removed.is_some() {
             // Remove from entity store
             entity_store.remove(key);
             
@@ -255,7 +255,7 @@ impl KnowledgeGraph {
                 
                 // Remove from bloom filter
                 let mut bloom = self.bloom_filter.write();
-                bloom.remove(&id);
+                bloom.remove(id);
                 
                 // Remove from spatial indices
                 let mut spatial_index = self.spatial_index.write();
@@ -272,7 +272,7 @@ impl KnowledgeGraph {
             }
         }
         
-        Ok(removed)
+        Ok(removed.is_some())
     }
 
     /// Get all entity IDs
@@ -312,7 +312,7 @@ impl KnowledgeGraph {
         
         if let Some(meta) = entity_store.get(key) {
             let offset = meta.embedding_offset as usize;
-            let quantized_size = quantizer.encoded_size();
+            let quantized_size = quantizer.subvector_count;
             
             if offset + quantized_size <= embedding_bank.len() {
                 let quantized = &embedding_bank[offset..offset + quantized_size];
