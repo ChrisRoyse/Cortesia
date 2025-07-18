@@ -1,0 +1,81 @@
+[package]
+name = "llmkg"
+version = "0.1.0"
+edition = "2021"
+authors = ["LLMKG Team"]
+description = "Lightning-fast knowledge graph optimized for LLM integration"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ahash = "0.8"
+slotmap = { version = "1.0", features = ["serde"] }
+bumpalo = "3.16"
+bytemuck = "1.16"
+
+# Compression and optimization
+zstd = "0.13"
+bloom = "0.3"
+
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+regex = "1.10"
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID generation
+uuid = { version = "1.10", features = ["v4"] }
+
+# Random number generation
+rand = "0.8"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Concurrency
+parking_lot = "0.12"
+crossbeam = "0.8"
+
+# System monitoring
+sysinfo = "0.30"
+
+# Math and SIMD
+num-traits = "0.2"
+nalgebra = { version = "0.33", optional = true }
+
+web-sys = { version = "0.3", features = ["console", "Performance", "WorkerGlobalScope"], optional = true }
+
+# WASM-specific dependencies
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+wee_alloc = { version = "0.4", optional = true }
+js-sys = { version = "0.3", optional = true }
+getrandom = { version = "0.2", features = ["js"], optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.5"
+tempfile = "3.12"
+
+[profile.release]
+lto = true
+opt-level = "s"
+strip = true
+
+[profile.release.package."*"]
+opt-level = "s"
+
+[features]
+default = ["native"]
+wasm = ["wasm-bindgen", "wasm-bindgen-futures", "console_error_panic_hook", "wee_alloc", "js-sys", "web-sys", "getrandom"]
+native = ["nalgebra"]
+simd = []
+cuda = []

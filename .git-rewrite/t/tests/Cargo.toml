@@ -1,0 +1,170 @@
+[package]
+name = "llmkg-tests"
+version = "0.1.0"
+edition = "2021"
+authors = ["LLMKG Team"]
+description = "Comprehensive simulation and testing infrastructure for LLMKG"
+
+[dependencies]
+# Core LLMKG dependency
+llmkg = { path = ".." }
+
+# Async runtime and utilities
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Randomness and deterministic generation
+rand = "0.8"
+rand_chacha = "0.3"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# File and path handling
+tempfile = "3.0"
+walkdir = "2.0"
+
+# HTTP and web server for dashboard
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+hyper = "1.0"
+
+# WebSocket support for real-time dashboard
+tokio-tungstenite = "0.21"
+
+# Database for performance storage
+rusqlite = { version = "0.30", features = ["bundled", "chrono"] }
+
+# Template engine for HTML reports
+handlebars = "5.0"
+
+# Performance monitoring
+sysinfo = "0.30"
+# procfs = "0.16"  # Linux-only, replaced with sysinfo for cross-platform support
+
+# Hash functions for checksums
+sha2 = "0.10"
+
+# Command line parsing for test runner
+clap = { version = "4.0", features = ["derive"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Concurrency and channels
+crossbeam = "0.8"
+crossbeam-channel = "0.5"
+
+# Memory tracking
+memory-stats = "1.0"
+
+# CPU affinity and process control
+core_affinity = "0.8"
+
+# SIMD support for performance testing
+wide = "0.7"
+
+# Regular expressions for parsing
+regex = "1.0"
+
+# UUID generation
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Base64 encoding for data serialization
+base64 = "0.22"
+
+# Compression for data storage
+flate2 = "1.0"
+
+# XML generation for JUnit reports
+quick-xml = { version = "0.31", features = ["serialize"] }
+
+# CSV handling for data export
+csv = "1.0"
+
+# Configuration file handling
+config = "0.14"
+toml = "0.8"
+
+# Process spawning and management
+subprocess = "0.2"
+
+# Additional dependencies for infrastructure
+parking_lot = "0.12"
+dashmap = "5.5"
+num_cpus = "1.16"
+hex = "0.4"
+bincode = "1.3"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"
+
+# Unit testing framework dependencies
+[[bench]]
+name = "unit_benchmarks"
+harness = false
+
+# Coverage configuration
+[tool.coverage]
+target-coverage = 100
+exclude-patterns = [
+    "tests/*",
+    "examples/*", 
+    "benches/*"
+]
+fail-under = 95  # Fail CI if coverage drops below 95%
+
+[profile.test]
+opt-level = 0
+debug = true
+overflow-checks = true
+lto = false
+codegen-units = 16
+
+[profile.bench]
+opt-level = 3
+debug = false
+overflow-checks = false
+lto = true
+codegen-units = 1
+
+[features]
+default = ["full"]
+full = ["dashboard", "performance-monitoring", "ci-integration"]
+dashboard = []
+performance-monitoring = []
+ci-integration = []
+minimal = []
+
+[[bin]]
+name = "test-runner"
+path = "src/bin/test_runner.rs"
+
+[[bin]]
+name = "dashboard"
+path = "src/bin/dashboard.rs"
+
+[[bin]]
+name = "data-generator"
+path = "src/bin/data_generator.rs"
+
+[[bin]]
+name = "unit-test-runner"
+path = "src/bin/unit_test_runner.rs"
+
+[lib]
+name = "llmkg_tests"
+path = "unit/lib.rs"

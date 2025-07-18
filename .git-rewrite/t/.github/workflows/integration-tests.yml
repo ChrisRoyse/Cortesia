@@ -1,0 +1,364 @@
+# Integration Tests CI/CD Pipeline
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run integration tests nightly
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  LLMKG_LOG_LEVEL: info
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable, beta]
+        features: [default, full, minimal]
+        include:
+          # Full feature matrix
+          - features: default
+            feature_flags: ""
+          - features: full  
+            feature_flags: "--features=wasm,mcp,federation,simd,quantization"
+          - features: minimal
+            feature_flags: "--no-default-features --features=core"
+        exclude:
+          # Skip beta on Windows and macOS to reduce CI time
+          - os: windows-latest
+            rust: beta
+          - os: macos-latest
+            rust: beta
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        profile: minimal
+        override: true
+        components: rustfmt, clippy
+        
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: ${{ matrix.os }}-${{ matrix.rust }}-${{ matrix.features }}
+        
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          pkg-config \
+          libssl-dev \
+          llvm \
+          clang \
+          libclang-dev
+          
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install llvm
+        echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> $GITHUB_ENV
+        
+    - name: Install WASM dependencies
+      if: matrix.features == 'full' || matrix.features == 'default'
+      run: |
+        rustup target add wasm32-unknown-unknown
+        cargo install wasm-pack
+        
+    - name: Setup Node.js for WASM tests
+      if: matrix.features == 'full' || matrix.features == 'default'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install WASM test dependencies
+      if: matrix.features == 'full' || matrix.features == 'default'
+      run: |
+        npm install -g @web/test-runner
+        npm install -g chromedriver
+        
+    - name: Check code formatting
+      run: cargo fmt --all -- --check
+      
+    - name: Lint code
+      run: cargo clippy --all-targets ${{ matrix.feature_flags }} -- -D warnings
+      
+    - name: Build project
+      run: |
+        cargo build --release ${{ matrix.feature_flags }}
+        
+    - name: Build WASM target
+      if: matrix.features == 'full' || matrix.features == 'default'
+      run: |
+        wasm-pack build --target web --out-dir pkg
+        
+    - name: Run unit tests
+      run: |
+        cargo test --lib ${{ matrix.feature_flags }} --release
+        
+    - name: Run integration tests
+      run: |
+        cargo test --test '*integration*' ${{ matrix.feature_flags }} --release -- --test-threads=1
+      env:
+        RUST_TEST_TIME_UNIT: 30000
+        RUST_TEST_TIME_INTEGRATION: 300000
+        LLMKG_KEEP_TEST_DATA: false
+        
+    - name: Run WASM integration tests
+      if: matrix.features == 'full' || matrix.features == 'default'
+      run: |
+        wasm-pack test --chrome --headless
+        
+    - name: Run performance benchmarks
+      if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+      run: |
+        cargo bench --bench '*integration*' ${{ matrix.feature_flags }}
+        
+    - name: Generate test coverage report
+      if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable' && matrix.features == 'full'
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --out xml --output-dir target/coverage/ --all-features
+        
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable' && matrix.features == 'full'
+      uses: codecov/codecov-action@v3
+      with:
+        file: target/coverage/cobertura.xml
+        flags: integration-tests
+        
+    - name: Collect test artifacts
+      if: always()
+      run: |
+        mkdir -p test-artifacts
+        find target -name "*.xml" -type f -exec cp {} test-artifacts/ \;
+        find target -name "*test*" -name "*.json" -type f -exec cp {} test-artifacts/ \;
+        if [ -d "/tmp/llmkg_integration_tests" ]; then
+          cp -r /tmp/llmkg_integration_tests test-artifacts/
+        fi
+        
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results-${{ matrix.os }}-${{ matrix.rust }}-${{ matrix.features }}
+        path: test-artifacts/
+        retention-days: 30
+        
+    - name: Generate performance report
+      if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+      run: |
+        cargo run --bin integration-test-reporter -- \
+          --input test-artifacts/ \
+          --output performance-report.html \
+          --format html
+          
+    - name: Upload performance report
+      if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report-${{ matrix.features }}
+        path: performance-report.html
+
+  docker-integration:
+    name: Docker Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    strategy:
+      matrix:
+        scenario: [single-node, distributed, federation]
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build integration test image
+      run: |
+        docker build -f tests/integration/Dockerfile \
+          -t llmkg-integration:${{ matrix.scenario }} \
+          --build-arg SCENARIO=${{ matrix.scenario }} .
+          
+    - name: Run Docker integration tests
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/test-results:/results \
+          -e SCENARIO=${{ matrix.scenario }} \
+          llmkg-integration:${{ matrix.scenario }}
+          
+    - name: Upload Docker test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-integration-${{ matrix.scenario }}
+        path: test-results/
+
+  stress-tests:
+    name: Stress Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'stress-test')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+        
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      
+    - name: Run stress tests
+      run: |
+        cargo test --release --test stress_integration -- --ignored
+      env:
+        RUST_TEST_TIME_UNIT: 60000
+        RUST_TEST_TIME_INTEGRATION: 1800000
+        LLMKG_STRESS_TEST_SIZE: large
+        
+    - name: Upload stress test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: stress-test-results
+        path: target/stress-test-results/
+
+  memory-leak-detection:
+    name: Memory Leak Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+        
+    - name: Install Valgrind
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+        
+    - name: Build debug version
+      run: |
+        cargo build --all-features
+        
+    - name: Run memory leak tests
+      run: |
+        valgrind --tool=memcheck \
+          --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --xml=yes \
+          --xml-file=valgrind-report.xml \
+          cargo test --test memory_integration -- --test-threads=1
+          
+    - name: Upload Valgrind report
+      uses: actions/upload-artifact@v3
+      with:
+        name: valgrind-report
+        path: valgrind-report.xml
+
+  cross-platform-verification:
+    name: Cross-Platform Verification
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Compare cross-platform results
+      run: |
+        python3 scripts/compare-cross-platform-results.py \
+          --input-dir . \
+          --output comparison-report.json
+          
+    - name: Upload comparison report
+      uses: actions/upload-artifact@v3
+      with:
+        name: cross-platform-comparison
+        path: comparison-report.json
+        
+    - name: Verify cross-platform compatibility
+      run: |
+        python3 scripts/verify-compatibility.py \
+          --report comparison-report.json \
+          --tolerance 0.1
+
+  integration-summary:
+    name: Integration Test Summary
+    needs: [integration-tests, docker-integration]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Download all test results
+      uses: actions/download-artifact@v3
+      
+    - name: Generate summary report
+      run: |
+        echo "# Integration Test Summary" > summary.md
+        echo "" >> summary.md
+        echo "## Test Results" >> summary.md
+        
+        # Count passed/failed tests
+        passed=$(find . -name "*.xml" -exec grep -l "failures=\"0\"" {} \; | wc -l)
+        total=$(find . -name "*.xml" | wc -l)
+        
+        echo "- Total test suites: $total" >> summary.md
+        echo "- Passed: $passed" >> summary.md
+        echo "- Failed: $((total - passed))" >> summary.md
+        echo "" >> summary.md
+        
+        # Performance summary
+        if [ -f performance-report-full/performance-report.html ]; then
+          echo "## Performance Summary" >> summary.md
+          echo "Performance report available in artifacts." >> summary.md
+        fi
+        
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });

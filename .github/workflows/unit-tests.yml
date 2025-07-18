@@ -1,0 +1,190 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        rust: [stable, beta, nightly]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
+        
+    - name: Install cargo-tarpaulin for coverage
+      run: cargo install cargo-tarpaulin
+      
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+          
+    - name: Cache cargo index
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+          
+    - name: Cache cargo build
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-target-
+          
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+      
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+      
+    - name: Build project
+      run: cargo build --verbose --all-features
+      
+    - name: Run unit tests with coverage
+      run: |
+        cd tests
+        cargo tarpaulin --verbose --all-features --workspace --timeout 300 \
+          --out xml --output-dir coverage/ \
+          --exclude-files "src/bin/*" "examples/*" "tests/*" \
+          --engine llvm \
+          --run-types Tests \
+          --fail-under 95
+          
+    - name: Run comprehensive unit test suite
+      run: |
+        cd tests
+        cargo run --bin unit-test-runner -- \
+          --coverage \
+          --verbose \
+          --output junit \
+          --report-file unit-test-results.xml
+          
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results-${{ matrix.rust }}
+        path: |
+          tests/unit-test-results.xml
+          tests/coverage/
+          
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: tests/coverage/cobertura.xml
+        flags: unit-tests
+        name: codecov-${{ matrix.rust }}
+        fail_ci_if_error: true
+        
+  memory-leak-tests:
+    name: Memory Leak Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install Valgrind
+      run: sudo apt-get update && sudo apt-get install -y valgrind
+      
+    - name: Run tests with Valgrind
+      run: |
+        cd tests
+        cargo build --bin unit-test-runner
+        valgrind --tool=memcheck --leak-check=full --error-exitcode=1 \
+          ./target/debug/unit-test-runner --module core
+          
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Run performance benchmarks
+      run: |
+        cd tests
+        cargo bench --bench unit_benchmarks
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: tests/target/criterion/
+        
+  cross-platform-tests:
+    name: Cross Platform Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Run core unit tests
+      run: |
+        cd tests
+        cargo test --lib --verbose
+        
+    - name: Run unit test runner
+      run: |
+        cd tests
+        cargo run --bin unit-test-runner -- --module core --timeout 10000
+        
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install cargo-audit
+      run: cargo install cargo-audit
+      
+    - name: Run security audit
+      run: cargo audit
+      
+    - name: Run cargo deny
+      uses: EmbarkStudios/cargo-deny-action@v1
