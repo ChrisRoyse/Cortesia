@@ -106,9 +106,9 @@ pub async fn apply_learning_mechanisms(
 
 /// Learn optimal inhibition strength adjustments
 async fn learn_inhibition_strength_adjustment(
-    pattern: &ActivationPattern,
+    _pattern: &ActivationPattern,
     results: &[GroupCompetitionResult],
-    history: &[InhibitionPerformanceMetrics],
+    _history: &[InhibitionPerformanceMetrics],
 ) -> Result<Option<ParameterAdjustment>> {
     // Analyze competition effectiveness
     let total_competitions = results.len();
@@ -152,7 +152,7 @@ async fn learn_inhibition_strength_adjustment(
 /// Learn optimal competition group configurations
 async fn learn_competition_group_optimization(
     results: &[GroupCompetitionResult],
-    history: &[InhibitionPerformanceMetrics],
+    _history: &[InhibitionPerformanceMetrics],
 ) -> Result<Option<ParameterAdjustment>> {
     // Analyze which competition groups are most effective
     let avg_suppression_rate = results.iter()
@@ -182,7 +182,7 @@ async fn learn_competition_group_optimization(
 
 /// Learn optimal temporal dynamics
 async fn learn_temporal_dynamics_optimization(
-    pattern: &ActivationPattern,
+    _pattern: &ActivationPattern,
     history: &[InhibitionPerformanceMetrics],
 ) -> Result<Option<ParameterAdjustment>> {
     // Analyze temporal patterns in performance
@@ -215,7 +215,7 @@ async fn learn_temporal_dynamics_optimization(
 
 /// Apply a parameter adjustment to the system
 async fn apply_parameter_adjustment(
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
     adjustment: &ParameterAdjustment,
 ) -> Result<()> {
     // In a real implementation, this would modify the actual configuration
@@ -314,7 +314,7 @@ fn generate_adaptation_suggestions(metrics: &InhibitionPerformanceMetrics) -> Ve
 
 /// Apply an adaptation suggestion
 async fn apply_adaptation_suggestion(
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
     suggestion: &AdaptationSuggestion,
 ) -> Result<()> {
     // Apply the suggestion by modifying the inhibition configuration

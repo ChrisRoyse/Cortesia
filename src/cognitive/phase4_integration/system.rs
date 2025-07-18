@@ -6,11 +6,9 @@ use super::interface::CognitiveLearningInterface;
 use super::performance::CognitivePerformanceTracker;
 use super::adaptation::AdaptationEngine;
 use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
-use crate::cognitive::orchestrator::CognitiveOrchestrator;
 use crate::cognitive::types::CognitivePatternType;
 use crate::learning::phase4_integration::Phase4LearningSystem;
 use crate::learning::types::{
-    PerformanceData as LearningPerformanceData,
     ThroughputMetrics as LearningThroughputMetrics
 };
 
@@ -237,21 +235,21 @@ impl Phase4CognitiveSystem {
         }
         
         Ok(PerformanceData {
-            query_latencies: vec![phase3_result.processing_time],
-            memory_usage: vec![phase3_result.memory_usage],
-            accuracy_scores: vec![phase3_result.confidence_score],
-            user_satisfaction: vec![phase3_result.user_satisfaction],
+            query_latencies: vec![phase3_result.performance_metrics.total_time],
+            memory_usage: vec![0.5], // Estimated memory usage
+            accuracy_scores: vec![phase3_result.confidence],
+            user_satisfaction: vec![phase3_result.confidence * 0.9], // Estimated from confidence
             system_stability: 0.9, // Would be measured from system
             error_rates: HashMap::new(),
             throughput_metrics: ThroughputMetrics {
                 queries_per_second: 10.0,
                 successful_queries: 1,
                 failed_queries: 0,
-                average_response_time: phase3_result.processing_time,
+                average_response_time: phase3_result.performance_metrics.total_time,
             },
             timestamp: SystemTime::now(),
             system_health: 0.9,
-            overall_performance_score: phase3_result.confidence_score,
+            overall_performance_score: phase3_result.confidence,
             component_scores,
             bottlenecks: Vec::new(),
         })
@@ -326,7 +324,7 @@ impl crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem {
     // Duplicate method removed - use the one in phase3_integration.rs
     
     /// Execute query with context
-    pub async fn execute_query(&self, query: &str, context: &str) -> Result<crate::cognitive::phase3_integration::Phase3QueryResult> {
+    pub async fn execute_query(&self, query: &str, _context: &str) -> Result<crate::cognitive::phase3_integration::Phase3QueryResult> {
         // This would execute the actual Phase 3 query
         // For now, we'll return a mock result
         Ok(crate::cognitive::phase3_integration::Phase3QueryResult {

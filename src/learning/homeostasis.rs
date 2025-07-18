@@ -168,26 +168,26 @@ impl SynapticHomeostasis {
 
     async fn calculate_integrated_activity_levels(
         &self,
-        time_window: Duration,
+        _time_window: Duration,
     ) -> Result<HashMap<EntityKey, f32>> {
         let mut activity_levels = HashMap::new();
         
         // 1. Get base activity from brain graph activation
         // Note: This would need to be implemented in BrainEnhancedKnowledgeGraph
         // For now, we'll use a placeholder approach
-        let graph_activities = HashMap::new();
+        let graph_activities: HashMap<EntityKey, f32> = HashMap::new();
         
         // 2. Get attention-weighted activities
         let attention_state = self.attention_manager.get_attention_state().await?;
         
         // 3. Get working memory influences
         // Note: This would need to be implemented based on actual working memory state
-        let memory_activities = HashMap::new();
+        let memory_activities: HashMap<EntityKey, f32> = HashMap::new();
         
         // 4. Combine all activity sources
         for (entity_key, base_activity) in graph_activities {
             // Check if entity is in current attention targets
-            let attention_weight = if attention_state.current_targets.contains(&entity_key) {
+            let attention_weight: f32 = if attention_state.current_targets.contains(&entity_key) {
                 attention_state.focus_strength
             } else {
                 0.5 // Default weight for non-focused entities
@@ -322,7 +322,7 @@ impl SynapticHomeostasis {
     ) -> Result<Vec<MetaplasticityUpdate>> {
         let mut updates = Vec::new();
         
-        for (entity_key, &activity_level) in current_activity {
+        for (entity_key, &_activity_level) in current_activity {
             // Get recent learning history for this entity
             let learning_history = self.get_recent_learning_history(*entity_key).await?;
             

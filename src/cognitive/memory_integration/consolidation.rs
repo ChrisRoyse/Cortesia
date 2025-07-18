@@ -118,7 +118,7 @@ impl MemoryConsolidation {
     /// Evaluate consolidation trigger
     async fn evaluate_trigger(&self, trigger: &ConsolidationTrigger) -> Result<bool> {
         match trigger {
-            ConsolidationTrigger::TimeBasedTrigger(duration) => {
+            ConsolidationTrigger::TimeBasedTrigger(_duration) => {
                 // Check if enough time has passed since last consolidation
                 // This is a simplified check - in practice would track last consolidation time
                 Ok(true)
@@ -288,28 +288,28 @@ impl MemoryConsolidation {
     }
 
     /// Move item to short-term memory
-    async fn move_to_short_term_memory(&self, candidate: &ConsolidationCandidate) -> Result<()> {
+    async fn move_to_short_term_memory(&self, _candidate: &ConsolidationCandidate) -> Result<()> {
         // In practice, would implement actual short-term memory storage
         // For now, this is a placeholder
         Ok(())
     }
 
     /// Move item to long-term memory
-    async fn move_to_long_term_memory(&self, candidate: &ConsolidationCandidate) -> Result<()> {
+    async fn move_to_long_term_memory(&self, _candidate: &ConsolidationCandidate) -> Result<()> {
         // Add item to knowledge graph
         // This is a simplified implementation
         Ok(())
     }
 
     /// Move item to semantic memory
-    async fn move_to_semantic_memory(&self, candidate: &ConsolidationCandidate) -> Result<()> {
+    async fn move_to_semantic_memory(&self, _candidate: &ConsolidationCandidate) -> Result<()> {
         // Add item to SDR storage
         // This is a simplified implementation
         Ok(())
     }
 
     /// Move item to episodic memory
-    async fn move_to_episodic_memory(&self, candidate: &ConsolidationCandidate) -> Result<()> {
+    async fn move_to_episodic_memory(&self, _candidate: &ConsolidationCandidate) -> Result<()> {
         // Add item to episodic memory storage
         // This is a simplified implementation
         Ok(())
@@ -341,7 +341,7 @@ impl MemoryConsolidation {
     }
 
     /// Optimize consolidation parameters
-    pub async fn optimize_consolidation(&self, performance_data: &PerformanceAnalysis) -> Result<()> {
+    pub async fn optimize_consolidation(&self, _performance_data: &PerformanceAnalysis) -> Result<()> {
         // This would implement consolidation optimization based on performance data
         // For now, this is a placeholder
         Ok(())

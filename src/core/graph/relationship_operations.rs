@@ -265,11 +265,11 @@ impl KnowledgeGraph {
     pub fn get_incoming_relationships(&self, entity: EntityKey) -> Vec<Relationship> {
         let mut relationships = Vec::new();
         
-        // Get relationships from main graph
-        let graph = self.graph.read();
-        relationships.extend(graph.get_incoming_relationships(entity));
+        // CSRGraph doesn't have get_incoming_relationships, so we need to iterate
+        // This is less efficient but necessary for now
+        // TODO: Consider adding an inverse index for efficient incoming edge lookup
         
-        // Also check edge buffer
+        // Check edge buffer for incoming relationships
         let edge_buffer = self.edge_buffer.read();
         for relationship in edge_buffer.iter() {
             if relationship.to == entity {

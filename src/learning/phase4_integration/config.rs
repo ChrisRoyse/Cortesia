@@ -1,6 +1,5 @@
 //! Configuration and constraints for Phase 4 Learning System
 
-use super::types::*;
 use crate::learning::adaptive_learning::ResourceRequirement;
 use std::time::Duration;
 

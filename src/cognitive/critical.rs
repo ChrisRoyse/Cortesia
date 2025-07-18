@@ -484,7 +484,7 @@ impl CriticalThinking {
     }
     
     /// Format the critical analysis answer
-    fn format_critical_answer(&self, query: &str, result: &CriticalResult) -> String {
+    fn format_critical_answer(&self, _query: &str, result: &CriticalResult) -> String {
         let mut answer = String::new();
         
         // If no results found, be truthful

@@ -230,7 +230,7 @@ impl AbstractThinking {
         let stats = self.graph.get_brain_statistics().await?;
         
         // Get relationship counts by type
-        let mut most_common_types = Vec::new();
+        let most_common_types;
         
         // Count relationships by analyzing all entity connections
         let mut type_counts = std::collections::HashMap::new();
@@ -281,9 +281,9 @@ impl AbstractThinking {
     }
     
     fn calculate_structural_complexity(&self, stats: &crate::core::brain_enhanced_graph::BrainStatistics) -> f32 {
-        let entity_complexity = (stats.entity_count as f32).ln() / 10.0;
-        let relationship_complexity = (stats.relationship_count as f32).ln() / 10.0;
-        let gate_complexity = (stats.entity_count as f32 * 0.1).ln() / 10.0; // Approximate gate count
+        let entity_complexity = (stats.entity_count as f32).ln() as f32 / 10.0;
+        let relationship_complexity = (stats.relationship_count as f32).ln() as f32 / 10.0;
+        let gate_complexity = (stats.entity_count as f32 * 0.1).ln() as f32 / 10.0; // Approximate gate count
         
         (entity_complexity + relationship_complexity + gate_complexity) / 3.0
     }
@@ -295,14 +295,14 @@ impl AbstractThinking {
         
         let total = stats.entity_count as f32;
         // Approximate distribution based on clustering coefficient
-        let input_p = 0.3; // Approximate 30% input nodes
-        let output_p = 0.3; // Approximate 30% output nodes
-        let gate_p = 0.4; // Approximate 40% gate nodes
+        let input_p = 0.3f32; // Approximate 30% input nodes
+        let output_p = 0.3f32; // Approximate 30% output nodes
+        let gate_p = 0.4f32; // Approximate 40% gate nodes
         
         let mut entropy = 0.0;
-        if input_p > 0.0 { entropy -= input_p * input_p.ln(); }
-        if output_p > 0.0 { entropy -= output_p * output_p.ln(); }
-        if gate_p > 0.0 { entropy -= gate_p * gate_p.ln(); }
+        if input_p > 0.0 { entropy -= input_p * (input_p.ln()); }
+        if output_p > 0.0 { entropy -= output_p * (output_p.ln()); }
+        if gate_p > 0.0 { entropy -= gate_p * (gate_p.ln()); }
         
         entropy
     }
@@ -476,7 +476,7 @@ impl CognitivePattern for AbstractThinking {
         ]
     }
     
-    fn estimate_complexity(&self, query: &str) -> ComplexityEstimate {
+    fn estimate_complexity(&self, _query: &str) -> ComplexityEstimate {
         ComplexityEstimate {
             computational_complexity: 60,
             estimated_time_ms: 2000,

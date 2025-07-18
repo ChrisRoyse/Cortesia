@@ -323,9 +323,14 @@ impl ZeroCopySerializer {
 
     /// Add relationship to the serialization buffer
     pub fn add_relationship(&mut self, relationship: &Relationship) -> Result<()> {
+        // Convert EntityKey to u32 for storage
+        use slotmap::{Key, KeyData};
+        let from_data: KeyData = relationship.from.data();
+        let to_data: KeyData = relationship.to.data();
+        
         let zero_copy_rel = ZeroCopyRelationship {
-            from: relationship.from,
-            to: relationship.to,
+            from: from_data.as_ffi() as u32,
+            to: to_data.as_ffi() as u32,
             rel_type: relationship.rel_type,
             flags: 0,
             weight: relationship.weight,

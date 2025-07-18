@@ -365,7 +365,7 @@ impl NeuralPatternDetector {
         
         // Follow the chain forward
         loop {
-            let mut next_entity = None;
+            let next_entity;
             let mut candidates = Vec::new();
             
             for relationship in relationships.values() {

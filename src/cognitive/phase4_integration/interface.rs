@@ -2,7 +2,7 @@
 
 use super::types::*;
 use crate::cognitive::types::CognitivePatternType;
-use crate::learning::phase4_integration::{Phase4LearningSystem, ComprehensiveLearningResult};
+use crate::learning::phase4_integration::Phase4LearningSystem;
 use crate::learning::types::{
     PerformanceData as LearningPerformanceData
 };
@@ -306,7 +306,7 @@ impl CognitiveFeedbackProcessor {
         &self,
         pattern: CognitivePatternType,
         performance_data: &LearningPerformanceData,
-        context: &str,
+        _context: &str,
     ) -> Result<()> {
         // Process different types of feedback
         

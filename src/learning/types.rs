@@ -20,6 +20,7 @@ pub struct LearningResult {
 pub struct ActivationEvent {
     pub entity_key: EntityKey,
     pub activation_strength: f32,
+    #[serde(skip, default = "Instant::now")]
     pub timestamp: Instant,
     pub context: ActivationContext,
 }

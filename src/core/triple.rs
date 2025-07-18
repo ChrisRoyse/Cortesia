@@ -372,8 +372,8 @@ impl KnowledgeNode {
     /// Calculate quality score based on usage and content
     pub fn calculate_quality_score(&mut self) {
         let recency_factor = 1.0 - ((current_timestamp() - self.metadata.created_at) as f32 / (86400.0 * 365.0)); // Decay over year
-        let usage_factor = (self.metadata.access_count as f32).ln().max(0.0) / 10.0; // Log scale
-        let size_efficiency = 1.0 - (self.metadata.size_bytes as f32 / MAX_CHUNK_SIZE_BYTES as f32).min(1.0);
+        let usage_factor = ((self.metadata.access_count as f32).ln() as f32).max(0.0) / 10.0; // Log scale
+        let size_efficiency = 1.0 - (self.metadata.size_bytes as f32 / MAX_CHUNK_SIZE_BYTES as f32).min(1.0f32);
         
         self.metadata.quality_score = (recency_factor * 0.3 + usage_factor * 0.5 + size_efficiency * 0.2).clamp(0.0, 1.0);
     }

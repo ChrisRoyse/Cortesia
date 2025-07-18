@@ -121,7 +121,7 @@ impl SystemsThinking {
     ) -> Result<HierarchyTraversalInternal> {
         let mut path = vec![root];
         let mut inherited_attributes = Vec::new();
-        let mut exceptions = Vec::new();
+        let exceptions = Vec::new();
         let mut current_entity = root;
         let mut depth = 0;
         

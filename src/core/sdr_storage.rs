@@ -212,6 +212,17 @@ pub struct SDRStorage {
     config: SDRConfig,
 }
 
+impl std::fmt::Debug for SDRStorage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SDRStorage")
+            .field("patterns", &"Arc<RwLock<AHashMap>>")
+            .field("entity_patterns", &"Arc<RwLock<AHashMap>>")
+            .field("similarity_index", &"Arc<RwLock<SimilarityIndex>>")
+            .field("config", &self.config)
+            .finish()
+    }
+}
+
 impl SDRStorage {
     pub fn new(config: SDRConfig) -> Self {
         Self {

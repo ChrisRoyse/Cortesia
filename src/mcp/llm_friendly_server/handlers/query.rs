@@ -240,7 +240,7 @@ fn extract_key_terms(question: &str) -> Vec<String> {
     }
     
     // Look for question keywords and extract following terms
-    let question_lower = question.to_lowercase();
+    let _question_lower = question.to_lowercase();
     for (i, word) in words.iter().enumerate() {
         if matches!(word.to_lowercase().as_str(), "who" | "what" | "where" | "when" | "which") {
             if i + 1 < words.len() {
@@ -284,7 +284,7 @@ fn calculate_relevance(triple: &Triple, question: &str) -> f32 {
         score += 0.4;
     }
     
-    score.min(1.0)
+    f32::min(score, 1.0)
 }
 
 /// Generate an answer from relevant facts

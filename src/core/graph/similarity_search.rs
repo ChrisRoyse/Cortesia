@@ -20,11 +20,18 @@ impl KnowledgeGraph {
         }
         
         // Check cache first
-        let cache_key = QueryCacheKey::new(query_embedding, k);
+        let cache_key = QueryCacheKey::new(query_embedding, k, 16);
         {
-            let cache = self.similarity_cache.read();
+            let mut cache = self.similarity_cache.write();
             if let Some(cached_results) = cache.get(&cache_key) {
-                return Ok(cached_results.clone());
+                // Convert cached u32 results back to EntityKey
+                let entity_id_map = self.entity_id_map.read();
+                let converted_results = cached_results.iter()
+                    .filter_map(|(id, score)| {
+                        entity_id_map.get(id).map(|key| (*key, *score))
+                    })
+                    .collect();
+                return Ok(converted_results);
             }
         }
         
@@ -44,10 +51,19 @@ impl KnowledgeGraph {
             self.similarity_search_spatial(query_embedding, k)?
         };
         
-        // Cache results
+        // Cache results (convert EntityKey to u32 for caching)
         {
+            let entity_id_map = self.entity_id_map.read();
+            let cacheable_results: Vec<(u32, f32)> = results.iter()
+                .filter_map(|(key, score)| {
+                    // Find the u32 ID for this EntityKey
+                    entity_id_map.iter()
+                        .find(|(_, k)| *k == key)
+                        .map(|(id, _)| (*id, *score))
+                })
+                .collect();
             let mut cache = self.similarity_cache.write();
-            cache.insert(cache_key, results.clone());
+            cache.insert(cache_key, cacheable_results);
         }
         
         // Check if search took too long
@@ -72,11 +88,18 @@ impl KnowledgeGraph {
         }
         
         // Check cache first
-        let cache_key = QueryCacheKey::new(query_embedding, k);
+        let cache_key = QueryCacheKey::new(query_embedding, k, 16);
         {
-            let cache = self.similarity_cache.read();
+            let mut cache = self.similarity_cache.write();
             if let Some(cached_results) = cache.get(&cache_key) {
-                return Ok(cached_results.clone());
+                // Convert cached u32 results back to EntityKey
+                let entity_id_map = self.entity_id_map.read();
+                let converted_results = cached_results.iter()
+                    .filter_map(|(id, score)| {
+                        entity_id_map.get(id).map(|key| (*key, *score))
+                    })
+                    .collect();
+                return Ok(converted_results);
             }
         }
         
@@ -89,10 +112,19 @@ impl KnowledgeGraph {
             self.similarity_search(query_embedding, k)?
         };
         
-        // Cache results
+        // Cache results (convert EntityKey to u32 for caching)
         {
+            let entity_id_map = self.entity_id_map.read();
+            let cacheable_results: Vec<(u32, f32)> = results.iter()
+                .filter_map(|(key, score)| {
+                    // Find the u32 ID for this EntityKey
+                    entity_id_map.iter()
+                        .find(|(_, k)| *k == key)
+                        .map(|(id, _)| (*id, *score))
+                })
+                .collect();
             let mut cache = self.similarity_cache.write();
-            cache.insert(cache_key, results.clone());
+            cache.insert(cache_key, cacheable_results);
         }
         
         #[cfg(debug_assertions)]
@@ -104,25 +136,69 @@ impl KnowledgeGraph {
     /// Similarity search using flat index
     fn similarity_search_flat(&self, query_embedding: &[f32], k: usize) -> Result<Vec<(EntityKey, f32)>> {
         let flat_index = self.flat_index.read();
-        flat_index.search(query_embedding, k)
+        let results = flat_index.k_nearest_neighbors(query_embedding, k);
+        
+        // Convert u32 to EntityKey
+        let entity_id_map = self.entity_id_map.read();
+        let converted_results = results.into_iter()
+            .filter_map(|(id, score)| {
+                // Find the EntityKey for this u32 ID
+                entity_id_map.get(&id).map(|key| (*key, score))
+            })
+            .collect();
+        
+        Ok(converted_results)
     }
 
     /// Similarity search using HNSW index
     fn similarity_search_hnsw(&self, query_embedding: &[f32], k: usize) -> Result<Vec<(EntityKey, f32)>> {
         let hnsw_index = self.hnsw_index.read();
-        hnsw_index.search(query_embedding, k)
+        let results = hnsw_index.search(query_embedding, k);
+        
+        // Convert u32 to EntityKey
+        let entity_id_map = self.entity_id_map.read();
+        let converted_results = results.into_iter()
+            .filter_map(|(id, score)| {
+                // Find the EntityKey for this u32 ID
+                entity_id_map.get(&id).map(|key| (*key, score))
+            })
+            .collect();
+        
+        Ok(converted_results)
     }
 
     /// Similarity search using LSH index
     fn similarity_search_lsh(&self, query_embedding: &[f32], k: usize) -> Result<Vec<(EntityKey, f32)>> {
         let lsh_index = self.lsh_index.read();
-        lsh_index.search(query_embedding, k)
+        let results = lsh_index.search(query_embedding, k);
+        
+        // Convert u32 to EntityKey
+        let entity_id_map = self.entity_id_map.read();
+        let converted_results = results.into_iter()
+            .filter_map(|(id, score)| {
+                // Find the EntityKey for this u32 ID
+                entity_id_map.get(&id).map(|key| (*key, score))
+            })
+            .collect();
+        
+        Ok(converted_results)
     }
 
     /// Similarity search using spatial index
     fn similarity_search_spatial(&self, query_embedding: &[f32], k: usize) -> Result<Vec<(EntityKey, f32)>> {
         let spatial_index = self.spatial_index.read();
-        spatial_index.search(query_embedding, k)
+        let results = spatial_index.k_nearest_neighbors(query_embedding, k);
+        
+        // Convert u32 to EntityKey
+        let entity_id_map = self.entity_id_map.read();
+        let converted_results = results.into_iter()
+            .filter_map(|(id, score)| {
+                // Find the EntityKey for this u32 ID
+                entity_id_map.get(&id).map(|key| (*key, score))
+            })
+            .collect();
+        
+        Ok(converted_results)
     }
 
     /// Parallel similarity search implementation
@@ -339,7 +415,7 @@ impl KnowledgeGraph {
         for key in entity_keys {
             if let Some(meta) = entity_store.get(key) {
                 let offset = meta.embedding_offset as usize;
-                let quantized_size = quantizer.encoded_size();
+                let quantized_size = quantizer.num_subspaces();
                 
                 if offset + quantized_size <= embedding_bank.len() {
                     let quantized_embedding = &embedding_bank[offset..offset + quantized_size];

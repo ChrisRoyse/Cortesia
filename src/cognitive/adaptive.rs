@@ -161,7 +161,7 @@ impl CognitivePattern for AdaptiveThinking {
         &self,
         query: &str,
         context: Option<&str>,
-        parameters: PatternParameters,
+        _parameters: PatternParameters,
     ) -> Result<PatternResult> {
         let start_time = Instant::now();
         
@@ -213,7 +213,7 @@ impl CognitivePattern for AdaptiveThinking {
         ]
     }
     
-    fn estimate_complexity(&self, query: &str) -> ComplexityEstimate {
+    fn estimate_complexity(&self, _query: &str) -> ComplexityEstimate {
         ComplexityEstimate {
             computational_complexity: 80,
             estimated_time_ms: 3000,

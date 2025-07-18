@@ -180,7 +180,11 @@ impl BrainEnhancedKnowledgeGraph {
     /// Generate path signature for deduplication
     fn generate_path_signature(&self, path: &[EntityKey]) -> String {
         path.iter()
-            .map(|key| key.data().as_ffi().to_string())
+            .map(|key| {
+                use slotmap::{Key, KeyData};
+                let key_data: KeyData = key.data();
+                key_data.as_ffi().to_string()
+            })
             .collect::<Vec<_>>()
             .join("-")
     }

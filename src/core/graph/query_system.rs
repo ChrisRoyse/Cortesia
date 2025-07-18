@@ -3,6 +3,7 @@
 use super::graph_core::{KnowledgeGraph, MAX_QUERY_TIME};
 use crate::core::types::{EntityKey, EntityData, QueryResult, ContextEntity};
 use crate::error::{GraphError, Result};
+use crate::embedding::similarity::cosine_similarity;
 use std::time::Instant;
 use std::collections::HashMap;
 
@@ -25,9 +26,7 @@ impl KnowledgeGraph {
         // Step 2: Build context entity map
         let mut context_map = HashMap::new();
         for context_entity in context_entities {
-            if let Some(key) = self.get_entity_key(context_entity.id) {
-                context_map.insert(key, context_entity);
-            }
+            context_map.insert(context_entity.id, context_entity);
         }
         
         // Step 3: Score entities based on similarity and context
@@ -53,15 +52,32 @@ impl KnowledgeGraph {
         }
         
         // Step 6: Build query result
-        let entities: Vec<(EntityKey, EntityData)> = scored_entities
+        let entities: Vec<ContextEntity> = scored_entities
             .into_iter()
-            .map(|(key, _, _, data)| (key, data))
+            .map(|(key, score, _, data)| {
+                // Convert to ContextEntity
+                let neighbors = self.get_neighbors(key);
+                ContextEntity {
+                    id: key,
+                    similarity: score,
+                    neighbors,
+                    properties: format!("{:?}", data.properties), // Convert properties to string
+                }
+            })
             .collect();
+        
+        // Calculate overall confidence based on top scores
+        let confidence = if entities.is_empty() {
+            0.0
+        } else {
+            entities.iter().map(|e| e.similarity).sum::<f32>() / entities.len() as f32
+        };
         
         let result = QueryResult {
             entities,
             relationships: result_relationships,
-            query_time: start_time.elapsed(),
+            confidence,
+            query_time_ms: start_time.elapsed().as_millis() as u64,
         };
         
         // Check if query took too long
@@ -93,7 +109,13 @@ impl KnowledgeGraph {
         for (entity_key, similarity) in similar_entities {
             if let Some((_, data)) = self.get_entity(entity_key) {
                 if filter(entity_key, &data) {
-                    filtered_entities.push((entity_key, data));
+                    let neighbors = self.get_neighbors(entity_key);
+                    filtered_entities.push(ContextEntity {
+                        id: entity_key,
+                        similarity,
+                        neighbors,
+                        properties: format!("{:?}", data.properties),
+                    });
                 }
             }
             
@@ -104,15 +126,23 @@ impl KnowledgeGraph {
         
         // Collect relationships
         let mut result_relationships = Vec::new();
-        for (entity_key, _) in &filtered_entities {
-            let relationships = self.get_entity_relationships(*entity_key);
+        for entity in &filtered_entities {
+            let relationships = self.get_entity_relationships(entity.id);
             result_relationships.extend(relationships);
         }
+        
+        // Calculate confidence
+        let confidence = if filtered_entities.is_empty() {
+            0.0
+        } else {
+            filtered_entities.iter().map(|e| e.similarity).sum::<f32>() / filtered_entities.len() as f32
+        };
         
         Ok(QueryResult {
             entities: filtered_entities,
             relationships: result_relationships,
-            query_time: start_time.elapsed(),
+            confidence,
+            query_time_ms: start_time.elapsed().as_millis() as u64,
         })
     }
 
@@ -168,7 +198,7 @@ impl KnowledgeGraph {
                         if let Some((_, data)) = self.get_entity(neighbor) {
                             // Score neighbor based on similarity to query
                             if let Some(neighbor_embedding) = self.get_entity_embedding(neighbor) {
-                                let similarity = self.calculate_cosine_similarity(query_embedding, &neighbor_embedding);
+                                let similarity = cosine_similarity(query_embedding, &neighbor_embedding);
                                 if similarity > 0.5 { // Threshold for relevance
                                     all_entities.insert(neighbor, data);
                                     next_entities.push(neighbor);
@@ -192,12 +222,23 @@ impl KnowledgeGraph {
         }
         
         // Convert to result format
-        let entities: Vec<(EntityKey, EntityData)> = all_entities.into_iter().collect();
+        let entities: Vec<ContextEntity> = all_entities.into_iter()
+            .map(|(key, data)| {
+                let neighbors = self.get_neighbors(key);
+                ContextEntity {
+                    id: key,
+                    similarity: 0.0, // Will be calculated separately if needed
+                    neighbors,
+                    properties: data.properties.to_string(),
+                }
+            })
+            .collect();
         
         Ok(QueryResult {
             entities,
             relationships: all_relationships,
-            query_time: start_time.elapsed(),
+            confidence: 1.0, // Default confidence
+            query_time_ms: start_time.elapsed().as_millis() as u64,
         })
     }
 
@@ -215,7 +256,13 @@ impl KnowledgeGraph {
         for (entity_key, similarity) in similar_entities {
             if neighbors.contains(&entity_key) {
                 if let Some((_, data)) = self.get_entity(entity_key) {
-                    filtered_entities.push((entity_key, data));
+                    let entity_neighbors = self.get_neighbors(entity_key);
+                    filtered_entities.push(ContextEntity {
+                        id: entity_key,
+                        similarity,
+                        neighbors: entity_neighbors,
+                        properties: format!("{:?}", data.properties),
+                    });
                 }
             }
             
@@ -226,15 +273,23 @@ impl KnowledgeGraph {
         
         // Collect relationships
         let mut result_relationships = Vec::new();
-        for (entity_key, _) in &filtered_entities {
-            let relationships = self.get_entity_relationships(*entity_key);
+        for entity in &filtered_entities {
+            let relationships = self.get_entity_relationships(entity.id);
             result_relationships.extend(relationships);
         }
+        
+        // Calculate confidence
+        let confidence = if filtered_entities.is_empty() {
+            0.0
+        } else {
+            filtered_entities.iter().map(|e| e.similarity).sum::<f32>() / filtered_entities.len() as f32
+        };
         
         Ok(QueryResult {
             entities: filtered_entities,
             relationships: result_relationships,
-            query_time: start_time.elapsed(),
+            confidence,
+            query_time_ms: start_time.elapsed().as_millis() as u64,
         })
     }
 
@@ -249,7 +304,7 @@ impl KnowledgeGraph {
         let mut scored_entities = Vec::new();
         for entity_key in entities_within_distance {
             if let Some(embedding) = self.get_entity_embedding(entity_key) {
-                let similarity = self.calculate_cosine_similarity(query_embedding, &embedding);
+                let similarity = cosine_similarity(query_embedding, &embedding);
                 if let Some((_, data)) = self.get_entity(entity_key) {
                     scored_entities.push((entity_key, similarity, data));
                 }
@@ -267,15 +322,31 @@ impl KnowledgeGraph {
             result_relationships.extend(relationships);
         }
         
-        let entities: Vec<(EntityKey, EntityData)> = scored_entities
-            .into_iter()
-            .map(|(key, _, data)| (key, data))
+        let entities: Vec<ContextEntity> = scored_entities
+            .iter()
+            .map(|(key, similarity, data)| {
+                let neighbors = self.get_neighbors(*key);
+                ContextEntity {
+                    id: *key,
+                    similarity: *similarity,
+                    neighbors,
+                    properties: data.properties.clone(),
+                }
+            })
             .collect();
+        
+        // Calculate confidence from scored entities
+        let confidence = if scored_entities.is_empty() {
+            0.0
+        } else {
+            scored_entities.iter().map(|(_, sim, _)| sim).sum::<f32>() / scored_entities.len() as f32
+        };
         
         Ok(QueryResult {
             entities,
             relationships: result_relationships,
-            query_time: start_time.elapsed(),
+            confidence,
+            query_time_ms: start_time.elapsed().as_millis() as u64,
         })
     }
 
@@ -289,7 +360,7 @@ impl KnowledgeGraph {
         // Score based on connections to context entities
         for neighbor in neighbors {
             if let Some(context_entity) = context_map.get(&neighbor) {
-                score += context_entity.weight;
+                score += context_entity.similarity;
             }
         }
         
@@ -345,11 +416,11 @@ impl KnowledgeGraph {
         
         // Validate k parameter
         if k == 0 {
-            return Err(GraphError::InvalidParameter("k must be greater than 0".to_string()));
+            return Err(GraphError::InvalidInput("k must be greater than 0".to_string()));
         }
         
         if k > self.entity_count() {
-            return Err(GraphError::InvalidParameter(
+            return Err(GraphError::InvalidInput(
                 format!("k ({}) cannot be greater than entity count ({})", k, self.entity_count())
             ));
         }

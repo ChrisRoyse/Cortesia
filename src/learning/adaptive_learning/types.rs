@@ -1,7 +1,7 @@
 //! Type definitions for adaptive learning system
 
 use crate::cognitive::types::CognitivePatternType;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 

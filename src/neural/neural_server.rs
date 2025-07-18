@@ -110,6 +110,17 @@ pub struct NeuralProcessingServer {
     pub request_queue: Arc<Mutex<VecDeque<NeuralRequest>>>,
 }
 
+impl std::fmt::Debug for NeuralProcessingServer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NeuralProcessingServer")
+            .field("endpoint", &self.endpoint)
+            .field("connection_pool", &"Arc<Mutex<Vec<TcpStream>>>")
+            .field("model_registry", &"Arc<Mutex<AHashMap>>")
+            .field("request_queue", &"Arc<Mutex<VecDeque>>")
+            .finish()
+    }
+}
+
 impl NeuralProcessingServer {
     pub async fn new(endpoint: String) -> Result<Self> {
         Ok(Self {

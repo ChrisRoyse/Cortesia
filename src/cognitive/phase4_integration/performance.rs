@@ -2,7 +2,6 @@
 
 use super::types::*;
 use crate::cognitive::types::CognitivePatternType;
-use std::sync::RwLock;
 use std::collections::HashMap;
 use std::time::SystemTime;
 use anyhow::Result;

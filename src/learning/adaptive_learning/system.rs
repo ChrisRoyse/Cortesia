@@ -1,6 +1,6 @@
 //! Main adaptive learning system implementation
 
-use super::types::{AdaptiveLearningConfig, QueryMetrics, CognitiveMetrics, SystemMetrics, PerformanceBottleneck as AdaptivePerformanceBottleneck, AdaptationRecord, AdaptationType, LearningTarget, LearningTargetType, SatisfactionAnalysis, CorrelationAnalysis, LearningTaskType, EmergencyContext, EmergencyTrigger, PerformanceSnapshot};
+use super::types::{AdaptiveLearningConfig, PerformanceBottleneck as AdaptivePerformanceBottleneck, AdaptationRecord, AdaptationType, LearningTarget, LearningTargetType, SatisfactionAnalysis, CorrelationAnalysis, LearningTaskType, EmergencyContext, EmergencyTrigger, PerformanceSnapshot, BottleneckType};
 use super::monitoring::PerformanceMonitor;
 use super::feedback::FeedbackAggregator;
 use super::scheduler::LearningScheduler;
@@ -8,14 +8,9 @@ use crate::cognitive::orchestrator::CognitiveOrchestrator;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
-use crate::learning::hebbian::{HebbianLearningEngine, CoactivationTracker, LearningStatistics};
+use crate::learning::hebbian::HebbianLearningEngine;
 use crate::learning::optimization_agent::GraphOptimizationAgent;
-use crate::learning::types::*;
-use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
-use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::activation_engine::ActivationPropagationEngine;
 
-use std::collections::VecDeque;
 use std::sync::{Arc, RwLock, Mutex};
 use std::time::SystemTime;
 use anyhow::Result;
@@ -40,37 +35,9 @@ pub struct AdaptiveLearningSystem {
 impl AdaptiveLearningSystem {
     /// Create new adaptive learning system
     pub fn new() -> Result<Self> {
-        let config = AdaptiveLearningConfig::default();
-        
-        // Note: This is a simplified initialization
-        // In a real implementation, these components would be properly initialized
-        // with their required dependencies (brain graph, activation engine, etc.)
-        Ok(Self {
-            integrated_cognitive_system: Arc::new(Phase3IntegratedCognitiveSystem::default()),
-            working_memory: Arc::new(WorkingMemorySystem::default()),
-            attention_manager: Arc::new(AttentionManager::default()),
-            orchestrator: Arc::new(CognitiveOrchestrator::default()),
-            // These would need proper initialization in production
-            hebbian_engine: Arc::new(Mutex::new(HebbianLearningEngine {
-                brain_graph: Arc::new(BrainEnhancedKnowledgeGraph::default()),
-                activation_engine: Arc::new(ActivationPropagationEngine::default()),
-                inhibition_system: Arc::new(CompetitiveInhibitionSystem::default()),
-                learning_rate: 0.01,
-                decay_constant: 0.001,
-                strengthening_threshold: 0.7,
-                weakening_threshold: 0.3,
-                max_weight: 1.0,
-                min_weight: 0.0,
-                learning_statistics: Arc::new(RwLock::new(LearningStatistics::new())),
-                coactivation_tracker: Arc::new(RwLock::new(CoactivationTracker::new())),
-            })),
-            optimization_agent: Arc::new(Mutex::new(GraphOptimizationAgent::default())),
-            performance_monitor: Arc::new(PerformanceMonitor::default()),
-            feedback_aggregator: Arc::new(FeedbackAggregator::default()),
-            learning_scheduler: Arc::new(LearningScheduler::default()),
-            adaptation_history: Arc::new(RwLock::new(Vec::new())),
-            learning_config: config,
-        })
+        // For now, return an error indicating that proper initialization is required
+        // This prevents the use of uninitialized components
+        anyhow::bail!("AdaptiveLearningSystem requires proper initialization with components. Use new_with_components() instead.")
     }
     
     /// Execute learning cycle
@@ -78,10 +45,10 @@ impl AdaptiveLearningSystem {
         let cycle_start = SystemTime::now();
         
         // Step 1: Collect current performance metrics
-        let performance_snapshot = self.performance_monitor.get_current_snapshot()?;
+        let _performance_snapshot = self.performance_monitor.get_current_snapshot()?;
         
         // Step 2: Aggregate feedback
-        let aggregated_feedback = self.feedback_aggregator.aggregate_feedback()?;
+        let _aggregated_feedback = self.feedback_aggregator.aggregate_feedback()?;
         
         // Step 3: Analyze performance bottlenecks
         let bottlenecks = self.performance_monitor.detect_anomalies()?;
@@ -250,7 +217,7 @@ impl AdaptiveLearningSystem {
     /// Execute structure optimization
     async fn execute_structure_optimization(&self) -> Result<bool> {
         // Attempt to optimize with the optimization agent
-        if let Ok(mut agent) = self.optimization_agent.try_lock() {
+        if let Ok(_agent) = self.optimization_agent.try_lock() {
             // Simplified optimization - would be more complex in practice
             println!("Executing structure optimization");
             Ok(true)
@@ -552,6 +519,7 @@ impl Default for PerformanceSnapshot {
 
 impl Default for AdaptiveLearningSystem {
     fn default() -> Self {
-        Self::new().unwrap()
+        // Cannot provide a default implementation without proper components
+        panic!("AdaptiveLearningSystem cannot be default-constructed. Use new_with_components() with proper initialization.")
     }
 }

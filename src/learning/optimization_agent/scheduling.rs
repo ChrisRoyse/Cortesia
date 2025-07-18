@@ -174,7 +174,7 @@ impl OptimizationScheduler {
             _ => {},
         }
         
-        impact.min(1.0)
+        f32::min(impact, 1.0)
     }
 
     /// Calculate urgency multiplier
@@ -308,8 +308,13 @@ impl OptimizationScheduler {
 
     /// Cancel scheduled optimization
     pub fn cancel_optimization(&mut self, optimization_id: &str) -> bool {
-        let pending_removed = self.pending_optimizations.retain(|opt| opt.optimization_id != optimization_id);
-        let queue_removed = self.priority_queue.retain(|item| item.optimization_id != optimization_id);
+        let pending_len_before = self.pending_optimizations.len();
+        self.pending_optimizations.retain(|opt| opt.optimization_id != optimization_id);
+        let pending_removed = pending_len_before != self.pending_optimizations.len();
+        
+        let queue_len_before = self.priority_queue.len();
+        self.priority_queue.retain(|item| item.optimization_id != optimization_id);
+        let queue_removed = queue_len_before != self.priority_queue.len();
         
         pending_removed || queue_removed
     }

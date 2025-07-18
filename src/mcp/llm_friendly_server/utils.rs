@@ -38,10 +38,10 @@ pub fn calculate_efficiency_score(memory_stats: &MemoryStats) -> f64 {
         return 1.0;
     }
     
-    let entities_per_mb = memory_stats.entity_count as f64 / 
+    let entities_per_mb = memory_stats.total_nodes as f64 / 
         (memory_stats.total_bytes as f64 / 1_048_576.0);
     
-    let relationships_per_mb = memory_stats.relationship_count as f64 / 
+    let relationships_per_mb = memory_stats.total_triples as f64 / 
         (memory_stats.total_bytes as f64 / 1_048_576.0);
     
     // Normalize scores (assuming good efficiency is 1000+ items per MB)
@@ -152,7 +152,7 @@ pub fn generate_error_suggestions(method: &str) -> Vec<String> {
 }
 
 /// Generate suggestions based on current state
-pub fn generate_suggestions(suggestion_type: &str, focus_area: Option<&str>) -> Vec<String> {
+pub fn generate_suggestions(suggestion_type: &str, _focus_area: Option<&str>) -> Vec<String> {
     match suggestion_type {
         "missing_facts" => vec![
             "Consider adding birth/death dates for people".to_string(),

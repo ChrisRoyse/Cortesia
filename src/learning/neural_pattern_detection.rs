@@ -14,7 +14,6 @@ use futures;
 use async_trait::async_trait;
 
 /// Enhanced neural pattern detection for Phase 4 learning
-#[derive(Debug, Clone)]
 pub struct NeuralPatternDetectionSystem {
     pub brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
     pub neural_server: Arc<NeuralProcessingServer>,
@@ -22,6 +21,32 @@ pub struct NeuralPatternDetectionSystem {
     pub pattern_cache: Arc<RwLock<PatternCache>>,
     pub detection_config: PatternDetectionConfig,
     pub pattern_models: HashMap<String, String>, // Model IDs for different patterns
+}
+
+impl std::fmt::Debug for NeuralPatternDetectionSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NeuralPatternDetectionSystem")
+            .field("brain_graph", &"BrainEnhancedKnowledgeGraph")
+            .field("neural_server", &self.neural_server)
+            .field("pattern_detectors", &self.pattern_detectors.keys().collect::<Vec<_>>())
+            .field("pattern_cache", &"Arc<RwLock<PatternCache>>")
+            .field("detection_config", &self.detection_config)
+            .field("pattern_models", &self.pattern_models)
+            .finish()
+    }
+}
+
+impl Clone for NeuralPatternDetectionSystem {
+    fn clone(&self) -> Self {
+        Self {
+            brain_graph: self.brain_graph.clone(),
+            neural_server: self.neural_server.clone(),
+            pattern_detectors: HashMap::new(), // Can't clone trait objects
+            pattern_cache: self.pattern_cache.clone(),
+            detection_config: self.detection_config.clone(),
+            pattern_models: self.pattern_models.clone(),
+        }
+    }
 }
 
 /// Core pattern detection trait
@@ -32,7 +57,7 @@ pub trait PatternDetector: Send + Sync {
     fn get_confidence_threshold(&self) -> f32;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PatternType {
     ActivationPattern,
     FrequencyPattern,
@@ -419,16 +444,21 @@ impl NeuralPatternDetectionSystem {
         // Remove oldest entries until cache is within size limit
         let target_size = cache.max_cache_size * 80 / 100; // Keep 80% of max
         
-        let mut entries: Vec<_> = cache.cached_patterns.iter().collect();
-        entries.sort_by_key(|(_, result)| result.timestamp);
-        
         let entries_to_remove = cache.cached_patterns.len().saturating_sub(target_size);
-        let keys_to_remove: Vec<_> = entries.iter()
-            .take(entries_to_remove)
-            .map(|(key, _)| key.clone())
-            .collect();
-        for key in keys_to_remove {
-            cache.cached_patterns.remove(&key);
+        if entries_to_remove > 0 {
+            let mut entries: Vec<_> = cache.cached_patterns.iter()
+                .map(|(key, result)| (key.clone(), result.timestamp))
+                .collect();
+            entries.sort_by_key(|(_, timestamp)| *timestamp);
+            
+            let keys_to_remove: Vec<_> = entries.iter()
+                .take(entries_to_remove)
+                .map(|(key, _)| key.clone())
+                .collect();
+            
+            for key in keys_to_remove {
+                cache.cached_patterns.remove(key.as_str());
+            }
         }
     }
 
@@ -477,7 +507,26 @@ impl PatternDetector for ActivationPatternDetector {
         
         // Get current activation states from brain graph
         let entities = if scope.entities.is_empty() {
-            self.brain_graph.get_all_entities().await?
+            // Get all entities and convert them to BrainInspiredEntity
+            let all_entities = self.brain_graph.get_all_entities().await;
+            let mut entities = Vec::new();
+            for (entity_key, entity_data, activation) in all_entities {
+                entities.push(BrainInspiredEntity {
+                    id: entity_key,
+                    concept_id: {
+                        use slotmap::{Key, KeyData};
+                        let key_data: KeyData = entity_key.data();
+                        format!("concept_{}", key_data.as_ffi())
+                    },
+                    properties: serde_json::from_str(&entity_data.properties).unwrap_or_default(),
+                    embedding: entity_data.embedding,
+                    activation_state: activation,
+                    direction: crate::core::brain_types::EntityDirection::Input,
+                    last_activation: SystemTime::now(),
+                    last_update: SystemTime::now(),
+                });
+            }
+            entities
         } else {
             // Get specific entities
             let mut entities = Vec::new();
@@ -485,7 +534,11 @@ impl PatternDetector for ActivationPatternDetector {
                 // In practice, would get entity from brain graph
                 entities.push(BrainInspiredEntity {
                     id: *entity_key,
-                    concept_id: format!("concept_{}", entity_key.data().as_ffi()),
+                    concept_id: {
+                        use slotmap::{Key, KeyData};
+                        let key_data: KeyData = entity_key.data();
+                        format!("concept_{}", key_data.as_ffi())
+                    },
                     properties: HashMap::new(),
                     embedding: vec![0.0; 128],
                     activation_state: 0.5,
@@ -550,7 +603,7 @@ impl PatternDetector for FrequencyPatternDetector {
         ).await?;
         
         // Decode neural predictions
-        if let Some(&frequency_score) = neural_prediction.first() {
+        if let Some(&frequency_score) = neural_prediction.prediction.first() {
             if frequency_score > 0.7 {
                 patterns.push(DetectedPattern {
                     pattern_id: Uuid::new_v4(),
@@ -656,7 +709,7 @@ impl PatternDetector for OscillatoryPatternDetector {
             ).await?;
             
             // Decode neural predictions
-            if let Some(&oscillation_score) = neural_prediction.first() {
+            if let Some(&oscillation_score) = neural_prediction.prediction.first() {
                 if oscillation_score > 0.7 {
                     patterns.push(DetectedPattern {
                         pattern_id: uuid::Uuid::new_v4(),
@@ -703,7 +756,7 @@ impl PatternDetector for TemporalPatternDetector {
             ).await?;
             
             // Decode temporal predictions
-            if let Some(&temporal_score) = neural_prediction.first() {
+            if let Some(&temporal_score) = neural_prediction.prediction.first() {
                 if temporal_score > 0.6 {
                     patterns.push(DetectedPattern {
                         pattern_id: uuid::Uuid::new_v4(),

@@ -69,7 +69,7 @@ pub fn calculate_efficiency_score(competition_results: &[GroupCompetitionResult]
 /// Calculate effectiveness score based on final activation pattern
 pub fn calculate_effectiveness_score(
     pattern: &ActivationPattern,
-    competition_results: &[GroupCompetitionResult],
+    _competition_results: &[GroupCompetitionResult],
 ) -> f32 {
     // Effectiveness measures how well the inhibition achieved its goals:
     // 1. Appropriate sparsity (not too dense, not too sparse)

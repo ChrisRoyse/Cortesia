@@ -176,7 +176,9 @@ impl RollbackManager {
         let mut hash = 0u64;
         
         for entity_key in entity_keys {
-            hash = hash.wrapping_mul(31).wrapping_add(entity_key.data().as_ffi() as u64);
+            use slotmap::{Key, KeyData};
+            let key_data: KeyData = entity_key.data();
+            hash = hash.wrapping_mul(31).wrapping_add(key_data.as_ffi() as u64);
         }
         
         hash = hash.wrapping_mul(31).wrapping_add(relationship_count as u64);
@@ -451,7 +453,7 @@ impl ImpactPredictor {
     fn predict_side_effects(
         &self,
         opportunity: &OptimizationOpportunity,
-        current_metrics: &PerformanceMetrics,
+        _current_metrics: &PerformanceMetrics,
     ) -> Vec<SideEffect> {
         let mut side_effects = Vec::new();
         

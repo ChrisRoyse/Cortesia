@@ -1,7 +1,7 @@
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::activation_engine::ActivationPropagationEngine;
 use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
-use crate::core::types::BrainInspiredRelationship;
+use crate::core::brain_types::BrainInspiredRelationship;
 use crate::core::types::EntityKey;
 use crate::learning::types::*;
 
@@ -200,7 +200,7 @@ impl HebbianLearningEngine {
     async fn calculate_correlation_updates(
         &self,
         activation_events: &[ActivationEvent],
-        learning_context: &LearningContext,
+        _learning_context: &LearningContext,
     ) -> Result<Vec<CorrelationUpdate>> {
         let mut updates = Vec::new();
         let tracker = self.coactivation_tracker.read().unwrap();

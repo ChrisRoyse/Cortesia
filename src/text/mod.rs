@@ -68,7 +68,7 @@ impl TextCompressor {
         let total_words = words.len() as f32;
         for (word, freq) in word_freq {
             let tf = freq as f32 / total_words;
-            let idf = (total_words / (freq as f32 + 1.0)).ln();
+            let idf = (total_words / (freq as f32 + 1.0)).ln() as f32;
             scores.insert(word, tf * idf);
         }
         

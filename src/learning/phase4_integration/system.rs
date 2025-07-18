@@ -50,7 +50,7 @@ pub struct Phase4LearningSystem {
 
 impl Phase4LearningSystem {
     /// Create new Phase 4 learning system
-    pub fn new(
+    pub async fn new(
         integrated_cognitive_system: Arc<Phase3IntegratedCognitiveSystem>,
         brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
         sdr_storage: Arc<SDRStorage>,
@@ -62,10 +62,36 @@ impl Phase4LearningSystem {
         
         // Initialize learning engines
         // Note: In production, these would be properly initialized with all dependencies
-        let activation_engine = Arc::new(ActivationPropagationEngine::default());
-        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::default());
-        let attention_manager = Arc::new(AttentionManager::default());
-        let working_memory = Arc::new(WorkingMemorySystem::default());
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(
+            crate::core::activation_engine::ActivationConfig::default()
+        ));
+        // Create critical thinking system for inhibition
+        let critical_thinking = Arc::new(crate::cognitive::critical::CriticalThinking::new(
+            brain_graph.clone(),
+        ));
+        
+        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::new(
+            activation_engine.clone(),
+            critical_thinking.clone(),
+        ));
+        // Create a temporary orchestrator for attention manager
+        let orchestrator = Arc::new(crate::cognitive::orchestrator::CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            crate::cognitive::orchestrator::CognitiveOrchestratorConfig::default(),
+        ).await?);
+        
+        let attention_manager = Arc::new(AttentionManager::new(
+            orchestrator.clone(),
+            activation_engine.clone(),
+            Arc::new(WorkingMemorySystem::new(
+                activation_engine.clone(),
+                sdr_storage.clone(),
+            ).await?),
+        ).await?);
+        let working_memory = Arc::new(WorkingMemorySystem::new(
+            activation_engine.clone(),
+            sdr_storage.clone(),
+        ).await?);
         
         let hebbian_engine = Arc::new(Mutex::new(
             HebbianLearningEngine::new(
@@ -201,19 +227,19 @@ impl Phase4LearningSystem {
     /// Perform coordinated learning across all systems
     async fn perform_coordinated_learning(
         &self,
-        strategy: &LearningStrategy,
+        _strategy: &LearningStrategy,
         coordination: &CoordinationResult,
     ) -> Result<CoordinatedLearningResults> {
         let mut hebbian_results = None;
         let mut homeostasis_results = None;
-        let mut optimization_results = None;
+        let optimization_results = None;
         let mut adaptive_results = None;
         
         // Execute learning based on participants
         for participant in &coordination.participants_activated {
             match participant {
                 LearningParticipant::HebbianEngine => {
-                    if let Ok(engine) = self.hebbian_engine.try_lock() {
+                    if let Ok(_engine) = self.hebbian_engine.try_lock() {
                         // Simplified hebbian learning execution
                         hebbian_results = Some(HebbianLearningResult {
                             connections_updated: 150,
@@ -224,7 +250,7 @@ impl Phase4LearningSystem {
                     }
                 },
                 LearningParticipant::HomeostasisSystem => {
-                    if let Ok(system) = self.homeostasis_system.try_lock() {
+                    if let Ok(_system) = self.homeostasis_system.try_lock() {
                         // Simplified homeostasis execution
                         homeostasis_results = Some(HomeostasisResult {
                             synapses_normalized: 25,
@@ -235,7 +261,7 @@ impl Phase4LearningSystem {
                     }
                 },
                 LearningParticipant::AdaptiveLearning => {
-                    if let Ok(adaptive) = self.adaptive_learning.try_lock() {
+                    if let Ok(_adaptive) = self.adaptive_learning.try_lock() {
                         // Simplified adaptive learning execution
                         adaptive_results = Some(AdaptiveLearningResult {
                             cycle_id: Uuid::new_v4(),
@@ -366,7 +392,7 @@ impl Phase4LearningSystem {
         _adaptation_result: &SystemParameterAdaptation,
     ) -> Result<ValidationResult> {
         // Measure current performance
-        let current_performance = self.measure_current_performance().await?;
+        let _current_performance = self.measure_current_performance().await?;
         
         // For now, assume validation passes
         Ok(ValidationResult {

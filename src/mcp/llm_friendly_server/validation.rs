@@ -108,7 +108,7 @@ pub async fn validate_consistency(
 
 /// Validate sources and credibility
 pub async fn validate_sources(
-    triple: &Triple,
+    _triple: &Triple,
     source: Option<&str>,
 ) -> Result<Vec<String>> {
     let mut sources = Vec::new();
@@ -127,8 +127,8 @@ pub async fn validate_sources(
 
 /// Validate with LLM assistance (placeholder)
 pub async fn validate_with_llm(
-    triple: &Triple,
-    context: &str,
+    _triple: &Triple,
+    _context: &str,
 ) -> Result<ValidationResult> {
     // In a real implementation, this would:
     // 1. Use an LLM to check factual accuracy

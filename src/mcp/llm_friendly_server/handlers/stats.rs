@@ -287,7 +287,7 @@ fn calculate_storage_optimization(memory_stats: &MemoryStats) -> f64 {
         return 1.0;
     }
     
-    let entities_per_byte = memory_stats.entity_count as f64 / memory_stats.total_bytes as f64;
+    let entities_per_byte = memory_stats.total_nodes as f64 / memory_stats.total_bytes as f64;
     
     // Normalize to 0-1 scale (assuming 0.01 entities per byte is excellent)
     (entities_per_byte / 0.01).min(1.0)

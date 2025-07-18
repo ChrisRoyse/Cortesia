@@ -336,7 +336,7 @@ impl AdaptationEngine {
     
     /// Monitor adaptation effectiveness
     async fn monitor_adaptations(&self, events: &[AdaptationEvent]) -> Result<()> {
-        let mut monitor = self.adaptation_monitor.clone();
+        let _monitor = self.adaptation_monitor.clone();
         
         for event in events {
             // Calculate effectiveness
@@ -351,7 +351,7 @@ impl AdaptationEngine {
             monitoring_metrics.insert(event.rule_applied.clone(), effectiveness);
             
             // Update user impact assessment
-            let user_impact = UserImpactAssessment {
+            let _user_impact = UserImpactAssessment {
                 satisfaction_change: event.performance_after - event.performance_before,
                 interaction_quality_change: if event.success { 0.05 } else { -0.05 },
                 task_completion_rate_change: if event.success { 0.02 } else { -0.02 },

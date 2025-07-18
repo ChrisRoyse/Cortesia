@@ -1,6 +1,5 @@
 //! Performance tracking and metrics for Phase 4 Learning System
 
-use super::types::*;
 use std::time::{Duration, SystemTime};
 
 /// Comprehensive performance tracking for Phase 4 learning

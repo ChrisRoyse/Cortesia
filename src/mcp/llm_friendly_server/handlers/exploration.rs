@@ -361,7 +361,7 @@ async fn generate_missing_facts_suggestions(
 
 /// Generate interesting questions
 async fn generate_interesting_questions(
-    engine: &KnowledgeEngine,
+    _engine: &KnowledgeEngine,
     focus_area: Option<&str>,
     limit: usize,
 ) -> Result<Vec<String>> {
@@ -380,7 +380,7 @@ async fn generate_interesting_questions(
 
 /// Generate potential connections
 async fn generate_potential_connections(
-    engine: &KnowledgeEngine,
+    _engine: &KnowledgeEngine,
     focus_area: Option<&str>,
     limit: usize,
 ) -> Result<Vec<String>> {
@@ -390,7 +390,7 @@ async fn generate_potential_connections(
 
 /// Generate knowledge gaps
 async fn generate_knowledge_gaps(
-    engine: &KnowledgeEngine,
+    _engine: &KnowledgeEngine,
     focus_area: Option<&str>,
     limit: usize,
 ) -> Result<Vec<String>> {

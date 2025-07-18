@@ -521,7 +521,7 @@ impl BrainInspiredMCPServer {
     }
 
     /// Generate embedding for a concept
-    async fn generate_concept_embedding(&self, concept: &str) -> Result<Vec<f32>> {
+    async fn generate_concept_embedding(&self, _concept: &str) -> Result<Vec<f32>> {
         // Generate a mock embedding for now
         // TODO: Implement actual neural embedding generation
         Ok(vec![0.1; 384])
@@ -554,13 +554,13 @@ impl BrainInspiredMCPServer {
     }
 
     /// Store logic gates (placeholder - would integrate with graph storage)
-    async fn store_logic_gates(&self, gates: Vec<LogicGate>) -> Result<()> {
+    async fn store_logic_gates(&self, _gates: Vec<LogicGate>) -> Result<()> {
         // TODO: Implement actual storage logic
         Ok(())
     }
 
     /// Store relationship (placeholder - would integrate with graph storage)
-    async fn store_relationship(&self, relationship: BrainInspiredRelationship) -> Result<()> {
+    async fn store_relationship(&self, _relationship: BrainInspiredRelationship) -> Result<()> {
         // TODO: Implement actual storage logic
         Ok(())
     }
@@ -593,7 +593,7 @@ impl BrainInspiredMCPServer {
         &self,
         brain_entity: &BrainInspiredEntity,
         temporal_metadata: &AHashMap<String, AttributeValue>,
-        valid_time: std::time::SystemTime,
+        _valid_time: std::time::SystemTime,
     ) -> Result<crate::versioning::temporal_graph::TemporalEntity> {
         use crate::versioning::temporal_graph::TemporalEntity;
         

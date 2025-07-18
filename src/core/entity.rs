@@ -1,5 +1,4 @@
 use crate::core::types::{EntityKey, EntityMeta, EntityData};
-use slotmap::Key;
 use crate::error::{GraphError, Result};
 use ahash::AHashMap;
 
@@ -69,7 +68,11 @@ impl EntityStore {
     
     pub fn update_degree(&mut self, key: EntityKey, delta: i16) -> Result<()> {
         let meta = self.entities.get_mut(&key)
-            .ok_or(GraphError::EntityNotFound { id: key.data().as_ffi() as u32 })?;
+            .ok_or({
+                use slotmap::{Key, KeyData};
+                let key_data: KeyData = key.data();
+                GraphError::EntityNotFound { id: key_data.as_ffi() as u32 }
+            })?;
         
         let new_degree = (meta.degree as i16 + delta).max(0) as u16;
         meta.degree = new_degree;

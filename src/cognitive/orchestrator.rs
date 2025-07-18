@@ -20,6 +20,18 @@ pub struct CognitiveOrchestrator {
     config: CognitiveOrchestratorConfig,
 }
 
+impl std::fmt::Debug for CognitiveOrchestrator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CognitiveOrchestrator")
+            .field("patterns", &self.patterns.keys().collect::<Vec<_>>())
+            .field("adaptive_selector", &"AdaptiveThinking")
+            .field("performance_monitor", &self.performance_monitor)
+            .field("brain_graph", &"BrainEnhancedKnowledgeGraph")
+            .field("config", &self.config)
+            .finish()
+    }
+}
+
 /// Configuration for the cognitive orchestrator
 #[derive(Debug, Clone)]
 pub struct CognitiveOrchestratorConfig {

@@ -119,19 +119,14 @@ fn calculate_rank_score(rank: usize) -> f32 {
 
 /// Generate unique ID for a result
 fn generate_result_id(result: &KnowledgeResult) -> String {
-    match result {
-        KnowledgeResult::Triple(triple) => {
-            format!("triple:{}:{}:{}", triple.subject, triple.predicate, triple.object)
-        }
-        KnowledgeResult::Chunk(chunk) => {
-            format!("chunk:{}", chunk.id)
-        }
-        KnowledgeResult::Entity(entity) => {
-            format!("entity:{}", entity.id)
-        }
-        KnowledgeResult::Relationship(rel) => {
-            format!("rel:{}:{}:{}", rel.source, rel.predicate, rel.target)
-        }
+    // Generate ID based on the first triple in the result or a hash of all triples
+    if let Some(first_triple) = result.triples.first() {
+        format!("triple:{}:{}:{}", first_triple.subject, first_triple.predicate, first_triple.object)
+    } else if let Some(first_node) = result.nodes.first() {
+        format!("node:{}", first_node.id)
+    } else {
+        // Fallback to a generic ID based on the result metadata
+        format!("result:found_{}_in_{}ms", result.total_found, result.query_time_ms)
     }
 }
 

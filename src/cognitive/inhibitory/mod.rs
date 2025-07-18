@@ -18,7 +18,6 @@ pub use matrix::InhibitionMatrixOps;
 
 use crate::core::activation_engine::ActivationPropagationEngine;
 use crate::core::brain_types::ActivationPattern;
-use slotmap::Key;
 use crate::core::types::EntityKey;
 use crate::cognitive::critical::CriticalThinking;
 use crate::error::Result;
@@ -33,6 +32,18 @@ pub struct CompetitiveInhibitionSystem {
     pub inhibition_matrix: Arc<RwLock<InhibitionMatrix>>,
     pub competition_groups: Arc<RwLock<Vec<CompetitionGroup>>>,
     pub inhibition_config: InhibitionConfig,
+}
+
+impl std::fmt::Debug for CompetitiveInhibitionSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CompetitiveInhibitionSystem")
+            .field("activation_engine", &"ActivationPropagationEngine")
+            .field("critical_thinking", &"CriticalThinking")
+            .field("inhibition_matrix", &"Arc<RwLock<InhibitionMatrix>>")
+            .field("competition_groups", &"Arc<RwLock<Vec<CompetitionGroup>>>")
+            .field("inhibition_config", &self.inhibition_config)
+            .finish()
+    }
 }
 
 impl CompetitiveInhibitionSystem {
@@ -53,7 +64,7 @@ impl CompetitiveInhibitionSystem {
     pub async fn apply_competitive_inhibition(
         &self,
         activation_pattern: &ActivationPattern,
-        domain_context: Option<String>,
+        _domain_context: Option<String>,
     ) -> Result<InhibitionResult> {
         // Create a working copy of the activation pattern
         let mut working_pattern = activation_pattern.clone();
@@ -222,10 +233,15 @@ impl CompetitiveInhibitionSystem {
             // Count co-activations
             for i in 0..active_entities.len() {
                 for j in (i + 1)..active_entities.len() {
-                    let pair = if active_entities[i].data() < active_entities[j].data() {
-                        (active_entities[i], active_entities[j])
-                    } else {
-                        (active_entities[j], active_entities[i])
+                    let pair = {
+                        use slotmap::{Key, KeyData};
+                        let data_i: KeyData = active_entities[i].data();
+                        let data_j: KeyData = active_entities[j].data();
+                        if data_i < data_j {
+                            (active_entities[i], active_entities[j])
+                        } else {
+                            (active_entities[j], active_entities[i])
+                        }
                     };
                     *co_activation_counts.entry(pair).or_insert(0) += 1;
                 }

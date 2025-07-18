@@ -628,7 +628,7 @@ impl LearningAlgorithm for HebbianLearningAlgorithm {
     }
 
     fn get_algorithm_type(&self) -> LearningAlgorithmType {
-        LearningAlgorithmType::ReinforcementLearning
+        LearningAlgorithmType::Reinforcement
     }
 
     async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {
@@ -675,7 +675,7 @@ impl LearningAlgorithm for ReinforcementLearningAlgorithm {
     }
 
     fn get_algorithm_type(&self) -> LearningAlgorithmType {
-        LearningAlgorithmType::ReinforcementLearning
+        LearningAlgorithmType::Reinforcement
     }
 
     async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {
@@ -720,7 +720,7 @@ impl LearningAlgorithm for BayesianOptimizationAlgorithm {
     }
 
     fn get_algorithm_type(&self) -> LearningAlgorithmType {
-        LearningAlgorithmType::BayesianOptimization
+        LearningAlgorithmType::Bayesian
     }
 
     async fn execute_learning(&self, _task: &LearningTask) -> Result<LearningResult> {

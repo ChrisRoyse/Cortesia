@@ -98,7 +98,7 @@ pub use crate::cognitive::{
 pub use crate::learning::{
     HebbianLearningEngine, SynapticHomeostasis, GraphOptimizationAgent, AdaptiveLearningSystem,
     Phase4LearningSystem, ActivationEvent, LearningContext, WeightChange, LearningUpdate,
-    STDPResult, PlasticityType, HomeostasisUpdate, OptimizationOpportunities, LearningResult,
+    STDPResult, PlasticityType, HomeostasisUpdate, OptimizationOpportunity, LearningResult,
     ComprehensiveLearningResult, LearningGoal, LearningGoalType, ResourceRequirement
 };
 

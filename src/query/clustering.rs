@@ -1,4 +1,5 @@
 use crate::core::graph::KnowledgeGraph;
+use crate::core::types::EntityKey;
 use crate::error::{GraphError, Result};
 use std::collections::{HashMap, HashSet};
 
@@ -73,8 +74,11 @@ impl HierarchicalClusterer {
         let mut matrix = AdjacencyMatrix::new(n);
         
         for (i, &entity_id) in entities.iter().enumerate() {
-            if let Ok(neighbors) = graph.get_neighbors(entity_id) {
-                for &neighbor_id in &neighbors {
+            let entity_key = EntityKey::from_u32(entity_id);
+            let neighbors = graph.get_neighbors(entity_key);
+            for &neighbor_key in &neighbors {
+                // Convert EntityKey back to u32 for comparison
+                if let Some(neighbor_id) = graph.get_entity_id(neighbor_key) {
                     if let Some(j) = entities.iter().position(|&id| id == neighbor_id) {
                         matrix.set_edge(i, j, 1.0);
                     }
@@ -129,7 +133,7 @@ impl LeidenClustering {
     }
 
     fn cluster(&self, adjacency: &AdjacencyMatrix, resolution: f64, min_size: usize) -> Result<HashMap<u32, Community>> {
-        let n = adjacency.len();
+        let n = adjacency.size;
         let mut communities = HashMap::new();
         let mut node_to_community = vec![0u32; n];
         

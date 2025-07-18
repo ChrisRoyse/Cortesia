@@ -312,7 +312,7 @@ impl KnowledgeGraph {
         
         if let Some(meta) = entity_store.get(key) {
             let offset = meta.embedding_offset as usize;
-            let quantized_size = quantizer.subvector_count;
+            let quantized_size = quantizer.num_subspaces();
             
             if offset + quantized_size <= embedding_bank.len() {
                 let quantized = &embedding_bank[offset..offset + quantized_size];

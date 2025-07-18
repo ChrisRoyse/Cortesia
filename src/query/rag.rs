@@ -1,5 +1,5 @@
 use crate::core::graph::KnowledgeGraph;
-use crate::core::types::{ContextEntity, QueryResult, Relationship};
+use crate::core::types::{ContextEntity, EntityKey, QueryResult, Relationship};
 use crate::error::Result;
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
@@ -49,8 +49,9 @@ impl GraphRAGEngine {
             }
             
             if visited_entities.insert(*entity_id) {
-                let neighbors = self.graph.get_neighbors(*entity_id)?;
-                let (_meta, data) = self.graph.get_entity(*entity_id)?;
+                let neighbors = self.graph.get_neighbors(*entity_id);
+                let (_meta, data) = self.graph.get_entity(*entity_id)
+                    .ok_or(crate::error::GraphError::EntityNotFound { id: 0 })?;
                 
                 context_entities.push(ContextEntity {
                     id: *entity_id,
@@ -87,8 +88,8 @@ impl GraphRAGEngine {
         let bridge_entities = self.find_bridge_entities(&similar_entities, max_depth)?;
         for bridge_id in bridge_entities {
             if !visited_entities.contains(&bridge_id) && context_entities.len() < max_entities {
-                if let Ok((_meta, data)) = self.graph.get_entity(bridge_id) {
-                    let neighbors = self.graph.get_neighbors(bridge_id)?;
+                if let Some((_meta, data)) = self.graph.get_entity(bridge_id) {
+                    let neighbors = self.graph.get_neighbors(bridge_id);
                     
                     context_entities.push(ContextEntity {
                         id: bridge_id,
@@ -134,9 +135,9 @@ impl GraphRAGEngine {
     
     fn expand_entity_context(
         &self,
-        entity_id: u32,
+        entity_id: EntityKey,
         max_depth: u8,
-        visited: &mut HashSet<u32>,
+        visited: &mut HashSet<EntityKey>,
         _context_entities: &mut Vec<ContextEntity>,
         relationships: &mut Vec<Relationship>,
     ) -> Result<()> {
@@ -149,7 +150,7 @@ impl GraphRAGEngine {
             }
             
             visited.insert(current_id);
-            let neighbors = self.graph.get_neighbors(current_id)?;
+            let neighbors = self.graph.get_neighbors(current_id);
             
             for &neighbor_id in &neighbors {
                 if depth + 1 < max_depth && !visited.contains(&neighbor_id) {
@@ -168,14 +169,14 @@ impl GraphRAGEngine {
         Ok(())
     }
     
-    fn find_bridge_entities(&self, similar_entities: &[(u32, f32)], max_depth: u8) -> Result<Vec<u32>> {
-        let mut bridge_scores: HashMap<u32, u32> = HashMap::new();
-        let entity_ids: Vec<u32> = similar_entities.iter().map(|(id, _)| *id).collect();
+    fn find_bridge_entities(&self, similar_entities: &[(EntityKey, f32)], max_depth: u8) -> Result<Vec<EntityKey>> {
+        let mut bridge_scores: HashMap<EntityKey, u32> = HashMap::new();
+        let entity_ids: Vec<EntityKey> = similar_entities.iter().map(|(id, _)| *id).collect();
         
         // Find entities that appear in paths between multiple similar entities
         for i in 0..entity_ids.len() {
             for j in (i + 1)..entity_ids.len() {
-                if let Ok(Some(path)) = self.graph.find_path(entity_ids[i], entity_ids[j], max_depth) {
+                if let Some(path) = self.graph.find_path(entity_ids[i], entity_ids[j]) {
                     for &path_entity in &path {
                         if !entity_ids.contains(&path_entity) {
                             *bridge_scores.entry(path_entity).or_insert(0) += 1;
@@ -186,7 +187,7 @@ impl GraphRAGEngine {
         }
         
         // Return top bridge entities
-        let mut bridges: Vec<(u32, u32)> = bridge_scores.into_iter().collect();
+        let mut bridges: Vec<(EntityKey, u32)> = bridge_scores.into_iter().collect();
         bridges.sort_by(|a, b| b.1.cmp(&a.1));
         
         Ok(bridges.into_iter().take(10).map(|(id, _)| id).collect())
@@ -206,7 +207,7 @@ impl GraphRAGEngine {
     fn calculate_entity_score(&self, entity: &ContextEntity, _query_embedding: &[f32]) -> f32 {
         // Multi-factor scoring
         let similarity_score = entity.similarity;
-        let connectivity_score = (entity.neighbors.len() as f32).log10().min(1.0);
+        let connectivity_score = (entity.neighbors.len() as f32).log10().min(1.0f32);
         let recency_score = 1.0; // Would be based on entity timestamps in production
         
         // Weighted combination
@@ -222,7 +223,7 @@ impl GraphRAGEngine {
                 to_entity: rel.to,
                 relationship_type: rel.rel_type,
                 explanation: format!(
-                    "Entity {} is connected to entity {} with relationship type {} (strength: {:.2})",
+                    "Entity {:?} is connected to entity {:?} with relationship type {} (strength: {:.2})",
                     rel.from, rel.to, rel.rel_type, rel.weight
                 ),
                 confidence: rel.weight,
@@ -321,7 +322,7 @@ impl GraphRAGContext {
         context.push_str("## Entities\n");
         for entity in &self.entities {
             context.push_str(&format!(
-                "- Entity {}: {} (similarity: {:.3})\n",
+                "- Entity {:?}: {} (similarity: {:.3})\n",
                 entity.id,
                 entity.properties,
                 entity.similarity
@@ -332,7 +333,7 @@ impl GraphRAGContext {
         context.push_str("\n## Relationships\n");
         for rel in &self.relationships {
             context.push_str(&format!(
-                "- {} → {} (type: {}, weight: {:.2})\n",
+                "- {:?} → {:?} (type: {}, weight: {:.2})\n",
                 rel.from, rel.to, rel.rel_type, rel.weight
             ));
         }
@@ -351,8 +352,8 @@ impl GraphRAGContext {
 
 #[derive(Debug, Clone)]
 pub struct RelationshipExplanation {
-    pub from_entity: u32,
-    pub to_entity: u32,
+    pub from_entity: EntityKey,
+    pub to_entity: EntityKey,
     pub relationship_type: u8,
     pub explanation: String,
     pub confidence: f32,

@@ -297,7 +297,9 @@ impl LearningScheduler {
             if performance_score < 0.6 {
                 match task.task_type {
                     LearningTaskType::HebbianLearning | LearningTaskType::GraphOptimization => {
-                        task.scheduled_time = task.scheduled_time.saturating_sub(std::time::Duration::from_secs(600)); // 10 minutes earlier
+                        task.scheduled_time = task.scheduled_time
+                            .checked_sub(std::time::Duration::from_secs(600))
+                            .unwrap_or(task.scheduled_time); // 10 minutes earlier
                     }
                     _ => {}
                 }

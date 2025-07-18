@@ -20,6 +20,19 @@ pub struct AttentionManager {
     pub attention_config: AttentionConfig,
 }
 
+impl std::fmt::Debug for AttentionManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AttentionManager")
+            .field("orchestrator", &"CognitiveOrchestrator")
+            .field("activation_engine", &"ActivationPropagationEngine")
+            .field("working_memory", &"WorkingMemorySystem")
+            .field("attention_state", &"Arc<RwLock<AttentionState>>")
+            .field("focus_history", &"Arc<RwLock<VecDeque<AttentionFocus>>>")
+            .field("attention_config", &self.attention_config)
+            .finish()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct AttentionState {
     pub current_focus: AttentionFocus,

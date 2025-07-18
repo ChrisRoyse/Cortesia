@@ -143,7 +143,7 @@ impl KnowledgeGraph {
             &mut best_weight,
         );
         
-        best_path
+        best_path.map(|path| (path, best_weight))
     }
 
     /// Recursive helper for finding best path
@@ -217,7 +217,7 @@ impl KnowledgeGraph {
             &mut best_weight,
         );
         
-        best_path
+        best_path.map(|path| (path, best_weight))
     }
 
     /// Recursive helper for finding weakest path

@@ -301,7 +301,7 @@ impl BrainEnhancedKnowledgeGraph {
         let mut hasher = DefaultHasher::new();
         
         // Hash embedding (sample a few values to avoid too much computation)
-        for (i, value) in query_embedding.iter().enumerate().step_by(4) {
+        for (_i, value) in query_embedding.iter().enumerate().step_by(4) {
             ((value * 1000.0) as i32).hash(&mut hasher);
         }
         

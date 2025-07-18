@@ -337,7 +337,7 @@ impl TwoTierQueryEngine {
         for summary in summaries {
             for &entity_id in &summary.key_entities {
                 entities.push(ContextEntity {
-                    id: entity_id,
+                    id: EntityKey::from_u32(entity_id),
                     similarity: summary.confidence_score as f32,
                     neighbors: Vec::new(),
                     properties: format!("Key entity from community {}", summary.community_id),

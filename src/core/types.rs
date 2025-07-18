@@ -6,6 +6,12 @@ new_key_type! {
     pub struct EntityKey;
 }
 
+impl std::fmt::Display for EntityKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 pub type TypeId = u16;
 pub type EmbeddingSize = u16;
 pub type EdgeWeight = f32;

@@ -74,7 +74,7 @@ impl PatternDetector {
             return Ok(None);
         }
         
-        let data = entity_data.unwrap();
+        let _data = entity_data.unwrap();
         
         // Get children and analyze their attributes
         let children = graph.get_child_entities(entity_key).await;
@@ -280,7 +280,7 @@ impl PatternDetector {
     }
 
     /// Check cache for optimization opportunities
-    fn check_cache_for_opportunities(&self, cache: &PatternCache) -> Option<Vec<OptimizationOpportunity>> {
+    fn check_cache_for_opportunities(&self, _cache: &PatternCache) -> Option<Vec<OptimizationOpportunity>> {
         // Check if we have recent cached results
         if let Some(last_analysis) = self.last_analysis {
             if last_analysis.elapsed() < self.analysis_config.cache_ttl {
@@ -459,8 +459,8 @@ impl PatternAnalysisUtils {
         entity2: EntityKey,
         graph: &BrainEnhancedKnowledgeGraph,
     ) -> Vec<EntityKey> {
-        let neighbors1: HashSet<_> = graph.get_neighbors(entity1).into_iter().map(|(k, _)| k).collect();
-        let neighbors2: HashSet<_> = graph.get_neighbors(entity2).into_iter().map(|(k, _)| k).collect();
+        let neighbors1: HashSet<_> = graph.get_neighbors(entity1).into_iter().collect();
+        let neighbors2: HashSet<_> = graph.get_neighbors(entity2).into_iter().collect();
         
         neighbors1.intersection(&neighbors2).cloned().collect()
     }
@@ -471,8 +471,8 @@ impl PatternAnalysisUtils {
         entity2: EntityKey,
         graph: &BrainEnhancedKnowledgeGraph,
     ) -> f32 {
-        let neighbors1: HashSet<_> = graph.get_neighbors(entity1).into_iter().map(|(k, _)| k).collect();
-        let neighbors2: HashSet<_> = graph.get_neighbors(entity2).into_iter().map(|(k, _)| k).collect();
+        let neighbors1: HashSet<_> = graph.get_neighbors(entity1).into_iter().collect();
+        let neighbors2: HashSet<_> = graph.get_neighbors(entity2).into_iter().collect();
         
         let intersection = neighbors1.intersection(&neighbors2).count();
         let union = neighbors1.union(&neighbors2).count();

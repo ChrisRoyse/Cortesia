@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 /// Apply hierarchical inhibition based on abstraction levels
 pub async fn apply_hierarchical_inhibition(
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
     pattern: &mut ActivationPattern,
     inhibition_matrix: &Arc<RwLock<InhibitionMatrix>>,
     config: &InhibitionConfig,
@@ -122,7 +122,7 @@ fn apply_top_down_inhibition(
                         .copied()
                         .unwrap_or(0.0);
                     
-                    let total_inhibition = inhibition_strength.max(specific_inhibition);
+                    let _total_inhibition = inhibition_strength.max(specific_inhibition);
                     
                     // This would update the actual activation values
                     // In practice, we'd track these changes and apply them later
@@ -148,7 +148,7 @@ fn apply_within_layer_inhibition(
         if let Some(dominant) = layer.dominant_entity {
             for entity in &layer.entities {
                 if *entity != dominant {
-                    let lateral_inhibition = matrix.lateral_inhibition
+                    let _lateral_inhibition = matrix.lateral_inhibition
                         .get(&(dominant, *entity))
                         .copied()
                         .unwrap_or(config.lateral_inhibition_strength * 0.5);

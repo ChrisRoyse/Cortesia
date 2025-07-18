@@ -18,6 +18,19 @@ pub struct PerformanceMonitor {
     config: MonitoringConfig,
 }
 
+impl std::fmt::Debug for PerformanceMonitor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PerformanceMonitor")
+            .field("metrics_collector", &"MetricsCollector")
+            .field("trace_exporter", &"TraceExporter")
+            .field("alert_manager", &"AlertManager")
+            .field("active_operations", &"RwLock<HashMap>")
+            .field("performance_history", &"RwLock<Vec>")
+            .field("config", &self.config)
+            .finish()
+    }
+}
+
 impl PerformanceMonitor {
     pub fn new(
         metrics_collector: Arc<MetricsCollector>,

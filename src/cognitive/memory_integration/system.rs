@@ -75,7 +75,7 @@ impl UnifiedMemorySystem {
     }
 
     /// Store information across memory systems
-    pub async fn store_information(&self, content: &str, importance: f32, context: Option<&str>) -> Result<String> {
+    pub async fn store_information(&self, content: &str, importance: f32, _context: Option<&str>) -> Result<String> {
         let start_time = Instant::now();
         let item_id = format!("item_{}", start_time.elapsed().as_nanos());
 

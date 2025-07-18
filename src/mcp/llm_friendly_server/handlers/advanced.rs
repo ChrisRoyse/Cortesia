@@ -20,7 +20,7 @@ use std::collections::HashMap;
 
 /// Handle generate_graph_query request
 pub async fn handle_generate_graph_query(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {

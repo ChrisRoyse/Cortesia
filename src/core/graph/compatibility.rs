@@ -55,15 +55,19 @@ impl KnowledgeGraph {
             let hash = hasher.finish();
             
             // Distribute hash across embedding dimensions
+            let embedding_len = embedding.len();
             for (j, val) in embedding.iter_mut().enumerate() {
-                if (i * 16 + j) < embedding.len() {
+                if (i * 16 + j) < embedding_len {
                     *val = ((hash as u64).wrapping_mul(j as u64 + 1) % 1000) as f32 / 1000.0;
                 }
             }
         }
         
         // Normalize embedding
-        let magnitude: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let magnitude: f32 = {
+            let sum: f32 = embedding.iter().map(|x| x * x).sum();
+            sum.sqrt()
+        };
         if magnitude > 0.0 {
             for val in embedding.iter_mut() {
                 *val /= magnitude;
@@ -118,7 +122,13 @@ impl KnowledgeGraph {
     /// Legacy entity lookup by ID
     pub fn get_entity_by_id_legacy(&self, id: u32) -> Option<(HashMap<String, String>, Vec<f32>)> {
         if let Some((_, data)) = self.get_entity_by_id(id) {
-            Some((data.properties, data.embedding))
+            // Parse properties JSON string to HashMap
+            if let Ok(props) = serde_json::from_str(&data.properties) {
+                Some((props, data.embedding))
+            } else {
+                // Return empty HashMap if parsing fails
+                Some((HashMap::new(), data.embedding))
+            }
         } else {
             None
         }
@@ -171,13 +181,18 @@ impl KnowledgeGraph {
 
     pub fn bloom_false_positive_rate(&self) -> f64 {
         let bloom = self.bloom_filter.read();
-        bloom.false_positive_rate()
+        // Calculate approximate false positive rate based on fill ratio
+        // This is an approximation since BloomFilter doesn't expose the exact rate
+        let fill_ratio = bloom.fill_ratio();
+        // Standard bloom filter false positive probability approximation
+        (fill_ratio * 0.6185).min(1.0) // Simplified approximation
     }
 
     /// Legacy entity management methods
     pub fn get_entity_properties(&self, id: u32) -> Option<HashMap<String, String>> {
         if let Some((_, data)) = self.get_entity_by_id(id) {
-            Some(data.properties)
+            // Parse properties JSON string to HashMap
+            serde_json::from_str(&data.properties).ok()
         } else {
             None
         }
@@ -194,7 +209,9 @@ impl KnowledgeGraph {
     pub fn update_entity_properties(&self, id: u32, properties: HashMap<String, String>) -> Result<()> {
         if let Some(key) = self.get_entity_key(id) {
             if let Some((_, mut data)) = self.get_entity(key) {
-                data.properties = properties;
+                // Serialize HashMap to JSON string
+                data.properties = serde_json::to_string(&properties)
+                    .unwrap_or_else(|_| "{}".to_string());
                 self.update_entity(key, data)?;
                 Ok(())
             } else {
@@ -295,7 +312,10 @@ impl KnowledgeGraph {
         
         for (id, key) in id_map.iter() {
             if let Some((_, data)) = self.get_entity(*key) {
-                exported.push((*id, data.properties, data.embedding));
+                // Parse properties to HashMap for export
+                let props: HashMap<String, String> = serde_json::from_str(&data.properties)
+                    .unwrap_or_else(|_| HashMap::new());
+                exported.push((*id, props, data.embedding));
             }
         }
         
@@ -351,9 +371,14 @@ impl KnowledgeGraph {
         
         for (_, key) in id_map.iter() {
             if let Some((_, data)) = self.get_entity(*key) {
-                if let Some(type_value) = data.properties.get("type") {
-                    if type_value == entity_type {
-                        count += 1;
+                // Parse properties string as JSON
+                if let Ok(props) = serde_json::from_str::<serde_json::Value>(&data.properties) {
+                    if let Some(type_value) = props.get("type") {
+                        if let Some(type_str) = type_value.as_str() {
+                            if type_str == entity_type {
+                                count += 1;
+                            }
+                        }
                     }
                 }
             }
@@ -369,14 +394,24 @@ impl KnowledgeGraph {
         
         for (_, key) in id_map.iter() {
             if let Some((_, data)) = self.get_entity(*key) {
-                if let Some(type_value) = data.properties.get("type") {
-                    if type_value == source_type {
-                        let outgoing = self.get_outgoing_relationships(*key);
-                        for relationship in outgoing {
-                            if let Some((_, target_data)) = self.get_entity(relationship.target) {
-                                if let Some(target_type_value) = target_data.properties.get("type") {
-                                    if target_type_value == target_type {
-                                        count += 1;
+                // Parse source properties
+                if let Ok(props) = serde_json::from_str::<serde_json::Value>(&data.properties) {
+                    if let Some(type_value) = props.get("type") {
+                        if let Some(type_str) = type_value.as_str() {
+                            if type_str == source_type {
+                                let outgoing = self.get_outgoing_relationships(*key);
+                                for relationship in outgoing {
+                                    if let Some((_, target_data)) = self.get_entity(relationship.to) {
+                                        // Parse target properties
+                                        if let Ok(target_props) = serde_json::from_str::<serde_json::Value>(&target_data.properties) {
+                                            if let Some(target_type_value) = target_props.get("type") {
+                                                if let Some(target_type_str) = target_type_value.as_str() {
+                                                    if target_type_str == target_type {
+                                                        count += 1;
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

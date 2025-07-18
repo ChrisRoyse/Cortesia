@@ -58,11 +58,11 @@ impl GraphOptimizationAgent {
             .await?;
 
         // 2. Analyze efficiency
-        let efficiency_score = self.efficiency_analyzer
+        let _efficiency_score = self.efficiency_analyzer
             .analyze_performance(current_metrics)?;
 
         // 3. Detect bottlenecks
-        let bottlenecks = self.bottleneck_detector
+        let _bottlenecks = self.bottleneck_detector
             .detect_bottlenecks(graph, current_metrics)
             .await?;
 

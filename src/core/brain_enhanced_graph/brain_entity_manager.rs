@@ -249,9 +249,11 @@ impl BrainEnhancedKnowledgeGraph {
         let mut activation = (embedding_magnitude / data.embedding.len() as f32).clamp(0.0, 1.0);
         
         // Boost activation based on properties
-        if let Some(importance) = data.properties.get("importance") {
-            if let Ok(importance_value) = importance.parse::<f32>() {
-                activation = (activation + importance_value).clamp(0.0, 1.0);
+        if let Ok(props) = serde_json::from_str::<serde_json::Value>(&data.properties) {
+            if let Some(importance) = props.get("importance") {
+                if let Some(importance_value) = importance.as_f64() {
+                    activation = (activation + importance_value as f32).clamp(0.0, 1.0);
+                }
             }
         }
         
@@ -277,7 +279,7 @@ impl BrainEnhancedKnowledgeGraph {
         // Incorporate input embeddings
         for input_key in inputs {
             if let Some(input_data) = self.core_graph.get_entity_data(*input_key) {
-                for (i, (gate_val, input_val)) in embedding.iter_mut().zip(input_data.embedding.iter()).enumerate() {
+                for (_i, (gate_val, input_val)) in embedding.iter_mut().zip(input_data.embedding.iter()).enumerate() {
                     *gate_val = (*gate_val + input_val * 0.3).clamp(0.0, 1.0);
                 }
             }
@@ -461,7 +463,9 @@ impl EntityStatistics {
     
     /// Get most common entity type
     pub fn most_common_type(&self) -> Option<(&String, usize)> {
-        self.type_distribution.iter().max_by_key(|(_, count)| *count)
+        self.type_distribution.iter()
+            .max_by_key(|(_, count)| *count)
+            .map(|(type_name, &count)| (type_name, count))
     }
     
     /// Check if activations are well-distributed

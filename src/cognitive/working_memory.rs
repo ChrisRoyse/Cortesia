@@ -17,6 +17,18 @@ pub struct WorkingMemorySystem {
     pub decay_config: MemoryDecayConfig,
 }
 
+impl std::fmt::Debug for WorkingMemorySystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WorkingMemorySystem")
+            .field("activation_engine", &"ActivationPropagationEngine")
+            .field("sdr_storage", &"SDRStorage")
+            .field("memory_buffers", &"Arc<RwLock<MemoryBuffers>>")
+            .field("capacity_limits", &self.capacity_limits)
+            .field("decay_config", &self.decay_config)
+            .finish()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MemoryBuffers {
     pub phonological_buffer: VecDeque<MemoryItem>,
@@ -689,7 +701,7 @@ impl WorkingMemorySystem {
         
         // Remove items until we have space
         let mut removed_count = 0;
-        for (index, _, item) in forgetting_candidates {
+        for (index, _, _item) in forgetting_candidates {
             if buffer.len() < self.get_capacity_for_buffer(buffer_type) {
                 break;
             }

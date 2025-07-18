@@ -66,7 +66,7 @@ impl MemoryRetrieval {
         // Activate cross-memory links
         let activated_links = self.activate_cross_memory_links(&fused_results.0).await?;
         
-        let retrieval_time = start_time.elapsed();
+        let _retrieval_time = start_time.elapsed();
         
         Ok(MemoryIntegrationResult {
             primary_results: fused_results.0,
@@ -284,7 +284,7 @@ impl MemoryRetrieval {
     }
     
     /// Query episodic memory (simplified)
-    async fn query_episodic_memory(&self, query: &str, context: &[String]) -> Result<Vec<MemoryItem>> {
+    async fn query_episodic_memory(&self, _query: &str, context: &[String]) -> Result<Vec<MemoryItem>> {
         // Simplified episodic memory query
         // In practice, this would query a dedicated episodic memory system
         let mut items = Vec::new();
@@ -359,7 +359,7 @@ impl MemoryRetrieval {
         &self,
         primary_results: &[MemoryRetrievalResult],
         secondary_results: &[MemoryRetrievalResult],
-        strategy: &RetrievalStrategy,
+        _strategy: &RetrievalStrategy,
     ) -> f32 {
         let mut total_confidence = 0.0;
         let mut total_weight = 0.0;

@@ -209,7 +209,7 @@ impl PerformanceMonitor {
     /// Get performance trend over time
     pub fn get_performance_trend(&self, window: Duration) -> Result<Vec<f32>> {
         let history = self.performance_history.read().unwrap();
-        let cutoff_time = SystemTime::now() - window;
+        let _cutoff_time = SystemTime::now() - window;
         
         let mut trend = Vec::new();
         

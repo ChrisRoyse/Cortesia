@@ -49,7 +49,7 @@ pub async fn handle_inhibition_exceptions(
 /// Detect mutual exclusion violations
 fn detect_mutual_exclusions(
     pattern: &ActivationPattern,
-    exceptions: &mut Vec<InhibitionException>,
+    _exceptions: &mut Vec<InhibitionException>,
 ) {
     // Simplified: check for known mutually exclusive pairs
     // In practice, this would use a knowledge base of exclusions
@@ -61,7 +61,7 @@ fn detect_mutual_exclusions(
     
     // Example: detect if contradictory concepts are both active
     for i in 0..active_entities.len() {
-        for j in (i + 1)..active_entities.len() {
+        for _j in (i + 1)..active_entities.len() {
             // This would check against actual mutual exclusion rules
             // For now, we'll skip actual detection
         }
@@ -70,9 +70,9 @@ fn detect_mutual_exclusions(
 
 /// Detect temporal conflicts
 fn detect_temporal_conflicts(
-    pattern: &ActivationPattern,
-    competition_results: &[GroupCompetitionResult],
-    exceptions: &mut Vec<InhibitionException>,
+    _pattern: &ActivationPattern,
+    _competition_results: &[GroupCompetitionResult],
+    _exceptions: &mut Vec<InhibitionException>,
 ) {
     // Check for temporal ordering violations
     // Simplified implementation
@@ -117,7 +117,7 @@ fn detect_resource_contentions(
 async fn resolve_exception(
     exception: &InhibitionException,
     pattern: &ActivationPattern,
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
 ) -> Result<Option<ExceptionResolution>> {
     match exception {
         InhibitionException::MutualExclusion(entity_a, entity_b) => {

@@ -70,9 +70,9 @@ impl ConvergentThinking {
     /// Extract target concept from query using neural processing with context
     async fn extract_target_concept_with_context(&self, query: &str, context: Option<&str>) -> Result<String> {
         // Enhanced concept extraction that considers context
-        let mut combined_text = query.to_string();
+        let mut _combined_text = query.to_string();
         if let Some(ctx) = context {
-            combined_text = format!("{} {}", ctx, query);
+            _combined_text = format!("{} {}", ctx, query);
         }
         
         

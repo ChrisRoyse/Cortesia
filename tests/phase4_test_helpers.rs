@@ -14,7 +14,7 @@ use llmkg::core::{
 };
 
 use llmkg::cognitive::{
-    working_memory::{WorkingMemorySystem, WorkingMemoryConfig, MemoryBuffer},
+    working_memory::WorkingMemorySystem,
     attention_manager::{AttentionManager, AttentionConfig, AttentionType},
     inhibitory_logic::{CompetitiveInhibitionSystem, InhibitionConfig, CompetitionGroup},
     abstract_pattern::{AbstractThinking, AbstractionConfig},
@@ -158,18 +158,12 @@ pub async fn create_test_attention_manager() -> Result<AttentionManager> {
 
 /// Create a test working memory system
 pub async fn create_test_working_memory() -> Result<WorkingMemorySystem> {
-    let config = WorkingMemoryConfig {
-        phonological_capacity: 7,
-        visuospatial_capacity: 5,
-        episodic_capacity: 4,
-        central_executive_capacity: 3,
-        decay_rate: 0.1,
-        interference_factor: 0.2,
-        consolidation_threshold: 0.8,
-        rehearsal_benefit: 0.3,
-    };
+    let activation_engine = Arc::new(ActivationPropagationEngine::new(
+        llmkg::core::activation_engine::ActivationConfig::default()
+    ));
+    let sdr_storage = Arc::new(SDRStorage::new(SDRParameters::default())?);
     
-    WorkingMemorySystem::with_config(config).await
+    WorkingMemorySystem::new(activation_engine, sdr_storage).await
 }
 
 /// Create a test SDR storage

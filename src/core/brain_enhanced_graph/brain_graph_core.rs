@@ -29,6 +29,21 @@ pub struct BrainEnhancedKnowledgeGraph {
     pub query_cache: RwLock<HashMap<String, BrainQueryResult>>,
 }
 
+impl std::fmt::Debug for BrainEnhancedKnowledgeGraph {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BrainEnhancedKnowledgeGraph")
+            .field("core_graph", &"KnowledgeGraph")
+            .field("sdr_storage", &"SDRStorage")
+            .field("config", &self.config)
+            .field("entity_activations", &"RwLock<HashMap>")
+            .field("synaptic_weights", &"RwLock<HashMap>")
+            .field("concept_structures", &"RwLock<HashMap>")
+            .field("learning_stats", &"RwLock<BrainStatistics>")
+            .field("query_cache", &"RwLock<HashMap>")
+            .finish()
+    }
+}
+
 impl BrainEnhancedKnowledgeGraph {
     /// Create new brain-enhanced knowledge graph
     pub fn new(embedding_dim: usize) -> Result<Self> {
@@ -56,7 +71,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Create new brain-enhanced graph for testing
     pub fn new_for_test() -> Result<Self> {
         let core_graph = Arc::new(KnowledgeGraph::new(96)?);
-        let sdr_storage = Arc::new(SDRStorage::new(96)?);
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
         
         Ok(Self {
             core_graph,

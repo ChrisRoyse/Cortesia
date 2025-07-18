@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 
 /// Apply group-based competition to the activation pattern
 pub async fn apply_group_competition(
-    system: &CompetitiveInhibitionSystem,
+    _system: &CompetitiveInhibitionSystem,
     working_pattern: &mut ActivationPattern,
     competition_groups: &Arc<RwLock<Vec<CompetitionGroup>>>,
     config: &InhibitionConfig,
@@ -127,7 +127,7 @@ async fn apply_semantic_competition(
 async fn apply_temporal_competition(
     pattern: &mut ActivationPattern,
     group: &CompetitionGroup,
-    config: &InhibitionConfig,
+    _config: &InhibitionConfig,
 ) -> Result<GroupCompetitionResult> {
     let pre_competition: Vec<_> = group.competing_entities.iter()
         .filter_map(|&entity| {

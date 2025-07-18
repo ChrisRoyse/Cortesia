@@ -3,7 +3,6 @@
 
 use std::collections::HashMap;
 use crate::core::types::EntityKey;
-use slotmap::Key;
 use serde::{Serialize, Deserialize};
 
 /// Performance test compatible Entity struct
@@ -164,7 +163,10 @@ impl EntityKey {
     }
     
     pub fn as_u32(&self) -> u32 {
-        self.data().as_ffi() as u32
+        use slotmap::Key;
+        use slotmap::KeyData;
+        let key_data: KeyData = self.data();
+        key_data.as_ffi() as u32
     }
     
     pub fn from_u32(_id: u32) -> Self {
@@ -214,7 +216,10 @@ impl EntityKey {
     }
     
     pub fn as_raw(&self) -> u64 {
-        self.data().as_ffi()
+        use slotmap::Key;
+        use slotmap::KeyData;
+        let key_data: KeyData = self.data();
+        key_data.as_ffi()
     }
     
     pub fn from_raw(raw: u64) -> Self {

@@ -50,6 +50,17 @@ pub struct ActivationPropagationEngine {
     config: ActivationConfig,
 }
 
+impl std::fmt::Debug for ActivationPropagationEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ActivationPropagationEngine")
+            .field("entities", &"Arc<RwLock<AHashMap>>")
+            .field("logic_gates", &"Arc<RwLock<AHashMap>>")
+            .field("relationships", &"Arc<RwLock<AHashMap>>")
+            .field("config", &self.config)
+            .finish()
+    }
+}
+
 impl ActivationPropagationEngine {
     pub fn new(config: ActivationConfig) -> Self {
         Self {

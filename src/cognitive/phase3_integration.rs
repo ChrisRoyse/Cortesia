@@ -48,6 +48,24 @@ pub struct Phase3IntegratedCognitiveSystem {
     pub performance_metrics: Arc<RwLock<SystemPerformanceMetrics>>,
 }
 
+impl std::fmt::Debug for Phase3IntegratedCognitiveSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Phase3IntegratedCognitiveSystem")
+            .field("orchestrator", &"CognitiveOrchestrator")
+            .field("activation_engine", &"ActivationPropagationEngine")
+            .field("brain_graph", &"BrainEnhancedKnowledgeGraph")
+            .field("sdr_storage", &"SDRStorage")
+            .field("working_memory", &"WorkingMemorySystem")
+            .field("attention_manager", &"AttentionManager")
+            .field("inhibitory_logic", &"CompetitiveInhibitionSystem")
+            .field("unified_memory", &"UnifiedMemorySystem")
+            .field("integration_config", &self.integration_config)
+            .field("system_state", &"RwLock<SystemState>")
+            .field("performance_metrics", &"RwLock<SystemPerformanceMetrics>")
+            .finish()
+    }
+}
+
 /// Type alias for backward compatibility with Phase 4 integration
 pub type IntegratedCognitiveSystem = Phase3IntegratedCognitiveSystem;
 
@@ -567,7 +585,7 @@ impl Phase3IntegratedCognitiveSystem {
         })
     }
 
-    async fn setup_attention_focus(&self, query: &str) -> Result<AttentionShift> {
+    async fn setup_attention_focus(&self, _query: &str) -> Result<AttentionShift> {
         use crate::cognitive::attention_manager::AttentionType;
         
         // Simple attention setup - would be more sophisticated in real implementation
@@ -590,7 +608,7 @@ impl Phase3IntegratedCognitiveSystem {
 
     async fn apply_initial_inhibition(&self, _query: &str) -> Result<InhibitionEvent> {
         // Apply initial inhibition to reduce noise
-        let mut activation_pattern = ActivationPattern::new(format!("initial_inhibition_{}", _query));
+        let activation_pattern = ActivationPattern::new(format!("initial_inhibition_{}", _query));
         
         let _result = self.inhibitory_logic.apply_competitive_inhibition(
             &activation_pattern,
@@ -823,7 +841,7 @@ impl Phase3IntegratedCognitiveSystem {
         })
     }
 
-    async fn consolidate_reasoning_memory(&self, response: &str, confidence: f32) -> Result<MemoryConsolidation> {
+    async fn consolidate_reasoning_memory(&self, _response: &str, confidence: f32) -> Result<MemoryConsolidation> {
         // Consolidate the reasoning results to long-term memory
         let _result = self.unified_memory.consolidate_memories(None).await?;
 
@@ -918,7 +936,7 @@ impl Phase3IntegratedCognitiveSystem {
     }
 
     /// Collect performance metrics for adaptive learning
-    pub async fn collect_performance_metrics(&self, duration: Duration) -> Result<PerformanceData> {
+    pub async fn collect_performance_metrics(&self, _duration: Duration) -> Result<PerformanceData> {
         let metrics = self.performance_metrics.read().await;
         let mut query_latencies = Vec::new();
         let mut accuracy_scores = Vec::new();

@@ -644,7 +644,7 @@ impl NeuralQueryProcessor {
     }
 
     /// Get related concepts for a given entity
-    pub fn get_related_concepts(&self, entity: &str, max_depth: usize) -> Vec<String> {
+    pub fn get_related_concepts(&self, entity: &str, _max_depth: usize) -> Vec<String> {
         // This would traverse the graph to find related concepts
         // For now, return a mock implementation
         vec![format!("{}_related", entity)]

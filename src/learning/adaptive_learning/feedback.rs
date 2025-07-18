@@ -226,7 +226,7 @@ impl FeedbackAggregator {
             .map(|d| d.as_millis() as f32)
             .sum::<f32>() / performance_data.query_latencies.len() as f32;
         
-        let avg_satisfaction = user_feedback.iter()
+        let _avg_satisfaction = user_feedback.iter()
             .map(|f| f.satisfaction_score)
             .sum::<f32>() / user_feedback.len() as f32;
         
