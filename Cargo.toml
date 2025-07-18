@@ -133,6 +133,14 @@ path = "tests/phase4_advanced_stress_tests.rs"
 name = "phase4_integration_scenarios"
 path = "tests/phase4_integration_scenarios.rs"
 
+[[test]]
+name = "phase1_cognitive_algorithm_tests"
+path = "tests/phase1_cognitive_algorithm_tests.rs"
+
+[[test]]
+name = "phase1_simple_cognitive_tests"
+path = "tests/phase1_simple_cognitive_tests.rs"
+
 [profile.test]
 opt-level = 2  # Optimize tests for better performance
 
