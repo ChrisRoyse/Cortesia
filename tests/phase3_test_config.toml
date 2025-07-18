@@ -1,0 +1,69 @@
+# Phase 3 Validation Test Configuration
+
+[test_parameters]
+# Working Memory Tests
+working_memory_capacity_tests = 30
+phonological_buffer_limit = 9  # 7±2
+visuospatial_buffer_limit = 5  # 4±1  
+episodic_buffer_limit = 4      # 3±1
+memory_decay_rate = 0.1
+importance_threshold = 0.5
+
+# Attention Management Tests
+attention_switch_speed_ms = 50
+max_divided_attention_targets = 8
+attention_boost_factor = 0.6
+memory_preservation_threshold = 0.7
+
+# Competitive Inhibition Tests
+competition_rounds = 10
+learning_rate = 0.1
+performance_improvement_target = 0.05
+winner_takes_all_threshold = 0.7
+
+# Unified Memory Tests
+cross_memory_queries = 10
+consolidation_threshold = 10
+conflict_resolution_minimum = 3
+parallel_retrieval_operations = 200
+
+# Performance Benchmarks
+working_memory_ops_target = 500
+attention_switches_target = 50
+inhibition_competitions_target = 25
+system_integration_target = 10
+
+# System Resilience Tests
+memory_thrashing_operations = 100
+rapid_attention_switches = 50
+competitive_storms = 30
+minimum_success_rate = 0.8
+
+[difficulty_levels]
+# Test difficulty multipliers
+easy = 0.5
+medium = 0.7
+hard = 0.9
+extreme = 1.0
+
+[synthetic_data]
+# Data generation parameters
+narrative_concepts = 30
+attention_contexts = 3
+competition_scenarios = 10
+knowledge_domains = 2
+reasoning_challenges = 3
+
+[edge_cases]
+# Pathological scenario parameters
+circular_dependency_depth = 3
+identical_item_flood = 20
+equal_activation_entities = 10
+rapid_transition_cycles = 30
+
+[validation_criteria]
+# Pass/fail criteria for complete validation
+minimum_test_pass_rate = 1.0  # 100% required
+performance_degradation_limit = 0.2
+error_recovery_time_ms = 5000
+system_stability_threshold = 0.9
