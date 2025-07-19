@@ -50,7 +50,7 @@ pub use crate::streaming::{StreamingUpdateHandler, IncrementalIndexer, UpdateStr
 pub use crate::gpu::GpuAccelerator;
 pub use crate::validation::{HumanValidationInterface, ValidationItem, ValidationResult};
 pub use crate::monitoring::{PerformanceMonitor, ObservabilityEngine, AlertManager};
-pub use crate::agents::{MultiAgentCoordinator, KnowledgeAgent, ConstructionTask, ConstructionResult, ConsensusProtocol, MergeStrategy};
+pub use crate::agents::{Agent, ConstructionAgent, CoordinationAgent, AgentId, Request, Response, Task, TaskResult, TaskType, Complexity};
 
 // Phase 1 Brain-Inspired Exports
 pub use crate::core::brain_types::{
