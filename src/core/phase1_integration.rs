@@ -4,6 +4,8 @@ use chrono::Utc;
 
 use crate::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainEnhancedConfig};
 use crate::core::brain_types::{BrainInspiredEntity, EntityDirection, ActivationPattern};
+use crate::core::phase1_types::{Phase1Config, QueryResult, EntityInfo, Phase1Statistics, CognitiveQueryResult};
+use crate::core::phase1_helpers::Phase1Helpers;
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::neural::structure_predictor::GraphStructurePredictor;
 use crate::neural::canonicalization::EnhancedNeuralCanonicalizer;
@@ -23,34 +25,10 @@ pub struct Phase1IntegrationLayer {
     pub mcp_server: Arc<BrainInspiredMCPServer>,
     pub temporal_processor: Arc<IncrementalTemporalProcessor>,
     pub cognitive_orchestrator: Option<Arc<CognitiveOrchestrator>>,
+    pub helpers: Phase1Helpers,
     pub config: Phase1Config,
 }
 
-/// Configuration for Phase 1 integration with Phase 2 cognitive capabilities
-#[derive(Debug, Clone)]
-pub struct Phase1Config {
-    pub embedding_dim: usize,
-    pub neural_server_endpoint: String,
-    pub enable_temporal_tracking: bool,
-    pub enable_sdr_storage: bool,
-    pub enable_real_time_updates: bool,
-    pub enable_cognitive_patterns: bool,
-    pub activation_config: crate::core::activation_engine::ActivationConfig,
-}
-
-impl Default for Phase1Config {
-    fn default() -> Self {
-        Self {
-            embedding_dim: 384,
-            neural_server_endpoint: "localhost:9000".to_string(),
-            enable_temporal_tracking: true,
-            enable_sdr_storage: true,
-            enable_real_time_updates: true,
-            enable_cognitive_patterns: true,
-            activation_config: crate::core::activation_engine::ActivationConfig::default(),
-        }
-    }
-}
 
 impl Phase1IntegrationLayer {
     /// Initialize the complete Phase 1 system
@@ -118,6 +96,13 @@ impl Phase1IntegrationLayer {
             None
         };
 
+        // 9. Initialize helpers
+        let helpers = Phase1Helpers::new(
+            canonicalizer.clone(),
+            neural_server.clone(),
+            brain_graph.clone(),
+        );
+
         Ok(Self {
             brain_graph,
             neural_server,
@@ -127,6 +112,7 @@ impl Phase1IntegrationLayer {
             mcp_server,
             temporal_processor,
             cognitive_orchestrator,
+            helpers,
             config,
         })
     }
@@ -138,7 +124,7 @@ impl Phase1IntegrationLayer {
         context: Option<&str>,
     ) -> Result<Vec<crate::core::types::EntityKey>> {
         // 1. Canonicalize entities
-        let canonical_entities = self.canonicalize_text_entities(text, context).await?;
+        let canonical_entities = self.helpers.canonicalize_text_entities(text, context).await?;
         
         // 2. Predict graph structure
         let graph_operations = self.structure_predictor.predict_structure(text).await?;
@@ -158,7 +144,7 @@ impl Phase1IntegrationLayer {
                     );
                     
                     // Generate embedding
-                    entity.embedding = self.generate_embedding(canonical_concept).await?;
+                    entity.embedding = self.helpers.generate_embedding(canonical_concept).await?;
                     
                     // Convert BrainInspiredEntity to EntityData for insertion
                     let entity_data = crate::core::types::EntityData {
@@ -212,7 +198,7 @@ impl Phase1IntegrationLayer {
         // 4. If real-time updates enabled, process through temporal processor
         if self.config.enable_real_time_updates {
             for entity_key in &created_entities {
-                if let Some(entity) = self.get_brain_entity(*entity_key).await? {
+                if let Some(entity) = self.helpers.get_brain_entity(*entity_key).await? {
                     let update = TemporalUpdateBuilder::new(UpdateOperation::Create)
                         .with_entity(entity)
                         .with_source(UpdateSource::System)
@@ -236,12 +222,12 @@ impl Phase1IntegrationLayer {
         let mut activation_pattern = ActivationPattern::new(query.to_string());
         
         // 2. Use canonicalizer to identify query entities
-        let query_entities = self.extract_query_entities(query).await?;
+        let query_entities = self.helpers.extract_query_entities(query).await?;
         
         // 3. Set initial activations
         for (i, entity_name) in query_entities.iter().enumerate() {
             // Find entities in the brain graph
-            let entities = self.find_entities_by_concept(entity_name).await?;
+            let entities = self.helpers.find_entities_by_concept(entity_name).await?;
             
             for entity_key in entities {
                 let activation_level = 1.0 / (i + 1) as f32; // Decay for later entities
@@ -251,7 +237,7 @@ impl Phase1IntegrationLayer {
         
         // 4. Propagate through neural network (simplified for now)
         // TODO: Implement proper activation propagation
-        let propagation_result = crate::core::activation_engine::PropagationResult {
+        let propagation_result = crate::core::activation_config::PropagationResult {
             final_activations: activation_pattern.activations.clone(),
             iterations_completed: 1,
             converged: true,
@@ -261,7 +247,7 @@ impl Phase1IntegrationLayer {
         
         // 5. Extract meaningful results
         let top_activations = activation_pattern.get_top_activations(10);
-        let entities_info = self.get_entities_info(&top_activations).await?;
+        let entities_info = self.helpers.get_entities_info(&top_activations).await?;
         
         Ok(QueryResult {
             query: query.to_string(),
@@ -301,7 +287,7 @@ impl Phase1IntegrationLayer {
     pub async fn get_phase1_statistics(&self) -> Result<Phase1Statistics> {
         let brain_stats = self.brain_graph.get_brain_statistics().await?;
         // Create dummy activation statistics since activation_engine is not available
-        let activation_stats = crate::core::activation_engine::ActivationStatistics {
+        let activation_stats = crate::core::activation_config::ActivationStatistics {
             total_entities: 0,
             total_gates: 0,
             total_relationships: 0,
@@ -401,160 +387,8 @@ impl Phase1IntegrationLayer {
         Ok(())
     }
 
-    // Helper methods
-
-    async fn canonicalize_text_entities(
-        &self,
-        text: &str,
-        context: Option<&str>,
-    ) -> Result<std::collections::HashMap<String, String>> {
-        let words: Vec<&str> = text.split_whitespace().collect();
-        let mut canonical_map = std::collections::HashMap::new();
-        
-        for word in words {
-            if word.len() > 2 {
-                let canonical = if let Some(ctx) = context {
-                    self.canonicalizer.canonicalize_with_context(word, ctx).await?
-                } else {
-                    self.canonicalizer.base_canonicalizer.canonicalize_entity(word).await?
-                };
-                canonical_map.insert(word.to_string(), canonical);
-            }
-        }
-        
-        Ok(canonical_map)
-    }
-
-    async fn generate_embedding(&self, concept: &str) -> Result<Vec<f32>> {
-        // Create a simple input vector from the concept
-        let mut input_vector = vec![0.0; 384];
-        for (i, byte) in concept.bytes().enumerate() {
-            if i < 384 {
-                input_vector[i] = (byte as f32) / 255.0;
-            }
-        }
-        
-        let result = self.neural_server.neural_predict(
-            "embedding_model",
-            input_vector,
-        ).await?;
-        
-        Ok(result.prediction)
-    }
-
-    async fn get_brain_entity(
-        &self,
-        entity_key: crate::core::types::EntityKey,
-    ) -> Result<Option<BrainInspiredEntity>> {
-        // Entities are stored in the core graph
-        let entity_data = self.brain_graph.core_graph.get_entity(entity_key);
-        
-        // Convert to BrainInspiredEntity
-        if let Some((_meta, data)) = entity_data {
-            Ok(Some(BrainInspiredEntity {
-                id: entity_key,
-                concept_id: format!("entity_{:?}", entity_key),
-                direction: EntityDirection::Input,
-                properties: HashMap::new(),
-                embedding: data.embedding,
-                activation_state: 0.0,
-                last_activation: std::time::SystemTime::now(),
-                last_update: std::time::SystemTime::now(),
-            }))
-        } else {
-            Ok(None)
-        }
-    }
-
-    async fn extract_query_entities(&self, query: &str) -> Result<Vec<String>> {
-        // Simple entity extraction - would use NLP in practice
-        Ok(query.split_whitespace()
-            .filter(|word| word.len() > 2)
-            .map(|word| word.to_lowercase())
-            .collect())
-    }
-
-    async fn find_entities_by_concept(
-        &self,
-        concept: &str,
-    ) -> Result<Vec<crate::core::types::EntityKey>> {
-        let all_entities = self.brain_graph.get_all_entities().await;
-        let mut matching_keys = Vec::new();
-        
-        for (key, entity_data, _) in &all_entities {
-            // Check if entity properties contain the concept
-            if entity_data.properties.to_lowercase().contains(&concept.to_lowercase()) {
-                matching_keys.push(*key);
-            }
-        }
-        
-        Ok(matching_keys)
-    }
-
-    async fn get_entities_info(
-        &self,
-        activations: &[(crate::core::types::EntityKey, f32)],
-    ) -> Result<Vec<EntityInfo>> {
-        let all_entities = self.brain_graph.get_all_entities().await;
-        let mut info = Vec::new();
-        
-        for (key, activation) in activations {
-            if let Some((_, _entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == key) {
-                info.push(EntityInfo {
-                    entity_key: *key,
-                    concept_id: format!("entity_{:?}", key),
-                    direction: EntityDirection::Input,
-                    activation_level: *activation,
-                });
-            }
-        }
-        
-        Ok(info)
-    }
 }
 
-/// Result of a neural query
-#[derive(Debug, Clone)]
-pub struct QueryResult {
-    pub query: String,
-    pub cognitive_pattern: String,
-    pub final_activations: std::collections::HashMap<crate::core::types::EntityKey, f32>,
-    pub iterations_completed: usize,
-    pub converged: bool,
-    pub entities_info: Vec<EntityInfo>,
-    pub total_energy: f32,
-}
-
-/// Information about an entity in query results
-#[derive(Debug, Clone)]
-pub struct EntityInfo {
-    pub entity_key: crate::core::types::EntityKey,
-    pub concept_id: String,
-    pub direction: EntityDirection,
-    pub activation_level: f32,
-}
-
-/// Comprehensive Phase 1 statistics
-#[derive(Debug, Clone)]
-pub struct Phase1Statistics {
-    pub brain_statistics: crate::core::brain_enhanced_graph::BrainStatistics,
-    pub activation_statistics: crate::core::activation_engine::ActivationStatistics,
-    pub update_statistics: crate::streaming::temporal_updates::UpdateStatistics,
-    pub current_queue_size: usize,
-    pub neural_server_connected: bool,
-}
-
-/// Result of cognitive query processing
-#[derive(Debug, Clone)]
-pub struct CognitiveQueryResult {
-    pub query: String,
-    pub final_answer: String,
-    pub strategy_used: ReasoningStrategy,
-    pub confidence: f32,
-    pub execution_time_ms: u64,
-    pub patterns_executed: Vec<CognitivePatternType>,
-    pub quality_metrics: crate::cognitive::QualityMetrics,
-}
 
 #[cfg(test)]
 mod tests {

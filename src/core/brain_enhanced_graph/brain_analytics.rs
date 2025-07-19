@@ -44,8 +44,13 @@ impl BrainEnhancedKnowledgeGraph {
         // Calculate average path length
         let average_path_length = self.calculate_average_path_length().await;
         
-        // Calculate betweenness centrality
-        let betweenness_centrality = self.calculate_betweenness_centrality().await;
+        // Calculate average betweenness centrality
+        let betweenness_values = self.calculate_betweenness_centrality().await;
+        let betweenness_centrality = if !betweenness_values.is_empty() {
+            betweenness_values.values().sum::<f32>() / betweenness_values.len() as f32
+        } else {
+            0.0
+        };
         
         // Calculate activation distribution
         let activation_distribution = self.calculate_activation_distribution(&activation_values);
