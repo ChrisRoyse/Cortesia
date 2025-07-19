@@ -4,7 +4,7 @@ use tokio::sync::RwLock;
 use ahash::AHashMap;
 
 use crate::core::brain_types::{
-    BrainInspiredEntity, LogicGate, BrainInspiredRelationship, 
+    BrainInspiredEntity, LogicGate, LogicGateType, BrainInspiredRelationship, 
     ActivationPattern, ActivationStep, EntityDirection, ActivationOperation
 };
 use crate::core::types::EntityKey;

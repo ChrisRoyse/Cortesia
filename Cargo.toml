@@ -146,3 +146,7 @@ opt-level = 2  # Optimize tests for better performance
 
 [profile.bench]
 debug = true  # Include debug info in benchmarks
+
+[[bench]]
+name = "realistic_benchmarks"
+harness = false

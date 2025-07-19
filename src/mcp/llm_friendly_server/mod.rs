@@ -205,7 +205,7 @@ impl LLMFriendlyMCPServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::brain_types::EntityKey;
+    use crate::core::types::EntityKey;
     
     #[tokio::test]
     async fn test_server_creation() {

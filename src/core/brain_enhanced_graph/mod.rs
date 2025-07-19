@@ -12,6 +12,9 @@ pub mod brain_relationship_manager;
 pub mod brain_advanced_ops;
 pub mod brain_analytics;
 
+#[cfg(test)]
+pub mod test_helpers;
+
 // Re-export main types and functionality
 pub use brain_graph_types::*;
 pub use brain_graph_core::{BrainEnhancedKnowledgeGraph, BrainMemoryUsage};
