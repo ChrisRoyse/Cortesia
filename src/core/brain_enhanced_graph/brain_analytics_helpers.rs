@@ -39,8 +39,8 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// Calculate clustering coefficient for a single entity
-    pub(crate) async fn calculate_clustering_coefficient(&self, entity_key: EntityKey) -> f32 {
-        let neighbors = self.get_neighbors(entity_key).await;
+    pub(crate) async fn _calculate_clustering_coefficient_helper(&self, entity_key: EntityKey) -> f32 {
+        let neighbors = self.get_neighbors(entity_key);
         
         if neighbors.len() < 2 {
             return 0.0;
@@ -81,7 +81,7 @@ impl BrainEnhancedKnowledgeGraph {
         visited.insert(start);
         
         while let Some((current, distance)) = queue.pop_front() {
-            let neighbors = self.get_neighbors(current).await;
+            let neighbors = self.get_neighbors(current);
             
             for neighbor in neighbors {
                 if neighbor == end {
@@ -155,7 +155,7 @@ impl BrainEnhancedKnowledgeGraph {
         visited.insert(start);
         
         while let Some(current) = queue.pop_front() {
-            let neighbors = self.get_neighbors(current).await;
+            let neighbors = self.get_neighbors(current);
             
             for neighbor in neighbors {
                 if neighbor == end {

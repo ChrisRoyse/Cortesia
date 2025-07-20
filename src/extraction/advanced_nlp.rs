@@ -673,7 +673,7 @@ impl ConfidenceScorer {
 
 /// Data structures
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Entity {
     pub id: String,
     pub text: String,

@@ -1,6 +1,7 @@
 //! Advanced query and validation handlers
 
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, KnowledgeResult};
+use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::core::knowledge_types::{TripleQuery, KnowledgeResult};
 use crate::core::triple::Triple;
 use crate::mcp::llm_friendly_server::query_generation::{
     generate_cypher_query, generate_sparql_query, generate_gremlin_query,

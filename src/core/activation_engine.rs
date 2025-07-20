@@ -8,7 +8,8 @@ use crate::core::brain_types::{
     ActivationPattern
 };
 use crate::core::types::EntityKey;
-use crate::core::activation_config::{ActivationConfig, PropagationResult, ActivationStatistics};
+// Re-export for external use
+pub use crate::core::activation_config::{ActivationConfig, PropagationResult, ActivationStatistics};
 use crate::core::activation_processors::ActivationProcessors;
 use crate::error::Result;
 
@@ -109,7 +110,7 @@ impl ActivationPropagationEngine {
             ).await?;
 
             // Step 4: Apply temporal decay
-            self.processors.apply_temporal_decay(&mut current_activations, &*entities).await?;
+            self.processors.apply_temporal_decay(&mut current_activations, &*entities, &*relationships).await?;
 
             // Check for convergence
             if self.processors.has_converged(&previous_activations, &current_activations) {

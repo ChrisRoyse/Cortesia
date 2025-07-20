@@ -44,13 +44,8 @@ impl BrainEnhancedKnowledgeGraph {
         // Calculate average path length
         let average_path_length = self.calculate_average_path_length().await;
         
-        // Calculate average betweenness centrality
-        let betweenness_values = self.calculate_betweenness_centrality().await;
-        let betweenness_centrality = if !betweenness_values.is_empty() {
-            betweenness_values.values().sum::<f32>() / betweenness_values.len() as f32
-        } else {
-            0.0
-        };
+        // Calculate betweenness centrality
+        let betweenness_centrality = self.calculate_betweenness_centrality().await;
         
         // Calculate activation distribution
         let activation_distribution = self.calculate_activation_distribution(&activation_values);
@@ -131,7 +126,7 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// Calculate betweenness centrality for all entities
-    async fn calculate_betweenness_centrality(&self) -> HashMap<EntityKey, f32> {
+    async fn _calculate_betweenness_centrality_analytics(&self) -> HashMap<EntityKey, f32> {
         let entity_keys = self.core_graph.get_all_entity_keys();
         let mut centrality = HashMap::new();
         
@@ -184,7 +179,7 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// Calculate activation distribution
-    fn calculate_activation_distribution(&self, activations: &[f32]) -> HashMap<String, usize> {
+    fn _calculate_activation_distribution_analytics(&self, activations: &[f32]) -> HashMap<String, usize> {
         let mut distribution = HashMap::new();
         
         for &activation in activations {

@@ -1,6 +1,6 @@
 //! Utility functions for the LLM-friendly MCP server
 
-use crate::core::knowledge_engine::MemoryStats;
+use crate::core::knowledge_types::MemoryStats;
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;
 use std::sync::Arc;

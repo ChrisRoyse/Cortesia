@@ -1,6 +1,7 @@
 //! Statistics and performance handlers
 
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery, MemoryStats, KnowledgeResult};
+use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::core::knowledge_types::{TripleQuery, MemoryStats, KnowledgeResult};
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, calculate_efficiency_score, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;

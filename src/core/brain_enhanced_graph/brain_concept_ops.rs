@@ -3,7 +3,7 @@
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
 use crate::core::types::EntityKey;
-use crate::core::sdr_storage::{SDRQuery, SDR};
+use crate::core::sdr_types::{SDRQuery, SDR};
 use crate::error::Result;
 use std::collections::HashSet;
 

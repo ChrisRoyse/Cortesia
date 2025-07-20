@@ -1,7 +1,8 @@
 //! Query-related request handlers
 
 use crate::core::triple::Triple;
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery};
+use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::core::knowledge_types::TripleQuery;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use std::sync::Arc;

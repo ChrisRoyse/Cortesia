@@ -11,6 +11,9 @@ pub mod brain_query_engine;
 pub mod brain_relationship_manager;
 pub mod brain_advanced_ops;
 pub mod brain_analytics;
+pub mod brain_analytics_helpers;
+pub mod brain_concept_ops;
+pub mod brain_optimization;
 
 #[cfg(test)]
 pub mod test_helpers;
@@ -21,5 +24,6 @@ pub use brain_graph_core::{BrainEnhancedKnowledgeGraph, BrainMemoryUsage};
 pub use brain_entity_manager::EntityStatistics;
 pub use brain_query_engine::QueryStatistics;
 pub use brain_relationship_manager::{RelationshipStatistics, RelationshipPattern};
-pub use brain_advanced_ops::{EntityRole, SplitCriteria, OptimizationResult};
+pub use brain_concept_ops::{EntityRole, SplitCriteria};
+pub use brain_optimization::OptimizationResult;
 pub use brain_analytics::{ConceptUsageStats, GraphPatternAnalysis};

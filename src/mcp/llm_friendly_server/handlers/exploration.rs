@@ -1,6 +1,7 @@
 //! Exploration and suggestion request handlers
 
-use crate::core::knowledge_engine::{KnowledgeEngine, TripleQuery};
+use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::core::knowledge_types::TripleQuery;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, generate_suggestions, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;

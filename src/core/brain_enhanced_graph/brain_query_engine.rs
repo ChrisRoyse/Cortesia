@@ -3,7 +3,7 @@
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
 use crate::core::types::{EntityKey, QueryResult, ContextEntity};
-use crate::core::sdr_storage::{SDRQuery, SDR};
+use crate::core::sdr_types::{SDRQuery, SDR};
 use crate::error::Result;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
@@ -320,7 +320,7 @@ impl BrainEnhancedKnowledgeGraph {
         
         // Create SDR from query embedding
         // Use default SDR config since field is private
-        let sdr_config = crate::core::sdr_storage::SDRConfig::default();
+        let sdr_config = crate::core::sdr_types::SDRConfig::default();
         let query_sdr = SDR::from_dense_vector(&query_embedding, &sdr_config);
         
         // Create SDR query

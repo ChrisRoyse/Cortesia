@@ -2,7 +2,8 @@
 
 use super::brain_graph_types::*;
 use crate::core::graph::KnowledgeGraph;
-use crate::core::sdr_storage::{SDRStorage, SDRConfig};
+use crate::core::sdr_storage::SDRStorage;
+use crate::core::sdr_types::SDRConfig;
 use crate::core::types::{EntityKey, EntityData};
 use crate::error::Result;
 use std::sync::Arc;

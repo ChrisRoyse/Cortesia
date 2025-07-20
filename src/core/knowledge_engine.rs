@@ -1,5 +1,4 @@
 use crate::core::triple::{Triple, KnowledgeNode, NodeType, PredicateVocabulary, MAX_CHUNK_SIZE_BYTES};
-use crate::core::knowledge_types::{MemoryStats, TripleQuery, KnowledgeResult, EntityContext};
 use crate::core::knowledge_embedding::EmbeddingGenerator;
 use crate::core::knowledge_extraction::TripleExtractor;
 use crate::embedding::simd_search::BatchProcessor;
@@ -7,6 +6,9 @@ use crate::error::{GraphError, Result};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use parking_lot::RwLock;
+
+// Re-export types for external use
+pub use crate::core::knowledge_types::{MemoryStats, TripleQuery, KnowledgeResult, EntityContext};
 
 /// Ultra-fast knowledge engine optimized for LLM SPO triple storage and retrieval
 /// Maintains <60 bytes per entity while supporting dynamic chunk sizes

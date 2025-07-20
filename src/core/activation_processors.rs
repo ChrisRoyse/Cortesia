@@ -48,13 +48,19 @@ impl ActivationProcessors {
 
             // Calculate new activation
             let current_activation = activations.get(entity_key).copied().unwrap_or(0.0);
-            let new_activation = if connection_count > 0 {
-                (current_activation + incoming_activation / connection_count as f32).min(1.0)
+            
+            // Input entities maintain their activation (external inputs)
+            let new_activation = if matches!(entity.direction, EntityDirection::Input) {
+                current_activation
+            } else if connection_count > 0 {
+                // Use the sum of weighted activations directly
+                incoming_activation.min(1.0)
             } else {
                 current_activation
             };
 
-            if (new_activation - current_activation).abs() > 0.001 {
+            // Always update if entity isn't in activations map yet or if there's a significant change
+            if !activations.contains_key(entity_key) || (new_activation - current_activation).abs() > 0.001 {
                 updates.insert(*entity_key, new_activation);
                 
                 trace.push(ActivationStep {
@@ -143,36 +149,59 @@ impl ActivationProcessors {
         trace: &mut Vec<ActivationStep>,
         _iteration: usize,
     ) -> Result<()> {
-        let mut inhibition_updates = HashMap::new();
+        // Apply inhibition in multiple passes to allow chain effects
+        // This ensures that if A inhibits B and B inhibits C,
+        // B's reduced activation will properly affect its inhibition of C
+        for pass in 0..2 {  // Two passes to propagate chain effects
+            // Collect all inhibition effects for this pass
+            let mut inhibition_effects: HashMap<EntityKey, f32> = HashMap::new();
 
-        for ((source, target), relationship) in relationships.iter() {
-            if relationship.is_inhibitory {
-                if let (Some(&source_activation), Some(&target_activation)) = 
-                    (activations.get(source), activations.get(target)) {
-                    
-                    // Apply inhibition: stronger source activation reduces target activation
-                    let inhibition_effect = source_activation * relationship.weight * self.config.inhibition_strength;
-                    let new_target_activation = (target_activation - inhibition_effect).max(0.0);
+            for ((source, target), relationship) in relationships.iter() {
+                if relationship.is_inhibitory {
+                    if let Some(&source_activation) = activations.get(source) {
+                        // Calculate inhibition effect based on current activation
+                        let effect = source_activation * relationship.weight * self.config.inhibition_strength;
+                        
+                        // Accumulate inhibition effects for each target
+                        *inhibition_effects.entry(*target).or_insert(0.0) += effect;
+                    }
+                }
+            }
+
+            // Apply all inhibition effects for this pass
+            let mut inhibition_updates = HashMap::new();
+            
+            for (target, total_inhibition) in inhibition_effects.iter() {
+                // Get current activation (default to 0.0 if not present)
+                let target_activation = activations.get(target).copied().unwrap_or(0.0);
+                
+                if target_activation > 0.0 {
+                    // Apply inhibition with a divisive inhibition model
+                    // This prevents complete suppression and allows competition
+                    let new_target_activation = target_activation / (1.0 + total_inhibition);
                     
                     if (new_target_activation - target_activation).abs() > 0.001 {
                         inhibition_updates.insert(*target, new_target_activation);
                         
-                        trace.push(ActivationStep {
-                            step_id: trace.len(),
-                            entity_key: *target,
-                            concept_id: format!("inhibited_{:?}", target),
-                            activation_level: new_target_activation,
-                            operation_type: ActivationOperation::Inhibit,
-                            timestamp: std::time::SystemTime::now(),
-                        });
+                        // Only add trace entries in the first pass to avoid duplication
+                        if pass == 0 {
+                            trace.push(ActivationStep {
+                                step_id: trace.len(),
+                                entity_key: *target,
+                                concept_id: format!("inhibited_{:?}", target),
+                                activation_level: new_target_activation,
+                                operation_type: ActivationOperation::Inhibit,
+                                timestamp: std::time::SystemTime::now(),
+                            });
+                        }
                     }
                 }
             }
-        }
 
-        // Apply inhibition updates
-        for (key, value) in inhibition_updates {
-            activations.insert(key, value);
+            // Apply inhibition updates immediately for this pass
+            for (key, value) in inhibition_updates {
+                activations.insert(key, value);
+            }
         }
 
         Ok(())
@@ -183,15 +212,30 @@ impl ActivationProcessors {
         &self,
         activations: &mut HashMap<EntityKey, f32>,
         entities: &AHashMap<EntityKey, BrainInspiredEntity>,
+        relationships: &AHashMap<(EntityKey, EntityKey), BrainInspiredRelationship>,
     ) -> Result<()> {
         for (entity_key, activation) in activations.iter_mut() {
             if let Some(entity) = entities.get(entity_key) {
-                let time_since_last = entity.last_activation.elapsed()
-                    .unwrap_or_default()
-                    .as_secs_f32();
+                // Skip decay for input entities (they maintain external activation)
+                if matches!(entity.direction, EntityDirection::Input) {
+                    continue;
+                }
                 
-                let decay_factor = (-self.config.decay_rate * time_since_last).exp();
-                *activation *= decay_factor;
+                // Check if entity has any connections (incoming or outgoing)
+                let has_connections = relationships.iter().any(|((source, target), _)| {
+                    *source == *entity_key || *target == *entity_key
+                });
+                
+                // Only apply decay to connected entities
+                if has_connections {
+                    let time_since_last = entity.last_activation.elapsed()
+                        .unwrap_or_default()
+                        .as_secs_f32();
+                    
+                    let decay_factor = (-self.config.decay_rate * time_since_last).exp();
+                    *activation *= decay_factor;
+                }
+                // Disconnected entities maintain their activation
             }
         }
 

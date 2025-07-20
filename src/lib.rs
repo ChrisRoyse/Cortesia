@@ -20,11 +20,11 @@ pub mod streaming;
 pub mod gpu;
 pub mod validation;
 pub mod monitoring;
-pub mod agents;
 pub mod text;
 pub mod cognitive;
 pub mod learning;
 pub mod graph;
+pub mod agents;
 
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;

@@ -1,9 +1,7 @@
 //! Advanced operations for brain-enhanced knowledge graph
 
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
-use super::brain_graph_types::*;
-use super::brain_concept_ops::{EntityRole, SplitCriteria};
-use super::brain_optimization::OptimizationResult;
+use super::brain_concept_ops::EntityRole;
 use crate::core::types::EntityKey;
 use crate::error::Result;
 

@@ -1,6 +1,6 @@
 //! Search result fusion for hybrid search
 
-use crate::core::knowledge_engine::KnowledgeResult;
+use crate::core::knowledge_types::KnowledgeResult;
 use crate::error::Result;
 use std::collections::HashMap;
 
