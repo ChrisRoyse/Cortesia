@@ -9,6 +9,9 @@ use std::collections::HashMap;
 use std::time::{SystemTime, Duration};
 use std::thread;
 use super::test_helpers::*;
+use super::test_helpers::{
+    generate_learning_rates, generate_decay_rates, generate_edge_case_activations, assert_float_eq
+};
 
 #[test]
 fn test_relationship_creation() {
@@ -433,4 +436,422 @@ fn test_boundary_decay_rates() {
         let result = rel.apply_decay();
         assert_float_eq(result, expected_factor, 0.02);
     }
+}
+
+// ==================== Enhanced Learning Rate Variation Tests ====================
+
+#[test]
+fn test_comprehensive_learning_rate_variations() {
+    let learning_rates = generate_learning_rates();
+    let initial_weights = vec![0.0, 0.1, 0.5, 0.9, 1.0];
+    
+    for &initial_weight in &initial_weights {
+        for &learning_rate in &learning_rates {
+            let mut rel = create_test_relationship(RelationType::Learned, initial_weight, false, 0.1);
+            let initial_count = rel.activation_count;
+            
+            rel.strengthen(learning_rate);
+            
+            // Check weight calculation
+            let expected_weight = (initial_weight + learning_rate).min(1.0);
+            assert_float_eq(rel.weight, expected_weight, 0.001);
+            assert_float_eq(rel.strength, expected_weight, 0.001);
+            
+            // Check counters incremented
+            assert_eq!(rel.activation_count, initial_count + 1);
+            assert_eq!(rel.usage_count, initial_count + 1);
+            
+            // Check timestamps updated
+            assert!(rel.last_strengthened <= SystemTime::now());
+            assert!(rel.last_update >= rel.last_strengthened);
+        }
+    }
+}
+
+#[test]
+fn test_extreme_learning_rate_edge_cases() {
+    let extreme_rates = vec![
+        f32::NEG_INFINITY,
+        -1000.0,
+        -1.0,
+        f32::INFINITY,
+        f32::NAN,
+        1000.0,
+    ];
+    
+    for &rate in &extreme_rates {
+        let mut rel = create_test_relationship(RelationType::Learned, 0.5, false, 0.1);
+        let initial_weight = rel.weight;
+        
+        rel.strengthen(rate);
+        
+        if rate.is_nan() {
+            // NaN learning rate might produce NaN weight
+            assert!(rel.weight.is_nan() || (rel.weight >= 0.0 && rel.weight <= 1.0));
+        } else if rate.is_infinite() || rate >= 1000.0 {
+            // Very large positive rates should saturate to 1.0
+            assert_eq!(rel.weight, 1.0, "Large positive learning rate should saturate");
+        } else if rate <= -1000.0 || rate == f32::NEG_INFINITY {
+            // Very large negative rates might underflow but shouldn't break
+            assert!(rel.weight >= 0.0 || rel.weight.is_infinite(), "Should handle negative rates gracefully");
+        }
+        
+        // Counters should still increment regardless of rate value
+        assert_eq!(rel.activation_count, 1);
+    }
+}
+
+#[test]
+fn test_sequential_learning_rate_applications() {
+    let mut rel = create_test_relationship(RelationType::Learned, 0.1, false, 0.1);
+    
+    // Apply a sequence of different learning rates
+    let learning_sequence = vec![0.1, 0.05, 0.2, 0.15, 0.3, 0.1];
+    let mut expected_weight = 0.1;
+    
+    for (i, &rate) in learning_sequence.iter().enumerate() {
+        rel.strengthen(rate);
+        expected_weight = (expected_weight + rate).min(1.0);
+        
+        assert_float_eq(rel.weight, expected_weight, 0.001);
+        assert_eq!(rel.activation_count, i as u64 + 1);
+        
+        // Small delay to ensure timestamps are different
+        thread::sleep(Duration::from_millis(1));
+    }
+    
+    // Final weight should be 1.0 (saturated)
+    assert_eq!(rel.weight, 1.0);
+}
+
+#[test]
+fn test_learning_rate_with_different_relation_types() {
+    let relation_types = vec![
+        RelationType::IsA,
+        RelationType::HasInstance,
+        RelationType::HasProperty,
+        RelationType::RelatedTo,
+        RelationType::PartOf,
+        RelationType::Similar,
+        RelationType::Opposite,
+        RelationType::Temporal,
+        RelationType::Learned,
+    ];
+    
+    let learning_rate = 0.3;
+    let initial_weight = 0.2;
+    
+    for rel_type in relation_types {
+        let mut rel = create_test_relationship(rel_type, initial_weight, false, 0.1);
+        
+        rel.strengthen(learning_rate);
+        
+        // Learning should work the same regardless of relation type
+        let expected = initial_weight + learning_rate;
+        assert_float_eq(rel.weight, expected, 0.001);
+        assert_eq!(rel.relation_type, rel_type);
+    }
+}
+
+#[test]
+fn test_learning_rate_inhibitory_vs_excitatory() {
+    let learning_rate = 0.4;
+    let initial_weight = 0.3;
+    
+    // Test excitatory relationship
+    let mut excitatory = create_test_relationship(RelationType::RelatedTo, initial_weight, false, 0.1);
+    excitatory.strengthen(learning_rate);
+    
+    // Test inhibitory relationship
+    let mut inhibitory = create_test_relationship(RelationType::RelatedTo, initial_weight, true, 0.1);
+    inhibitory.strengthen(learning_rate);
+    
+    // Learning should work the same way regardless of inhibitory flag
+    assert_float_eq(excitatory.weight, inhibitory.weight, 0.001);
+    assert_eq!(excitatory.weight, initial_weight + learning_rate);
+    
+    // But inhibitory flag should be preserved
+    assert!(!excitatory.is_inhibitory);
+    assert!(inhibitory.is_inhibitory);
+}
+
+// ==================== Enhanced Decay Testing ====================
+
+#[test]
+fn test_comprehensive_decay_rate_variations() {
+    let decay_rates = generate_decay_rates();
+    let initial_weights = vec![0.1, 0.5, 0.9, 1.0];
+    let time_intervals = vec![
+        Duration::from_millis(100),
+        Duration::from_secs(1),
+        Duration::from_secs(5),
+        Duration::from_secs(10),
+    ];
+    
+    for &initial_weight in &initial_weights {
+        for &decay_rate in &decay_rates {
+            for &time_interval in &time_intervals {
+                let mut rel = create_test_relationship(RelationType::Temporal, initial_weight, false, decay_rate);
+                rel.last_strengthened = SystemTime::now() - time_interval;
+                
+                let result = rel.apply_decay();
+                
+                // Calculate expected decay
+                let time_secs = time_interval.as_secs_f32();
+                let expected = initial_weight * (-decay_rate * time_secs).exp();
+                
+                if decay_rate == 0.0 {
+                    // No decay
+                    assert_float_eq(result, initial_weight, 0.001);
+                } else if decay_rate.is_finite() && decay_rate > 0.0 {
+                    // Normal decay
+                    assert_float_eq(result, expected, 0.02);
+                    assert!(result <= initial_weight, "Decay should not increase weight");
+                    assert!(result >= 0.0, "Weight should not go negative");
+                } else {
+                    // Handle extreme decay rates gracefully
+                    assert!(result >= 0.0, "Weight should remain non-negative");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_decay_with_extreme_timestamps() {
+    let mut rel = create_test_relationship(RelationType::Temporal, 0.8, false, 0.1);
+    
+    // Test with future timestamp (clock skew)
+    rel.last_strengthened = SystemTime::now() + Duration::from_secs(1);
+    let result = rel.apply_decay();
+    
+    // Should handle gracefully (elapsed() returns Ok(Duration::ZERO) or Default)
+    assert!(result >= 0.0 && result <= 1.0);
+    
+    // Test with very old timestamp
+    rel.weight = 0.9;
+    rel.strength = 0.9;
+    rel.last_strengthened = SystemTime::UNIX_EPOCH;
+    let result = rel.apply_decay();
+    
+    // Should decay to essentially zero
+    assert!(result < 0.001);
+}
+
+#[test]
+fn test_decay_and_strengthen_interaction_patterns() {
+    let mut rel = create_test_relationship(RelationType::Learned, 0.5, false, 0.2);
+    
+    // Pattern 1: Strengthen, wait, decay, strengthen again
+    rel.strengthen(0.3); // Weight becomes 0.8
+    assert_float_eq(rel.weight, 0.8, 0.001);
+    
+    thread::sleep(Duration::from_millis(100));
+    rel.apply_decay(); // Some decay occurs
+    let after_decay = rel.weight;
+    assert!(after_decay < 0.8);
+    
+    rel.strengthen(0.1); // Strengthen again
+    assert!(rel.weight > after_decay);
+    
+    // Pattern 2: Rapid strengthen-decay cycles
+    for _ in 0..5 {
+        let before = rel.weight;
+        rel.strengthen(0.05);
+        let after_strengthen = rel.weight;
+        
+        // Small delay for decay
+        rel.last_strengthened = SystemTime::now() - Duration::from_millis(50);
+        rel.apply_decay();
+        let after_decay = rel.weight;
+        
+        assert!(after_strengthen > before, "Strengthen should increase weight");
+        assert!(after_decay <= after_strengthen, "Decay should not increase weight");
+    }
+}
+
+// ==================== Property-Based Testing ====================
+
+#[test]
+fn test_relationship_weight_bounds_property() {
+    let learning_rates = generate_learning_rates();
+    let initial_weights = vec![0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0];
+    
+    for &initial in &initial_weights {
+        for &rate in &learning_rates {
+            let mut rel = create_test_relationship(RelationType::RelatedTo, initial, false, 0.1);
+            
+            rel.strengthen(rate);
+            
+            // Property: Weight should always be in [0, 1] range after strengthening
+            if !rel.weight.is_nan() {
+                assert!(rel.weight >= 0.0, "Weight should be non-negative");
+                assert!(rel.weight <= 1.0, "Weight should not exceed 1.0");
+            }
+            
+            // Property: Weight and strength should always be equal
+            assert_float_eq(rel.weight, rel.strength, 0.001);
+        }
+    }
+}
+
+#[test]
+fn test_relationship_monotonic_strengthening_property() {
+    let mut rel = create_test_relationship(RelationType::RelatedTo, 0.1, false, 0.0); // No decay
+    
+    // Property: Successive positive strengthening should not decrease weight
+    let positive_rates = vec![0.01, 0.05, 0.1, 0.2, 0.05, 0.1];
+    let mut previous_weight = rel.weight;
+    
+    for &rate in &positive_rates {
+        rel.strengthen(rate);
+        
+        if rate >= 0.0 {
+            assert!(rel.weight >= previous_weight, 
+                   "Positive strengthening should not decrease weight: {} -> {} (rate: {})",
+                   previous_weight, rel.weight, rate);
+        }
+        
+        previous_weight = rel.weight;
+        if previous_weight >= 1.0 {
+            break; // Stop at saturation
+        }
+    }
+}
+
+#[test]
+fn test_relationship_decay_monotonicity_property() {
+    let mut rel = create_test_relationship(RelationType::Temporal, 1.0, false, 0.3);
+    
+    // Property: Successive decay applications should not increase weight
+    for i in 1..=10 {
+        let previous_weight = rel.weight;
+        rel.last_strengthened = SystemTime::now() - Duration::from_millis(i * 50);
+        
+        let result = rel.apply_decay();
+        
+        assert!(result <= previous_weight,
+               "Decay should not increase weight: {} -> {} (iteration {})",
+               previous_weight, result, i);
+    }
+}
+
+#[test]
+fn test_relationship_counter_monotonicity_property() {
+    let mut rel = create_test_relationship(RelationType::RelatedTo, 0.5, false, 0.1);
+    
+    // Property: Strengthening should always increment counters
+    for i in 1..=10 {
+        let prev_activation = rel.activation_count;
+        let prev_usage = rel.usage_count;
+        
+        rel.strengthen(0.01);
+        
+        assert_eq!(rel.activation_count, prev_activation + 1,
+                  "Activation count should increment");
+        assert_eq!(rel.usage_count, prev_usage + 1,
+                  "Usage count should increment");
+        assert_eq!(rel.activation_count, rel.usage_count,
+                  "Counters should remain equal");
+    }
+    
+    // Property: Decay should not affect counters
+    let count_before_decay = rel.activation_count;
+    rel.apply_decay();
+    assert_eq!(rel.activation_count, count_before_decay,
+              "Decay should not affect counters");
+}
+
+#[test]
+fn test_relationship_temporal_consistency_property() {
+    let mut rel = create_test_relationship(RelationType::Temporal, 0.5, false, 0.1);
+    
+    let start_time = SystemTime::now();
+    
+    // Property: Timestamps should be consistent and non-decreasing
+    rel.strengthen(0.1);
+    let first_strengthen_time = rel.last_strengthened;
+    let first_update_time = rel.last_update;
+    
+    assert!(first_strengthen_time >= start_time, "Strengthen time should be recent");
+    assert!(first_update_time >= first_strengthen_time, "Update time should be >= strengthen time");
+    
+    thread::sleep(Duration::from_millis(10));
+    
+    rel.apply_decay();
+    let after_decay_update = rel.last_update;
+    
+    assert!(after_decay_update > first_update_time, "Decay should update timestamp");
+    assert_eq!(rel.last_strengthened, first_strengthen_time, "Decay should not change strengthen time");
+    
+    thread::sleep(Duration::from_millis(10));
+    
+    rel.strengthen(0.05);
+    let second_strengthen_time = rel.last_strengthened;
+    
+    assert!(second_strengthen_time > first_strengthen_time, "Second strengthen should have later timestamp");
+}
+
+#[test]
+fn test_relationship_saturation_stability_property() {
+    let mut rel = create_test_relationship(RelationType::RelatedTo, 0.9, false, 0.0); // No decay
+    
+    // Reach saturation
+    rel.strengthen(0.2); // Should reach 1.0
+    assert_eq!(rel.weight, 1.0);
+    
+    // Property: Once saturated, further strengthening should not change weight
+    for _ in 0..5 {
+        let prev_weight = rel.weight;
+        rel.strengthen(0.1);
+        assert_eq!(rel.weight, prev_weight, "Saturated weight should remain stable");
+    }
+    
+    // But counters should still increment
+    assert_eq!(rel.activation_count, 6); // Initial strengthen + 5 more
+}
+
+#[test]
+fn test_relationship_metadata_persistence_property() {
+    let mut rel = create_test_relationship(RelationType::RelatedTo, 0.5, false, 0.1);
+    
+    // Add metadata
+    rel.metadata.insert("source".to_string(), "test".to_string());
+    rel.metadata.insert("confidence".to_string(), "0.95".to_string());
+    let original_metadata = rel.metadata.clone();
+    
+    // Property: Metadata should persist through strengthen/decay operations
+    for _ in 0..3 {
+        rel.strengthen(0.1);
+        assert_eq!(rel.metadata, original_metadata, "Metadata should persist through strengthening");
+        
+        rel.apply_decay();
+        assert_eq!(rel.metadata, original_metadata, "Metadata should persist through decay");
+    }
+}
+
+// ==================== Stress Testing ====================
+
+#[test]
+fn test_relationship_high_frequency_operations() {
+    let mut rel = create_test_relationship(RelationType::Learned, 0.1, false, 0.05);
+    
+    // Rapid alternating strengthen/decay operations
+    for i in 0..100 {
+        if i % 2 == 0 {
+            rel.strengthen(0.01);
+        } else {
+            // Introduce small delay and decay
+            rel.last_strengthened = SystemTime::now() - Duration::from_millis(1);
+            rel.apply_decay();
+        }
+        
+        // Properties should hold throughout
+        assert!(rel.weight >= 0.0 && rel.weight <= 1.0, "Weight should remain in bounds");
+        assert_float_eq(rel.weight, rel.strength, 0.001, "Weight and strength should match");
+    }
+    
+    // Should have reasonable final values
+    assert!(rel.activation_count >= 50, "Should have many activations");
+    assert!(rel.weight > 0.0, "Should have some weight remaining");
 }

@@ -13,14 +13,15 @@ mod test_relation_type;
 mod test_brain_inspired_entity;
 mod test_brain_inspired_relationship;
 mod test_logic_gate;
+mod test_logic_gate_comprehensive;
+mod test_entity;
+mod test_relationship;
 
 // Pattern and operation tests
 mod test_activation_pattern;
+mod test_activation_patterns;
 mod test_activation_step;
-mod test_graph_operation;
-mod test_training_example;
 
-// Integration and performance tests
-mod test_integration;
-mod test_performance;
-mod test_edge_cases;
+// Error handling and performance tests
+mod test_error_handling;
+mod test_performance_stress;

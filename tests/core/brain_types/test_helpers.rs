@@ -175,6 +175,20 @@ impl LogicGateBuilder {
     }
 }
 
+/// Create a test logic gate with specified parameters
+pub fn create_test_gate(gate_type: LogicGateType, threshold: f32, num_inputs: usize) -> LogicGate {
+    let inputs: Vec<EntityKey> = (0..num_inputs).map(|i| EntityKey::from(slotmap::KeyData::from_ffi(i as u64))).collect();
+    let outputs = vec![EntityKey::from(slotmap::KeyData::from_ffi(num_inputs as u64))];
+    let weights = vec![1.0; num_inputs];
+    
+    LogicGateBuilder::new(gate_type)
+        .with_threshold(threshold)
+        .with_inputs(inputs)
+        .with_outputs(outputs)
+        .with_weights(weights)
+        .build()
+}
+
 // ==================== Activation Pattern Helpers ====================
 
 /// Create a simple activation pattern for testing
@@ -182,7 +196,7 @@ pub fn create_test_pattern(query: &str, size: usize) -> ActivationPattern {
     let mut pattern = ActivationPattern::new(query.to_string());
     
     for i in 0..size {
-        let key = EntityKey::from(i as u64);
+        let key = EntityKey::from(slotmap::KeyData::from_ffi(i as u64));
         let activation = (i as f32 + 1.0) / (size as f32 + 1.0); // Normalized activation
         pattern.activations.insert(key, activation);
     }
@@ -195,7 +209,7 @@ pub fn create_pattern_with_activations(query: &str, activations: Vec<(u64, f32)>
     let mut pattern = ActivationPattern::new(query.to_string());
     
     for (key_val, activation) in activations {
-        pattern.activations.insert(EntityKey::from(key_val), activation);
+        pattern.activations.insert(EntityKey::from(slotmap::KeyData::from_ffi(key_val)), activation);
     }
     
     pattern
@@ -352,6 +366,117 @@ pub fn assert_relationship_properties(
         "{}: Expected inhibitory {}, got {}",
         context, expected_inhibitory, rel.is_inhibitory
     );
+}
+
+// ==================== Additional Helper Functions ====================
+
+/// Create a test relationship with specific parameters
+pub fn create_test_relationship(
+    relation_type: RelationType,
+    weight: f32,
+    is_inhibitory: bool,
+    temporal_decay: f32
+) -> BrainInspiredRelationship {
+    let source = EntityKey::default();
+    let target = EntityKey::default();
+    let mut rel = BrainInspiredRelationship::new(source, target, relation_type);
+    rel.weight = weight;
+    rel.strength = weight;
+    rel.is_inhibitory = is_inhibitory;
+    rel.temporal_decay = temporal_decay;
+    rel
+}
+
+/// Assert floating point equality with tolerance
+pub fn assert_float_eq(actual: f32, expected: f32, tolerance: f32) {
+    assert!(
+        (actual - expected).abs() <= tolerance,
+        "Expected {}, got {}, tolerance {}",
+        expected, actual, tolerance
+    );
+}
+
+/// Assert activation value is valid (typically between 0.0 and 1.0 but allows flexibility)
+pub fn assert_valid_activation(activation: f32) {
+    assert!(
+        !activation.is_nan() && !activation.is_infinite(),
+        "Activation should be a valid number, got {}",
+        activation
+    );
+}
+
+/// Generate test data for property-based testing
+pub fn generate_valid_activations(count: usize) -> Vec<f32> {
+    (0..count).map(|i| (i as f32) / (count as f32)).collect()
+}
+
+/// Generate test data for learning rates
+pub fn generate_learning_rates() -> Vec<f32> {
+    vec![
+        0.0, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 1.5, 2.0
+    ]
+}
+
+/// Generate test data for decay rates
+pub fn generate_decay_rates() -> Vec<f32> {
+    vec![
+        0.0, 0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0
+    ]
+}
+
+/// Generate edge case activation values for testing
+pub fn generate_edge_case_activations() -> Vec<f32> {
+    vec![
+        f32::NEG_INFINITY,
+        -1000.0,
+        -1.0,
+        -0.1,
+        0.0,
+        0.1,
+        0.5,
+        0.9,
+        1.0,
+        1.1,
+        2.0,
+        1000.0,
+        f32::INFINITY,
+        f32::NAN,
+    ]
+}
+
+/// Create weight matrix with different characteristics
+pub fn create_test_weight_matrices() -> Vec<Vec<f32>> {
+    vec![
+        vec![], // Empty
+        vec![1.0], // Single weight
+        vec![0.5, 0.5], // Balanced
+        vec![0.8, 0.2], // Unbalanced
+        vec![0.33, 0.33, 0.34], // Three weights
+        vec![0.1, 0.2, 0.3, 0.4], // Four weights
+        vec![0.0, 0.0, 0.0], // All zeros
+        vec![1.0, 1.0, 1.0], // All ones
+        vec![-0.5, 0.5, 1.0], // Including negative
+        vec![f32::NAN, 0.5, 0.3], // Including NaN
+    ]
+}
+
+/// Create test input combinations for logic gates
+pub fn create_gate_test_inputs() -> Vec<Vec<f32>> {
+    vec![
+        vec![], // Empty inputs
+        vec![0.0], // Single zero
+        vec![1.0], // Single one
+        vec![0.5], // Single middle
+        vec![0.0, 0.0], // Both zero
+        vec![0.0, 1.0], // Mixed
+        vec![1.0, 0.0], // Mixed reverse
+        vec![1.0, 1.0], // Both one
+        vec![0.5, 0.5], // Both middle
+        vec![0.3, 0.7, 0.5], // Three inputs
+        vec![f32::NAN, 0.5], // With NaN
+        vec![f32::INFINITY, 0.5], // With infinity
+        vec![-0.5, 0.5], // With negative
+    ]
 }
 
 // ==================== Timing Helpers ====================

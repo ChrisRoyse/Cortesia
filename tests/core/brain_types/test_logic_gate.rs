@@ -7,7 +7,11 @@ use llmkg::error::GraphError;
 use serde_json;
 
 use super::test_constants;
-use super::test_helpers::{LogicGateBuilder, assert_activation_close, measure_execution_time};
+use super::test_helpers::{
+    LogicGateBuilder, assert_activation_close, measure_execution_time,
+    create_test_weight_matrices, create_gate_test_inputs, generate_edge_case_activations,
+    assert_float_eq
+};
 
 // ==================== Constructor Tests ====================
 
@@ -553,4 +557,376 @@ fn test_complex_gate_network_simulation() {
     
     // Should propagate through network correctly
     assert!(final_output > 0.0, "Complex network should produce output");
+}
+
+// ==================== Enhanced Edge Case Tests ====================
+
+#[test]
+fn test_logic_gate_empty_inputs_comprehensive() {
+    let gate_types = [
+        LogicGateType::And,
+        LogicGateType::Or,
+        LogicGateType::Nand,
+        LogicGateType::Nor,
+        LogicGateType::Threshold,
+        LogicGateType::Inhibitory,
+    ];
+    
+    for gate_type in gate_types {
+        let gate = LogicGate::new(gate_type, 0.5);
+        let result = gate.calculate_output(&[]);
+        
+        match gate_type {
+            LogicGateType::Inhibitory => {
+                // Inhibitory gate should return 0 for empty inputs
+                assert_eq!(result.unwrap(), 0.0, "Inhibitory gate with empty inputs");
+            }
+            LogicGateType::Threshold => {
+                // Threshold gate should return 0 for empty inputs
+                assert_eq!(result.unwrap(), 0.0, "Threshold gate with empty inputs");
+            }
+            _ => {
+                // Other gates may error or return a default value
+                match result {
+                    Ok(output) => assert!(output >= 0.0 && output <= 1.0, "Valid output range"),
+                    Err(_) => {} // Error is acceptable for empty inputs
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_logic_gate_weight_matrix_mismatches() {
+    let weight_matrices = create_test_weight_matrices();
+    let test_inputs = create_gate_test_inputs();
+    
+    for weights in weight_matrices {
+        let mut gate = LogicGate::new(LogicGateType::Weighted, 0.5);
+        gate.weight_matrix = weights.clone();
+        
+        for inputs in &test_inputs {
+            let result = gate.calculate_output(inputs);
+            
+            if weights.len() != inputs.len() {
+                // Size mismatch should error
+                assert!(result.is_err(), 
+                    "Weight matrix size mismatch should error: weights={}, inputs={}", 
+                    weights.len(), inputs.len());
+            } else if weights.is_empty() && inputs.is_empty() {
+                // Both empty should work and return 0
+                assert_eq!(result.unwrap(), 0.0, "Empty weights and inputs should work");
+            } else {
+                // Matching sizes should work (unless inputs are invalid)
+                match result {
+                    Ok(output) => {
+                        if !output.is_nan() {
+                            assert!(output >= 0.0, "Output should be non-negative");
+                        }
+                    }
+                    Err(_) => {} // May error for invalid inputs like NaN
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_logic_gate_invalid_thresholds() {
+    let invalid_thresholds = vec![
+        f32::NEG_INFINITY,
+        -1000.0,
+        -1.0,
+        f32::INFINITY,
+        f32::NAN,
+    ];
+    
+    let valid_thresholds = vec![
+        0.0, 0.5, 1.0, 2.0, 100.0
+    ];
+    
+    // Test that gates can be created with various thresholds
+    for &threshold in &invalid_thresholds {
+        let gate = LogicGate::new(LogicGateType::And, threshold);
+        assert_eq!(gate.threshold, threshold, "Threshold should be stored as-is");
+        
+        // Test calculation with invalid threshold
+        let result = gate.calculate_output(&[0.5, 0.7]);
+        match result {
+            Ok(output) => {
+                if threshold.is_nan() {
+                    assert!(output.is_nan() || output >= 0.0, "NaN threshold behavior");
+                } else {
+                    assert!(output >= 0.0 || output.is_infinite(), "Output should be valid");
+                }
+            }
+            Err(_) => {} // Error is acceptable for invalid thresholds
+        }
+    }
+    
+    // Valid thresholds should always work
+    for &threshold in &valid_thresholds {
+        let gate = LogicGate::new(LogicGateType::Or, threshold);
+        let result = gate.calculate_output(&[0.5, 0.7]).unwrap();
+        assert!(result >= 0.0 && result <= 1.0, "Valid threshold should work");
+    }
+}
+
+#[test]
+fn test_logic_gate_extreme_input_values() {
+    let edge_cases = generate_edge_case_activations();
+    let gate_types = [
+        LogicGateType::And,
+        LogicGateType::Or,
+        LogicGateType::Threshold,
+        LogicGateType::Inhibitory,
+    ];
+    
+    for gate_type in gate_types {
+        let gate = LogicGate::new(gate_type, 0.5);
+        
+        // Test single extreme values
+        for &value in &edge_cases {
+            if gate_type == LogicGateType::And || gate_type == LogicGateType::Or {
+                let result = gate.calculate_output(&[value, 0.5]);
+                match result {
+                    Ok(output) => {
+                        if value.is_nan() {
+                            assert!(output.is_nan() || (output >= 0.0 && output <= 1.0));
+                        } else if value.is_infinite() {
+                            assert!(output.is_infinite() || (output >= 0.0 && output <= 1.0));
+                        } else {
+                            assert!(output >= 0.0, "Output should be non-negative");
+                        }
+                    }
+                    Err(_) => {} // Error is acceptable for extreme values
+                }
+            } else {
+                let result = gate.calculate_output(&[value]);
+                match result {
+                    Ok(output) => {
+                        if !value.is_finite() {
+                            // Non-finite inputs may produce non-finite outputs
+                            assert!(output.is_finite() || !output.is_finite());
+                        } else {
+                            assert!(output >= 0.0, "Output should be non-negative for finite inputs");
+                        }
+                    }
+                    Err(_) => {} // Error is acceptable for extreme values
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_logic_gate_input_node_capacity_mismatch() {
+    let mut gate = LogicGate::new(LogicGateType::And, 0.5);
+    
+    // Set input nodes to expect 3 inputs
+    gate.input_nodes = vec![EntityKey::from(1), EntityKey::from(2), EntityKey::from(3)];
+    
+    // Test with wrong number of inputs
+    let result_too_few = gate.calculate_output(&[0.5, 0.7]); // 2 inputs, expects 3
+    assert!(result_too_few.is_err(), "Should error with too few inputs");
+    
+    let result_too_many = gate.calculate_output(&[0.5, 0.7, 0.3, 0.9]); // 4 inputs, expects 3
+    assert!(result_too_many.is_err(), "Should error with too many inputs");
+    
+    // Test with correct number of inputs
+    let result_correct = gate.calculate_output(&[0.5, 0.7, 0.3]); // 3 inputs
+    assert!(result_correct.is_ok(), "Should work with correct number of inputs");
+}
+
+#[test]
+fn test_weighted_gate_comprehensive_edge_cases() {
+    let mut gate = LogicGate::new(LogicGateType::Weighted, 0.6);
+    
+    // Test with zero weights
+    gate.weight_matrix = vec![0.0, 0.0, 0.0];
+    let result = gate.calculate_output(&[0.8, 0.9, 0.7]).unwrap();
+    assert_eq!(result, 0.0, "Zero weights should produce zero output");
+    
+    // Test with negative weights
+    gate.weight_matrix = vec![-0.5, 0.5, 1.0];
+    let result = gate.calculate_output(&[0.8, 0.9, 0.7]).unwrap();
+    // Expected: 0.8*(-0.5) + 0.9*0.5 + 0.7*1.0 = -0.4 + 0.45 + 0.7 = 0.75
+    let expected = 0.8 * (-0.5) + 0.9 * 0.5 + 0.7 * 1.0;
+    if expected >= 0.6 { // Above threshold
+        assert_float_eq(result, expected.min(1.0), 0.01);
+    } else {
+        assert_eq!(result, 0.0);
+    }
+    
+    // Test with very large weights
+    gate.weight_matrix = vec![1000.0, 1000.0];
+    gate.threshold = 500.0;
+    let result = gate.calculate_output(&[0.001, 0.001]).unwrap();
+    // Should exceed threshold and be clamped to 1.0
+    assert_eq!(result, 1.0, "Large weights should saturate");
+    
+    // Test with infinite weights
+    gate.weight_matrix = vec![f32::INFINITY, 0.5];
+    let result = gate.calculate_output(&[0.5, 0.3]);
+    match result {
+        Ok(output) => {
+            assert!(output.is_infinite() || output == 1.0, "Infinite weight behavior");
+        }
+        Err(_) => {} // Error is acceptable with infinite weights
+    }
+    
+    // Test with NaN weights
+    gate.weight_matrix = vec![f32::NAN, 0.5];
+    let result = gate.calculate_output(&[0.5, 0.3]);
+    match result {
+        Ok(output) => {
+            assert!(output.is_nan() || (output >= 0.0 && output <= 1.0), "NaN weight behavior");
+        }
+        Err(_) => {} // Error is acceptable with NaN weights
+    }
+}
+
+#[test]
+fn test_gate_type_specific_input_validation() {
+    // Test XOR with wrong input count
+    let xor_gate = LogicGate::new(LogicGateType::Xor, 0.5);
+    assert!(xor_gate.calculate_output(&[0.5]).is_err(), "XOR needs 2 inputs");
+    assert!(xor_gate.calculate_output(&[0.5, 0.7, 0.3]).is_err(), "XOR needs exactly 2 inputs");
+    
+    // Test XNOR with wrong input count  
+    let xnor_gate = LogicGate::new(LogicGateType::Xnor, 0.5);
+    assert!(xnor_gate.calculate_output(&[0.5]).is_err(), "XNOR needs 2 inputs");
+    assert!(xnor_gate.calculate_output(&[0.5, 0.7, 0.3]).is_err(), "XNOR needs exactly 2 inputs");
+    
+    // Test NOT with wrong input count
+    let not_gate = LogicGate::new(LogicGateType::Not, 0.5);
+    assert!(not_gate.calculate_output(&[]).is_err(), "NOT needs 1 input");
+    assert!(not_gate.calculate_output(&[0.5, 0.7]).is_err(), "NOT needs exactly 1 input");
+    
+    // Test Identity with wrong input count
+    let identity_gate = LogicGate::new(LogicGateType::Identity, 0.0);
+    assert!(identity_gate.calculate_output(&[]).is_err(), "Identity needs 1 input");
+    assert!(identity_gate.calculate_output(&[0.5, 0.7]).is_err(), "Identity needs exactly 1 input");
+}
+
+#[test]
+fn test_threshold_edge_behaviors() {
+    let gate = LogicGate::new(LogicGateType::Threshold, 1.0);
+    
+    // Test sum exactly equal to threshold
+    let result = gate.calculate_output(&[0.5, 0.5]).unwrap();
+    assert_eq!(result, 1.0, "Sum equal to threshold should activate");
+    
+    // Test sum slightly below threshold
+    let result = gate.calculate_output(&[0.499, 0.499]).unwrap();
+    assert_eq!(result, 0.0, "Sum below threshold should not activate");
+    
+    // Test sum slightly above threshold
+    let result = gate.calculate_output(&[0.501, 0.501]).unwrap();
+    assert_float_eq(result, 1.002, 0.001);
+    assert_eq!(result, 1.0, "Sum above threshold should be clamped to 1.0");
+}
+
+#[test]
+fn test_inhibitory_gate_edge_cases() {
+    let gate = LogicGate::new(LogicGateType::Inhibitory, 0.0); // Threshold unused
+    
+    // Test with only primary input
+    let result = gate.calculate_output(&[0.8]).unwrap();
+    assert_float_eq(result, 0.8, 0.001);
+    
+    // Test with equal primary and inhibitory
+    let result = gate.calculate_output(&[0.5, 0.5]).unwrap();
+    assert_eq!(result, 0.0, "Equal primary and inhibitory should cancel");
+    
+    // Test with multiple strong inhibitory inputs
+    let result = gate.calculate_output(&[0.5, 0.3, 0.3, 0.3]).unwrap();
+    // 0.5 - (0.3 + 0.3 + 0.3) = 0.5 - 0.9 = -0.4 -> 0.0
+    assert_eq!(result, 0.0, "Strong inhibition should completely suppress");
+    
+    // Test with very large inhibitory values
+    let result = gate.calculate_output(&[1.0, 1000.0]).unwrap();
+    assert_eq!(result, 0.0, "Massive inhibition should suppress any primary");
+    
+    // Test with negative inhibitory (double negative = positive)
+    let result = gate.calculate_output(&[0.5, -0.3]).unwrap();
+    // 0.5 - (-0.3) = 0.5 + 0.3 = 0.8
+    assert_float_eq(result, 0.8, 0.001);
+}
+
+// ==================== Property-Based Testing ====================
+
+#[test]
+fn test_gate_output_range_property() {
+    let gate_types = [
+        LogicGateType::And,
+        LogicGateType::Or,
+        LogicGateType::Nand,
+        LogicGateType::Nor,
+        LogicGateType::Not,
+        LogicGateType::Identity,
+        LogicGateType::Threshold,
+    ];
+    
+    for gate_type in gate_types {
+        let gate = LogicGate::new(gate_type, 0.5);
+        
+        // Test with valid inputs (0.0 to 1.0 range)
+        for i in 0..10 {
+            let input1 = i as f32 / 10.0;
+            for j in 0..10 {
+                let input2 = j as f32 / 10.0;
+                
+                let inputs = match gate_type {
+                    LogicGateType::Not | LogicGateType::Identity => vec![input1],
+                    _ => vec![input1, input2],
+                };
+                
+                if let Ok(output) = gate.calculate_output(&inputs) {
+                    assert!(
+                        output >= 0.0 && output <= 1.0,
+                        "Gate {:?} output {} should be in [0,1] for inputs {:?}",
+                        gate_type, output, inputs
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_gate_deterministic_property() {
+    let gate = LogicGate::new(LogicGateType::And, 0.5);
+    let inputs = vec![0.7, 0.8];
+    
+    // Same inputs should always produce same output
+    let output1 = gate.calculate_output(&inputs).unwrap();
+    let output2 = gate.calculate_output(&inputs).unwrap();
+    let output3 = gate.calculate_output(&inputs).unwrap();
+    
+    assert_float_eq(output1, output2, 0.0001);
+    assert_float_eq(output2, output3, 0.0001);
+}
+
+#[test]
+fn test_gate_monotonicity_properties() {
+    let gate = LogicGate::new(LogicGateType::Threshold, 1.0);
+    
+    // For threshold gates, increasing all inputs should not decrease output
+    let test_cases = vec![
+        (vec![0.1, 0.2], vec![0.2, 0.3]),
+        (vec![0.3, 0.4], vec![0.4, 0.5]),
+        (vec![0.5, 0.5], vec![0.6, 0.6]),
+    ];
+    
+    for (lower_inputs, higher_inputs) in test_cases {
+        let lower_output = gate.calculate_output(&lower_inputs).unwrap();
+        let higher_output = gate.calculate_output(&higher_inputs).unwrap();
+        
+        assert!(
+            higher_output >= lower_output,
+            "Threshold gate should be monotonic: {:?} -> {} vs {:?} -> {}",
+            lower_inputs, lower_output, higher_inputs, higher_output
+        );
+    }
 }

@@ -387,7 +387,8 @@ mod tests {
 
     #[test]
     fn test_logic_gate_and() {
-        let gate = LogicGate::new(LogicGateType::And, 0.5);
+        let mut gate = LogicGate::new(LogicGateType::And, 0.5);
+        gate.input_nodes = vec![EntityKey::from(1), EntityKey::from(2)];
         
         // Both inputs high
         assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.8);

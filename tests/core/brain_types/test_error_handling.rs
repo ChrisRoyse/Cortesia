@@ -450,18 +450,18 @@ fn test_string_handling_edge_cases() {
         "",
         " ",
         "\n\r\t",
-        "🔥".repeat(1000), // Very long unicode
+        &"🔥".repeat(1000), // Very long unicode
         "\0null\0terminated\0",
         "control\x01\x02\x03chars",
     ];
     
     for test_string in extreme_strings {
         // Entity concept IDs
-        let entity = BrainInspiredEntity::new(test_string.clone(), EntityDirection::Input);
+        let entity = BrainInspiredEntity::new(test_string.to_string(), EntityDirection::Input);
         assert_eq!(entity.concept_id, test_string);
         
         // Activation pattern queries
-        let pattern = ActivationPattern::new(test_string.clone());
+        let pattern = ActivationPattern::new(test_string.to_string());
         assert_eq!(pattern.query, test_string);
     }
 }
