@@ -446,11 +446,12 @@ fn test_maximum_input_scenarios() {
 fn test_string_handling_edge_cases() {
     // Test with extreme string inputs
     
+    let long_unicode = "🔥".repeat(1000);
     let extreme_strings = vec![
         "",
         " ",
         "\n\r\t",
-        &"🔥".repeat(1000), // Very long unicode
+        &long_unicode, // Very long unicode
         "\0null\0terminated\0",
         "control\x01\x02\x03chars",
     ];

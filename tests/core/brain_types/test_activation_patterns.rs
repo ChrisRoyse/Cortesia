@@ -244,7 +244,7 @@ fn test_activation_pattern_query_variations() {
         "simple query",
         "complex query with symbols !@#$%",
         "🧠 unicode query 🔥",
-        "very long query ".repeat(100),
+        &"very long query ".repeat(100),
         "query\nwith\nnewlines",
         "query\twith\ttabs",
     ];

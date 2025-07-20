@@ -54,11 +54,11 @@ fn test_activation_step_all_operations() {
             EntityKey::from(slotmap::KeyData::from_ffi(index as u64)),
             test_constants::TEST_CONCEPT_GATE,
             test_constants::THRESHOLD_POTENTIAL,
-            *operation
+            operation.clone()
         );
         
         assert_eq!(step.step_id, index);
-        assert!(matches!(step.operation_type, operation));
+        assert_eq!(step.operation_type, *operation);
     }
 }
 
@@ -68,7 +68,7 @@ fn test_activation_step_all_operations() {
 fn test_activation_step_serialization() {
     let step = create_activation_step(
         5,
-        EntityKey::from(slotmap::KeyData::from_ffi(100),
+        EntityKey::from(slotmap::KeyData::from_ffi(100)),
         test_constants::TEST_CONCEPT_OUTPUT,
         test_constants::STRONG_EXCITATORY,
         ActivationOperation::Propagate
@@ -89,7 +89,7 @@ fn test_activation_step_serialization() {
 fn test_activation_step_deserialization() {
     let original = create_activation_step(
         10,
-        EntityKey::from(slotmap::KeyData::from_ffi(200),
+        EntityKey::from(slotmap::KeyData::from_ffi(200)),
         test_constants::TEST_CONCEPT_HIDDEN,
         test_constants::MEDIUM_EXCITATORY,
         ActivationOperation::Reinforce
@@ -166,7 +166,7 @@ fn test_activation_step_extreme_levels() {
 fn test_operation_type_initialize() {
     let step = create_activation_step(
         1,
-        EntityKey::from(slotmap::KeyData::from_ffi(1),
+        EntityKey::from(slotmap::KeyData::from_ffi(1)),
         test_constants::TEST_CONCEPT_INPUT,
         test_constants::RESTING_POTENTIAL,
         ActivationOperation::Initialize
@@ -185,7 +185,7 @@ fn test_operation_type_initialize() {
 fn test_operation_type_propagate() {
     let step = create_activation_step(
         2,
-        EntityKey::from(slotmap::KeyData::from_ffi(2),
+        EntityKey::from(slotmap::KeyData::from_ffi(2)),
         test_constants::TEST_CONCEPT_GATE,
         test_constants::ACTION_POTENTIAL,
         ActivationOperation::Propagate
@@ -204,7 +204,7 @@ fn test_operation_type_propagate() {
 fn test_operation_type_inhibit() {
     let step = create_activation_step(
         3,
-        EntityKey::from(slotmap::KeyData::from_ffi(3),
+        EntityKey::from(slotmap::KeyData::from_ffi(3)),
         test_constants::TEST_CONCEPT_OUTPUT,
         test_constants::WEAK_EXCITATORY,
         ActivationOperation::Inhibit
@@ -223,7 +223,7 @@ fn test_operation_type_inhibit() {
 fn test_operation_type_reinforce() {
     let step = create_activation_step(
         4,
-        EntityKey::from(slotmap::KeyData::from_ffi(4),
+        EntityKey::from(slotmap::KeyData::from_ffi(4)),
         test_constants::TEST_CONCEPT_HIDDEN,
         test_constants::STRONG_EXCITATORY,
         ActivationOperation::Reinforce
@@ -242,7 +242,7 @@ fn test_operation_type_reinforce() {
 fn test_operation_type_decay() {
     let step = create_activation_step(
         5,
-        EntityKey::from(slotmap::KeyData::from_ffi(5),
+        EntityKey::from(slotmap::KeyData::from_ffi(5)),
         test_constants::TEST_CONCEPT_INPUT,
         test_constants::WEAK_EXCITATORY,
         ActivationOperation::Decay
@@ -289,7 +289,7 @@ fn test_activation_step_empty_concept_id() {
     // Test with empty concept ID (should be allowed but not recommended)
     let step = create_activation_step(
         1,
-        EntityKey::from(slotmap::KeyData::from_ffi(1),
+        EntityKey::from(slotmap::KeyData::from_ffi(1)),
         test_constants::EMPTY_CONCEPT_ID,
         test_constants::RESTING_POTENTIAL,
         ActivationOperation::Initialize
@@ -335,7 +335,7 @@ fn test_activation_step_sequence() {
     for i in 0..step_count {
         let step = create_activation_step(
             i,
-            EntityKey::from(slotmap::KeyData::from_ffi(i as u64),
+            EntityKey::from(slotmap::KeyData::from_ffi(i as u64)),
             test_constants::TEST_CONCEPT_INPUT,
             (i as f32) / (step_count as f32),
             ActivationOperation::Propagate
@@ -382,7 +382,7 @@ fn test_activation_step_timestamp_ordering() {
         
         let step = create_activation_step(
             i,
-            EntityKey::from(slotmap::KeyData::from_ffi(i as u64),
+            EntityKey::from(slotmap::KeyData::from_ffi(i as u64)),
             test_constants::TEST_CONCEPT_GATE,
             test_constants::MEDIUM_EXCITATORY,
             ActivationOperation::Propagate
@@ -409,7 +409,7 @@ fn test_activation_step_creation_performance() {
         for i in 0..step_count {
             let _ = create_activation_step(
                 i,
-                EntityKey::from(slotmap::KeyData::from_ffi(i as u64),
+                EntityKey::from(slotmap::KeyData::from_ffi(i as u64)),
                 test_constants::TEST_CONCEPT_INPUT,
                 test_constants::THRESHOLD_POTENTIAL,
                 ActivationOperation::Initialize
@@ -429,7 +429,7 @@ fn test_activation_step_creation_performance() {
 fn test_activation_step_serialization_performance() {
     let step = create_activation_step(
         42,
-        EntityKey::from(slotmap::KeyData::from_ffi(123),
+        EntityKey::from(slotmap::KeyData::from_ffi(123)),
         test_constants::TEST_CONCEPT_HIDDEN,
         test_constants::STRONG_EXCITATORY,
         ActivationOperation::Propagate
@@ -455,7 +455,7 @@ fn test_activation_step_serialization_performance() {
 fn test_activation_step_debug_format() {
     let step = create_activation_step(
         7,
-        EntityKey::from(slotmap::KeyData::from_ffi(99),
+        EntityKey::from(slotmap::KeyData::from_ffi(99)),
         test_constants::TEST_CONCEPT_OUTPUT,
         test_constants::ACTION_POTENTIAL,
         ActivationOperation::Inhibit
@@ -477,7 +477,7 @@ fn test_activation_step_debug_format() {
 fn test_activation_step_clone() {
     let original = create_activation_step(
         15,
-        EntityKey::from(slotmap::KeyData::from_ffi(500),
+        EntityKey::from(slotmap::KeyData::from_ffi(500)),
         test_constants::TEST_CONCEPT_GATE,
         test_constants::MEDIUM_EXCITATORY,
         ActivationOperation::Decay
@@ -506,7 +506,7 @@ fn test_activation_step_memory_usage() {
     
     let step = create_activation_step(
         1,
-        EntityKey::from(slotmap::KeyData::from_ffi(1),
+        EntityKey::from(slotmap::KeyData::from_ffi(1)),
         test_constants::TEST_CONCEPT_INPUT,
         test_constants::RESTING_POTENTIAL,
         ActivationOperation::Initialize

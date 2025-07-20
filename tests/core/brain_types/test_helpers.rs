@@ -509,3 +509,314 @@ where
     );
     result
 }
+
+// ==================== Property-Based Testing Helpers ====================
+
+/// Generate boundary activation values for comprehensive testing
+pub fn boundary_activation_values() -> Vec<f32> {
+    vec![
+        0.0,              // Minimum activation
+        0.001,            // Very small positive
+        0.1,              // Low activation
+        0.25,             // Quarter activation
+        0.5,              // Half activation
+        0.75,             // Three-quarter activation
+        0.9,              // High activation
+        0.999,            // Very high activation
+        1.0,              // Maximum activation
+    ]
+}
+
+/// Generate comprehensive test thresholds
+pub fn threshold_test_values() -> Vec<f32> {
+    vec![
+        0.0,              // Zero threshold
+        0.001,            // Very low threshold
+        0.1,              // Low threshold
+        0.3,              // Low-medium threshold
+        0.5,              // Medium threshold
+        0.7,              // Medium-high threshold
+        0.9,              // High threshold
+        1.0,              // Maximum threshold
+        1.5,              // Above maximum threshold
+        2.0,              // Well above maximum
+    ]
+}
+
+/// Generate test weight matrices with various characteristics
+pub fn weight_matrix_variants(input_count: usize) -> Vec<Vec<f32>> {
+    let mut variants = Vec::new();
+    
+    // Uniform weights
+    variants.push(vec![1.0 / input_count as f32; input_count]);
+    
+    // All ones
+    variants.push(vec![1.0; input_count]);
+    
+    // All zeros
+    variants.push(vec![0.0; input_count]);
+    
+    // Decreasing weights
+    variants.push((0..input_count).map(|i| 1.0 - (i as f32 / input_count as f32)).collect());
+    
+    // Increasing weights
+    variants.push((0..input_count).map(|i| (i + 1) as f32 / input_count as f32).collect());
+    
+    // Random-like weights (deterministic for testing)
+    variants.push((0..input_count).map(|i| ((i * 37 + 17) % 100) as f32 / 100.0).collect());
+    
+    // Single dominant weight
+    let mut single_dominant = vec![0.1; input_count];
+    if input_count > 0 {
+        single_dominant[0] = 0.9;
+    }
+    variants.push(single_dominant);
+    
+    // Alternating weights
+    variants.push((0..input_count).map(|i| if i % 2 == 0 { 0.8 } else { 0.2 }).collect());
+    
+    variants
+}
+
+/// Generate comprehensive input combinations for property-based testing
+pub fn input_combinations(input_count: usize) -> Vec<Vec<f32>> {
+    let mut combinations = Vec::new();
+    let boundary_values = boundary_activation_values();
+    
+    // All same values
+    for &value in &boundary_values {
+        combinations.push(vec![value; input_count]);
+    }
+    
+    // All zeros
+    combinations.push(vec![0.0; input_count]);
+    
+    // All ones
+    combinations.push(vec![1.0; input_count]);
+    
+    // Mixed values
+    if input_count >= 2 {
+        combinations.push(vec![0.0, 1.0].into_iter().cycle().take(input_count).collect());
+        combinations.push(vec![1.0, 0.0].into_iter().cycle().take(input_count).collect());
+        combinations.push(vec![0.5, 0.3, 0.8].into_iter().cycle().take(input_count).collect());
+    }
+    
+    // Gradual increase
+    combinations.push((0..input_count).map(|i| i as f32 / input_count.max(1) as f32).collect());
+    
+    // Gradual decrease
+    combinations.push((0..input_count).map(|i| 1.0 - (i as f32 / input_count.max(1) as f32)).collect());
+    
+    combinations
+}
+
+/// Generate edge case scenarios for testing
+pub fn edge_case_scenarios() -> Vec<(&'static str, Vec<f32>)> {
+    vec![
+        ("all_zero", vec![0.0, 0.0, 0.0]),
+        ("all_max", vec![1.0, 1.0, 1.0]),
+        ("mixed_extreme", vec![0.0, 1.0, 0.0]),
+        ("very_small", vec![0.001, 0.001, 0.001]),
+        ("near_threshold", vec![0.499, 0.501, 0.5]),
+        ("above_saturation", vec![1.1, 1.2, 1.5]),
+        ("negative_values", vec![-0.1, -0.5, -1.0]),
+        ("large_values", vec![10.0, 100.0, 1000.0]),
+    ]
+}
+
+/// Property: All gate outputs should be non-negative (except for special float values)
+pub fn property_non_negative_output<F>(gate_fn: F, inputs: &[f32]) -> bool
+where
+    F: Fn(&[f32]) -> llmkg::error::Result<f32>,
+{
+    match gate_fn(inputs) {
+        Ok(output) => output >= 0.0 || output.is_nan(),
+        Err(_) => true, // Errors are acceptable for invalid inputs
+    }
+}
+
+/// Property: Gate outputs should be deterministic (same inputs = same outputs)
+pub fn property_deterministic_output<F>(gate_fn: F, inputs: &[f32]) -> bool
+where
+    F: Fn(&[f32]) -> llmkg::error::Result<f32>,
+{
+    let result1 = gate_fn(inputs);
+    let result2 = gate_fn(inputs);
+    
+    match (result1, result2) {
+        (Ok(out1), Ok(out2)) => {
+            if out1.is_nan() && out2.is_nan() {
+                true // Both NaN is consistent
+            } else {
+                (out1 - out2).abs() < f32::EPSILON
+            }
+        },
+        (Err(_), Err(_)) => true, // Both errors is consistent
+        _ => false, // Inconsistent results
+    }
+}
+
+/// Property: Monotonicity for certain gate types (AND, OR)
+pub fn property_monotonic_and(inputs1: &[f32], inputs2: &[f32], gate_fn: impl Fn(&[f32]) -> llmkg::error::Result<f32>) -> bool {
+    if inputs1.len() != inputs2.len() {
+        return true; // Skip if different lengths
+    }
+    
+    // Check if inputs1 <= inputs2 element-wise
+    let all_leq = inputs1.iter().zip(inputs2.iter()).all(|(a, b)| a <= b);
+    
+    if !all_leq {
+        return true; // Property doesn't apply
+    }
+    
+    match (gate_fn(inputs1), gate_fn(inputs2)) {
+        (Ok(out1), Ok(out2)) => out1 <= out2 || out1.is_nan() || out2.is_nan(),
+        _ => true, // Skip if either fails
+    }
+}
+
+// ==================== Performance Testing Helpers ====================
+
+/// Benchmark a function with multiple iterations
+pub fn benchmark_function<F, T>(
+    operation: F,
+    iterations: usize,
+    operation_name: &str
+) -> (T, std::time::Duration)
+where
+    F: Fn() -> T,
+    T: Clone,
+{
+    let start = std::time::Instant::now();
+    let mut result = None;
+    
+    for _ in 0..iterations {
+        result = Some(operation());
+    }
+    
+    let total_duration = start.elapsed();
+    let avg_duration = total_duration / iterations as u32;
+    
+    println!("{}: {} iterations, avg {:?}/op", operation_name, iterations, avg_duration);
+    
+    (result.unwrap(), total_duration)
+}
+
+/// Memory usage estimation helper
+pub fn estimate_memory_usage<T>() -> usize {
+    std::mem::size_of::<T>()
+}
+
+/// Create performance test dataset
+pub fn create_performance_dataset(size: usize) -> Vec<f32> {
+    (0..size).map(|i| {
+        let val = (i as f32 * 1.618034) % 1.0; // Golden ratio for pseudo-random distribution
+        val
+    }).collect()
+}
+
+// ==================== Fuzzing Helpers ====================
+
+/// Simple deterministic "random" number generator for testing
+pub struct TestRng {
+    state: u64,
+}
+
+impl TestRng {
+    pub fn new(seed: u64) -> Self {
+        Self { state: seed }
+    }
+    
+    pub fn next_f32(&mut self) -> f32 {
+        self.state = self.state.wrapping_mul(1103515245).wrapping_add(12345);
+        ((self.state / 65536) % 32768) as f32 / 32768.0
+    }
+    
+    pub fn next_bool(&mut self) -> bool {
+        self.next_f32() > 0.5
+    }
+    
+    pub fn next_range(&mut self, min: f32, max: f32) -> f32 {
+        min + self.next_f32() * (max - min)
+    }
+}
+
+/// Generate fuzz test inputs
+pub fn generate_fuzz_inputs(rng: &mut TestRng, count: usize) -> Vec<f32> {
+    (0..count).map(|_| {
+        match rng.next_f32() {
+            x if x < 0.1 => 0.0,                    // 10% zeros
+            x if x < 0.2 => 1.0,                    // 10% ones
+            x if x < 0.3 => rng.next_f32(),         // 10% normal range
+            x if x < 0.4 => -rng.next_f32(),        // 10% negative
+            x if x < 0.5 => rng.next_range(1.0, 10.0), // 10% above normal
+            x if x < 0.6 => f32::NAN,               // 10% NaN
+            x if x < 0.7 => f32::INFINITY,          // 10% infinity
+            x if x < 0.8 => f32::NEG_INFINITY,      // 10% negative infinity
+            _ => rng.next_range(0.0, 1.0),          // 20% normal range
+        }
+    }).collect()
+}
+
+// ==================== Test Data Validation ====================
+
+/// Validate that test data produces expected results
+pub fn validate_test_data() -> bool {
+    // Validate boundary values
+    let boundaries = boundary_activation_values();
+    assert_eq!(boundaries.len(), 9);
+    assert_eq!(boundaries[0], 0.0);
+    assert_eq!(boundaries[8], 1.0);
+    
+    // Validate threshold values
+    let thresholds = threshold_test_values();
+    assert_eq!(thresholds.len(), 10);
+    assert_eq!(thresholds[0], 0.0);
+    
+    // Validate weight matrices
+    let weights = weight_matrix_variants(3);
+    assert!(weights.len() >= 6);
+    assert_eq!(weights[0].len(), 3); // Uniform weights
+    
+    true
+}
+
+// ==================== Assertion Macros ====================
+
+/// Assert that a value is within a specific range
+#[macro_export]
+macro_rules! assert_in_range {
+    ($value:expr, $min:expr, $max:expr) => {
+        assert!(
+            $value >= $min && $value <= $max,
+            "Value {} not in range [{}, {}]",
+            $value, $min, $max
+        );
+    };
+    ($value:expr, $min:expr, $max:expr, $msg:expr) => {
+        assert!(
+            $value >= $min && $value <= $max,
+            "{}: Value {} not in range [{}, {}]",
+            $msg, $value, $min, $max
+        );
+    };
+}
+
+/// Assert that a value is approximately equal with custom tolerance
+#[macro_export]
+macro_rules! assert_approx_eq {
+    ($left:expr, $right:expr, $tolerance:expr) => {
+        assert!(
+            ($left - $right).abs() <= $tolerance,
+            "Values not approximately equal: {} != {} (tolerance: {})",
+            $left, $right, $tolerance
+        );
+    };
+    ($left:expr, $right:expr, $tolerance:expr, $msg:expr) => {
+        assert!(
+            ($left - $right).abs() <= $tolerance,
+            "{}: Values not approximately equal: {} != {} (tolerance: {})",
+            $msg, $left, $right, $tolerance
+        );
+    };
+}
