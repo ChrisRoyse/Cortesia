@@ -14,6 +14,7 @@ pub mod pattern_detector;
 pub mod tuned_parameters;
 pub mod working_memory;
 pub mod attention_manager;
+pub mod attention_manager_traits;
 pub mod inhibitory;
 pub mod inhibitory_logic;
 pub mod memory_integration;

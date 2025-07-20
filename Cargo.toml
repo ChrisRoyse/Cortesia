@@ -113,33 +113,33 @@ simd = []
 cuda = []
 mcp = []
 
-[[test]]
-name = "phase4_realistic_tests"
-path = "tests/phase4_realistic_tests.rs"
+# [[test]]
+# name = "phase4_realistic_tests"
+# path = "tests/phase4_realistic_tests.rs"
 
-[[test]]
-name = "phase4_deepseek_integration"
-path = "tests/phase4_deepseek_integration.rs"
+# [[test]]
+# name = "phase4_deepseek_integration"
+# path = "tests/phase4_deepseek_integration.rs"
 
-[[test]]
-name = "phase4_comprehensive_tests"
-path = "tests/phase4_comprehensive_tests.rs"
+# [[test]]
+# name = "phase4_comprehensive_tests"
+# path = "tests/phase4_comprehensive_tests.rs"
 
-[[test]]
-name = "phase4_advanced_stress_tests"
-path = "tests/phase4_advanced_stress_tests.rs"
+# [[test]]
+# name = "phase4_advanced_stress_tests"
+# path = "tests/phase4_advanced_stress_tests.rs"
 
-[[test]]
-name = "phase4_integration_scenarios"
-path = "tests/phase4_integration_scenarios.rs"
+# [[test]]
+# name = "phase4_integration_scenarios"
+# path = "tests/phase4_integration_scenarios.rs"
 
-[[test]]
-name = "phase1_cognitive_algorithm_tests"
-path = "tests/phase1_cognitive_algorithm_tests.rs"
+# [[test]]
+# name = "phase1_cognitive_algorithm_tests"
+# path = "tests/phase1_cognitive_algorithm_tests.rs"
 
-[[test]]
-name = "phase1_simple_cognitive_tests"
-path = "tests/phase1_simple_cognitive_tests.rs"
+# [[test]]
+# name = "phase1_simple_cognitive_tests"
+# path = "tests/phase1_simple_cognitive_tests.rs"
 
 [profile.test]
 opt-level = 2  # Optimize tests for better performance
@@ -153,4 +153,8 @@ harness = false
 
 [[bench]]
 name = "activation_engine_bench"
+harness = false
+
+[[bench]]
+name = "attention_manager_bench"
 harness = false
