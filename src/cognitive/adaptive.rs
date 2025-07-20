@@ -9,6 +9,14 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 // use crate::monitoring::performance::PerformanceMonitor;
 use crate::error::Result;
 
+/// Ensemble result from merging multiple patterns
+#[derive(Debug, Clone)]
+pub struct EnsembleResult {
+    pub merged_answer: String,
+    pub individual_contributions: Vec<PatternContribution>,
+    pub confidence_analysis: ConfidenceDistribution,
+}
+
 /// Adaptive thinking pattern - selects optimal cognitive pattern based on query and context
 pub struct AdaptiveThinking {
     pub graph: Arc<BrainEnhancedKnowledgeGraph>,
@@ -75,7 +83,7 @@ impl AdaptiveThinking {
         })
     }
     
-    async fn analyze_query_characteristics(&self, query: &str, _context: Option<&str>) -> Result<QueryCharacteristics> {
+    pub async fn analyze_query_characteristics(&self, query: &str, _context: Option<&str>) -> Result<QueryCharacteristics> {
         // Analyze query to determine optimal patterns
         let word_count = query.split_whitespace().count();
         let has_creative_words = query.to_lowercase().contains("creative") || 
@@ -99,7 +107,7 @@ impl AdaptiveThinking {
         })
     }
     
-    async fn select_cognitive_strategies(
+    pub async fn select_cognitive_strategies(
         &self,
         query: &str,
         query_analysis: QueryCharacteristics,
@@ -277,7 +285,7 @@ impl AdaptiveThinking {
     }
     
     /// Merge results from multiple patterns using ensemble methods
-    async fn merge_pattern_results(
+    pub async fn merge_pattern_results(
         &self,
         pattern_results: Vec<PatternContribution>,
     ) -> Result<EnsembleResult> {
@@ -551,14 +559,6 @@ impl AdaptiveThinking {
             },
         })
     }
-}
-
-/// Ensemble result from merging multiple patterns
-#[derive(Debug, Clone)]
-struct EnsembleResult {
-    merged_answer: String,
-    individual_contributions: Vec<PatternContribution>,
-    confidence_analysis: ConfidenceDistribution,
 }
 
 // Individual pattern contribution to ensemble - use global PatternContribution from cognitive::types

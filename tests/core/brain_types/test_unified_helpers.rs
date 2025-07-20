@@ -517,22 +517,6 @@ impl QuantumTestFactory {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum NetworkComplexity {
-    Simple,
-    Moderate,
-    Complex,
-    Massive,
-}
-
-#[derive(Debug)]
-pub struct NeuralNetworkScenario {
-    pub entities: Vec<BrainInspiredEntity>,
-    pub gates: Vec<LogicGate>,
-    pub relationships: Vec<BrainInspiredRelationship>,
-    pub complexity: NetworkComplexity,
-    pub expected_behaviors: Vec<&'static str>,
-}
 
 // ==================== Quantum Test Pattern Generator ====================
 
@@ -664,14 +648,6 @@ impl QuantumPatternGenerator {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum ActivationScenario {
-    Linear,
-    Exponential,
-    Oscillatory,
-    Chaotic,
-    Sparse,
-}
 
 // ==================== Quantum Integration Test Orchestrator ====================
 
@@ -790,15 +766,6 @@ impl QuantumIntegrationOrchestrator {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum IntegrationScenario {
-    BasicPropagation,
-    TemporalDynamics,
-    InhibitoryModulation,
-    LearningAdaptation,
-    ScalabilityStress,
-}
-
 #[derive(Debug)]
 pub struct IntegrationTestResult {
     pub scenario_type: IntegrationScenario,
@@ -808,7 +775,7 @@ pub struct IntegrationTestResult {
     pub behavioral_observations: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
     pub processing_time_ms: f64,
     pub memory_usage_mb: f64,
