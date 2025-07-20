@@ -7,10 +7,7 @@ target/
 *.dll
 *.dll.exp
 *.d
-.claude/
-/.claude/
-.claude.md
-.claude
+
 # Cargo lock file (include for applications, exclude for libraries)
 Cargo.lock
 

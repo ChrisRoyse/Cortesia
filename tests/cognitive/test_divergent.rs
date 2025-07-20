@@ -1,0 +1,305 @@
+#[cfg(test)]
+mod divergent_tests {
+    use tokio;
+    use crate::cognitive::divergent::DivergentThinking;
+    use crate::cognitive::types::{PatternResult, DivergentResult, ExplorationPath, CognitivePatternType};
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+
+    #[tokio::test]
+    async fn test_extract_seed_concept_basic() {
+        let thinking = create_test_divergent_thinking().await;
+        
+        // Test "examples of" questions
+        let result = thinking.extract_seed_concept("What are examples of dogs?").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "dogs");
+        
+        // Test "tell me about" questions
+        let result = thinking.extract_seed_concept("Tell me about technology").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "technology");
+        
+        // Test "connections with" questions
+        let result = thinking.extract_seed_concept("Show me connections with art").await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "art");
+    }
+
+    #[tokio::test]
+    async fn test_extract_seed_concept_edge_cases() {
+        let thinking = create_test_divergent_thinking().await;
+        
+        // Test query with no clear seed concept
+        let result = thinking.extract_seed_concept("what how when why").await;
+        assert!(result.is_err(), "Query without clear concept should return error");
+        
+        // Test empty query
+        let result = thinking.extract_seed_concept("").await;
+        assert!(result.is_err(), "Empty query should return error");
+    }
+
+    #[tokio::test]
+    async fn test_rank_by_creativity() {
+        let thinking = create_test_divergent_thinking().await;
+        
+        // Create mock exploration paths with different creativity scores
+        let paths = vec![
+            create_mock_path("path1", 0.8, 0.3), // High relevance, low novelty
+            create_mock_path("path2", 0.6, 0.8), // Medium relevance, high novelty
+            create_mock_path("path3", 0.9, 0.9), // High relevance, high novelty
+            create_mock_path("path4", 0.4, 0.2), // Low relevance, low novelty
+        ];
+        
+        let ranked = thinking.rank_by_creativity(paths, 0.6).await; // novelty_weight = 0.6
+        assert!(ranked.is_ok());
+        
+        let sorted_paths = ranked.unwrap();
+        // Path3 should be first (highest combined score)
+        assert_eq!(sorted_paths[0].path_id, "path3");
+        // Path4 should be last (lowest combined score)
+        assert_eq!(sorted_paths.last().unwrap().path_id, "path4");
+    }
+
+    #[tokio::test]
+    async fn test_path_exploration_and_diversity() {
+        // Create a graph with multiple distinct clusters
+        let graph = create_diverse_test_graph().await;
+        let thinking = DivergentThinking::new(graph, 5, 0.3, 0.5); // exploration_breadth=5
+        
+        // Execute exploration from "music" seed
+        let result = thinking.execute("What are examples of music?").await;
+        assert!(result.is_ok());
+        
+        let pattern_result = result.unwrap();
+        match pattern_result {
+            PatternResult::Divergent(div_result) => {
+                assert!(div_result.paths.len() > 1, "Should find multiple exploration paths");
+                
+                // Should explore both classical and rock clusters
+                let has_classical = div_result.paths.iter().any(|p| p.destination.contains("classical"));
+                let has_rock = div_result.paths.iter().any(|p| p.destination.contains("rock"));
+                
+                assert!(has_classical || has_rock, "Should explore different clusters");
+                assert!(div_result.confidence > 0.0, "Should have positive confidence");
+            },
+            _ => panic!("Expected DivergentResult")
+        }
+    }
+
+    #[tokio::test]
+    async fn test_novelty_ranking() {
+        // Test the system's ability to identify and prioritize novel connections
+        let graph = create_novelty_test_graph().await;
+        let thinking = DivergentThinking::new(graph, 3, 0.2, 0.8); // High novelty weight
+        
+        let result = thinking.execute_divergent_exploration("seed", 3).await;
+        assert!(result.is_ok());
+        
+        let div_result = result.unwrap();
+        assert!(div_result.paths.len() >= 2, "Should find both obvious and novel paths");
+        
+        // The novel path should rank higher due to high novelty weight
+        let has_novel_higher = div_result.paths.iter()
+            .take(2)
+            .any(|p| p.destination.contains("novel"));
+        
+        assert!(has_novel_higher, "Novel connection should rank highly: {:?}", 
+               div_result.paths.iter().map(|p| &p.destination).collect::<Vec<_>>());
+    }
+
+    #[tokio::test]
+    async fn test_spread_activation() {
+        let graph = create_test_graph().await;
+        let thinking = DivergentThinking::new(graph, 4, 0.3, 0.5);
+        
+        // Test broad activation spreading
+        let exploration_map = thinking.spread_activation("music", 2).await;
+        assert!(exploration_map.is_ok());
+        
+        let map = exploration_map.unwrap();
+        assert!(map.activated_nodes.len() > 2, "Should activate multiple nodes broadly");
+        assert!(map.exploration_depth == 2, "Should respect depth limit");
+        
+        // Should include related concepts
+        assert!(map.activated_nodes.contains_key("classical") || 
+                map.activated_nodes.contains_key("rock"), 
+                "Should activate related music concepts");
+    }
+
+    #[tokio::test]
+    async fn test_neural_path_exploration() {
+        let graph = create_path_test_graph().await;
+        let thinking = DivergentThinking::new(graph, 3, 0.3, 0.5);
+        
+        // Create a mock exploration map
+        let mut exploration_map = ExplorationMap::new();
+        exploration_map.add_activation("start", 1.0);
+        exploration_map.add_activation("bridge", 0.7);
+        exploration_map.add_activation("end", 0.5);
+        
+        let paths = thinking.neural_path_exploration(exploration_map, 3).await;
+        assert!(paths.is_ok());
+        
+        let found_paths = paths.unwrap();
+        assert!(found_paths.len() > 0, "Should find creative paths");
+        
+        // Should find the bridge connection
+        let has_bridge_path = found_paths.iter()
+            .any(|p| p.intermediate_concepts.contains(&"bridge".to_string()));
+        assert!(has_bridge_path, "Should find path through bridge concept");
+    }
+
+    #[tokio::test]
+    async fn test_cognitive_pattern_interface() {
+        let thinking = create_test_divergent_thinking().await;
+        
+        let result = thinking.execute("What are examples of animals?").await;
+        assert!(result.is_ok());
+        
+        let pattern_result = result.unwrap();
+        match pattern_result {
+            PatternResult::Divergent(div_result) => {
+                assert!(!div_result.paths.is_empty(), "Should have exploration paths");
+                assert!(div_result.confidence >= 0.0 && div_result.confidence <= 1.0);
+                assert_eq!(div_result.pattern_type, CognitivePatternType::Divergent);
+                assert!(!div_result.seed_concept.is_empty(), "Should identify seed concept");
+            },
+            _ => panic!("Expected DivergentResult from divergent thinking")
+        }
+    }
+
+    #[tokio::test]
+    async fn test_creativity_threshold() {
+        let graph = create_test_graph().await;
+        let thinking = DivergentThinking::new(graph, 3, 0.8, 0.5); // High creativity threshold
+        
+        let result = thinking.execute("Tell me about music").await;
+        assert!(result.is_ok());
+        
+        let pattern_result = result.unwrap();
+        if let PatternResult::Divergent(div_result) = pattern_result {
+            // With high creativity threshold, should filter out low-creativity paths
+            for path in &div_result.paths {
+                let creativity_score = path.relevance_score * 0.5 + path.novelty_score * 0.5;
+                assert!(creativity_score >= 0.8, 
+                       "All paths should meet creativity threshold: {}", creativity_score);
+            }
+        }
+    }
+
+    // Helper functions
+
+    async fn create_test_divergent_thinking() -> DivergentThinking {
+        let graph = create_test_graph().await;
+        DivergentThinking::new(graph, 3, 0.3, 0.5)
+    }
+
+    async fn create_test_graph() -> BrainEnhancedKnowledgeGraph {
+        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        
+        // Create a music-focused graph
+        graph.add_entity("music", "Central concept").await.unwrap();
+        graph.add_entity("classical", "Music genre").await.unwrap();
+        graph.add_entity("rock", "Music genre").await.unwrap();
+        graph.add_entity("symphony", "Classical form").await.unwrap();
+        graph.add_entity("guitar", "Rock instrument").await.unwrap();
+        
+        // Add relationships
+        graph.add_relationship("music", "classical", "genre", 0.8).await.unwrap();
+        graph.add_relationship("music", "rock", "genre", 0.8).await.unwrap();
+        graph.add_relationship("classical", "symphony", "form", 0.7).await.unwrap();
+        graph.add_relationship("rock", "guitar", "instrument", 0.7).await.unwrap();
+        
+        graph
+    }
+
+    async fn create_diverse_test_graph() -> BrainEnhancedKnowledgeGraph {
+        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        
+        // Create distinct clusters connected to music
+        graph.add_entity("music", "Central seed").await.unwrap();
+        
+        // Classical cluster
+        graph.add_entity("classical", "Genre").await.unwrap();
+        graph.add_entity("orchestra", "Classical group").await.unwrap();
+        graph.add_entity("composer", "Classical creator").await.unwrap();
+        
+        // Rock cluster  
+        graph.add_entity("rock", "Genre").await.unwrap();
+        graph.add_entity("band", "Rock group").await.unwrap();
+        graph.add_entity("drummer", "Rock member").await.unwrap();
+        
+        // Connect clusters to seed
+        graph.add_relationship("music", "classical", "includes", 0.8).await.unwrap();
+        graph.add_relationship("music", "rock", "includes", 0.8).await.unwrap();
+        
+        // Internal cluster connections
+        graph.add_relationship("classical", "orchestra", "performed_by", 0.9).await.unwrap();
+        graph.add_relationship("classical", "composer", "created_by", 0.9).await.unwrap();
+        graph.add_relationship("rock", "band", "performed_by", 0.9).await.unwrap();
+        graph.add_relationship("rock", "drummer", "includes", 0.8).await.unwrap();
+        
+        graph
+    }
+
+    async fn create_novelty_test_graph() -> BrainEnhancedKnowledgeGraph {
+        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        
+        graph.add_entity("seed", "Starting point").await.unwrap();
+        graph.add_entity("obvious", "Direct connection").await.unwrap();
+        graph.add_entity("novel", "Creative connection").await.unwrap();
+        
+        // Strong, obvious connection
+        graph.add_relationship("seed", "obvious", "direct", 0.9).await.unwrap();
+        
+        // Weaker but more novel connection
+        graph.add_relationship("seed", "novel", "creative", 0.4).await.unwrap();
+        
+        graph
+    }
+
+    async fn create_path_test_graph() -> BrainEnhancedKnowledgeGraph {
+        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        
+        graph.add_entity("start", "Beginning").await.unwrap();
+        graph.add_entity("bridge", "Intermediate").await.unwrap();
+        graph.add_entity("end", "Destination").await.unwrap();
+        
+        graph.add_relationship("start", "bridge", "connects", 0.7).await.unwrap();
+        graph.add_relationship("bridge", "end", "leads_to", 0.8).await.unwrap();
+        
+        graph
+    }
+
+    fn create_mock_path(id: &str, relevance: f32, novelty: f32) -> ExplorationPath {
+        ExplorationPath {
+            path_id: id.to_string(),
+            source_concept: "test_source".to_string(),
+            destination: format!("dest_{}", id),
+            intermediate_concepts: vec![],
+            relevance_score: relevance,
+            novelty_score: novelty,
+            path_length: 2,
+            explanation: format!("Mock path {}", id),
+        }
+    }
+
+    // Mock struct for testing
+    struct ExplorationMap {
+        activated_nodes: std::collections::HashMap<String, f32>,
+        exploration_depth: u32,
+    }
+
+    impl ExplorationMap {
+        fn new() -> Self {
+            Self {
+                activated_nodes: std::collections::HashMap::new(),
+                exploration_depth: 0,
+            }
+        }
+        
+        fn add_activation(&mut self, node: &str, activation: f32) {
+            self.activated_nodes.insert(node.to_string(), activation);
+        }
+    }
+}
