@@ -1018,7 +1018,7 @@ mod tests {
     #[test]
     fn test_levenshtein_distance() {
         let convergent = ConvergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert_eq!(convergent.levenshtein_distance("hello", "hello"), 0);
@@ -1029,7 +1029,7 @@ mod tests {
     #[test]
     fn test_concept_relevance() {
         let convergent = ConvergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert_eq!(convergent.calculate_concept_relevance("dog", "dog"), 1.0);
@@ -1040,7 +1040,7 @@ mod tests {
     #[test]
     fn test_stop_words() {
         let convergent = ConvergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert!(convergent.is_stop_word("the"));

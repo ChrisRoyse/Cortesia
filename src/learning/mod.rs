@@ -5,7 +5,7 @@
 
 pub mod hebbian;
 pub mod homeostasis;
-pub mod optimization_agent;
+// pub mod optimization_agent; // Removed as requested
 pub mod adaptive_learning;
 pub mod phase4_integration;
 pub mod types;
@@ -17,14 +17,6 @@ pub mod meta_learning;
 pub use hebbian::HebbianLearningEngine;
 pub use homeostasis::{SynapticHomeostasis, HomeostasisUpdate};
 
-// From optimization_agent - rename conflicting types
-pub use optimization_agent::{
-    GraphOptimizationAgent,
-    OptimizationOpportunity,
-    PatternDetector as OptimizationPatternDetector,
-    AnalysisScope as OptimizationAnalysisScope,
-    PerformanceBottleneck as OptimizationPerformanceBottleneck
-};
 
 // From adaptive_learning - rename conflicting types
 pub use adaptive_learning::{

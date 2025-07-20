@@ -58,7 +58,6 @@ The learning system enables LLMKG to adapt and improve over time. It is a key pa
 
 - **`HebbianLearningEngine`**: Implements the "cells that fire together, wire together" principle, strengthening connections between co-activated entities.
 - **`SynapticHomeostasis`**: A system for maintaining the overall stability of the knowledge graph by preventing runaway activation and ensuring that all parts of the network remain active and responsive.
-- **`GraphOptimizationAgent`**: Continuously analyzes the graph structure for inefficiencies and applies optimizations such as pruning weak connections or consolidating redundant hierarchies.
 - **`AdaptiveLearningSystem`**: A high-level system that monitors overall performance and adjusts learning parameters and strategies to improve outcomes.
 - **`MetaLearningSystem`**: The most advanced learning component, which learns how to learn better by analyzing the performance of different learning strategies over time.
 
@@ -103,7 +102,7 @@ A comprehensive suite of tools for monitoring the health and performance of the 
     - For more complex queries, the `BrainInspiredMCPServer` is used. The `CognitiveOrchestrator` selects an appropriate cognitive pattern (e.g., `DivergentThinking` for an open-ended question).
 4.  **Reasoning**: The selected cognitive pattern is executed. This involves activating entities in the `BrainEnhancedKnowledgeGraph`, propagating activation through the `ActivationPropagationEngine`, and using the `WorkingMemorySystem` and `AttentionManager` to manage the reasoning process.
 5.  **Federation**: If the query requires information from multiple databases, the `QueryRouter` creates a federated query plan. The `FederationCoordinator` executes the plan, and the `ResultMerger` combines the results.
-6.  **Learning**: As queries are processed, the `PerformanceMonitor` collects data. This data is fed to the `AdaptiveLearningSystem`, which might trigger the `HebbianLearningEngine` to strengthen connections, the `GraphOptimizationAgent` to restructure part of the graph, or the `MetaLearningSystem` to adjust the overall learning strategy.
+6.  **Learning**: As queries are processed, the `PerformanceMonitor` collects data. This data is fed to the `AdaptiveLearningSystem`, which might trigger the `HebbianLearningEngine` to strengthen connections or the `MetaLearningSystem` to adjust the overall learning strategy.
 7.  **Response**: The final result is formatted and returned through the MCP server.
 
 ## 4. Potential Areas for Improvement or Concern

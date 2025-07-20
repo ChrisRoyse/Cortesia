@@ -16,13 +16,9 @@ async fn test_and_gate_operation() {
     let input_b = BrainInspiredEntity::new("InputB".to_string(), EntityDirection::Input);
     let output = BrainInspiredEntity::new("Output".to_string(), EntityDirection::Output);
 
-    let key_a = input_a.id;
-    let key_b = input_b.id;
-    let key_output = output.id;
-
-    engine.add_entity(input_a).await.unwrap();
-    engine.add_entity(input_b).await.unwrap();
-    engine.add_entity(output).await.unwrap();
+    let key_a = engine.add_entity(input_a).await.unwrap();
+    let key_b = engine.add_entity(input_b).await.unwrap();
+    let key_output = engine.add_entity(output).await.unwrap();
 
     // Create AND gate
     let mut and_gate = LogicGate::new(LogicGateType::And, 0.5);
@@ -30,8 +26,7 @@ async fn test_and_gate_operation() {
     and_gate.input_nodes.push(key_b);
     and_gate.output_nodes.push(key_output);
 
-    let gate_key = and_gate.gate_id;
-    engine.add_logic_gate(and_gate).await.unwrap();
+    let gate_key = engine.add_logic_gate(and_gate).await.unwrap();
 
     // Test 1: Both inputs high (1, 1) -> 1
     let mut pattern1 = ActivationPattern::new("and_11".to_string());
@@ -71,13 +66,9 @@ async fn test_or_gate_operation() {
     let input_b = BrainInspiredEntity::new("InputB".to_string(), EntityDirection::Input);
     let output = BrainInspiredEntity::new("Output".to_string(), EntityDirection::Output);
 
-    let key_a = input_a.id;
-    let key_b = input_b.id;
-    let key_output = output.id;
-
-    engine.add_entity(input_a).await.unwrap();
-    engine.add_entity(input_b).await.unwrap();
-    engine.add_entity(output).await.unwrap();
+    let key_a = engine.add_entity(input_a).await.unwrap();
+    let key_b = engine.add_entity(input_b).await.unwrap();
+    let key_output = engine.add_entity(output).await.unwrap();
 
     // Create OR gate
     let mut or_gate = LogicGate::new(LogicGateType::Or, 0.5);
@@ -124,11 +115,8 @@ async fn test_not_gate_operation() {
     let input = BrainInspiredEntity::new("Input".to_string(), EntityDirection::Input);
     let output = BrainInspiredEntity::new("Output".to_string(), EntityDirection::Output);
 
-    let key_input = input.id;
-    let key_output = output.id;
-
-    engine.add_entity(input).await.unwrap();
-    engine.add_entity(output).await.unwrap();
+    let key_input = engine.add_entity(input).await.unwrap();
+    let key_output = engine.add_entity(output).await.unwrap();
 
     // Create NOT gate
     let mut not_gate = LogicGate::new(LogicGateType::Not, 0.0);
@@ -210,15 +198,10 @@ async fn test_threshold_gate_operation() {
     let input_c = BrainInspiredEntity::new("InputC".to_string(), EntityDirection::Input);
     let output = BrainInspiredEntity::new("Output".to_string(), EntityDirection::Output);
 
-    let key_a = input_a.id;
-    let key_b = input_b.id;
-    let key_c = input_c.id;
-    let key_output = output.id;
-
-    engine.add_entity(input_a).await.unwrap();
-    engine.add_entity(input_b).await.unwrap();
-    engine.add_entity(input_c).await.unwrap();
-    engine.add_entity(output).await.unwrap();
+    let key_a = engine.add_entity(input_a).await.unwrap();
+    let key_b = engine.add_entity(input_b).await.unwrap();
+    let key_c = engine.add_entity(input_c).await.unwrap();
+    let key_output = engine.add_entity(output).await.unwrap();
 
     // Create threshold gate (fires if sum >= 1.5)
     let mut threshold_gate = LogicGate::new(LogicGateType::Threshold, 1.5);

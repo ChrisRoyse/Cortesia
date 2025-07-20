@@ -9,7 +9,6 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::sdr_storage::SDRStorage;
 use crate::learning::hebbian::HebbianLearningEngine;
 use crate::learning::homeostasis::SynapticHomeostasis;
-use crate::learning::optimization_agent::GraphOptimizationAgent;
 use crate::learning::adaptive_learning::AdaptiveLearningSystem;
 use crate::learning::types::*;
 use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
@@ -34,7 +33,6 @@ pub struct Phase4LearningSystem {
     // Core learning engines
     pub hebbian_engine: Arc<Mutex<HebbianLearningEngine>>,
     pub homeostasis_system: Arc<Mutex<SynapticHomeostasis>>,
-    pub optimization_agent: Arc<Mutex<GraphOptimizationAgent>>,
     pub adaptive_learning: Arc<Mutex<AdaptiveLearningSystem>>,
     
     // Integration with Phase 3 systems
@@ -109,7 +107,6 @@ impl Phase4LearningSystem {
             ).await?
         ));
         
-        let optimization_agent = Arc::new(Mutex::new(GraphOptimizationAgent::default()));
         let adaptive_learning = Arc::new(Mutex::new(AdaptiveLearningSystem::new()?));
         
         // Initialize coordination systems
@@ -119,7 +116,6 @@ impl Phase4LearningSystem {
         Ok(Self {
             hebbian_engine,
             homeostasis_system,
-            optimization_agent,
             adaptive_learning,
             integrated_cognitive_system,
             brain_graph,

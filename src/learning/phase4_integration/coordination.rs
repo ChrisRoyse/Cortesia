@@ -207,7 +207,6 @@ impl LearningCoordinator {
             },
             StrategyType::Aggressive => {
                 participants.push(LearningParticipant::HebbianEngine);
-                participants.push(LearningParticipant::OptimizationAgent);
                 participants.push(LearningParticipant::AdaptiveLearning);
             },
             StrategyType::Conservative => {

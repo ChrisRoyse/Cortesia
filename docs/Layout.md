@@ -50,7 +50,6 @@ The system implements 7 distinct cognitive patterns:
 ### 3. Phase 4 Learning Systems (`src/learning/`)
 - **Hebbian Learning Engine**: Synaptic strengthening based on coactivation
 - **Synaptic Homeostasis**: Maintains network stability
-- **Graph Optimization Agent**: Automated structure optimization
 - **Adaptive Learning System**: Meta-learning and parameter tuning
 
 ## MCP Server Integration - Hybrid Cognitive Tool Architecture

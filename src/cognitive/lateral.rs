@@ -731,7 +731,7 @@ mod tests {
     #[test]
     fn test_lateral_query_parsing() {
         let lateral = LateralThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         // Test would check query parsing logic
@@ -743,7 +743,7 @@ mod tests {
     #[test]
     fn test_concept_relevance() {
         let lateral = LateralThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert_eq!(lateral.calculate_concept_relevance("dog", "dog"), 1.0);

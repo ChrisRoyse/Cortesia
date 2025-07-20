@@ -9,7 +9,6 @@ use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 use crate::learning::hebbian::HebbianLearningEngine;
-use crate::learning::optimization_agent::GraphOptimizationAgent;
 
 use std::sync::{Arc, RwLock, Mutex};
 use std::time::SystemTime;
@@ -24,7 +23,6 @@ pub struct AdaptiveLearningSystem {
     pub attention_manager: Arc<AttentionManager>,
     pub orchestrator: Arc<CognitiveOrchestrator>,
     pub hebbian_engine: Arc<Mutex<HebbianLearningEngine>>,
-    pub optimization_agent: Arc<Mutex<GraphOptimizationAgent>>,
     pub performance_monitor: Arc<PerformanceMonitor>,
     pub feedback_aggregator: Arc<FeedbackAggregator>,
     pub learning_scheduler: Arc<LearningScheduler>,
@@ -216,14 +214,9 @@ impl AdaptiveLearningSystem {
     
     /// Execute structure optimization
     async fn execute_structure_optimization(&self) -> Result<bool> {
-        // Attempt to optimize with the optimization agent
-        if let Ok(_agent) = self.optimization_agent.try_lock() {
-            // Simplified optimization - would be more complex in practice
-            println!("Executing structure optimization");
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        // Structure optimization removed - no agents in system
+        println!("Structure optimization disabled - no agents");
+        Ok(false)
     }
     
     /// Execute parameter tuning

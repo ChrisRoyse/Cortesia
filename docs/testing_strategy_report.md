@@ -42,7 +42,6 @@ Unit tests should be written for individual components in isolation. This is the
 
 - **`HebbianLearningEngine`**: Test that connections are strengthened and weakened correctly based on co-activation patterns.
 - **`SynapticHomeostasis`**: Test that the system correctly normalizes synaptic weights to maintain stability.
-- **`GraphOptimizationAgent`**: Test the detection of optimization opportunities and the application of optimization strategies on a mock graph.
 
 ## 4. Integration Testing
 

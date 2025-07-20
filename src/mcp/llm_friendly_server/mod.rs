@@ -209,7 +209,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_server_creation() {
-        let engine = Arc::new(RwLock::new(KnowledgeEngine::new()));
+        let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
         let server = LLMFriendlyMCPServer::new(engine);
         
         let tools = server.get_available_tools();
@@ -220,7 +220,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_health_check() {
-        let engine = Arc::new(RwLock::new(KnowledgeEngine::new()));
+        let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
         let server = LLMFriendlyMCPServer::new(engine);
         
         let health = server.get_health().await;
@@ -230,16 +230,16 @@ mod tests {
     
     #[tokio::test]
     async fn test_unknown_method() {
-        let engine = Arc::new(RwLock::new(KnowledgeEngine::new()));
+        let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
         let server = LLMFriendlyMCPServer::new(engine);
         
         let request = LLMMCPRequest {
-            id: "test".to_string(),
             method: "unknown_method".to_string(),
-            params: None,
+            params: serde_json::Value::Null,
         };
         
         let response = server.handle_request(request).await.unwrap();
-        assert!(response.error.is_some());
+        assert!(!response.success);
+        assert!(response.message.contains("Unknown method"));
     }
 }

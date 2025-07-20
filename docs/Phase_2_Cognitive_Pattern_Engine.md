@@ -344,7 +344,6 @@ pub struct AbstractThinking {
     pub graph: Arc<RwLock<TemporalKnowledgeGraph>>,
     pub neural_server: Arc<NeuralProcessingServer>,
     pub pattern_models: AHashMap<String, String>, // N-BEATS, TimesNet model IDs
-    pub refactoring_agent: Arc<RefactoringAgent>,
 }
 
 impl AbstractThinking {

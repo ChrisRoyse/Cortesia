@@ -1078,7 +1078,7 @@ mod tests {
     #[test]
     fn test_exploration_type_inference() {
         let divergent = DivergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert!(matches!(
@@ -1100,7 +1100,7 @@ mod tests {
     #[test]
     fn test_seed_concept_extraction() {
         let divergent = DivergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert_eq!(
@@ -1117,7 +1117,7 @@ mod tests {
     #[test]
     fn test_concept_similarity() {
         let divergent = DivergentThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()),
+            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
         );
         
         assert_eq!(divergent.calculate_concept_relevance("dog", "dog"), 1.0);

@@ -15,7 +15,6 @@ use crate::error::Result;
 pub struct AbstractThinking {
     pub graph: Arc<BrainEnhancedKnowledgeGraph>,
     pub pattern_models: AHashMap<String, String>,
-    pub refactoring_agent: Arc<RefactoringAgent>,
     pub pattern_detector: NeuralPatternDetector,
 }
 
@@ -34,7 +33,6 @@ impl AbstractThinking {
         Self {
             graph,
             pattern_models,
-            refactoring_agent: Arc::new(RefactoringAgent::new()),
             pattern_detector,
         }
     }
@@ -487,15 +485,6 @@ impl CognitivePattern for AbstractThinking {
     }
 }
 
-struct RefactoringAgent {
-    // Implementation would handle graph refactoring suggestions
-}
-
-impl RefactoringAgent {
-    fn new() -> Self {
-        Self {}
-    }
-}
 
 impl AbstractThinking {
     /// Infer analysis parameters from query and context

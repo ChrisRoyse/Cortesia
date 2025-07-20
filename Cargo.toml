@@ -150,3 +150,7 @@ debug = true  # Include debug info in benchmarks
 [[bench]]
 name = "realistic_benchmarks"
 harness = false
+
+[[bench]]
+name = "activation_engine_bench"
+harness = false

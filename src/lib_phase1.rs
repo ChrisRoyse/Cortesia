@@ -15,7 +15,6 @@ pub mod streaming;
 pub mod gpu;
 pub mod validation;
 //pub mod monitoring; // Excluded due to missing dependencies
-pub mod agents;
 pub mod text;
 pub mod mcp;
 

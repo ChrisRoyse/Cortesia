@@ -33,7 +33,6 @@ pub enum LearningSessionType {
 pub enum LearningParticipant {
     HebbianEngine,
     HomeostasisSystem,
-    OptimizationAgent,
     AdaptiveLearning,
     CognitiveOrchestrator,
 }

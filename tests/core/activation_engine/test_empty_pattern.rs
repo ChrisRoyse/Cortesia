@@ -38,7 +38,10 @@ async fn test_empty_network_with_initial_pattern() {
     
     // Create activation pattern with non-existent entities
     let mut pattern = ActivationPattern::new("test_pattern".to_string());
-    pattern.activations.insert(llmkg::core::types::EntityKey::default(), 0.8);
+    let non_existent_entity = BrainInspiredEntity::new("NonExistent".to_string(), EntityDirection::Hidden);
+    let non_existent_key = non_existent_entity.id;
+    // Note: We intentionally don't add this entity to the engine
+    pattern.activations.insert(non_existent_key, 0.8);
     
     // Propagate in empty network
     let result = engine.propagate_activation(&pattern).await.unwrap();

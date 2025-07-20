@@ -2,7 +2,7 @@
 // Ultra-efficient serialization that avoids memory allocation and copying during read operations
 // Designed for maximum performance with direct memory access patterns
 
-use crate::core::types::{EntityData, Relationship};
+use crate::core::types::{EntityData, EntityKey, Relationship};
 use crate::error::{GraphError, Result};
 use crate::storage::string_interner::StringInterner;
 use std::mem;
@@ -531,8 +531,8 @@ mod tests {
         
         // Add test relationship
         let relationship = Relationship {
-            from: 0,
-            to: 1,
+            from: EntityKey::new("from_entity".to_string()),
+            to: EntityKey::new("to_entity".to_string()),
             rel_type: 1,
             weight: 0.5,
         };

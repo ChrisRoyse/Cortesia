@@ -400,7 +400,7 @@ mod tests {
         let integration = Phase1IntegrationLayer::new(config).await.unwrap();
         
         let stats = integration.get_phase1_statistics().await.unwrap();
-        assert_eq!(stats.brain_statistics.total_brain_entities, 0);
+        assert_eq!(stats.brain_statistics.entity_count, 0);
     }
 
     #[tokio::test]

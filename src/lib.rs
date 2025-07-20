@@ -24,7 +24,7 @@ pub mod text;
 pub mod cognitive;
 pub mod learning;
 pub mod graph;
-pub mod agents;
+// pub mod agents; // Removed as requested
 
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
@@ -50,7 +50,7 @@ pub use crate::streaming::{StreamingUpdateHandler, IncrementalIndexer, UpdateStr
 pub use crate::gpu::GpuAccelerator;
 pub use crate::validation::{HumanValidationInterface, ValidationItem, ValidationResult};
 pub use crate::monitoring::{PerformanceMonitor, ObservabilityEngine, AlertManager};
-pub use crate::agents::{Agent, ConstructionAgent, CoordinationAgent, AgentId, Request, Response, Task, TaskResult, TaskType, Complexity};
+// pub use crate::agents::{Agent, ConstructionAgent, CoordinationAgent, AgentId, Request, Response, Task, TaskResult, TaskType, Complexity};
 
 // Phase 1 Brain-Inspired Exports
 pub use crate::core::brain_types::{
@@ -96,9 +96,9 @@ pub use crate::cognitive::{
 
 // Phase 4 Self-Organization & Learning Exports
 pub use crate::learning::{
-    HebbianLearningEngine, SynapticHomeostasis, GraphOptimizationAgent, AdaptiveLearningSystem,
+    HebbianLearningEngine, SynapticHomeostasis, AdaptiveLearningSystem,
     Phase4LearningSystem, ActivationEvent, LearningContext, WeightChange, LearningUpdate,
-    STDPResult, PlasticityType, HomeostasisUpdate, OptimizationOpportunity, LearningResult,
+    STDPResult, PlasticityType, HomeostasisUpdate, LearningResult,
     ComprehensiveLearningResult, LearningGoal, LearningGoalType, ResourceRequirement
 };
 
@@ -113,3 +113,4 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
         core::arch::wasm32::unreachable();
     }
 }
+
