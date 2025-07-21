@@ -4,15 +4,64 @@
 use llmkg::cognitive::attention_manager::{
     AttentionManager, AttentionType, ExecutiveCommand, AttentionTarget, AttentionTargetType,
 };
-use llmkg::cognitive::types::CognitivePatternType;
+use llmkg::cognitive::CognitivePatternType;
 use std::time::Duration;
 use tokio::time::sleep;
 use anyhow::Result;
 
-// Import shared test utilities
-use super::test_utils::{
-    create_test_entity_keys, PerformanceTimer,
-};
+// Import test support utilities for integration tests
+use llmkg::test_support::data::{create_standard_test_entities};
+use llmkg::core::types::{EntityKey, EntityData};
+use std::time::Instant;
+
+/// Creates test EntityKeys for integration testing
+fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
+    use slotmap::SlotMap;
+    
+    let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+    let mut keys = Vec::new();
+    
+    for i in 0..count {
+        let key = sm.insert(EntityData::new(
+            1,
+            format!("integration_test_entity_{}", i),
+            vec![0.0; 64],
+        ));
+        keys.push(key);
+    }
+    
+    keys
+}
+
+/// Performance timer for integration tests
+struct PerformanceTimer {
+    start: Instant,
+    operation: String,
+}
+
+impl PerformanceTimer {
+    fn new(operation: &str) -> Self {
+        Self {
+            start: Instant::now(),
+            operation: operation.to_string(),
+        }
+    }
+    
+    fn elapsed_ms(&self) -> f64 {
+        self.start.elapsed().as_secs_f64() * 1000.0
+    }
+    
+    fn assert_within_ms(&self, max_ms: f64) {
+        let elapsed = self.elapsed_ms();
+        assert!(
+            elapsed <= max_ms,
+            "{} took {:.2}ms, expected less than {:.2}ms",
+            self.operation,
+            elapsed,
+            max_ms
+        );
+    }
+}
 
 /// Creates a fully configured attention manager for integration testing
 async fn create_integration_test_manager() -> Result<AttentionManager> {

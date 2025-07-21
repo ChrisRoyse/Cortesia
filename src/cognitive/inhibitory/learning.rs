@@ -410,7 +410,9 @@ mod tests {
             entity_keys.push(entity);
         }
         
-        (ActivationPattern { activations }, entity_keys)
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations = activations;
+        (pattern, entity_keys)
     }
 
     fn create_test_competition_results(entities: &[EntityKey]) -> Vec<GroupCompetitionResult> {
@@ -839,8 +841,8 @@ mod tests {
         assert!(variance > 0.0);
         
         // Manually calculate expected variance for verification
-        let mean = 0.5;
-        let expected_variance = ((0.1 - mean).powi(2) + (0.5 - mean).powi(2) + (0.9 - mean).powi(2)) / 3.0;
+        let mean = 0.5f32;
+        let expected_variance = ((0.1f32 - mean).powi(2) + (0.5f32 - mean).powi(2) + (0.9f32 - mean).powi(2)) / 3.0;
         assert!((variance - expected_variance).abs() < 0.001);
     }
 }

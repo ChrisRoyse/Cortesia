@@ -456,6 +456,12 @@ impl AdaptiveThinking {
             CognitivePatternType::Adaptive => {
                 0.3 // Lower score for adaptive calling itself
             }
+            CognitivePatternType::ChainOfThought => {
+                analysis.factual_focus * 0.7 + analysis.complexity_score * 0.6
+            }
+            CognitivePatternType::TreeOfThoughts => {
+                analysis.creative_requirement * 0.7 + analysis.complexity_score * 0.8
+            }
         }
     }
     
@@ -542,6 +548,8 @@ impl AdaptiveThinking {
             CognitivePatternType::Critical => 0.85,
             CognitivePatternType::Abstract => 0.65,
             CognitivePatternType::Adaptive => 0.7,
+            CognitivePatternType::ChainOfThought => 0.72,
+            CognitivePatternType::TreeOfThoughts => 0.73,
         };
         
         Ok(PatternResult {

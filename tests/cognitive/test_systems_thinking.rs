@@ -4,7 +4,7 @@ mod systems_thinking_integration_tests {
     use std::sync::Arc;
     use tokio;
     use llmkg::cognitive::systems::SystemsThinking;
-    use llmkg::cognitive::types::{
+    use llmkg::cognitive::{
         CognitivePattern, PatternParameters, PatternResult, CognitivePatternType,
         SystemsReasoningType, SystemsResult, InheritedAttribute, Exception, ExceptionType
     };

@@ -1,9 +1,9 @@
 //! Integration tests for zero_copy_engine.rs
 //! Tests complete workflows, performance benchmarks, and realistic scenarios
 
-use llm_knowledge_graph::core::zero_copy_engine::ZeroCopyKnowledgeEngine;
-use llm_knowledge_graph::core::knowledge_engine::KnowledgeEngine;
-use llm_knowledge_graph::core::types::EntityData;
+use llmkg::core::zero_copy_engine::ZeroCopyKnowledgeEngine;
+use llmkg::core::knowledge_engine::KnowledgeEngine;
+use llmkg::core::types::EntityData;
 use std::sync::Arc;
 use std::time::Instant;
 use std::collections::HashMap;

@@ -421,6 +421,8 @@ impl CognitiveOrchestrator {
                     CognitivePatternType::Critical => "Critical Analysis",
                     CognitivePatternType::Abstract => "Pattern Recognition",
                     CognitivePatternType::Adaptive => "Adaptive Insights",
+                    CognitivePatternType::ChainOfThought => "Chain of Thought",
+                    CognitivePatternType::TreeOfThoughts => "Tree of Thoughts",
                 };
                 combined.push_str(&format!("{}: {}\n", pattern_name, answer.trim()));
             }
@@ -440,6 +442,8 @@ impl CognitiveOrchestrator {
             CognitivePatternType::Critical => 1.1,
             CognitivePatternType::Abstract => 0.7,
             CognitivePatternType::Adaptive => 1.2,
+            CognitivePatternType::ChainOfThought => 1.0,
+            CognitivePatternType::TreeOfThoughts => 0.9,
         }
     }
     

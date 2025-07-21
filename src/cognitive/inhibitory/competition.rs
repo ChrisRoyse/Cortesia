@@ -291,7 +291,9 @@ mod tests {
             entity_keys.push(entity);
         }
         
-        (ActivationPattern { activations }, entity_keys)
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations = activations;
+        (pattern, entity_keys)
     }
 
     fn create_test_group(entities: Vec<EntityKey>, competition_type: CompetitionType, winner_takes_all: bool) -> CompetitionGroup {

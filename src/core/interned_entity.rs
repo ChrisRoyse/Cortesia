@@ -576,10 +576,12 @@ mod tests {
     #[test]
     fn test_interned_relationship_new() {
         let interner = StringInterner::new();
-        let rel = InternedRelationship::new(&interner, 1, 2, "RELATES_TO", 0.8);
+        let from_key = EntityKey::from_raw_parts(1, 0);
+        let to_key = EntityKey::from_raw_parts(2, 0);
+        let rel = InternedRelationship::new(&interner, from_key, to_key, "RELATES_TO", 0.8);
         
-        assert_eq!(rel.from, 1);
-        assert_eq!(rel.to, 2);
+        assert_eq!(rel.from, from_key);
+        assert_eq!(rel.to, to_key);
         assert_eq!(rel.weight, 0.8);
         assert_eq!(rel.get_relationship_type(&interner), Some("RELATES_TO".to_string()));
         assert_eq!(rel.properties.len(), 0);
@@ -588,7 +590,9 @@ mod tests {
     #[test]
     fn test_interned_relationship_add_property() {
         let interner = StringInterner::new();
-        let mut rel = InternedRelationship::new(&interner, 1, 2, "RELATES_TO", 0.5);
+        let from_key = EntityKey::from_raw_parts(1, 0);
+        let to_key = EntityKey::from_raw_parts(2, 0);
+        let mut rel = InternedRelationship::new(&interner, from_key, to_key, "RELATES_TO", 0.5);
         
         rel.add_property(&interner, "strength", "high");
         rel.add_property(&interner, "confidence", "0.95");
@@ -601,7 +605,9 @@ mod tests {
     #[test]
     fn test_interned_relationship_memory_usage() {
         let interner = StringInterner::new();
-        let mut rel = InternedRelationship::new(&interner, 1, 2, "RELATES_TO", 0.5);
+        let from_key = EntityKey::from_raw_parts(1, 0);
+        let to_key = EntityKey::from_raw_parts(2, 0);
+        let mut rel = InternedRelationship::new(&interner, from_key, to_key, "RELATES_TO", 0.5);
         
         let base_memory = rel.memory_usage();
         
@@ -618,20 +624,21 @@ mod tests {
         
         assert_eq!(collection.entities.len(), 0);
         assert_eq!(collection.relationships.len(), 0);
-        assert_eq!(collection.interner.stats().total_strings, 0);
+        assert_eq!(collection.interner.stats().unique_strings, 0);
     }
 
     #[test]
     fn test_interned_entity_collection_add_entity_empty_properties() {
         let mut collection = InternedEntityCollection::new();
         let properties = HashMap::new();
+        let key = EntityKey::from_raw_parts(1, 0);
         
-        collection.add_entity(1, 42, &properties, vec![1.0, 2.0]);
+        collection.add_entity(key, 42, &properties, vec![1.0, 2.0]);
         
         assert_eq!(collection.entities.len(), 1);
-        assert!(collection.entities.contains_key(&1));
+        assert!(collection.entities.contains_key(&key));
         
-        let entity = collection.entities.get(&1).unwrap();
+        let entity = collection.entities.get(&key).unwrap();
         assert_eq!(entity.type_id, 42);
         assert_eq!(entity.properties.len(), 0);
     }
@@ -643,10 +650,11 @@ mod tests {
         properties.insert("name".to_string(), "Alice".to_string());
         properties.insert("age".to_string(), "25".to_string());
         
-        collection.add_entity(1, 10, &properties, vec![0.1, 0.2]);
+        let key = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key, 10, &properties, vec![0.1, 0.2]);
         
         assert_eq!(collection.entities.len(), 1);
-        let entity = collection.entities.get(&1).unwrap();
+        let entity = collection.entities.get(&key).unwrap();
         assert_eq!(entity.properties.len(), 2);
         assert_eq!(entity.get_property(&collection.interner, "name"), Some("Alice".to_string()));
         assert_eq!(entity.get_property(&collection.interner, "age"), Some("25".to_string()));
@@ -657,12 +665,14 @@ mod tests {
         let mut collection = InternedEntityCollection::new();
         let properties = HashMap::new();
         
-        collection.add_relationship(1, 2, "CONNECTS", 0.7, &properties);
+        let from_key = EntityKey::from_raw_parts(1, 0);
+        let to_key = EntityKey::from_raw_parts(2, 0);
+        collection.add_relationship(from_key, to_key, "CONNECTS", 0.7, &properties);
         
         assert_eq!(collection.relationships.len(), 1);
         let rel = &collection.relationships[0];
-        assert_eq!(rel.from, 1);
-        assert_eq!(rel.to, 2);
+        assert_eq!(rel.from, from_key);
+        assert_eq!(rel.to, to_key);
         assert_eq!(rel.weight, 0.7);
         assert_eq!(rel.get_relationship_type(&collection.interner), Some("CONNECTS".to_string()));
         assert_eq!(rel.properties.len(), 0);
@@ -675,7 +685,9 @@ mod tests {
         properties.insert("type".to_string(), "strong".to_string());
         properties.insert("created".to_string(), "2023-01-01".to_string());
         
-        collection.add_relationship(1, 2, "LINKS", 0.9, &properties);
+        let from_key = EntityKey::from_raw_parts(1, 0);
+        let to_key = EntityKey::from_raw_parts(2, 0);
+        collection.add_relationship(from_key, to_key, "LINKS", 0.9, &properties);
         
         assert_eq!(collection.relationships.len(), 1);
         let rel = &collection.relationships[0];
@@ -703,13 +715,15 @@ mod tests {
         // Add entities with different numbers of properties
         let mut props1 = HashMap::new();
         props1.insert("name".to_string(), "Entity1".to_string());
-        collection.add_entity(1, 10, &props1, vec![1.0, 2.0]);
+        let key1 = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key1, 10, &props1, vec![1.0, 2.0]);
         
         let mut props2 = HashMap::new();
         props2.insert("name".to_string(), "Entity2".to_string());
         props2.insert("type".to_string(), "TypeA".to_string());
         props2.insert("value".to_string(), "100".to_string());
-        collection.add_entity(2, 20, &props2, vec![3.0, 4.0, 5.0]);
+        let key2 = EntityKey::from_raw_parts(2, 0);
+        collection.add_entity(key2, 20, &props2, vec![3.0, 4.0, 5.0]);
         
         let stats = collection.stats();
         
@@ -729,7 +743,8 @@ mod tests {
         let mut collection = InternedEntityCollection::new();
         let mut properties = HashMap::new();
         properties.insert("name".to_string(), "Alice".to_string());
-        collection.add_entity(1, 10, &properties, vec![]);
+        let key = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key, 10, &properties, vec![]);
         
         let results = collection.find_by_property("name", "Bob");
         assert!(results.is_empty());
@@ -745,32 +760,36 @@ mod tests {
         let mut props1 = HashMap::new();
         props1.insert("name".to_string(), "Alice".to_string());
         props1.insert("type".to_string(), "Person".to_string());
-        collection.add_entity(1, 10, &props1, vec![]);
+        let key1 = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key1, 10, &props1, vec![]);
         
         let mut props2 = HashMap::new();
         props2.insert("name".to_string(), "Bob".to_string());
         props2.insert("type".to_string(), "Person".to_string());
-        collection.add_entity(2, 10, &props2, vec![]);
+        let key2 = EntityKey::from_raw_parts(2, 0);
+        collection.add_entity(key2, 10, &props2, vec![]);
         
         let mut props3 = HashMap::new();
         props3.insert("name".to_string(), "Company".to_string());
         props3.insert("type".to_string(), "Organization".to_string());
-        collection.add_entity(3, 20, &props3, vec![]);
+        let key3 = EntityKey::from_raw_parts(3, 0);
+        collection.add_entity(key3, 20, &props3, vec![]);
         
         let person_results = collection.find_by_property("type", "Person");
         assert_eq!(person_results.len(), 2);
-        assert!(person_results.contains(&1));
-        assert!(person_results.contains(&2));
+        assert!(person_results.contains(&key1));
+        assert!(person_results.contains(&key2));
         
         let alice_results = collection.find_by_property("name", "Alice");
         assert_eq!(alice_results.len(), 1);
-        assert_eq!(alice_results[0], 1);
+        assert_eq!(alice_results[0], key1);
     }
 
     #[test]
     fn test_interned_entity_collection_find_by_tag_not_found() {
         let mut collection = InternedEntityCollection::new();
-        collection.add_entity(1, 10, &HashMap::new(), vec![]);
+        let key = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key, 10, &HashMap::new(), vec![]);
         
         let results = collection.find_by_tag("nonexistent");
         assert!(results.is_empty());
@@ -779,28 +798,31 @@ mod tests {
     #[test]
     fn test_interned_entity_collection_find_by_tag_found() {
         let mut collection = InternedEntityCollection::new();
-        collection.add_entity(1, 10, &HashMap::new(), vec![]);
-        collection.add_entity(2, 20, &HashMap::new(), vec![]);
-        collection.add_entity(3, 30, &HashMap::new(), vec![]);
+        let key1 = EntityKey::from_raw_parts(1, 0);
+        let key2 = EntityKey::from_raw_parts(2, 0);
+        let key3 = EntityKey::from_raw_parts(3, 0);
+        collection.add_entity(key1, 10, &HashMap::new(), vec![]);
+        collection.add_entity(key2, 20, &HashMap::new(), vec![]);
+        collection.add_entity(key3, 30, &HashMap::new(), vec![]);
         
         // Add tags to entities
-        if let Some(entity1) = collection.entities.get_mut(&1) {
+        if let Some(entity1) = collection.entities.get_mut(&key1) {
             entity1.add_tag(&collection.interner, "important");
             entity1.add_tag(&collection.interner, "active");
         }
         
-        if let Some(entity2) = collection.entities.get_mut(&2) {
+        if let Some(entity2) = collection.entities.get_mut(&key2) {
             entity2.add_tag(&collection.interner, "important");
         }
         
         let important_results = collection.find_by_tag("important");
         assert_eq!(important_results.len(), 2);
-        assert!(important_results.contains(&1));
-        assert!(important_results.contains(&2));
+        assert!(important_results.contains(&key1));
+        assert!(important_results.contains(&key2));
         
         let active_results = collection.find_by_tag("active");
         assert_eq!(active_results.len(), 1);
-        assert_eq!(active_results[0], 1);
+        assert_eq!(active_results[0], key1);
     }
 
     #[test]
@@ -817,13 +839,15 @@ mod tests {
         let mut props1 = HashMap::new();
         props1.insert("name".to_string(), "Alice".to_string());
         props1.insert("age".to_string(), "25".to_string());
-        collection.add_entity(1, 10, &props1, vec![]);
+        let key1 = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key1, 10, &props1, vec![]);
         
         let mut props2 = HashMap::new();
         props2.insert("name".to_string(), "Bob".to_string());
         props2.insert("city".to_string(), "NYC".to_string());
         props2.insert("country".to_string(), "USA".to_string());
-        collection.add_entity(2, 20, &props2, vec![]);
+        let key2 = EntityKey::from_raw_parts(2, 0);
+        collection.add_entity(key2, 20, &props2, vec![]);
         
         let keys = collection.get_all_property_keys();
         assert_eq!(keys.len(), 4);
@@ -851,7 +875,7 @@ mod tests {
         for i in 1..=5 {
             let mut props = HashMap::new();
             props.insert("id".to_string(), i.to_string());
-            collection.add_entity(i, 10, &props, vec![i as f32]);
+            collection.add_entity(EntityKey::new(i.to_string()), 10, &props, vec![i as f32]);
         }
         
         let json = collection.export_sample_json(3).unwrap();
@@ -872,7 +896,7 @@ mod tests {
             props.insert("type".to_string(), "Person".to_string()); // Same value for all
             props.insert("status".to_string(), "Active".to_string()); // Same value for all
             props.insert("id".to_string(), i.to_string()); // Unique values
-            collection.add_entity(i, 10, &props, vec![]);
+            collection.add_entity(EntityKey::new(i.to_string()), 10, &props, vec![]);
         }
         
         let stats = collection.stats();
@@ -880,10 +904,10 @@ mod tests {
         
         // We should have fewer unique strings than total property insertions
         // due to string interning of repeated values
-        assert!(interner_stats.total_strings < 30); // 10 entities * 3 props = 30 without interning
+        assert!(interner_stats.unique_strings < 30); // 10 entities * 3 props = 30 without interning
         
         // Verify that "Person" and "Active" are properly interned
-        assert!(interner_stats.total_strings >= 12); // At least: "type", "status", "id", "Person", "Active", "1"-"10"
+        assert!(interner_stats.unique_strings >= 12); // At least: "type", "status", "id", "Person", "Active", "1"-"10"
     }
 
     #[test]
@@ -895,9 +919,9 @@ mod tests {
         
         // Add multiple entities with the same large strings
         for i in 1..=5 {
-            collection.add_entity(i, 10, &HashMap::new(), vec![]);
+            collection.add_entity(EntityKey::new(i.to_string()), 10, &HashMap::new(), vec![]);
             
-            if let Some(entity) = collection.entities.get_mut(&i) {
+            if let Some(entity) = collection.entities.get_mut(&EntityKey::new(i.to_string())) {
                 entity.set_description(&collection.interner, &large_description);
                 entity.set_category(&collection.interner, &large_category);
             }
@@ -908,11 +932,11 @@ mod tests {
         
         // With string interning, we should have only 2 large strings stored
         // instead of 10 (5 descriptions + 5 categories)
-        assert_eq!(interner_stats.total_strings, 2);
+        assert_eq!(interner_stats.unique_strings, 2);
         
         // Total memory should be much less than without interning
         let expected_without_interning = 5 * (large_description.len() + large_category.len());
-        assert!(interner_stats.total_memory_bytes < expected_without_interning);
+        assert!(interner_stats.total_memory_bytes < expected_without_interning as u32);
     }
 
     #[test]
@@ -929,10 +953,11 @@ mod tests {
         props.insert("special".to_string(), special_chars.to_string());
         props.insert("whitespace".to_string(), whitespace.to_string());
         
-        collection.add_entity(1, 10, &props, vec![]);
+        let key = EntityKey::from_raw_parts(1, 0);
+        collection.add_entity(key, 10, &props, vec![]);
         
         // Verify that complex strings are stored and retrieved correctly
-        let entity = collection.entities.get(&1).unwrap();
+        let entity = collection.entities.get(&key).unwrap();
         assert_eq!(entity.get_property(&collection.interner, "unicode"), Some(unicode_string.to_string()));
         assert_eq!(entity.get_property(&collection.interner, "special"), Some(special_chars.to_string()));
         assert_eq!(entity.get_property(&collection.interner, "whitespace"), Some(whitespace.to_string()));

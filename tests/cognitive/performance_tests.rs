@@ -1,24 +1,104 @@
 //! Performance tests for cognitive components
 //! Benchmarks and performance validation for critical paths
 
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use std::sync::Arc;
 use llmkg::cognitive::attention_manager::{AttentionManager, AttentionType};
 use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
 use llmkg::cognitive::working_memory::{WorkingMemorySystem, MemoryContent, BufferType};
 use llmkg::cognitive::{ConvergentThinking, DivergentThinking, LateralThinking, CriticalThinking};
+use llmkg::cognitive::CognitivePattern;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::activation_engine::ActivationPropagationEngine;
 use llmkg::core::sdr_storage::SDRStorage;
 use llmkg::core::sdr_types::SDRConfig;
-use llmkg::core::types::EntityKey;
+// Import test utilities for performance tests
+use llmkg::core::types::{EntityKey, EntityData};
 
-// Import shared test utilities
-use super::test_utils::{
-    create_test_entity_keys,
-    create_memory_item,
-    PerformanceTimer,
-};
+/// Creates test EntityKeys for performance testing  
+fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
+    use slotmap::SlotMap;
+    
+    let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+    let mut keys = Vec::new();
+    
+    for i in 0..count {
+        let key = sm.insert(EntityData::new(
+            1,
+            format!("perf_test_entity_{}", i),
+            vec![0.0; 64],
+        ));
+        keys.push(key);
+    }
+    
+    keys
+}
+
+/// Creates EntityData for performance tests
+fn create_entity_data(type_id: u16, name: &str, description: &str) -> EntityData {
+    EntityData::new(
+        type_id,
+        format!("{}: {}", name, description),
+        vec![0.0; 64]
+    )
+}
+
+/// Creates a single EntityKey for performance tests
+fn create_entity_key(name: &str) -> EntityKey {
+    use slotmap::SlotMap;
+    let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+    sm.insert(EntityData::new(1, name.to_string(), vec![0.0; 64]))
+}
+
+/// Creates a memory item for performance tests
+fn create_memory_item(
+    content: &str,
+    activation_level: f32,
+    importance_score: f32,
+    access_count: u32,
+) -> llmkg::cognitive::working_memory::MemoryItem {
+    use llmkg::cognitive::working_memory::MemoryItem;
+    use std::time::Instant;
+    
+    MemoryItem {
+        content: llmkg::cognitive::working_memory::MemoryContent::Concept(content.to_string()),
+        activation_level,
+        timestamp: Instant::now(),
+        importance_score,
+        access_count,
+        decay_factor: 0.1,
+    }
+}
+
+/// Performance timer for performance tests
+struct PerformanceTimer {
+    start: Instant,
+    operation: String,
+}
+
+impl PerformanceTimer {
+    fn new(operation: &str) -> Self {
+        Self {
+            start: Instant::now(),
+            operation: operation.to_string(),
+        }
+    }
+    
+    fn elapsed_ms(&self) -> f64 {
+        self.start.elapsed().as_secs_f64() * 1000.0
+    }
+    
+    fn assert_within_ms(&self, max_ms: f64) {
+        let elapsed = self.elapsed_ms();
+        assert!(
+            elapsed <= max_ms,
+            "{} took {:.2}ms, expected less than {:.2}ms",
+            self.operation,
+            elapsed,
+            max_ms
+        );
+    }
+}
 
 /// Creates a test graph with realistic size for performance testing
 fn create_performance_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
@@ -724,8 +804,9 @@ async fn test_systems_thinking_pattern_performance() {
         ("herbivore", "An animal that eats plants"),
     ];
     
-    for (name, description) in test_entities {
-        let _ = graph.add_entity(name, description).await;
+    for (i, (name, description)) in test_entities.iter().enumerate() {
+        let entity_data = create_entity_data(i as u16 + 1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let systems = llmkg::cognitive::SystemsThinking::new(graph);
@@ -777,8 +858,9 @@ async fn test_systems_thinking_hierarchy_traversal_performance() {
     ];
     
     let mut prev_key = None;
-    for (name, description) in hierarchy_levels {
-        let key = graph.add_entity(name, description).await.unwrap();
+    for (i, (name, description)) in hierarchy_levels.iter().enumerate() {
+        let entity_data = create_entity_data(i as u16 + 1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         if let Some(parent) = prev_key {
             let _ = graph.add_weighted_edge(key, parent, 0.9).await;
         }
@@ -814,8 +896,9 @@ async fn test_systems_thinking_complexity_performance() {
     ];
     
     let mut entity_keys = Vec::new();
-    for entity in entities {
-        let key = graph.add_entity(entity, &format!("Component: {}", entity)).await.unwrap();
+    for (i, entity) in entities.iter().enumerate() {
+        let entity_data = create_entity_data(i as u16 + 1, entity, &format!("Component: {}", entity));
+        let key = graph.add_entity(entity_data).await.unwrap();
         entity_keys.push(key);
     }
     
@@ -861,7 +944,8 @@ async fn test_systems_thinking_attribute_inheritance_performance() {
     
     let mut prev_key = None;
     for (name, description) in biological_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         if let Some(parent) = prev_key {
             let _ = graph.add_weighted_edge(key, parent, 0.9).await;
         }
@@ -895,7 +979,7 @@ async fn test_systems_thinking_attribute_inheritance_performance() {
 /// Tests SystemsThinking concurrent execution performance
 #[tokio::test]
 async fn test_systems_thinking_concurrent_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     
     // Add test data
     let test_entities = vec![
@@ -907,7 +991,8 @@ async fn test_systems_thinking_concurrent_performance() {
     ];
     
     for (name, description) in test_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let systems = Arc::new(llmkg::cognitive::SystemsThinking::new(graph));
@@ -947,7 +1032,8 @@ async fn test_systems_thinking_memory_performance() {
     for i in 0..100 {
         let name = format!("entity_{}", i);
         let description = format!("Test entity number {}", i);
-        let _ = graph.add_entity(&name, &description).await;
+        let entity_data = create_entity_data(1, &name, &description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     // Add many relationships
@@ -1002,7 +1088,8 @@ async fn test_systems_thinking_cognitive_pattern_performance() {
     ];
     
     for (name, description) in hierarchy {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let systems = llmkg::cognitive::SystemsThinking::new(graph);
@@ -1039,7 +1126,8 @@ async fn test_systems_thinking_exception_handling_performance() {
     
     let mut keys = Vec::new();
     for (name, description) in problematic_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         keys.push(key);
     }
     
@@ -1089,7 +1177,8 @@ async fn test_systems_thinking_performance_regression() {
     
     let mut prev_key = None;
     for (name, description) in standard_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         if let Some(parent) = prev_key {
             let _ = graph.add_weighted_edge(key, parent, 0.9).await;
         }
@@ -1143,7 +1232,8 @@ async fn test_critical_thinking_pattern_performance() {
     ];
     
     for (name, description) in test_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1192,7 +1282,8 @@ async fn test_critical_thinking_contradiction_performance() {
     ];
     
     for (name, description) in contradictory_facts {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1225,22 +1316,19 @@ async fn test_critical_thinking_source_validation_performance() {
     ];
     
     for (name, description) in source_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
     
     let timer = PerformanceTimer::new("source validation performance");
     
-    // Test source validation at different levels
-    for validation_level in [
-        llmkg::cognitive::ValidationLevel::Basic,
-        llmkg::cognitive::ValidationLevel::Comprehensive,
-        llmkg::cognitive::ValidationLevel::Rigorous,
-    ] {
+    // Test source validation at different complexity levels
+    for complexity_level in [0.3, 0.6, 0.9] {
         for i in 0..10 {
-            let query = format!("validate sources for claim {}", i);
-            let _ = critical.execute_critical_analysis(&query, validation_level).await;
+            let query = format!("validate sources for claim {} at complexity {}", i, complexity_level);
+            let _ = critical.execute(&query, Some("validation context"), Default::default()).await;
         }
     }
     
@@ -1251,7 +1339,7 @@ async fn test_critical_thinking_source_validation_performance() {
 /// Tests CriticalThinking concurrent execution performance
 #[tokio::test]
 async fn test_critical_thinking_concurrent_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     
     // Add test data for concurrent analysis
     let concurrent_test_entities = vec![
@@ -1264,7 +1352,8 @@ async fn test_critical_thinking_concurrent_performance() {
     ];
     
     for (name, description) in concurrent_test_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = Arc::new(CriticalThinking::new(graph));
@@ -1312,7 +1401,8 @@ async fn test_critical_thinking_cognitive_pattern_performance() {
     ];
     
     for (name, description) in validation_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1325,16 +1415,13 @@ async fn test_critical_thinking_cognitive_pattern_performance() {
         let context = if i % 2 == 0 { Some("scientific validation context") } else { None };
         
         let parameters = llmkg::cognitive::PatternParameters {
-            max_iterations: Some(10),
-            confidence_threshold: Some(0.7),
-            exploration_depth: Some(3),
-            creativity_level: Some(0.3),
-            validation_level: Some(match i % 3 {
-                0 => llmkg::cognitive::ValidationLevel::Basic,
-                1 => llmkg::cognitive::ValidationLevel::Comprehensive,
-                _ => llmkg::cognitive::ValidationLevel::Rigorous,
-            }),
-            output_format: None,
+            max_depth: Some(10),
+            activation_threshold: Some(0.7),
+            exploration_breadth: Some(3),
+            creativity_threshold: Some(0.3),
+            validation_level: None,
+            pattern_type: Some(llmkg::cognitive::PatternType::Structural),
+            reasoning_strategy: Some(llmkg::cognitive::ReasoningStrategy::Automatic),
         };
         
         let _ = critical.execute(&query, context, parameters).await;
@@ -1360,7 +1447,8 @@ async fn test_critical_thinking_uncertainty_analysis_performance() {
     ];
     
     for (name, description) in uncertain_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1386,7 +1474,8 @@ async fn test_critical_thinking_memory_performance() {
     for i in 0..80 {
         let name = format!("fact_{}", i);
         let description = format!("Test fact number {} for validation", i);
-        let _ = graph.add_entity(&name, &description).await;
+        let entity_data = create_entity_data(1, &name, &description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1423,7 +1512,8 @@ async fn test_critical_thinking_performance_regression() {
     ];
     
     for (name, description) in standard_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let critical = CriticalThinking::new(graph);
@@ -1479,7 +1569,8 @@ async fn test_abstract_thinking_pattern_performance() {
     ];
     
     for (name, description) in test_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = llmkg::cognitive::AbstractThinking::new(graph);
@@ -1532,7 +1623,8 @@ async fn test_abstract_thinking_pattern_detection_performance() {
     
     let mut keys = Vec::new();
     for (name, description) in pattern_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         keys.push(key);
     }
     
@@ -1589,7 +1681,8 @@ async fn test_abstract_thinking_abstraction_performance() {
     
     let mut hierarchy_keys = Vec::new();
     for (name, description) in hierarchy_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         hierarchy_keys.push(key);
     }
     
@@ -1628,7 +1721,7 @@ async fn test_abstract_thinking_abstraction_performance() {
 /// Tests AbstractThinking concurrent execution performance
 #[tokio::test]
 async fn test_abstract_thinking_concurrent_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     
     // Add test data for concurrent analysis
     let concurrent_entities = vec![
@@ -1641,7 +1734,8 @@ async fn test_abstract_thinking_concurrent_performance() {
     ];
     
     for (name, description) in concurrent_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = Arc::new(llmkg::cognitive::AbstractThinking::new(graph));
@@ -1660,7 +1754,7 @@ async fn test_abstract_thinking_concurrent_performance() {
         };
         let scope = match i % 2 {
             0 => llmkg::cognitive::AnalysisScope::Global,
-            _ => llmkg::cognitive::AnalysisScope::Regional(vec![crate::core::entity_compat::create_entity_key(&format!("entity_{}", i))]),
+            _ => llmkg::cognitive::AnalysisScope::Regional(vec![create_entity_key(&format!("entity_{}", i))]),
         };
         
         let handle = tokio::spawn(async move {
@@ -1693,7 +1787,8 @@ async fn test_abstract_thinking_cognitive_pattern_performance() {
     ];
     
     for (name, description) in cognitive_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = llmkg::cognitive::AbstractThinking::new(graph);
@@ -1747,7 +1842,8 @@ async fn test_abstract_thinking_optimization_performance() {
     ];
     
     for (name, description) in optimization_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = llmkg::cognitive::AbstractThinking::new(graph);
@@ -1760,7 +1856,7 @@ async fn test_abstract_thinking_optimization_performance() {
             llmkg::cognitive::AnalysisScope::Global
         } else {
             llmkg::cognitive::AnalysisScope::Regional(vec![
-                crate::core::entity_compat::create_entity_key(&format!("opt_entity_{}", i % 5))
+                create_entity_key(&format!("opt_entity_{}", i % 5))
             ])
         };
         
@@ -1783,7 +1879,8 @@ async fn test_abstract_thinking_memory_performance() {
     for i in 0..120 {
         let name = format!("memory_test_entity_{}", i);
         let description = format!("Test entity {} for memory performance analysis", i);
-        let _ = graph.add_entity(&name, &description).await;
+        let entity_data = create_entity_data(1, &name, &description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     // Add many relationships to create complex patterns
@@ -1812,10 +1909,10 @@ async fn test_abstract_thinking_memory_performance() {
         let scope = match i % 3 {
             0 => llmkg::cognitive::AnalysisScope::Global,
             1 => llmkg::cognitive::AnalysisScope::Regional(vec![
-                crate::core::entity_compat::create_entity_key(&format!("region_entity_{}", i % 10))
+                create_entity_key(&format!("region_entity_{}", i % 10))
             ]),
             _ => llmkg::cognitive::AnalysisScope::Local(
-                crate::core::entity_compat::create_entity_key(&format!("local_entity_{}", i % 5))
+                create_entity_key(&format!("local_entity_{}", i % 5))
             ),
         };
         
@@ -1842,7 +1939,8 @@ async fn test_abstract_thinking_performance_regression() {
     
     let mut entity_keys = Vec::new();
     for (name, description) in standard_entities {
-        let key = graph.add_entity(name, description).await.unwrap();
+        let entity_data = create_entity_data(1, name, description);
+        let key = graph.add_entity(entity_data).await.unwrap();
         entity_keys.push(key);
     }
     
@@ -1909,7 +2007,8 @@ async fn test_abstract_thinking_refactoring_performance() {
     ];
     
     for (name, description) in refactoring_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = llmkg::cognitive::AbstractThinking::new(graph);
@@ -1940,7 +2039,7 @@ async fn test_phase3_system_initialization_performance() {
     let timer = PerformanceTimer::new("Phase3 system initialization");
     
     for _ in 0..5 {
-        let graph = Arc::new(create_performance_test_graph());
+        let graph = create_performance_test_graph();
         let orchestrator = Arc::new(
             llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
                 graph.clone(), 
@@ -1965,7 +2064,7 @@ async fn test_phase3_system_initialization_performance() {
 /// Tests Phase3 execute_advanced_reasoning performance
 #[tokio::test]
 async fn test_phase3_advanced_reasoning_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -1992,7 +2091,8 @@ async fn test_phase3_advanced_reasoning_performance() {
     ];
     
     for (name, description) in test_entities {
-        let _ = system.brain_graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = system.brain_graph.add_entity(entity_data).await;
     }
     
     let queries = vec![
@@ -2016,7 +2116,7 @@ async fn test_phase3_advanced_reasoning_performance() {
 /// Tests Phase3 pattern integration mode performance
 #[tokio::test]
 async fn test_phase3_pattern_integration_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2063,7 +2163,7 @@ async fn test_phase3_pattern_integration_performance() {
 /// Tests Phase3 working memory integration performance
 #[tokio::test]
 async fn test_phase3_working_memory_integration_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2100,7 +2200,7 @@ async fn test_phase3_working_memory_integration_performance() {
 /// Tests Phase3 attention management performance
 #[tokio::test]
 async fn test_phase3_attention_management_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2142,7 +2242,7 @@ async fn test_phase3_attention_management_performance() {
 /// Tests Phase3 system diagnostics performance
 #[tokio::test]
 async fn test_phase3_system_diagnostics_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2176,7 +2276,7 @@ async fn test_phase3_system_diagnostics_performance() {
 /// Tests Phase3 performance data collection performance
 #[tokio::test]
 async fn test_phase3_performance_data_collection_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2212,7 +2312,7 @@ async fn test_phase3_performance_data_collection_performance() {
 /// Tests Phase3 concurrent execution performance
 #[tokio::test]
 async fn test_phase3_concurrent_execution_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2255,7 +2355,7 @@ async fn test_phase3_concurrent_execution_performance() {
 /// Tests Phase3 memory optimization performance
 #[tokio::test]
 async fn test_phase3_memory_optimization_performance() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2297,7 +2397,7 @@ async fn test_phase3_memory_optimization_performance() {
 /// Tests Phase3 system performance regression
 #[tokio::test]
 async fn test_phase3_system_performance_regression() {
-    let graph = Arc::new(create_performance_test_graph());
+    let graph = create_performance_test_graph();
     let orchestrator = Arc::new(
         llmkg::cognitive::orchestrator::CognitiveOrchestrator::new(
             graph.clone(), 
@@ -2356,7 +2456,8 @@ async fn test_abstract_thinking_meta_analysis_performance() {
     ];
     
     for (name, description) in meta_entities {
-        let _ = graph.add_entity(name, description).await;
+        let entity_data = create_entity_data(1, name, description);
+        let _ = graph.add_entity(entity_data).await;
     }
     
     let abstract_thinking = llmkg::cognitive::AbstractThinking::new(graph);
@@ -2408,7 +2509,11 @@ fn create_performance_activation_pattern(entity_count: usize) -> (llmkg::core::b
         entity_keys.push(entity);
     }
     
-    (llmkg::core::brain_types::ActivationPattern { activations }, entity_keys)
+    (llmkg::core::brain_types::ActivationPattern { 
+        activations, 
+        timestamp: SystemTime::now(),
+        query: "performance_test_pattern".to_string(),
+    }, entity_keys)
 }
 
 /// Tests competitive inhibition performance with varying numbers of entities

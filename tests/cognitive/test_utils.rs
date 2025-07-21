@@ -10,15 +10,34 @@ pub fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
     let mut keys = Vec::new();
     
     for i in 0..count {
-        let key = sm.insert(EntityData {
-            type_id: 1,
-            properties: format!("test_entity_{}", i),
-            embedding: vec![0.0; 64],
-        });
+        let key = sm.insert(EntityData::new(
+            1,
+            format!("test_entity_{}", i),
+            vec![0.0; 64],
+        ));
         keys.push(key);
     }
     
     keys
+}
+
+/// Creates a single EntityKey with specified name for testing
+pub fn create_entity_key(name: &str) -> EntityKey {
+    let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+    sm.insert(EntityData::new(
+        1,
+        name.to_string(),
+        vec![0.0; 64],
+    ))
+}
+
+/// Helper function to create EntityData with name and description for testing
+pub fn create_entity_data(type_id: u16, name: &str, description: &str) -> EntityData {
+    EntityData::new(
+        type_id,
+        format!("{}: {}", name, description),
+        vec![0.0; 64]
+    )
 }
 
 /// Creates test memory items with specified activation levels

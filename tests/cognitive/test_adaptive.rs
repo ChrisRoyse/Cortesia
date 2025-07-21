@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::collections::HashMap as AHashMap;
 
 use llmkg::cognitive::{AdaptiveThinking, CognitivePattern, CognitivePatternType, PatternParameters, PatternResult, ResultMetadata, ComplexityEstimate, ActivationStep, ActivationOperation};
-use llmkg::cognitive::types::*;
+use llmkg::cognitive::*;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::entity_compat::Entity;
 use llmkg::core::types::{EntityKey, EntityData};

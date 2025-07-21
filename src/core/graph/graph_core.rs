@@ -452,7 +452,7 @@ mod tests {
     #[test]
     fn test_get_entity_id_empty_graph() {
         let graph = KnowledgeGraph::new_internal(96).unwrap();
-        let dummy_key = EntityKey::new(0); // Assuming EntityKey has a new method
+        let dummy_key = EntityKey::from_raw_parts(0, 0);
         assert!(graph.get_entity_id(dummy_key).is_none());
     }
 

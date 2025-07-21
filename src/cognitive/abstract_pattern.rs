@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::cognitive::pattern_detector::NeuralPatternDetector;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::types::EntityKey;
+use crate::core::types::{EntityKey, EntityData};
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
 // Neural server dependency removed - using pure graph operations
 use crate::error::Result;
@@ -694,12 +694,12 @@ mod tests {
         let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).expect("Failed to create test graph"));
         
         // Add some test entities
-        let _ = graph.add_entity("animal", "Basic animal entity").await;
-        let _ = graph.add_entity("mammal", "Warm-blooded vertebrate").await;
-        let _ = graph.add_entity("dog", "Domesticated canine").await;
-        let _ = graph.add_entity("cat", "Feline animal").await;
-        let _ = graph.add_entity("vehicle", "Transportation device").await;
-        let _ = graph.add_entity("car", "Four-wheeled vehicle").await;
+        let _ = graph.add_entity(EntityData::new(1, "animal: Basic animal entity".to_string(), vec![0.0; 64])).await;
+        let _ = graph.add_entity(EntityData::new(1, "mammal: Warm-blooded vertebrate".to_string(), vec![0.0; 64])).await;
+        let _ = graph.add_entity(EntityData::new(1, "dog: Domesticated canine".to_string(), vec![0.0; 64])).await;
+        let _ = graph.add_entity(EntityData::new(1, "cat: Feline animal".to_string(), vec![0.0; 64])).await;
+        let _ = graph.add_entity(EntityData::new(1, "vehicle: Transportation device".to_string(), vec![0.0; 64])).await;
+        let _ = graph.add_entity(EntityData::new(1, "car: Four-wheeled vehicle".to_string(), vec![0.0; 64])).await;
         
         graph
     }
@@ -1094,24 +1094,15 @@ mod tests {
         let abstract_thinking = create_test_abstract_thinking().await;
         
         // Test with zero entities
-        let zero_stats = crate::core::brain_enhanced_graph::BrainStatistics {
-            entity_count: 0,
-            relationship_count: 0,
-            max_degree: 0,
-            average_degree: 0.0,
-            clustering_coefficient: 0.0,
-        };
+        let zero_stats = crate::core::brain_enhanced_graph::BrainStatistics::new();
         let entropy = abstract_thinking.calculate_distribution_entropy(&zero_stats);
         assert_eq!(entropy, 0.0, "Entropy should be 0 for empty graph");
         
         // Test with non-zero entities
-        let stats = crate::core::brain_enhanced_graph::BrainStatistics {
-            entity_count: 100,
-            relationship_count: 200,
-            max_degree: 10,
-            average_degree: 4.0,
-            clustering_coefficient: 0.3,
-        };
+        let mut stats = crate::core::brain_enhanced_graph::BrainStatistics::new();
+        stats.entity_count = 100;
+        stats.relationship_count = 200;
+        stats.clustering_coefficient = 0.3;
         let entropy = abstract_thinking.calculate_distribution_entropy(&stats);
         assert!(entropy > 0.0, "Entropy should be positive for non-empty graph");
         assert!(entropy <= 2.0, "Entropy should be reasonable (less than ln(3) for 3 categories)");
@@ -1124,9 +1115,18 @@ mod tests {
         let stats = crate::core::brain_enhanced_graph::BrainStatistics {
             entity_count: 100,
             relationship_count: 200,
+            avg_activation: 0.5,
+            max_activation: 1.0,
+            min_activation: 0.0,
+            graph_density: 0.02,
+            clustering_coefficient: 0.3,
+            average_path_length: 3.5,
+            betweenness_centrality: std::collections::HashMap::new(),
+            activation_distribution: std::collections::HashMap::new(),
+            concept_coherence: 0.8,
+            learning_efficiency: 0.9,
             max_degree: 10,
             average_degree: 4.0,
-            clustering_coefficient: 0.3,
         };
         
         let complexity = abstract_thinking.calculate_structural_complexity(&stats);
@@ -1141,9 +1141,18 @@ mod tests {
         let stats = crate::core::brain_enhanced_graph::BrainStatistics {
             entity_count: 100,
             relationship_count: 200,
+            avg_activation: 0.5,
+            max_activation: 1.0,
+            min_activation: 0.0,
+            graph_density: 0.02,
+            clustering_coefficient: 0.3,
+            average_path_length: 3.5,
+            betweenness_centrality: std::collections::HashMap::new(),
+            activation_distribution: std::collections::HashMap::new(),
+            concept_coherence: 0.8,
+            learning_efficiency: 0.9,
             max_degree: 10,
             average_degree: 4.0,
-            clustering_coefficient: 0.3,
         };
         
         let result = abstract_thinking.analyze_entity_distribution(&stats).await;

@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
-use crate::core::types::EntityKey;
+use crate::core::types::{EntityKey, EntityData};
 // Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
 
@@ -642,10 +642,10 @@ mod tests {
         let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
         
         // Add test entities for hierarchical testing
-        let mammal_key = graph.add_entity("mammal", "A warm-blooded vertebrate").await.unwrap();
-        let dog_key = graph.add_entity("dog", "A domesticated mammal").await.unwrap();
-        let cat_key = graph.add_entity("cat", "An independent mammal").await.unwrap();
-        let elephant_key = graph.add_entity("elephant", "A large mammal").await.unwrap();
+        let mammal_key = graph.add_entity(EntityData::new(1, "mammal: A warm-blooded vertebrate".to_string(), vec![0.0; 128])).await.unwrap();
+        let dog_key = graph.add_entity(EntityData::new(1, "dog: A domesticated mammal".to_string(), vec![0.0; 128])).await.unwrap();
+        let cat_key = graph.add_entity(EntityData::new(1, "cat: An independent mammal".to_string(), vec![0.0; 128])).await.unwrap();
+        let elephant_key = graph.add_entity(EntityData::new(1, "elephant: A large mammal".to_string(), vec![0.0; 128])).await.unwrap();
         
         // Add hierarchical relationships (is_a)
         graph.add_weighted_edge(dog_key, mammal_key, 0.9).await.unwrap();
@@ -970,7 +970,7 @@ mod tests {
         let systems = SystemsThinking::new(graph.clone());
         
         // Add an entity with known properties
-        let dog_key = graph.add_entity("dog", "A domesticated mammal").await.unwrap();
+        let dog_key = graph.add_entity(EntityData::new(1, "dog: A domesticated mammal".to_string(), vec![0.0; 128])).await.unwrap();
         
         let result = systems.generate_basic_attributes(dog_key).await;
         assert!(result.is_ok());

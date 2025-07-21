@@ -320,7 +320,9 @@ mod tests {
         activations.insert(entity2, 0.6);
         activations.insert(entity3, 0.4);
         
-        ActivationPattern { activations }
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations = activations;
+        pattern
     }
 
     #[tokio::test]

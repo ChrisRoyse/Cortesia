@@ -213,6 +213,12 @@ impl LateralThinking {
             intermediate_concepts: Vec::new(),
             creativity_score: 0.0,
             plausibility_score: 1.0,
+            bridge_entity: start,
+            connection_strength: 0.5,
+            start_relevance: 1.0,
+            end_relevance: 0.0,
+            semantic_distance: 0,
+            is_direct: true,
         });
         visited.insert(start);
         
@@ -248,6 +254,12 @@ impl LateralThinking {
                         intermediate_concepts: new_concepts,
                         creativity_score: current_bridge.creativity_score + creativity_score,
                         plausibility_score: current_bridge.plausibility_score * 0.9, // Decay plausibility
+                        bridge_entity: connected_entity,
+                        connection_strength: current_bridge.connection_strength * 0.9,
+                        start_relevance: current_bridge.start_relevance,
+                        end_relevance: 0.0,
+                        semantic_distance: current_bridge.semantic_distance + 1,
+                        is_direct: false,
                     };
                     
                     queue.push_back(new_bridge);
@@ -291,11 +303,18 @@ impl LateralThinking {
         
         for step in 0..max_length {
             if current_entity == end {
+                let path_len = path.len();
                 return Ok(Some(BridgeCandidate {
                     path,
                     intermediate_concepts: concepts,
                     creativity_score: total_creativity,
                     plausibility_score: 1.0 / (step + 1) as f32,
+                    bridge_entity: current_entity,
+                    connection_strength: total_creativity / path_len as f32,
+                    start_relevance: 1.0,
+                    end_relevance: 1.0,
+                    semantic_distance: step as u32,
+                    is_direct: step == 0,
                 }));
             }
             
@@ -374,10 +393,16 @@ impl LateralThinking {
             };
             
             enhanced_bridges.push(BridgeCandidate {
-                path: bridge.path,
-                intermediate_concepts: bridge.intermediate_concepts,
+                path: bridge.path.clone(),
+                intermediate_concepts: bridge.intermediate_concepts.clone(),
                 creativity_score: (bridge.creativity_score + temporal_score) / 2.0,
                 plausibility_score: (bridge.plausibility_score + connection_score) / 2.0,
+                bridge_entity: bridge.bridge_entity,
+                connection_strength: connection_score,
+                start_relevance: bridge.start_relevance,
+                end_relevance: bridge.end_relevance,
+                semantic_distance: bridge.semantic_distance,
+                is_direct: bridge.is_direct,
             });
         }
         
@@ -394,11 +419,17 @@ impl LateralThinking {
             let explanation = self.generate_bridge_explanation(&bridge).await?;
             
             scored_bridges.push(BridgePath {
-                path: bridge.path,
-                intermediate_concepts: bridge.intermediate_concepts,
+                path: bridge.path.clone(),
+                intermediate_concepts: bridge.intermediate_concepts.clone(),
                 novelty_score,
                 plausibility_score,
                 explanation,
+                bridge_id: format!("bridge_{}", scored_bridges.len()),
+                start_concept: "start_concept".to_string(),
+                end_concept: "end_concept".to_string(), 
+                bridge_concepts: bridge.intermediate_concepts.clone(),
+                creativity_score: bridge.creativity_score,
+                connection_strength: bridge.connection_strength,
             });
         }
         
@@ -581,6 +612,9 @@ impl LateralThinking {
                 overall_novelty: 0.0,
                 concept_uniqueness: Vec::new(),
                 path_creativity: 0.0,
+                average_novelty: 0.0,
+                highest_novelty_path: None,
+                top_creative_insights: Vec::new(),
             });
         }
         
@@ -588,10 +622,18 @@ impl LateralThinking {
         let concept_uniqueness = bridges.iter().map(|b| b.novelty_score).collect();
         let path_creativity = bridges.iter().map(|b| b.plausibility_score).sum::<f32>() / bridges.len() as f32;
         
+        let average_novelty = overall_novelty;
+        let highest_novelty_path = bridges.iter().max_by(|a, b| a.novelty_score.partial_cmp(&b.novelty_score).unwrap())
+            .map(|b| b.bridge_id.clone());
+        let top_creative_insights = bridges.iter().take(3).map(|b| b.explanation.clone()).collect();
+        
         Ok(NoveltyAnalysis {
             overall_novelty,
             concept_uniqueness,
             path_creativity,
+            average_novelty,
+            highest_novelty_path,
+            top_creative_insights,
         })
     }
     
@@ -727,6 +769,12 @@ struct BridgeCandidate {
     intermediate_concepts: Vec<String>,
     creativity_score: f32,
     plausibility_score: f32,
+    bridge_entity: EntityKey,
+    connection_strength: f32,
+    start_relevance: f32,
+    end_relevance: f32,
+    semantic_distance: u32,
+    is_direct: bool,
 }
 
 #[cfg(test)]
@@ -806,6 +854,76 @@ mod tests {
         assert!(!thinking.is_stop_word("art"));
         assert!(!thinking.is_stop_word("learning"));
         assert!(!thinking.is_stop_word("intelligence"));
+    }
+
+    #[tokio::test]
+    async fn test_generate_bridge_explanation() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
+        
+        // Test explanation generation for different bridge types
+        let simple_bridge = BridgeCandidate {
+            path: vec![EntityKey::from_raw_parts(1, 0), EntityKey::from_raw_parts(2, 0)],
+            intermediate_concepts: vec!["concept1".to_string(), "concept2".to_string()],
+            creativity_score: 0.8,
+            plausibility_score: 0.9,
+            bridge_entity: EntityKey::from_raw_parts(1, 0),
+            connection_strength: 0.7,
+            start_relevance: 0.8,
+            end_relevance: 0.6,
+            semantic_distance: 2,
+            is_direct: false,
+        };
+        
+        let explanation = thinking.generate_bridge_explanation(&simple_bridge).await;
+        assert!(explanation.is_ok());
+        
+        let generated_explanation = explanation.unwrap();
+        assert!(!generated_explanation.is_empty(), "Should generate explanation");
+    }
+
+    #[tokio::test]
+    async fn test_analyze_novelty() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
+        
+        // Create test bridge paths with different characteristics
+        let conventional_bridge = BridgePath {
+            path: vec![EntityKey::from_raw_parts(1, 0), EntityKey::from_raw_parts(2, 0)],
+            intermediate_concepts: vec!["visual".to_string()],
+            bridge_id: "conventional".to_string(),
+            start_concept: "art".to_string(),
+            end_concept: "design".to_string(),
+            bridge_concepts: vec!["visual".to_string()], // obvious connection
+            novelty_score: 0.2,
+            plausibility_score: 0.9,
+            creativity_score: 0.0, // Will be calculated
+            explanation: "Art connects to design through visual elements".to_string(),
+            connection_strength: 0.8,
+        };
+        
+        let novel_bridge = BridgePath {
+            path: vec![EntityKey::from_raw_parts(3, 0), EntityKey::from_raw_parts(4, 0), EntityKey::from_raw_parts(5, 0)],
+            intermediate_concepts: vec!["harmony".to_string(), "ratios".to_string()],
+            bridge_id: "novel".to_string(),
+            start_concept: "music".to_string(),
+            end_concept: "mathematics".to_string(),
+            bridge_concepts: vec!["harmony".to_string(), "ratios".to_string()], // creative connection
+            novelty_score: 0.8,
+            plausibility_score: 0.6,
+            creativity_score: 0.0, // Will be calculated
+            explanation: "Music connects to mathematics through harmonic ratios".to_string(),
+            connection_strength: 0.5,
+        };
+        
+        let bridges = vec![conventional_bridge, novel_bridge];
+        let analyzed = thinking.analyze_novelty(&bridges).await;
+        assert!(analyzed.is_ok());
+        
+        let novelty_analysis = analyzed.unwrap();
+        assert!(novelty_analysis.average_novelty > 0.0);
+        assert!(novelty_analysis.highest_novelty_path.is_some());
+        assert!(!novelty_analysis.top_creative_insights.is_empty());
     }
 }
 

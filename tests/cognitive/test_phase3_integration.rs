@@ -19,6 +19,7 @@ use llmkg::core::{
     activation_engine::ActivationPropagationEngine,
     sdr_storage::SDRStorage,
     sdr_types::SDRConfig,
+    types::EntityData,
 };
 use llmkg::error::Result;
 
@@ -68,7 +69,7 @@ async fn populate_test_graph(system: &Phase3IntegratedCognitiveSystem) -> Result
     ];
 
     for (name, description) in test_entities {
-        let _ = system.brain_graph.add_entity(name, description).await?;
+        let _ = system.brain_graph.add_entity(EntityData::new(1, description.to_string(), vec![0.0; 128])).await?;
     }
 
     // Add some relationships

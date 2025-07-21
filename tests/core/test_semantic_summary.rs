@@ -63,10 +63,10 @@ async fn test_semantic_summary_llm_integration() {
     for (i, entity) in entities.iter().enumerate() {
         let entity_key = EntityKey::default(); // In real usage, this would come from the knowledge engine
         let summary = summarizer.create_summary(entity, entity_key).unwrap();
-        summaries.push(summary);
         
-        // Convert to LLM-friendly text
+        // Convert to LLM-friendly text before moving summary
         let llm_text = summarizer.to_llm_text(&summary);
+        summaries.push(summary);
         println!("Entity {} LLM Text:\n{}\n", i, llm_text);
     }
 
@@ -238,7 +238,7 @@ async fn test_llm_comprehension_estimation_accuracy() {
     }
 
     // Test summary with maximum features for best comprehension
-    let mut rich_summary = SemanticSummary {
+    let rich_summary = SemanticSummary {
         entity_type: EntityType {
             type_id: 1,
             confidence: 0.99,

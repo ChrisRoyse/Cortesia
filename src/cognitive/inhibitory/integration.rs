@@ -89,6 +89,16 @@ async fn apply_pattern_specific_inhibition(
             // Adaptive thinking: dynamic inhibition based on context
             apply_adaptive_inhibition(pattern, &inhibition_profile, &mut affected_entities);
         }
+        
+        CognitivePatternType::ChainOfThought => {
+            // Chain of thought: sequential inhibition preserving reasoning chain
+            apply_convergent_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::TreeOfThoughts => {
+            // Tree of thoughts: hierarchical inhibition allowing branching
+            apply_systems_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
     }
     
     Ok(PatternSpecificInhibition {
@@ -147,6 +157,20 @@ fn get_inhibition_profile(pattern_type: CognitivePatternType) -> InhibitionProfi
             convergent_factor: 0.5,
             divergent_factor: 0.5,
             lateral_spread: 0.5,
+            critical_threshold: 0.5,
+        },
+        
+        CognitivePatternType::ChainOfThought => InhibitionProfile {
+            convergent_factor: 0.8,
+            divergent_factor: 0.3,
+            lateral_spread: 0.2,
+            critical_threshold: 0.6,
+        },
+        
+        CognitivePatternType::TreeOfThoughts => InhibitionProfile {
+            convergent_factor: 0.4,
+            divergent_factor: 0.7,
+            lateral_spread: 0.6,
             critical_threshold: 0.5,
         },
     }

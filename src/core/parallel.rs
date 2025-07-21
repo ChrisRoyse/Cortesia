@@ -224,6 +224,7 @@ mod tests {
 
     fn create_test_entity_data(dim: usize, seed: f32) -> EntityData {
         EntityData {
+            type_id: 1,
             embedding: create_test_embedding(dim, seed),
             properties: format!("test_entity_{}", seed),
         }

@@ -2,7 +2,7 @@
 mod neural_bridge_finder_tests {
     use tokio;
     use llmkg::cognitive::neural_bridge_finder::NeuralBridgeFinder;
-    use llmkg::cognitive::types::BridgePath;
+    use llmkg::cognitive::BridgePath;
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
     #[tokio::test]

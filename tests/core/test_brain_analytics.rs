@@ -1,9 +1,9 @@
 //! Integration tests for brain_analytics.rs
 //! Tests comprehensive graph analysis workflows and statistical accuracy
 
-use llm_knowledge_graph::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
-use llm_knowledge_graph::core::brain_enhanced_graph::brain_graph_types::*;
-use llm_knowledge_graph::core::types::EntityData;
+use llmkg::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_graph_types::*;
+use llmkg::core::types::EntityData;
 use std::time::Instant;
 use std::collections::HashMap;
 use tokio;

@@ -263,7 +263,9 @@ mod tests {
             entity_keys.push(entity);
         }
         
-        (ActivationPattern { activations }, entity_keys)
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations = activations;
+        (pattern, entity_keys)
     }
 
     fn create_test_competition_results(entities: &[EntityKey]) -> Vec<GroupCompetitionResult> {
@@ -318,9 +320,11 @@ mod tests {
             &mut pattern,
             &competition_results,
             &hierarchical_result,
-        ).await.unwrap();
+        ).await;
         
         // Should handle case with no exceptions gracefully
+        assert!(result.is_ok());
+        let result = result.unwrap();
         assert!(!result.pattern_modified || result.pattern_modified); // May or may not be modified
         assert!(result.unresolved_conflicts.len() >= 0);
     }
@@ -407,8 +411,10 @@ mod tests {
         let system = create_test_system();
         
         let exception = InhibitionException::MutualExclusion(entities[0], entities[1]);
-        let resolution = resolve_exception(&exception, &pattern, &system).await.unwrap();
+        let resolution = resolve_exception(&exception, &pattern, &system).await;
         
+        assert!(resolution.is_ok());
+        let resolution = resolution.unwrap();
         assert!(resolution.is_some());
         let res = resolution.unwrap();
         assert_eq!(res.exception_type, "MutualExclusion");
@@ -429,8 +435,10 @@ mod tests {
         let system = create_test_system();
         
         let exception = InhibitionException::TemporalConflict(entities[0], entities[1]);
-        let resolution = resolve_exception(&exception, &pattern, &system).await.unwrap();
+        let resolution = resolve_exception(&exception, &pattern, &system).await;
         
+        assert!(resolution.is_ok());
+        let resolution = resolution.unwrap();
         assert!(resolution.is_some());
         let res = resolution.unwrap();
         assert_eq!(res.exception_type, "TemporalConflict");
@@ -451,8 +459,10 @@ mod tests {
         let system = create_test_system();
         
         let exception = InhibitionException::HierarchicalInconsistency(entities[0], entities[1]);
-        let resolution = resolve_exception(&exception, &pattern, &system).await.unwrap();
+        let resolution = resolve_exception(&exception, &pattern, &system).await;
         
+        assert!(resolution.is_ok());
+        let resolution = resolution.unwrap();
         assert!(resolution.is_some());
         let res = resolution.unwrap();
         assert_eq!(res.exception_type, "HierarchicalInconsistency");
@@ -467,8 +477,9 @@ mod tests {
         let system = create_test_system();
         
         let exception = InhibitionException::ResourceContention(entities.clone());
-        let resolution = resolve_exception(&exception, &pattern, &system).await.unwrap();
+        let resolution = resolve_exception(&exception, &pattern, &system).await;
         
+        let resolution = resolution.expect("Resolution should succeed");
         assert!(resolution.is_some());
         let res = resolution.unwrap();
         assert_eq!(res.exception_type, "ResourceContention");
@@ -557,7 +568,7 @@ mod tests {
     #[tokio::test]
     async fn test_identify_unresolved_conflicts_all_resolved() {
         let exceptions = vec![
-            InhibitionException::MutualExclusion(EntityKey::from_raw_parts(0, 0).unwrap(), EntityKey::from_raw_parts(1, 0).unwrap()),
+            InhibitionException::MutualExclusion(EntityKey::from_raw_parts(0, 0), EntityKey::from_raw_parts(1, 0)),
             InhibitionException::ResourceContention(vec![]),
         ];
         
@@ -565,7 +576,7 @@ mod tests {
             ExceptionResolution {
                 exception_type: "MutualExclusion".to_string(),
                 affected_entities: vec![],
-                resolution_strategy: ResolutionStrategy::Suppression(EntityKey::from_raw_parts(0, 0).unwrap()),
+                resolution_strategy: ResolutionStrategy::Suppression(EntityKey::from_raw_parts(0, 0)),
                 effectiveness: 0.9,
             },
             ExceptionResolution {
@@ -585,16 +596,16 @@ mod tests {
     #[tokio::test]
     async fn test_identify_unresolved_conflicts_some_unresolved() {
         let exceptions = vec![
-            InhibitionException::MutualExclusion(EntityKey::from_raw_parts(0, 0).unwrap(), EntityKey::from_raw_parts(1, 0).unwrap()),
+            InhibitionException::MutualExclusion(EntityKey::from_raw_parts(0, 0), EntityKey::from_raw_parts(1, 0)),
             InhibitionException::ResourceContention(vec![]),
-            InhibitionException::TemporalConflict(EntityKey::from_raw_parts(2, 0).unwrap(), EntityKey::from_raw_parts(3, 0).unwrap()),
+            InhibitionException::TemporalConflict(EntityKey::from_raw_parts(2, 0), EntityKey::from_raw_parts(3, 0)),
         ];
         
         let resolutions = vec![
             ExceptionResolution {
                 exception_type: "MutualExclusion".to_string(),
                 affected_entities: vec![],
-                resolution_strategy: ResolutionStrategy::Suppression(EntityKey::from_raw_parts(0, 0).unwrap()),
+                resolution_strategy: ResolutionStrategy::Suppression(EntityKey::from_raw_parts(0, 0)),
                 effectiveness: 0.9,
             },
         ];
@@ -620,7 +631,9 @@ mod tests {
             &mut pattern,
             &competition_results,
             &hierarchical_result,
-        ).await.unwrap();
+        ).await;
+        
+        let result = result.expect("Exception handling should succeed");
         
         // Should detect and resolve exceptions
         assert!(!result.exceptions_detected.is_empty());

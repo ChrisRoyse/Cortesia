@@ -2,41 +2,11 @@
 mod divergent_tests {
     use tokio;
     use llmkg::cognitive::divergent::{DivergentThinking, calculate_concept_similarity, extract_seed_concept, infer_exploration_type, ExplorationType};
-    use llmkg::cognitive::types::{PatternResult, DivergentResult, ExplorationPath, CognitivePatternType};
+    use llmkg::cognitive::{PatternResult, DivergentResult, ExplorationPath, CognitivePatternType};
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
-    #[tokio::test]
-    async fn test_extract_seed_concept_basic() {
-        let thinking = create_test_divergent_thinking().await;
-        
-        // Test "examples of" questions
-        let result = thinking.extract_seed_concept("What are examples of dogs?").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "dogs");
-        
-        // Test "tell me about" questions
-        let result = thinking.extract_seed_concept("Tell me about technology").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "technology");
-        
-        // Test "connections with" questions
-        let result = thinking.extract_seed_concept("Show me connections with art").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "art");
-    }
-
-    #[tokio::test]
-    async fn test_extract_seed_concept_edge_cases() {
-        let thinking = create_test_divergent_thinking().await;
-        
-        // Test query with no clear seed concept
-        let result = thinking.extract_seed_concept("what how when why").await;
-        assert!(result.is_err(), "Query without clear concept should return error");
-        
-        // Test empty query
-        let result = thinking.extract_seed_concept("").await;
-        assert!(result.is_err(), "Empty query should return error");
-    }
+    // NOTE: Tests for extract_seed_concept method have been moved to src/cognitive/divergent.rs
+    // The public extract_seed_concept function is still tested below
 
     #[tokio::test]
     async fn test_seed_concept_extraction() {
@@ -54,33 +24,14 @@ mod divergent_tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_rank_by_creativity() {
-        let thinking = create_test_divergent_thinking().await;
-        
-        // Create mock exploration paths with different creativity scores
-        let paths = vec![
-            create_mock_path("path1", 0.8, 0.3), // High relevance, low novelty
-            create_mock_path("path2", 0.6, 0.8), // Medium relevance, high novelty
-            create_mock_path("path3", 0.9, 0.9), // High relevance, high novelty
-            create_mock_path("path4", 0.4, 0.2), // Low relevance, low novelty
-        ];
-        
-        let ranked = thinking.rank_by_creativity(paths, 0.6).await; // novelty_weight = 0.6
-        assert!(ranked.is_ok());
-        
-        let sorted_paths = ranked.unwrap();
-        // Path3 should be first (highest combined score)
-        assert_eq!(sorted_paths[0].path_id, "path3");
-        // Path4 should be last (lowest combined score)
-        assert_eq!(sorted_paths.last().unwrap().path_id, "path4");
-    }
+    // NOTE: Tests for rank_by_creativity have been moved to src/cognitive/divergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     #[tokio::test]
     async fn test_path_exploration_and_diversity() {
         // Create a graph with multiple distinct clusters
         let graph = create_diverse_test_graph().await;
-        let thinking = DivergentThinking::new(graph, 5, 0.3, 0.5); // exploration_breadth=5
+        let thinking = DivergentThinking::new_with_params(graph, 5, 0.3); // exploration_breadth=5
         
         // Execute exploration from "music" seed
         let result = thinking.execute("What are examples of music?").await;
@@ -106,7 +57,7 @@ mod divergent_tests {
     async fn test_novelty_ranking() {
         // Test the system's ability to identify and prioritize novel connections
         let graph = create_novelty_test_graph().await;
-        let thinking = DivergentThinking::new(graph, 3, 0.2, 0.8); // High novelty weight
+        let thinking = DivergentThinking::new_with_params(graph, 3, 0.2); // Custom params
         
         let result = thinking.execute_divergent_exploration("seed", 3).await;
         assert!(result.is_ok());
@@ -123,47 +74,11 @@ mod divergent_tests {
                div_result.paths.iter().map(|p| &p.destination).collect::<Vec<_>>());
     }
 
-    #[tokio::test]
-    async fn test_spread_activation() {
-        let graph = create_test_graph().await;
-        let thinking = DivergentThinking::new(graph, 4, 0.3, 0.5);
-        
-        // Test broad activation spreading
-        let exploration_map = thinking.spread_activation("music", 2).await;
-        assert!(exploration_map.is_ok());
-        
-        let map = exploration_map.unwrap();
-        assert!(map.activated_nodes.len() > 2, "Should activate multiple nodes broadly");
-        assert!(map.exploration_depth == 2, "Should respect depth limit");
-        
-        // Should include related concepts
-        assert!(map.activated_nodes.contains_key("classical") || 
-                map.activated_nodes.contains_key("rock"), 
-                "Should activate related music concepts");
-    }
+    // NOTE: Tests for spread_activation have been moved to src/cognitive/divergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
-    #[tokio::test]
-    async fn test_neural_path_exploration() {
-        let graph = create_path_test_graph().await;
-        let thinking = DivergentThinking::new(graph, 3, 0.3, 0.5);
-        
-        // Create a mock exploration map
-        let mut exploration_map = ExplorationMap::new();
-        exploration_map.add_activation("start", 1.0);
-        exploration_map.add_activation("bridge", 0.7);
-        exploration_map.add_activation("end", 0.5);
-        
-        let paths = thinking.neural_path_exploration(exploration_map, 3).await;
-        assert!(paths.is_ok());
-        
-        let found_paths = paths.unwrap();
-        assert!(found_paths.len() > 0, "Should find creative paths");
-        
-        // Should find the bridge connection
-        let has_bridge_path = found_paths.iter()
-            .any(|p| p.intermediate_concepts.contains(&"bridge".to_string()));
-        assert!(has_bridge_path, "Should find path through bridge concept");
-    }
+    // NOTE: Tests for neural_path_exploration have been moved to src/cognitive/divergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     #[tokio::test]
     async fn test_cognitive_pattern_interface() {

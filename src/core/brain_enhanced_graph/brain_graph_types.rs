@@ -181,6 +181,8 @@ pub struct BrainStatistics {
     pub activation_distribution: HashMap<String, usize>,
     pub concept_coherence: f32,
     pub learning_efficiency: f32,
+    pub max_degree: usize,
+    pub average_degree: f32,
 }
 
 impl BrainStatistics {
@@ -199,6 +201,8 @@ impl BrainStatistics {
             activation_distribution: HashMap::new(),
             concept_coherence: 0.0,
             learning_efficiency: 0.0,
+            max_degree: 0,
+            average_degree: 0.0,
         }
     }
 
@@ -493,7 +497,7 @@ mod tests {
 
     /// Helper function to create a test EntityKey
     fn create_test_entity(id: u64) -> EntityKey {
-        EntityKey(id)
+        EntityKey::new(id.to_string())
     }
 
     #[cfg(test)]

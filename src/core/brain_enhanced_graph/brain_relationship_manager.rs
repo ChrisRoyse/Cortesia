@@ -54,6 +54,17 @@ impl BrainEnhancedKnowledgeGraph {
         children_with_weights
     }
 
+    /// Add weighted edge (test compatibility method)
+    pub async fn add_weighted_edge(&self, from: EntityKey, to: EntityKey, weight: f32) -> Result<()> {
+        let relationship = Relationship {
+            from,
+            to,
+            rel_type: 0, // Default relationship type
+            weight,
+        };
+        self.insert_brain_relationship(relationship).await
+    }
+
     /// Check if relationship exists
     pub async fn has_relationship(&self, source: EntityKey, target: EntityKey) -> bool {
         self.core_graph.has_relationship(source, target)
@@ -1049,14 +1060,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_concurrent_relationship_operations() {
-        let graph = create_test_graph().await.unwrap();
+        let graph = std::sync::Arc::new(create_test_graph().await.unwrap());
         let entities = create_test_entities(&graph, 2).await.unwrap();
         
         // Test concurrent synaptic weight operations
         let mut handles = vec![];
         
         for i in 0..10 {
-            let graph_clone = &graph;
+            let graph_clone = graph.clone();
             let entities_clone = entities.clone();
             
             let handle = tokio::spawn(async move {

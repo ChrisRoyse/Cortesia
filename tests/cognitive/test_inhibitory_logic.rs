@@ -30,7 +30,7 @@ async fn create_test_inhibitory_system() -> CompetitiveInhibitionSystem {
 
 /// Helper function to create test activation pattern with specific entities
 fn create_test_activation_pattern(strengths: Vec<f32>) -> (ActivationPattern, Vec<EntityKey>) {
-    let mut entity_map = SlotMap::new();
+    let mut entity_map: SlotMap<EntityKey, ()> = SlotMap::with_key();
     let mut activations = HashMap::new();
     let mut entity_keys = Vec::new();
     
@@ -40,7 +40,11 @@ fn create_test_activation_pattern(strengths: Vec<f32>) -> (ActivationPattern, Ve
         entity_keys.push(entity);
     }
     
-    (ActivationPattern { activations }, entity_keys)
+    (ActivationPattern { 
+        activations,
+        timestamp: std::time::SystemTime::now(),
+        query: "test".to_string(),
+    }, entity_keys)
 }
 
 /// Helper function to create competition groups for testing

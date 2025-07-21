@@ -5,11 +5,10 @@ use std::sync::Arc;
 use tokio;
 
 use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
-use llmkg::cognitive::types::{
+use llmkg::cognitive::{
     CognitivePatternType, ReasoningStrategy, ReasoningResult
 };
-use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use llmkg::test_support::fixtures::*;
+use llmkg::test_support::fixtures::create_test_graph;
 
 /// Creates a test orchestrator with minimal test data
 async fn create_test_orchestrator() -> CognitiveOrchestrator {
@@ -95,7 +94,12 @@ async fn test_specific_pattern_execution() {
         
         assert!(!result.final_answer.is_empty(), 
                "Pattern {:?} should provide answer", pattern);
-        assert_eq!(result.strategy_used, ReasoningStrategy::Specific(pattern));
+        match result.strategy_used {
+            ReasoningStrategy::Specific(used_pattern) => {
+                assert_eq!(used_pattern, pattern, "Pattern {:?} should be used", pattern);
+            }
+            _ => panic!("Expected Specific strategy with pattern {:?}", pattern),
+        }
         assert!(result.execution_metadata.patterns_executed.contains(&pattern));
         assert!(result.quality_metrics.overall_confidence >= 0.0);
         assert!(result.quality_metrics.overall_confidence <= 1.0);
@@ -120,7 +124,12 @@ async fn test_ensemble_reasoning() {
     ).await.unwrap();
     
     assert!(!result.final_answer.is_empty());
-    assert_eq!(result.strategy_used, ReasoningStrategy::Ensemble(ensemble_patterns));
+    match result.strategy_used {
+        ReasoningStrategy::Ensemble(used_patterns) => {
+            assert_eq!(used_patterns, ensemble_patterns, "Should use ensemble patterns");
+        }
+        _ => panic!("Expected Ensemble strategy"),
+    }
     
     // Should have executed multiple patterns
     assert!(result.execution_metadata.patterns_executed.len() >= 2,
@@ -322,7 +331,12 @@ async fn test_edge_cases_and_boundary_conditions() {
         ReasoningStrategy::Ensemble(single_ensemble.clone()),
     ).await.unwrap();
     
-    assert_eq!(result.strategy_used, ReasoningStrategy::Ensemble(single_ensemble));
+    match result.strategy_used {
+        ReasoningStrategy::Ensemble(used_patterns) => {
+            assert_eq!(used_patterns, single_ensemble, "Should use single ensemble");
+        }
+        _ => panic!("Expected Ensemble strategy with single pattern"),
+    }
     assert!(!result.final_answer.is_empty());
 }
 

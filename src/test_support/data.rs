@@ -1,7 +1,7 @@
 //! Test data fixtures for consistent testing across all test types
 
 use crate::core::types::EntityKey;
-use crate::cognitive::{QueryIntent, types::CognitivePatternType};
+use crate::cognitive::{neural_query::QueryIntent, types::CognitivePatternType};
 use std::collections::HashMap;
 
 /// Standard test queries for different cognitive patterns
@@ -263,6 +263,8 @@ impl TestDataProvider {
             CognitivePatternType::Critical => self.queries.analytical.iter().copied().collect(),
             CognitivePatternType::Abstract => self.queries.creative.iter().copied().collect(),
             CognitivePatternType::Adaptive => self.queries.relational.iter().copied().collect(),
+            CognitivePatternType::ChainOfThought => self.queries.analytical.iter().copied().collect(),
+            CognitivePatternType::TreeOfThoughts => self.queries.creative.iter().copied().collect(),
         }
     }
 

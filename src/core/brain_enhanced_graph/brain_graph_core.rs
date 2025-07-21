@@ -437,7 +437,7 @@ mod tests {
 
     /// Helper function to create test entity keys
     fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
-        (0..count).map(|i| EntityKey::new(i as u64)).collect()
+        (0..count).map(|i| EntityKey::new((i as u64).to_string())).collect()
     }
 
     /// Helper function to setup brain graph with test entities
@@ -570,7 +570,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_entity_activation_nonexistent_entity() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let nonexistent_entity = EntityKey::new(999);
+        let nonexistent_entity = EntityKey::new(999.to_string());
         
         let activation = brain_graph.get_entity_activation(nonexistent_entity).await;
         assert_eq!(activation, 0.0);
@@ -579,7 +579,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_entity_activation_existing_entity() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let entity = EntityKey::new(1);
+        let entity = EntityKey::new(1.to_string());
         let expected_activation = 0.75;
         
         // Set activation first
@@ -593,7 +593,7 @@ mod tests {
     #[tokio::test]
     async fn test_set_entity_activation_valid_values() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let entity = EntityKey::new(1);
+        let entity = EntityKey::new(1.to_string());
         
         // Test setting various valid activation values
         let test_values = vec![0.0, 0.25, 0.5, 0.75, 1.0];
@@ -608,7 +608,7 @@ mod tests {
     #[tokio::test]
     async fn test_set_entity_activation_clamping() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let entity = EntityKey::new(1);
+        let entity = EntityKey::new(1.to_string());
         
         // Test values outside [0.0, 1.0] range are clamped
         brain_graph.set_entity_activation(entity, -0.5).await;
@@ -623,7 +623,7 @@ mod tests {
     #[tokio::test]
     async fn test_set_entity_activation_concurrent_access() {
         let brain_graph = Arc::new(create_test_brain_graph().await.unwrap());
-        let entity = EntityKey::new(1);
+        let entity = EntityKey::new(1.to_string());
         
         // Test concurrent access to activation setting
         let mut handles = vec![];
@@ -654,8 +654,8 @@ mod tests {
     #[tokio::test]
     async fn test_synaptic_weight_management() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let source = EntityKey::new(1);
-        let target = EntityKey::new(2);
+        let source = EntityKey::new(1.to_string());
+        let target = EntityKey::new(2.to_string());
         
         // Test initial weight
         let initial_weight = brain_graph.get_synaptic_weight(source, target).await;
@@ -684,8 +684,8 @@ mod tests {
         
         // Test storing and retrieving concept
         let mut concept = ConceptStructure::new();
-        concept.add_input(EntityKey::new(1));
-        concept.add_output(EntityKey::new(2));
+        concept.add_input(EntityKey::new(1.to_string()));
+        concept.add_output(EntityKey::new(2.to_string()));
         concept.concept_activation = 0.7;
         concept.coherence_score = 0.8;
         
@@ -779,9 +779,9 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Setup some state
-        let entity = EntityKey::new(1);
+        let entity = EntityKey::new(1.to_string());
         brain_graph.set_entity_activation(entity, 0.8).await;
-        brain_graph.set_synaptic_weight(entity, EntityKey::new(2), 0.7).await;
+        brain_graph.set_synaptic_weight(entity, EntityKey::new(2.to_string()), 0.7).await;
         brain_graph.store_concept_structure("test".to_string(), ConceptStructure::new()).await;
         brain_graph.update_learning_stats(|stats| {
             stats.entity_count = 5;
@@ -826,8 +826,8 @@ mod tests {
         // Manually insert invalid activation (bypassing clamping)
         {
             let mut activations = brain_graph.entity_activations.write().await;
-            activations.insert(EntityKey::new(999), 1.5); // Invalid: > 1.0
-            activations.insert(EntityKey::new(998), -0.5); // Invalid: < 0.0
+            activations.insert(EntityKey::new(999.to_string()), 1.5); // Invalid: > 1.0
+            activations.insert(EntityKey::new(998.to_string()), -0.5); // Invalid: < 0.0
         }
         
         let issues = brain_graph.validate_consistency().await;
@@ -845,7 +845,7 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Add activations for non-existent entities
-        let nonexistent_entity = EntityKey::new(999);
+        let nonexistent_entity = EntityKey::new(999.to_string());
         brain_graph.set_entity_activation(nonexistent_entity, 0.5).await;
         
         let issues = brain_graph.validate_consistency().await;
@@ -863,8 +863,8 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Setup some state for metrics calculation
-        brain_graph.set_entity_activation(EntityKey::new(1), 0.4).await;
-        brain_graph.set_entity_activation(EntityKey::new(2), 0.6).await;
+        brain_graph.set_entity_activation(EntityKey::new(1.to_string()), 0.4).await;
+        brain_graph.set_entity_activation(EntityKey::new(2.to_string()), 0.6).await;
         
         brain_graph.update_learning_stats(|stats| {
             stats.learning_efficiency = 0.8;
@@ -892,7 +892,7 @@ mod tests {
         
         // Add some data to increase memory usage
         for i in 0..100 {
-            brain_graph.set_entity_activation(EntityKey::new(i), 0.5).await;
+            brain_graph.set_entity_activation(EntityKey::new(i.to_string()), 0.5).await;
         }
         
         let memory_usage = brain_graph.get_memory_usage().await;
@@ -960,8 +960,8 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Test integration between different components
-        let entity1 = EntityKey::new(1);
-        let entity2 = EntityKey::new(2);
+        let entity1 = EntityKey::new(1.to_string());
+        let entity2 = EntityKey::new(2.to_string());
         
         // Set up brain-enhanced state
         brain_graph.set_entity_activation(entity1, 0.8).await;
@@ -1006,7 +1006,7 @@ mod tests {
         let handle1 = tokio::spawn(async move {
             // Concurrent activation updates
             for i in 0..50 {
-                let entity = EntityKey::new(i);
+                let entity = EntityKey::new(i.to_string());
                 let activation = (i as f32) / 100.0;
                 graph1.set_entity_activation(entity, activation).await;
             }
@@ -1015,8 +1015,8 @@ mod tests {
         let handle2 = tokio::spawn(async move {
             // Concurrent synaptic weight updates
             for i in 0..25 {
-                let source = EntityKey::new(i);
-                let target = EntityKey::new(i + 25);
+                let source = EntityKey::new(i.to_string());
+                let target = EntityKey::new((i + 25).to_string());
                 let weight = (i as f32) / 50.0;
                 graph2.set_synaptic_weight(source, target, weight).await;
             }
@@ -1047,7 +1047,7 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Set up a network of activations to simulate spread
-        let entities: Vec<EntityKey> = (0..10).map(|i| EntityKey::new(i)).collect();
+        let entities: Vec<EntityKey> = (0..10).map(|i| EntityKey::new(i.to_string())).collect();
         
         // Set initial activation
         brain_graph.set_entity_activation(entities[0], 1.0).await;
@@ -1169,8 +1169,8 @@ mod tests {
     #[tokio::test]
     async fn test_component_coordination() {
         let brain_graph = create_test_brain_graph().await.unwrap();
-        let entity1 = EntityKey::new(1);
-        let entity2 = EntityKey::new(2);
+        let entity1 = EntityKey::new(1.to_string());
+        let entity2 = EntityKey::new(2.to_string());
         
         // Test coordination between activations and synaptic weights
         brain_graph.set_entity_activation(entity1, 0.8).await;
@@ -1216,9 +1216,9 @@ mod tests {
         
         // Test with edge case entity keys
         let edge_cases = vec![
-            EntityKey::new(0),                    // Zero key
-            EntityKey::new(u64::MAX),            // Maximum key
-            EntityKey::new(u64::MAX / 2),        // Middle value
+            EntityKey::new(0.to_string()),                    // Zero key
+            EntityKey::new(u64::MAX.to_string()),            // Maximum key
+            EntityKey::new((u64::MAX / 2).to_string()),        // Middle value
         ];
         
         for entity in edge_cases {
@@ -1228,7 +1228,7 @@ mod tests {
             assert_eq!(activation, 0.5);
             
             // Test synaptic weight management
-            let other_entity = EntityKey::new(1);
+            let other_entity = EntityKey::new(1.to_string());
             brain_graph.set_synaptic_weight(entity, other_entity, 0.3).await;
             let weight = brain_graph.get_synaptic_weight(entity, other_entity).await;
             assert_eq!(weight, 0.3);
@@ -1241,7 +1241,7 @@ mod tests {
         
         // Stress test with many activation operations
         let num_entities = 1000;
-        let entities: Vec<EntityKey> = (0..num_entities).map(|i| EntityKey::new(i)).collect();
+        let entities: Vec<EntityKey> = (0..num_entities).map(|i| EntityKey::new(i.to_string())).collect();
         
         // Set activations for all entities
         for (i, entity) in entities.iter().enumerate() {

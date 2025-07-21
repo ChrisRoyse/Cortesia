@@ -2,7 +2,7 @@
 //! Tests public API and end-to-end critical analysis workflows
 
 use llmkg::cognitive::{CriticalThinking, CognitivePattern};
-use llmkg::cognitive::types::{
+use llmkg::cognitive::{
     PatternParameters, CognitivePatternType, ValidationLevel, ConflictType, ResolutionStrategy
 };
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;

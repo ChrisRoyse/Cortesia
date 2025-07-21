@@ -3,77 +3,20 @@ mod convergent_tests {
     use std::collections::HashMap;
     use tokio;
     use llmkg::cognitive::convergent::ConvergentThinking;
-    use llmkg::cognitive::types::{PatternResult, ConvergentResult, CognitivePatternType};
+    use llmkg::cognitive::{PatternResult, ConvergentResult, CognitivePatternType};
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
-    #[tokio::test]
-    async fn test_calculate_concept_relevance_hierarchical() {
-        // Test hierarchical relationship relevance
-        let thinking = create_test_convergent_thinking().await;
-        
-        // Test hierarchical match - golden retriever is a type of dog
-        let relevance = thinking.calculate_concept_relevance("golden retriever", "dog");
-        assert!(relevance > 0.8, "Hierarchical relevance should be high: {}", relevance);
-        
-        // Test exact match
-        let exact = thinking.calculate_concept_relevance("dog", "dog");
-        assert_eq!(exact, 1.0, "Exact match should return 1.0");
-        
-        // Test unrelated concepts
-        let unrelated = thinking.calculate_concept_relevance("dog", "computer");
-        assert!(unrelated < 0.2, "Unrelated concepts should have low relevance: {}", unrelated);
-    }
+    // NOTE: Tests for calculate_concept_relevance have been moved to src/cognitive/convergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
-    #[tokio::test]
-    async fn test_calculate_concept_relevance_semantic() {
-        let thinking = create_test_convergent_thinking().await;
-        
-        // Test semantic field matching - dog and pet are in same semantic field
-        let semantic = thinking.calculate_concept_relevance("dog", "pet");
-        assert!(semantic > 0.5, "Semantic field relevance should be moderate-high: {}", semantic);
-        
-        // Test lexical similarity
-        let lexical = thinking.calculate_concept_relevance("canine", "dog");
-        assert!(lexical > 0.4, "Lexically similar concepts should have moderate relevance: {}", lexical);
-    }
-
-    #[tokio::test]
-    async fn test_extract_target_concept_basic() {
-        let thinking = create_test_convergent_thinking().await;
-        
-        // Test basic "what are" questions
-        let result = thinking.extract_target_concept("what are the properties of a dog").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "dog");
-        
-        // Test "how many" questions
-        let result = thinking.extract_target_concept("how many legs does a cat have").await;
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "cat");
-    }
-
-    #[tokio::test]
-    async fn test_extract_target_concept_edge_cases() {
-        let thinking = create_test_convergent_thinking().await;
-        
-        // Test query with only stop words
-        let result = thinking.extract_target_concept("the and or but").await;
-        assert!(result.is_err(), "Stop words only should return error");
-        
-        // Test empty query
-        let result = thinking.extract_target_concept("").await;
-        assert!(result.is_err(), "Empty query should return error");
-        
-        // Test query with no recognizable concepts
-        let result = thinking.extract_target_concept("xyz abc def").await;
-        assert!(result.is_err(), "Unrecognizable concepts should return error");
-    }
+    // NOTE: Tests for extract_target_concept have been moved to src/cognitive/convergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     #[tokio::test]
     async fn test_end_to_end_query_and_answer() {
         // Create a test graph with known structure
         let graph = create_test_graph().await;
-        let thinking = ConvergentThinking::new(graph, 3, 2); // max_depth=3, beam_width=2
+        let thinking = ConvergentThinking::new(graph); // Uses default max_depth and beam_width
         
         // Execute query about dog properties
         let result = thinking.execute("What is a dog?").await;
@@ -94,9 +37,9 @@ mod convergent_tests {
     async fn test_beam_search_pruning() {
         // Test that beam search correctly prunes less relevant paths
         let graph = create_pruning_test_graph().await;
-        let thinking = ConvergentThinking::new(graph, 2, 1); // beam_width=1 for strict pruning
+        let thinking = ConvergentThinking::new(graph); // Uses default beam_width
         
-        let result = thinking.execute_convergent_query("What connects to start?", "start").await;
+        let result = thinking.execute_convergent_query("What connects to start?", Some("start")).await;
         assert!(result.is_ok());
         
         let conv_result = result.unwrap();
@@ -104,38 +47,25 @@ mod convergent_tests {
         assert!(conv_result.answer.contains("chain_end"), "Should follow longer chain: {}", conv_result.answer);
     }
 
-    #[tokio::test]
-    async fn test_focused_propagation() {
-        let graph = create_test_graph().await;
-        let thinking = ConvergentThinking::new(graph, 2, 3);
-        
-        // Test propagation from a known start point
-        let activation_map = thinking.focused_propagation("dog", 2).await;
-        assert!(activation_map.is_ok());
-        
-        let activations = activation_map.unwrap();
-        assert!(activations.len() > 1, "Should propagate to multiple nodes");
-        
-        // Should include "mammal" with high activation
-        let mammal_activation = activations.get("mammal").unwrap_or(&0.0);
-        assert!(*mammal_activation > 0.5, "Mammal should be highly activated");
-    }
+    // NOTE: Tests for focused_propagation have been moved to src/cognitive/convergent.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     // Helper functions for creating test data
 
     async fn create_test_convergent_thinking() -> ConvergentThinking {
         let graph = create_test_graph().await;
-        ConvergentThinking::new(graph, 3, 2)
+        ConvergentThinking::new(graph)
     }
 
-    async fn create_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+    async fn create_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
+        use llmkg::core::types::EntityData;
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
         
         // Create basic animal hierarchy
-        graph.add_entity("dog", "Animal concept").await.unwrap();
-        graph.add_entity("mammal", "Classification concept").await.unwrap();
-        graph.add_entity("warm_blooded", "Property concept").await.unwrap();
-        graph.add_entity("pet", "Relationship concept").await.unwrap();
+        graph.add_entity(EntityData::new(1, "Animal concept".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Classification concept".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Property concept".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Relationship concept".to_string(), vec![0.0; 128])).await.unwrap();
         
         // Add relationships
         graph.add_relationship("dog", "mammal", "is_a", 0.9).await.unwrap();
@@ -145,14 +75,15 @@ mod convergent_tests {
         graph
     }
 
-    async fn create_pruning_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+    async fn create_pruning_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
+        use llmkg::core::types::EntityData;
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
         
         // Create a graph where beam search pruning matters
-        graph.add_entity("start", "Starting point").await.unwrap();
-        graph.add_entity("dead_end", "High activation but no connections").await.unwrap();
-        graph.add_entity("chain_middle", "Lower initial but leads somewhere").await.unwrap();
-        graph.add_entity("chain_end", "Final destination with valuable info").await.unwrap();
+        graph.add_entity(EntityData::new(1, "Starting point".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "High activation but no connections".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Lower initial but leads somewhere".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Final destination with valuable info".to_string(), vec![0.0; 128])).await.unwrap();
         
         // High activation path that leads nowhere
         graph.add_relationship("start", "dead_end", "strong_link", 0.9).await.unwrap();
@@ -201,14 +132,15 @@ mod convergent_tests {
     }
 
 
-    async fn create_deep_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+    async fn create_deep_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
+        use llmkg::core::types::EntityData;
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
         
         // Create a deep chain to test depth limits
-        graph.add_entity("root", "Starting point").await.unwrap();
-        graph.add_entity("level1", "First level").await.unwrap();
-        graph.add_entity("level2", "Second level").await.unwrap();
-        graph.add_entity("level3", "Third level - should not be reached").await.unwrap();
+        graph.add_entity(EntityData::new(1, "Starting point".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "First level".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Second level".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Third level - should not be reached".to_string(), vec![0.0; 128])).await.unwrap();
         
         graph.add_relationship("root", "level1", "connects", 0.8).await.unwrap();
         graph.add_relationship("level1", "level2", "connects", 0.8).await.unwrap();

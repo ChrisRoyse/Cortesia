@@ -1,0 +1,545 @@
+warning: unused import: `HashMap`
+ --> src\core\sdr_storage.rs:1:33
+  |
+1 | use std::collections::{HashSet, HashMap};
+  |                                 ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `SDREntry` and `SDRQuery`
+ --> src\core\sdr_storage.rs:8:97
+  |
+8 | use crate::core::sdr_types::{SDRConfig, SDR, SDRPattern, SDRStatistics, SimilaritySearchResult, SDREntry, SDRQuery};
+  |                                                                                                 ^^^^^^^^  ^^^^^^^^
+
+warning: unused import: `GraphError`
+  --> src\core\sdr_storage.rs:10:28
+   |
+10 | use crate::error::{Result, GraphError};
+   |                            ^^^^^^^^^^
+
+warning: unused import: `super::brain_graph_types::*`
+ --> src\core\brain_enhanced_graph\brain_advanced_ops.rs:5:5
+  |
+5 | use super::brain_graph_types::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ZeroCopyBenchmark`
+ --> src\core\zero_copy_engine.rs:6:95
+  |
+6 | use crate::core::zero_copy_types::{BenchmarkResult, ZeroCopyEntityInfo, ZeroCopySearchResult, ZeroCopyBenchmark};
+  |                                                                                               ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Duration`
+  --> src\core\zero_copy_engine.rs:12:17
+   |
+12 | use std::time::{Duration, Instant};
+   |                 ^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src\core\phase1_integration.rs:2:5
+  |
+2 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `EntityDirection`
+ --> src\core\phase1_integration.rs:6:53
+  |
+6 | use crate::core::brain_types::{BrainInspiredEntity, EntityDirection, ActivationPattern};
+  |                                                     ^^^^^^^^^^^^^^^
+
+warning: unused import: `EntityInfo`
+ --> src\core\phase1_integration.rs:7:60
+  |
+7 | use crate::core::phase1_types::{Phase1Config, QueryResult, EntityInfo, Phase1Statistics, CognitiveQueryResult};
+  |                                                            ^^^^^^^^^^
+
+warning: unused import: `EntityKey`
+ --> src\storage\zero_copy.rs:5:38
+  |
+5 | use crate::core::types::{EntityData, EntityKey, Relationship};
+  |                                      ^^^^^^^^^
+
+warning: unused import: `EntityData`
+  --> src\cognitive\systems.rs:10:37
+   |
+10 | use crate::core::types::{EntityKey, EntityData};
+   |                                     ^^^^^^^^^^
+
+warning: unused import: `EntityData`
+ --> src\cognitive\abstract_pattern.rs:9:37
+  |
+9 | use crate::core::types::{EntityKey, EntityData};
+  |                                     ^^^^^^^^^^
+
+warning: unused import: `crate::core::entity_compat`
+ --> src\test_support\assertions.rs:4:5
+  |
+4 | use crate::core::entity_compat; // Import for EntityKey::from_hash
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src\test_support\mod.rs:3:1
+  |
+3 | pub mod assertions;
+  | ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `neural_query::QueryIntent`
+ --> src\test_support\data.rs:4:24
+  |
+4 | use crate::cognitive::{neural_query::QueryIntent, types::CognitivePatternType};
+  |                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src\test_support\mod.rs:5:1
+  |
+5 | pub mod data;
+  | ^^^^^^^^^^^^^
+
+warning: unused import: `crate::core::graph::graph_core::KnowledgeGraph`
+ --> src\test_support\fixtures.rs:5:5
+  |
+5 | use crate::core::graph::graph_core::KnowledgeGraph;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src\test_support\mod.rs:6:1
+  |
+6 | pub mod fixtures;
+  | ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::core::entity_compat`
+ --> src\test_support\scenarios.rs:8:5
+  |
+8 | use crate::core::entity_compat;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: if this is a test module, consider adding a `#[cfg(test)]` to the containing module
+ --> src\test_support\mod.rs:7:1
+  |
+7 | pub mod scenarios;
+  | ^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `key`
+   --> src\core\activation_engine.rs:151:18
+    |
+151 |             for (key, activation) in &mut current_activations {
+    |                  ^^^ help: if this is intentional, prefix it with an underscore: `_key`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `entities`
+  --> src\test_support\fixtures.rs:86:9
+   |
+86 |     let entities = create_standard_test_entities();
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `entities`
+  --> src\test_support\fixtures.rs:96:9
+   |
+96 |     let entities = create_cognitive_test_entities();
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `graph`
+   --> src\test_support\scenarios.rs:606:5
+    |
+606 |     graph: &BrainEnhancedKnowledgeGraph,
+    |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_graph`
+
+warning: variable does not need to be mutable
+  --> src\mcp\llm_friendly_server\handlers\storage.rs:47:9
+   |
+47 |     let mut engine = knowledge_engine.write().await;
+   |         ----^^^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:106:9
+    |
+106 |     let mut engine = knowledge_engine.write().await;
+    |         ----^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src\mcp\brain_inspired_server.rs:148:17
+    |
+148 |             let mut graph = self.knowledge_graph.write().await;
+    |                 ----^^^^^
+    |                 |
+    |                 help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> src\mcp\brain_inspired_server.rs:636:13
+    |
+636 |         let mut graph = self.knowledge_graph.write().await;
+    |             ----^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: unused variable: `relationship_count`
+   --> src\core\graph\compatibility.rs:441:13
+    |
+441 |         let relationship_count = self.relationship_count();
+    |             ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_relationship_count`
+
+warning: unused variable: `from`
+   --> src\storage\csr.rs:217:32
+    |
+217 |     pub fn add_edge(&mut self, from: u32, to: u32, weight: f32) -> Result<()> {
+    |                                ^^^^ help: if this is intentional, prefix it with an underscore: `_from`
+
+warning: unused variable: `to`
+   --> src\storage\csr.rs:217:43
+    |
+217 |     pub fn add_edge(&mut self, from: u32, to: u32, weight: f32) -> Result<()> {
+    |                                           ^^ help: if this is intentional, prefix it with an underscore: `_to`
+
+warning: unused variable: `weight`
+   --> src\storage\csr.rs:217:52
+    |
+217 |     pub fn add_edge(&mut self, from: u32, to: u32, weight: f32) -> Result<()> {
+    |                                                    ^^^^^^ help: if this is intentional, prefix it with an underscore: `_weight`
+
+warning: unused variable: `data`
+   --> src\storage\persistent_mmap.rs:237:57
+    |
+237 |     pub fn add_entity(&mut self, entity_key: EntityKey, data: &EntityData, embedding: &[f32]) -> Result<()> {
+    |                                                         ^^^^ help: if this is intentional, prefix it with an underscore: `_data`
+
+warning: unused variable: `data`
+   --> src\storage\persistent_mmap.rs:329:27
+    |
+329 |         for ((entity_key, data, _embedding), quantized) in entities_data.iter().zip(quantized_batch.iter()) {
+    |                           ^^^^ help: if this is intentional, prefix it with an underscore: `_data`
+
+warning: unused variable: `err`
+   --> src\storage\persistent_mmap.rs:536:13
+    |
+536 |     fn from(err: io::Error) -> Self {
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_err`
+
+warning: unused variable: `summary`
+   --> src\storage\semantic_store.rs:149:27
+    |
+149 |         for (&entity_key, summary) in summaries.iter() {
+    |                           ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_summary`
+
+warning: unused variable: `max_depth`
+   --> src\query\rag.rs:172:75
+    |
+172 |     fn find_bridge_entities(&self, similar_entities: &[(EntityKey, f32)], max_depth: u8) -> Result<Vec<EntityKey>> {
+    |                                                                           ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_max_depth`
+
+warning: unused variable: `start_time`
+   --> src\versioning\temporal_graph.rs:103:14
+    |
+103 |         for (start_time, entities) in self.valid_time_index.range(..=time).rev() {
+    |              ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_start_time`
+
+warning: unused variable: `neural_server`
+  --> src\neural\canonicalization.rs:70:35
+   |
+70 |     pub fn new_with_neural_server(neural_server: Arc<NeuralProcessingServer>) -> Self {
+   |                                   ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `metrics`
+   --> src\monitoring\dashboard.rs:440:36
+    |
+440 |     fn extract_performance_metrics(metrics: &HashMap<String, MetricSample>) -> PerformanceMetricsSnapshot {
+    |                                    ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `context`
+   --> src\cognitive\divergent.rs:851:9
+    |
+851 |         context: Option<&str>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src\cognitive\lateral.rs:608:9
+    |
+608 |         context: Option<&str>,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `parameters`
+   --> src\cognitive\systems.rs:307:9
+    |
+307 |         parameters: PatternParameters,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_parameters`
+
+warning: unused variable: `query`
+   --> src\cognitive\critical.rs:451:35
+    |
+451 |     fn estimate_complexity(&self, query: &str) -> ComplexityEstimate {
+    |                                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `total`
+   --> src\cognitive\abstract_pattern.rs:294:13
+    |
+294 |         let total = stats.entity_count as f32;
+    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_total`
+
+warning: unused variable: `temporal_patterns`
+   --> src\cognitive\neural_query.rs:523:13
+    |
+523 |         let temporal_patterns = vec![
+    |             ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_temporal_patterns`
+
+warning: type `MockModel` is more private than the item `MockNeuralServer::models`
+   --> src\neural\neural_server.rs:317:5
+    |
+317 |     pub models: Arc<Mutex<AHashMap<String, MockModel>>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `MockNeuralServer::models` is reachable at visibility `pub`
+    |
+note: but type `MockModel` is only usable at visibility `pub(self)`
+   --> src\neural\neural_server.rs:321:1
+    |
+321 | struct MockModel {
+    | ^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `ReasoningStep` is more private than the item `convergent_enhanced::ReasoningTrace::reasoning_steps`
+  --> src\cognitive\convergent_enhanced.rs:46:5
+   |
+46 |     pub reasoning_steps: Vec<ReasoningStep>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `convergent_enhanced::ReasoningTrace::reasoning_steps` is reachable at visibility `pub`
+   |
+note: but type `ReasoningStep` is only usable at visibility `pub(self)`
+  --> src\cognitive\convergent_enhanced.rs:13:1
+   |
+13 | struct ReasoningStep {
+   | ^^^^^^^^^^^^^^^^^^^^
+
+warning: type `systems::HierarchyCache` is more private than the item `SystemsThinking::hierarchy_cache`
+   --> src\cognitive\systems.rs:17:5
+    |
+17  |     pub hierarchy_cache: Arc<RwLock<HierarchyCache>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `SystemsThinking::hierarchy_cache` is reachable at visibility `pub`
+    |
+note: but type `systems::HierarchyCache` is only usable at visibility `pub(crate)`
+   --> src\cognitive\systems.rs:614:1
+    |
+614 | pub(crate) struct HierarchyCache {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `ExceptionResolver` is more private than the item `CriticalThinking::exception_resolver`
+   --> src\cognitive\critical.rs:16:5
+    |
+16  |     pub exception_resolver: Arc<ExceptionResolver>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `CriticalThinking::exception_resolver` is reachable at visibility `pub`
+    |
+note: but type `ExceptionResolver` is only usable at visibility `pub(self)`
+   --> src\cognitive\critical.rs:462:1
+    |
+462 | struct ExceptionResolver {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `StrategySelector` is more private than the item `AdaptiveThinking::strategy_selector`
+   --> src\cognitive\adaptive.rs:23:5
+    |
+23  |     pub strategy_selector: Arc<StrategySelector>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `AdaptiveThinking::strategy_selector` is reachable at visibility `pub`
+    |
+note: but type `StrategySelector` is only usable at visibility `pub(self)`
+   --> src\cognitive\adaptive.rs:235:1
+    |
+235 | struct StrategySelector {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `EnsembleCoordinator` is more private than the item `AdaptiveThinking::ensemble_coordinator`
+   --> src\cognitive\adaptive.rs:24:5
+    |
+24  |     pub ensemble_coordinator: Arc<EnsembleCoordinator>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `AdaptiveThinking::ensemble_coordinator` is reachable at visibility `pub`
+    |
+note: but type `EnsembleCoordinator` is only usable at visibility `pub(self)`
+   --> src\cognitive\adaptive.rs:245:1
+    |
+245 | struct EnsembleCoordinator {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:252:13
+    |
+252 |             entity_store.remove(key);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+    = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+    |
+252 |             let _ = entity_store.remove(key);
+    |             +++++++
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:268:17
+    |
+268 |                 bloom.remove(id);
+    |                 ^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+    |
+268 |                 let _ = bloom.remove(id);
+    |                 +++++++
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:272:17
+    |
+272 |                 spatial_index.remove(id);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+    |
+272 |                 let _ = spatial_index.remove(id);
+    |                 +++++++
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:275:17
+    |
+275 |                 flat_index.remove(id);
+    |                 ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+    |
+275 |                 let _ = flat_index.remove(id);
+    |                 +++++++
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:278:17
+    |
+278 |                 hnsw_index.remove(id);
+    |                 ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+    |
+278 |                 let _ = hnsw_index.remove(id);
+    |                 +++++++
+
+warning: unused `std::result::Result` that must be used
+   --> src\core\graph\entity_operations.rs:281:17
+    |
+281 |                 lsh_index.remove(id);
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+help: use `let _ = ...` to ignore the resulting value
+    |
+281 |                 let _ = lsh_index.remove(id);
+    |                 +++++++
+
+warning: calls to `std::mem::drop` with a reference instead of an owned value does nothing
+   --> src\storage\hnsw.rs:153:25
+    |
+153 |                         drop(neighbor);
+    |                         ^^^^^--------^
+    |                              |
+    |                              argument has type `&mut hnsw::Node`
+    |
+    = note: `#[warn(dropping_references)]` on by default
+help: use `let _ = ...` to ignore the expression or result
+    |
+153 -                         drop(neighbor);
+153 +                         let _ = neighbor;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\parameter_tuning.rs:660:5
+    |
+660 |     async fn tune_hebbian_parameters(&self, performance_data: &PerformanceData) -> Result<HebbianParameterUpdate>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+    = note: `#[warn(async_fn_in_trait)]` on by default
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+660 -     async fn tune_hebbian_parameters(&self, performance_data: &PerformanceData) -> Result<HebbianParameterUpdate>;
+660 +     fn tune_hebbian_parameters(&self, performance_data: &PerformanceData) -> impl std::future::Future<Output = Result<HebbianParameterUpdate>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\parameter_tuning.rs:661:5
+    |
+661 |     async fn tune_attention_parameters(&self, attention_metrics: &AttentionMetrics) -> Result<AttentionParameterUpdate>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+661 -     async fn tune_attention_parameters(&self, attention_metrics: &AttentionMetrics) -> Result<AttentionParameterUpdate>;
+661 +     fn tune_attention_parameters(&self, attention_metrics: &AttentionMetrics) -> impl std::future::Future<Output = Result<AttentionParameterUpdate>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\parameter_tuning.rs:662:5
+    |
+662 |     async fn tune_memory_parameters(&self, memory_metrics: &MemoryMetrics) -> Result<MemoryParameterUpdate>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+662 -     async fn tune_memory_parameters(&self, memory_metrics: &MemoryMetrics) -> Result<MemoryParameterUpdate>;
+662 +     fn tune_memory_parameters(&self, memory_metrics: &MemoryMetrics) -> impl std::future::Future<Output = Result<MemoryParameterUpdate>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\parameter_tuning.rs:663:5
+    |
+663 |     async fn auto_tune_system(&self, system_state: &SystemState) -> Result<SystemParameterUpdate>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+663 -     async fn auto_tune_system(&self, system_state: &SystemState) -> Result<SystemParameterUpdate>;
+663 +     fn auto_tune_system(&self, system_state: &SystemState) -> impl std::future::Future<Output = Result<SystemParameterUpdate>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\meta_learning.rs:781:5
+    |
+781 |     async fn learn_to_learn(&self, learning_tasks: &[LearningTask]) -> Result<MetaLearningModel>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+781 -     async fn learn_to_learn(&self, learning_tasks: &[LearningTask]) -> Result<MetaLearningModel>;
+781 +     fn learn_to_learn(&self, learning_tasks: &[LearningTask]) -> impl std::future::Future<Output = Result<MetaLearningModel>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\meta_learning.rs:782:5
+    |
+782 |     async fn adapt_learning_strategy(&self, task_context: &TaskContext) -> Result<LearningStrategy>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+782 -     async fn adapt_learning_strategy(&self, task_context: &TaskContext) -> Result<LearningStrategy>;
+782 +     fn adapt_learning_strategy(&self, task_context: &TaskContext) -> impl std::future::Future<Output = Result<LearningStrategy>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\learning\meta_learning.rs:783:5
+    |
+783 |     async fn transfer_knowledge(&self, source_domain: &Domain, target_domain: &Domain) -> Result<TransferResult>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+783 -     async fn transfer_knowledge(&self, source_domain: &Domain, target_domain: &Domain) -> Result<TransferResult>;
+783 +     fn transfer_knowledge(&self, source_domain: &Domain, target_domain: &Domain) -> impl std::future::Future<Output = Result<TransferResult>> + Send;
+    |
+
+warning: `llmkg` (lib) generated 62 warnings (run `cargo fix --lib -p llmkg` to apply 20 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.30s

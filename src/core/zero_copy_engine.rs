@@ -1,7 +1,7 @@
 // Phase 4.4: Zero-Copy Knowledge Engine Integration
 // Enhanced knowledge engine that leverages zero-copy serialization for maximum performance
 
-use crate::core::types::{EntityData, Relationship};
+use crate::core::types::{EntityData, EntityKey, Relationship};
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::zero_copy_types::{BenchmarkResult, ZeroCopyEntityInfo, ZeroCopySearchResult, ZeroCopyBenchmark};
 use crate::storage::zero_copy::{ZeroCopySerializer, ZeroCopyGraphStorage, ZeroCopyMetrics};
@@ -716,11 +716,10 @@ mod tests {
         let entities = vec![create_test_entity(1, 1, "test", 4)];
         let relationships = vec![
             Relationship {
-                from_entity_id: 1,
-                to_entity_id: 2,
-                relationship_type: 1,
+                from: EntityKey::from_raw_parts(1, 0),
+                to: EntityKey::from_raw_parts(2, 0),
+                rel_type: 1,
                 weight: 0.5,
-                properties: HashMap::new(),
             }
         ];
         

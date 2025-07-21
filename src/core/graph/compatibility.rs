@@ -467,7 +467,7 @@ mod tests {
     use std::collections::HashMap;
 
     fn create_test_graph() -> KnowledgeGraph {
-        KnowledgeGraph::new(128, 10000)
+        KnowledgeGraph::new(128).unwrap()
     }
 
     #[test]

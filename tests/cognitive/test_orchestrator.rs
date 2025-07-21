@@ -4,8 +4,8 @@ mod orchestrator_tests {
     use std::sync::Arc;
     use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
     use llmkg::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainEnhancedConfig};
-    use llmkg::cognitive::types::{
-        PatternResult, CognitivePatternType, QueryType, ProcessingPipeline,
+    use llmkg::cognitive::{
+        PatternResult, CognitivePatternType,
         AdaptiveThinking, ConvergentThinking, DivergentThinking, CriticalThinking,
         LateralThinking, AbstractThinking
     };

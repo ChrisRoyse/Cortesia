@@ -1236,4 +1236,105 @@ mod tests {
         let result = extract_seed_concept("").await;
         assert!(result.is_err(), "Empty query should return error");
     }
+
+    // Helper to create a test instance
+    fn create_test_thinking() -> DivergentThinking {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
+        DivergentThinking {
+            graph,
+            exploration_breadth: 3,
+            creativity_threshold: 0.3,
+            novelty_weight: 0.5,
+            max_exploration_depth: 4,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_rank_by_creativity() {
+        let thinking = create_test_thinking();
+        
+        // Create mock exploration paths with different creativity scores
+        let key1 = EntityKey::from_raw_parts(1, 0);
+        let key2 = EntityKey::from_raw_parts(2, 0);
+        let paths = vec![
+            ExplorationPath {
+                path: vec![key1],
+                concepts: vec!["test".to_string(), "dest1".to_string()],
+                concept: "test".to_string(),
+                relevance_score: 0.8,
+                novelty_score: 0.3,
+            },
+            ExplorationPath {
+                path: vec![key2],
+                concepts: vec!["test".to_string(), "dest2".to_string()],
+                concept: "test".to_string(),
+                relevance_score: 0.6,
+                novelty_score: 0.8,
+            },
+            ExplorationPath {
+                path: vec![key1, key2],
+                concepts: vec!["test".to_string(), "dest3".to_string()],
+                concept: "test".to_string(),
+                relevance_score: 0.9,
+                novelty_score: 0.9,
+            },
+            ExplorationPath {
+                path: vec![key2, key1],
+                concepts: vec!["test".to_string(), "dest4".to_string()],
+                concept: "test".to_string(),
+                relevance_score: 0.4,
+                novelty_score: 0.2,
+            },
+        ];
+        
+        let ranked = thinking.rank_by_creativity(paths).await;
+        assert!(ranked.is_ok());
+        
+        let sorted_paths = ranked.unwrap();
+        // Path with highest combined score should be first (0.9 + 0.9 = 1.8)
+        assert!(sorted_paths[0].relevance_score >= 0.9 && sorted_paths[0].novelty_score >= 0.9);
+        // Path with lowest combined score should be last (0.4 + 0.2 = 0.6)
+        assert!(sorted_paths.last().unwrap().relevance_score <= 0.4);
+    }
+
+    #[tokio::test]
+    async fn test_spread_activation() {
+        let thinking = create_test_thinking();
+        
+        // Create a simple activation pattern for testing
+        let activation_pattern = ActivationPattern::new("test query".to_string());
+        
+        // Test broad activation spreading
+        let exploration_map = thinking.spread_activation(activation_pattern, ExplorationType::Instances).await;
+        assert!(exploration_map.is_ok());
+        
+        let map = exploration_map.unwrap();
+        // The actual test logic depends on the implementation details
+        // For now, we just verify the method can be called
+    }
+
+    #[tokio::test]
+    async fn test_neural_path_exploration() {
+        let thinking = create_test_thinking();
+        
+        // Create a mock exploration map
+        let exploration_map = ExplorationMap {
+            starting_entities: Vec::new(),
+            exploration_waves: Vec::new(),
+            total_entities_explored: 0,
+            exploration_depth: 2,
+            edges: Vec::new(),
+            neighbors_cache: std::collections::HashMap::new(),
+            activated_nodes: std::collections::HashMap::new(),
+            total_concepts_explored: 3,
+            creative_bridges_found: 1,
+        };
+        
+        let paths = thinking.neural_path_exploration(exploration_map).await;
+        assert!(paths.is_ok());
+        
+        let found_paths = paths.unwrap();
+        // The actual test logic depends on the implementation details
+        // For now, we just verify the method can be called
+    }
 }

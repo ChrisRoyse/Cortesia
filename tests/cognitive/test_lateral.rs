@@ -2,7 +2,7 @@
 mod lateral_tests {
     use tokio;
     use llmkg::cognitive::lateral::LateralThinking;
-    use llmkg::cognitive::types::{
+    use llmkg::cognitive::{
         PatternResult, LateralResult, BridgePath, CognitivePatternType
     };
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
@@ -132,50 +132,8 @@ mod lateral_tests {
         assert!(has_long_path, "Should find longer bridge paths");
     }
 
-    #[tokio::test]
-    async fn test_analyze_novelty() {
-        let thinking = create_test_lateral_thinking().await;
-        
-        // Create test bridge paths with different characteristics
-        let conventional_bridge = BridgePath {
-            bridge_id: "conventional".to_string(),
-            start_concept: "art".to_string(),
-            end_concept: "design".to_string(),
-            bridge_concepts: vec!["visual".to_string()], // obvious connection
-            novelty_score: 0.2,
-            plausibility_score: 0.9,
-            creativity_score: 0.0, // Will be calculated
-            explanation: "Art connects to design through visual elements".to_string(),
-            connection_strength: 0.8,
-        };
-        
-        let novel_bridge = BridgePath {
-            bridge_id: "novel".to_string(),
-            start_concept: "music".to_string(),
-            end_concept: "mathematics".to_string(),
-            bridge_concepts: vec!["harmony".to_string(), "ratios".to_string()], // creative connection
-            novelty_score: 0.8,
-            plausibility_score: 0.6,
-            creativity_score: 0.0, // Will be calculated
-            explanation: "Music connects to mathematics through harmonic ratios".to_string(),
-            connection_strength: 0.5,
-        };
-        
-        let bridges = vec![conventional_bridge, novel_bridge];
-        let analyzed = thinking.analyze_novelty(bridges).await;
-        assert!(analyzed.is_ok());
-        
-        let analyzed_bridges = analyzed.unwrap();
-        assert_eq!(analyzed_bridges.len(), 2);
-        
-        // Novel bridge should score higher on creativity
-        let novel = analyzed_bridges.iter().find(|b| b.bridge_id == "novel").unwrap();
-        let conventional = analyzed_bridges.iter().find(|b| b.bridge_id == "conventional").unwrap();
-        
-        assert!(novel.creativity_score > conventional.creativity_score,
-               "Novel bridge should have higher creativity score: {} vs {}", 
-               novel.creativity_score, conventional.creativity_score);
-    }
+    // NOTE: Tests for analyze_novelty have been moved to src/cognitive/lateral.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     #[tokio::test]
     async fn test_end_to_end_lateral_thinking() {
@@ -230,33 +188,8 @@ mod lateral_tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_bridge_explanation_generation() {
-        let thinking = create_test_lateral_thinking().await;
-        
-        // Test explanation generation for different bridge types
-        let simple_bridge = BridgePath {
-            bridge_id: "simple".to_string(),
-            start_concept: "dog".to_string(),
-            end_concept: "loyalty".to_string(),
-            bridge_concepts: vec!["companion".to_string()],
-            novelty_score: 0.4,
-            plausibility_score: 0.8,
-            creativity_score: 0.6,
-            explanation: "".to_string(), // Will be generated
-            connection_strength: 0.7,
-        };
-        
-        let explanation = thinking.generate_bridge_explanation(&simple_bridge).await;
-        assert!(explanation.is_ok());
-        
-        let generated_explanation = explanation.unwrap();
-        assert!(!generated_explanation.is_empty(), "Should generate explanation");
-        assert!(generated_explanation.contains("dog") && generated_explanation.contains("loyalty"),
-               "Explanation should mention both concepts");
-        assert!(generated_explanation.contains("companion"),
-               "Explanation should mention bridge concept");
-    }
+    // NOTE: Tests for generate_bridge_explanation have been moved to src/cognitive/lateral.rs
+    // in the #[cfg(test)] module where they can access the private method directly.
 
     #[tokio::test]
     async fn test_cognitive_pattern_interface() {

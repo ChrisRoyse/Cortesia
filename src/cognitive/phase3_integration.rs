@@ -832,6 +832,19 @@ impl Phase3IntegratedCognitiveSystem {
                 ).await?;
                 (result.final_answer, result.confidence_distribution.ensemble_confidence)
             }
+            CognitivePatternType::ChainOfThought => {
+                // Chain of thought reasoning - step by step
+                let result = self.convergent_thinking.execute_convergent_query(query, None).await?;
+                (result.answer, result.confidence)
+            }
+            CognitivePatternType::TreeOfThoughts => {
+                // Tree of thoughts - branching exploration
+                let result = self.divergent_thinking.execute_divergent_exploration(
+                    query,
+                    crate::cognitive::types::ExplorationType::Creative,
+                ).await?;
+                (format!("Tree exploration found {} paths", result.total_paths_explored), 0.75)
+            }
         };
 
         Ok(PatternExecutionResult {

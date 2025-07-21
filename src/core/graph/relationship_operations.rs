@@ -40,6 +40,17 @@ impl KnowledgeGraph {
         Ok(())
     }
 
+    /// Add relationship (test compatibility method)
+    pub fn add_relationship(&self, from: EntityKey, to: EntityKey, weight: f32) -> Result<()> {
+        let relationship = Relationship {
+            from,
+            to,
+            rel_type: 0, // Default relationship type
+            weight,
+        };
+        self.insert_relationship(relationship)
+    }
+
     /// Insert multiple relationships in batch
     pub fn insert_relationships_batch(&self, relationships: Vec<Relationship>) -> Result<()> {
         // Validate all relationships first

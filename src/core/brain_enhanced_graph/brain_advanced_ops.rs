@@ -92,12 +92,21 @@ mod tests {
 
     // Helper function to add test entity
     async fn add_test_entity(graph: &BrainEnhancedKnowledgeGraph, name: &str, properties: &str, embedding: Vec<f32>) -> Result<EntityKey> {
+        // Create properties JSON that includes the name
+        let props = serde_json::json!({
+            "name": name,
+            "description": properties
+        });
+        
         let entity_data = EntityData {
-            name: name.to_string(),
-            properties: properties.to_string(),
+            type_id: 1, // Generic entity type
+            properties: props.to_string(),
             embedding,
         };
-        graph.core_graph.insert_entity(entity_data)
+        
+        // Generate unique ID
+        let id = graph.core_graph.entity_count() as u32 + 1;
+        graph.core_graph.insert_entity(id, entity_data)
     }
 
     #[tokio::test]

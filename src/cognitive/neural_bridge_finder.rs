@@ -180,11 +180,17 @@ impl NeuralBridgeFinder {
             );
             
             Ok(Some(BridgePath {
-                path,
-                intermediate_concepts,
+                path: path.clone(),
+                intermediate_concepts: intermediate_concepts.clone(),
                 novelty_score,
                 plausibility_score,
                 explanation,
+                bridge_id: format!("neural_bridge_{}", path.len()),
+                start_concept: "start".to_string(),
+                end_concept: "end".to_string(),
+                bridge_concepts: intermediate_concepts,
+                creativity_score: novelty_score,
+                connection_strength: plausibility_score,
             }))
         } else {
             Ok(None)

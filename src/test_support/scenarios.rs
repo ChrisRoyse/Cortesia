@@ -1,7 +1,7 @@
 //! Predefined test scenarios for cognitive patterns
 
 use crate::cognitive::types::CognitivePatternType;
-use crate::cognitive::QueryIntent;
+use crate::cognitive::neural_query::QueryIntent;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::types::EntityKey;
 // Import the entity_compat module to access EntityKey::from_hash method

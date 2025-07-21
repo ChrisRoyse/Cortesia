@@ -71,6 +71,8 @@ pub enum CognitivePatternType {
     Critical,
     Abstract,
     Adaptive,
+    ChainOfThought,
+    TreeOfThoughts,
 }
 
 /// Parameters for cognitive pattern execution
@@ -143,7 +145,7 @@ pub enum ReasoningStrategy {
 }
 
 /// Validation levels for critical thinking
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ValidationLevel {
     Basic,
     Comprehensive,
@@ -179,7 +181,7 @@ pub enum SystemsReasoningType {
 }
 
 /// Analysis scope for abstract thinking
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AnalysisScope {
     Local(EntityKey),
     Regional(Vec<EntityKey>),
@@ -234,6 +236,12 @@ pub struct BridgePath {
     pub novelty_score: f32,
     pub plausibility_score: f32,
     pub explanation: String,
+    pub bridge_id: String,
+    pub start_concept: String,
+    pub end_concept: String,
+    pub bridge_concepts: Vec<String>,
+    pub creativity_score: f32,
+    pub connection_strength: f32,
 }
 
 /// Analysis of novelty in lateral thinking
@@ -242,6 +250,9 @@ pub struct NoveltyAnalysis {
     pub overall_novelty: f32,
     pub concept_uniqueness: Vec<f32>,
     pub path_creativity: f32,
+    pub average_novelty: f32,
+    pub highest_novelty_path: Option<String>,
+    pub top_creative_insights: Vec<String>,
 }
 
 /// Results from systems thinking
@@ -312,7 +323,7 @@ pub struct Contradiction {
 }
 
 /// Types of conflicts
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ConflictType {
     DirectContradiction,
     InheritanceConflict,
@@ -321,7 +332,7 @@ pub enum ConflictType {
 }
 
 /// Strategy for resolving contradictions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ResolutionStrategy {
     PreferLocal,
     PreferTrusted,
@@ -592,6 +603,8 @@ impl std::fmt::Display for CognitivePatternType {
             CognitivePatternType::Critical => write!(f, "Critical"),
             CognitivePatternType::Abstract => write!(f, "Abstract"),
             CognitivePatternType::Adaptive => write!(f, "Adaptive"),
+            CognitivePatternType::ChainOfThought => write!(f, "ChainOfThought"),
+            CognitivePatternType::TreeOfThoughts => write!(f, "TreeOfThoughts"),
         }
     }
 }
@@ -605,6 +618,9 @@ pub struct ExplorationMap {
     pub exploration_depth: usize,
     pub edges: Vec<ExplorationEdge>,
     pub neighbors_cache: HashMap<EntityKey, Vec<EntityKey>>,
+    pub activated_nodes: HashMap<String, f32>,
+    pub total_concepts_explored: usize,
+    pub creative_bridges_found: usize,
 }
 
 /// Edge in exploration map
@@ -625,6 +641,9 @@ impl ExplorationMap {
             exploration_depth: 0,
             edges: Vec::new(),
             neighbors_cache: HashMap::new(),
+            activated_nodes: HashMap::new(),
+            total_concepts_explored: 0,
+            creative_bridges_found: 0,
         }
     }
     

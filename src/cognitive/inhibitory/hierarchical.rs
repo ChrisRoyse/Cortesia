@@ -8,6 +8,7 @@ use crate::core::brain_types::ActivationPattern;
 use crate::core::types::EntityKey;
 use crate::error::Result;
 use std::sync::Arc;
+use std::time::SystemTime;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
 
@@ -225,7 +226,9 @@ mod tests {
             entity_keys.push(entity);
         }
         
-        (ActivationPattern { activations }, entity_keys)
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations = activations;
+        (pattern, entity_keys)
     }
 
     fn create_test_system() -> CompetitiveInhibitionSystem {
@@ -463,7 +466,11 @@ mod tests {
     #[tokio::test]
     async fn test_empty_pattern_hierarchical_inhibition() {
         let system = create_test_system();
-        let mut pattern = ActivationPattern { activations: HashMap::new() };
+        let mut pattern = ActivationPattern { 
+            activations: HashMap::new(),
+            timestamp: SystemTime::now(),
+            query: "test".to_string(),
+        };
         
         let result = apply_hierarchical_inhibition(
             &system,

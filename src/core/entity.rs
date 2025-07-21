@@ -712,12 +712,12 @@ mod tests {
     fn test_large_scale_operations() {
         let mut store = EntityStore::new();
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
-        let entity_count = 1000;
+        let entity_count: usize = 1000;
         
         // Insert many entities
         for i in 0..entity_count {
-            let key = sm.insert(create_test_entity_data(i, &format!("entity_{}", i)));
-            let data = create_test_entity_data(i, &format!("entity_{}", i));
+            let key = sm.insert(create_test_entity_data(i as u16, &format!("entity_{}", i)));
+            let data = create_test_entity_data(i as u16, &format!("entity_{}", i));
             store.insert(key, &data).unwrap();
         }
         

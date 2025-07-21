@@ -45,6 +45,16 @@ impl BrainEnhancedKnowledgeGraph {
         Ok(entity_key)
     }
 
+    /// Add entity (test compatibility method)
+    pub async fn add_entity(&self, data: EntityData) -> Result<EntityKey> {
+        // Generate a unique ID for the entity
+        let id = {
+            let core_graph = &self.core_graph;
+            (core_graph.entity_count() as u32) + 1
+        };
+        self.insert_brain_entity(id, data).await
+    }
+
     /// Insert logic gate entity
     pub async fn insert_logic_gate(&self, id: u32, gate_type: &str, inputs: Vec<EntityKey>, outputs: Vec<EntityKey>) -> Result<EntityKey> {
         // Create gate properties

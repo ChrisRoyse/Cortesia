@@ -659,8 +659,10 @@ mod tests {
         let cloned = entity.clone();
         assert_eq!(entity, cloned);
         
-        // Ensure it's a deep clone
-        assert_ne!(entity.attributes().as_ptr(), cloned.attributes().as_ptr());
+        // Ensure it's a deep clone by modifying the clone and checking the original is unchanged
+        let mut cloned_mod = cloned.clone();
+        cloned_mod.add_attribute("new_key", "new_value");
+        assert!(!entity.attributes.contains_key("new_key"));
     }
 
     #[test]

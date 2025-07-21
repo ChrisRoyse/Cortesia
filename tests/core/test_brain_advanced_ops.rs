@@ -1,9 +1,9 @@
 //! Integration tests for brain_advanced_ops.rs
 //! Tests complete learning and reasoning cycles, concept operations, and graph optimization
 
-use llm_knowledge_graph::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
-use llm_knowledge_graph::core::brain_enhanced_graph::brain_graph_types::*;
-use llm_knowledge_graph::core::types::{EntityData, EntityKey};
+use llmkg::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_graph_types::*;
+use llmkg::core::types::{EntityData, EntityKey};
 use std::time::Instant;
 use tokio;
 

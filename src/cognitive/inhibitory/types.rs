@@ -36,7 +36,7 @@ pub struct CompetitionGroup {
     pub temporal_dynamics: TemporalDynamics,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompetitionType {
     Semantic,      // Competing semantic concepts
     Temporal,      // Competing temporal states
@@ -235,7 +235,7 @@ pub struct ParameterAdjustment {
     pub confidence: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParameterAdjustmentType {
     StrengthOptimization,
     CompetitionOptimization,

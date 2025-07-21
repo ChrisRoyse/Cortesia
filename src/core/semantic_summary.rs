@@ -503,7 +503,7 @@ mod tests {
 
     // Helper function to create a test EntityKey
     fn create_test_entity_key() -> EntityKey {
-        let mut entities = SlotMap::new();
+        let mut entities: SlotMap<EntityKey, ()> = SlotMap::with_key();
         entities.insert(())
     }
 

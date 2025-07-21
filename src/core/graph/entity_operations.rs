@@ -67,6 +67,16 @@ impl KnowledgeGraph {
         Ok(key)
     }
     
+    /// Add entity (test compatibility method)
+    pub fn add_entity(&self, data: EntityData) -> Result<EntityKey> {
+        // Generate a unique ID for the entity
+        let id = {
+            let id_map = self.entity_id_map.read();
+            (id_map.len() as u32) + 1
+        };
+        self.insert_entity(id, data)
+    }
+    
     /// Batch insert entities for high throughput
     /// This is much more efficient than individual inserts for large datasets
     /// Uses parallel processing for validation and encoding on large batches

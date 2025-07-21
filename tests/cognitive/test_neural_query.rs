@@ -2,7 +2,7 @@
 //! Private method tests are in src/cognitive/neural_query.rs
 
 use llmkg::cognitive::neural_query::*;
-use llmkg::cognitive::types::*;
+use llmkg::cognitive::*;
 use llmkg::graph::Graph;
 use std::sync::Arc;
 

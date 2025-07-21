@@ -580,7 +580,6 @@ mod tests {
             object: "chocolate".to_string(),
             confidence: 0.9,
             source: Some("test".to_string()),
-            metadata: HashMap::new(),
         }
     }
 
@@ -938,7 +937,6 @@ mod tests {
             object: "chocolate".to_string(),
             confidence: 0.9,
             source: Some("test".to_string()),
-            metadata: HashMap::new(),
         };
         
         let triple2 = Triple {
@@ -947,7 +945,6 @@ mod tests {
             object: "sweet".to_string(),
             confidence: 0.8,
             source: Some("test".to_string()),
-            metadata: HashMap::new(),
         };
         
         engine.store_triple(triple1, None).unwrap();

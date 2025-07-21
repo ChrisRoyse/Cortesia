@@ -604,7 +604,7 @@ mod tests {
         let result = integration.cognitive_reasoning(
             "What is the relationship between cause and effect?",
             Some("philosophical context"),
-            Some(CognitivePatternType::ChainOfThought),
+            Some(CognitivePatternType::Critical),
         ).await;
         assert!(result.is_ok());
         
@@ -622,7 +622,7 @@ mod tests {
         let result = integration.cognitive_reasoning(
             "Test query",
             None,
-            Some(CognitivePatternType::ChainOfThought),
+            Some(CognitivePatternType::Critical),
         ).await;
         assert!(result.is_err());
         
@@ -678,11 +678,12 @@ mod tests {
         let integration = create_test_integration().await;
         
         // Test that all components are properly initialized
-        assert!(!integration.brain_graph.is_null());
-        assert!(!integration.neural_server.is_null());
-        assert!(!integration.structure_predictor.is_null());
-        assert!(!integration.canonicalizer.is_null());
-        assert!(!integration.temporal_processor.is_null());
+        // Arc pointers in Rust can't be null, so we just verify they exist
+        assert!(Arc::strong_count(&integration.brain_graph) > 0);
+        assert!(Arc::strong_count(&integration.neural_server) > 0);
+        assert!(Arc::strong_count(&integration.structure_predictor) > 0);
+        assert!(Arc::strong_count(&integration.canonicalizer) > 0);
+        assert!(Arc::strong_count(&integration.temporal_processor) > 0);
         
         // Test helper coordination
         let stats = integration.get_phase1_statistics().await;

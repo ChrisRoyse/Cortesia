@@ -463,12 +463,16 @@ mod tests {
 
     // Helper to create test entity data
     fn create_test_entity_data(id: u32, embedding: Vec<f32>) -> crate::core::types::EntityData {
+        let props = serde_json::json!({
+            "id": id,
+            "entity_type": "test",
+            "metadata": {}
+        });
+        
         crate::core::types::EntityData {
-            id,
-            entity_type: "test".to_string(),
-            properties: HashMap::new(),
+            type_id: 1, // Test entity type
+            properties: props.to_string(),
             embedding,
-            metadata: HashMap::new(),
         }
     }
 
@@ -576,12 +580,12 @@ mod tests {
         let mut initial_activations = HashMap::new();
         
         // Add activation below threshold (0.1)
-        initial_activations.insert(EntityKey::new(1), 0.05);
+        initial_activations.insert(EntityKey::new(1.to_string()), 0.05);
         
         let result = graph.propagate_activation(&initial_activations).await;
         // Should only contain the initial activation, no propagation
         assert_eq!(result.len(), 1);
-        assert_eq!(result.get(&EntityKey::new(1)), Some(&0.05));
+        assert_eq!(result.get(&EntityKey::new(1.to_string())), Some(&0.05));
     }
 
     #[tokio::test]
@@ -597,18 +601,17 @@ mod tests {
         
         // Add relationship
         graph.core_graph.add_relationship(
-            EntityKey::new(1), 
-            EntityKey::new(2), 
-            "connects_to".to_string(),
-            HashMap::new()
+            EntityKey::new(1.to_string()), 
+            EntityKey::new(2.to_string()), 
+            1.0
         ).unwrap();
         
         let mut initial_activations = HashMap::new();
-        initial_activations.insert(EntityKey::new(1), 0.5); // Above threshold
+        initial_activations.insert(EntityKey::new(1.to_string()), 0.5); // Above threshold
         
         let result = graph.propagate_activation(&initial_activations).await;
         assert!(!result.is_empty());
-        assert!(result.contains_key(&EntityKey::new(1)));
+        assert!(result.contains_key(&EntityKey::new(1.to_string())));
     }
 
     #[tokio::test]
@@ -624,8 +627,8 @@ mod tests {
     async fn test_apply_neural_dampening_with_plasticity() {
         let graph = create_test_brain_graph().await;
         let mut activations = HashMap::new();
-        activations.insert(EntityKey::new(1), 0.8);
-        activations.insert(EntityKey::new(2), 0.2);
+        activations.insert(EntityKey::new(1.to_string()), 0.8);
+        activations.insert(EntityKey::new(2.to_string()), 0.2);
         
         let result = graph.apply_neural_dampening(&activations).await;
         
@@ -645,8 +648,8 @@ mod tests {
         graph.config.enable_neural_plasticity = false;
         
         let mut activations = HashMap::new();
-        activations.insert(EntityKey::new(1), 0.8);
-        activations.insert(EntityKey::new(2), 0.2);
+        activations.insert(EntityKey::new(1.to_string()), 0.8);
+        activations.insert(EntityKey::new(2.to_string()), 0.2);
         
         let result = graph.apply_neural_dampening(&activations).await;
         
@@ -654,21 +657,16 @@ mod tests {
         // 0.8 * 0.8 = 0.64
         // 0.2 * 0.8 = 0.16
         assert_eq!(result.len(), 2);
-        assert!(result.get(&EntityKey::new(1)).unwrap() - 0.64 < 0.01);
-        assert!(result.get(&EntityKey::new(2)).unwrap() - 0.16 < 0.01);
+        assert!(result.get(&EntityKey::new(1.to_string())).unwrap() - 0.64 < 0.01);
+        assert!(result.get(&EntityKey::new(2.to_string())).unwrap() - 0.16 < 0.01);
     }
 
     #[tokio::test]
     async fn test_calculate_concept_embedding_empty_concept() {
         let graph = create_test_brain_graph().await;
-        let concept_structure = ConceptStructure {
-            concept_name: "test".to_string(),
-            central_entities: Vec::new(),
-            peripheral_entities: Vec::new(),
-            concept_activation: 0.5,
-            coherence_score: 0.8,
-            discovery_timestamp: std::time::SystemTime::now(),
-        };
+        let mut concept_structure = ConceptStructure::new();
+        concept_structure.concept_activation = 0.5;
+        concept_structure.coherence_score = 0.8;
         
         let result = graph.calculate_concept_embedding(&concept_structure).await;
         assert!(result.is_ok());
@@ -689,14 +687,11 @@ mod tests {
         graph.core_graph.add_entity(entity1).unwrap();
         graph.core_graph.add_entity(entity2).unwrap();
         
-        let concept_structure = ConceptStructure {
-            concept_name: "test".to_string(),
-            central_entities: vec![EntityKey::new(1), EntityKey::new(2)],
-            peripheral_entities: Vec::new(),
-            concept_activation: 0.5,
-            coherence_score: 0.8,
-            discovery_timestamp: std::time::SystemTime::now(),
-        };
+        let mut concept_structure = ConceptStructure::new();
+        concept_structure.add_input(EntityKey::from_raw_parts(1, 0));
+        concept_structure.add_input(EntityKey::from_raw_parts(2, 0));
+        concept_structure.concept_activation = 0.5;
+        concept_structure.coherence_score = 0.8;
         
         let result = graph.calculate_concept_embedding(&concept_structure).await;
         assert!(result.is_ok());
@@ -967,23 +962,23 @@ mod tests {
         graph.core_graph.add_entity(entity3).unwrap();
         
         graph.core_graph.add_relationship(
-            EntityKey::new(1), EntityKey::new(2), 
-            "connects".to_string(), HashMap::new()
+            EntityKey::new(1.to_string()), EntityKey::new(2.to_string()), 
+            1.0
         ).unwrap();
         graph.core_graph.add_relationship(
-            EntityKey::new(2), EntityKey::new(3), 
-            "connects".to_string(), HashMap::new()
+            EntityKey::new(2.to_string()), EntityKey::new(3.to_string()), 
+            1.0
         ).unwrap();
         
         let mut initial_activations = HashMap::new();
-        initial_activations.insert(EntityKey::new(1), 0.8);
+        initial_activations.insert(EntityKey::new(1.to_string()), 0.8);
         
         let result = graph.propagate_activation(&initial_activations).await;
         
         // Should only propagate to depth 1 (entities 1 and 2)
-        assert!(result.contains_key(&EntityKey::new(1)));
+        assert!(result.contains_key(&EntityKey::new(1.to_string())));
         // Entity 3 should not be activated due to depth limit
-        assert!(!result.contains_key(&EntityKey::new(3)) || 
-                result.get(&EntityKey::new(3)).unwrap() == &0.0);
+        assert!(!result.contains_key(&EntityKey::new(3.to_string())) || 
+                result.get(&EntityKey::new(3.to_string())).unwrap() == &0.0);
     }
 }

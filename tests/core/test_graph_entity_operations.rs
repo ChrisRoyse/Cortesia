@@ -399,8 +399,9 @@ fn test_entity_embedding_operations() {
     // Verify embedding was updated
     let updated_embedding = graph.get_entity_embedding(update_key);
     assert!(updated_embedding.is_some());
-    assert_eq!(updated_embedding.unwrap(), new_embedding);
-    assert_ne!(updated_embedding.unwrap(), embeddings[0]);
+    let updated_embedding_value = updated_embedding.unwrap();
+    assert_eq!(updated_embedding_value, new_embedding);
+    assert_ne!(updated_embedding_value, embeddings[0]);
     
     // Phase 4: Test embedding normalization consistency
     let unnormalized = vec![1.0, 2.0, 3.0, 4.0]; // Will be extended to 96 dims

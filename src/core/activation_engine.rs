@@ -353,8 +353,8 @@ mod tests {
             let source_entity = BrainInspiredEntity::new("source".to_string(), EntityDirection::Input);
             let target_entity = BrainInspiredEntity::new("target".to_string(), EntityDirection::Output);
             
-            let source_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let target_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let source_key = EntityKey::from_raw_parts(1, 0);
+            let target_key = EntityKey::from_raw_parts(2, 0);
 
             entities.insert(source_key, source_entity);
             entities.insert(target_key, target_entity);
@@ -426,8 +426,8 @@ mod tests {
             let entity1 = BrainInspiredEntity::new("entity1".to_string(), EntityDirection::Output);
             let entity2 = BrainInspiredEntity::new("entity2".to_string(), EntityDirection::Output);
             
-            let key1 = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let key2 = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let key1 = EntityKey::from_raw_parts(1, 0);
+            let key2 = EntityKey::from_raw_parts(2, 0);
 
             entities.insert(key1, entity1);
             entities.insert(key2, entity2);
@@ -457,8 +457,8 @@ mod tests {
             let mut activations = HashMap::new();
             let mut trace = Vec::new();
 
-            let source_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let target_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let source_key = EntityKey::from_raw_parts(1, 0);
+            let target_key = EntityKey::from_raw_parts(2, 0);
 
             // Create inhibitory relationship
             let mut relationship = BrainInspiredRelationship::new(source_key, target_key, RelationType::RelatedTo);
@@ -494,8 +494,8 @@ mod tests {
             let mut activations = HashMap::new();
             let mut trace = Vec::new();
 
-            let source_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let target_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let source_key = EntityKey::from_raw_parts(1, 0);
+            let target_key = EntityKey::from_raw_parts(2, 0);
 
             // Create inhibitory relationship
             let mut relationship = BrainInspiredRelationship::new(source_key, target_key, RelationType::RelatedTo);
@@ -526,8 +526,8 @@ mod tests {
             let mut activations = HashMap::new();
             let mut trace = Vec::new();
 
-            let source_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let target_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let source_key = EntityKey::from_raw_parts(1, 0);
+            let target_key = EntityKey::from_raw_parts(2, 0);
 
             // Create inhibitory relationship
             let mut relationship = BrainInspiredRelationship::new(source_key, target_key, RelationType::RelatedTo);
@@ -564,10 +564,10 @@ mod tests {
             let input2 = BrainInspiredEntity::new("input2".to_string(), EntityDirection::Input);
             let output = BrainInspiredEntity::new("output".to_string(), EntityDirection::Output);
 
-            let input1_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let input2_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
-            let output_key = slotmap::Key::from(slotmap::KeyData::from_ffi(3));
-            let gate_key = slotmap::Key::from(slotmap::KeyData::from_ffi(4));
+            let input1_key = EntityKey::from_raw_parts(1, 0);
+            let input2_key = EntityKey::from_raw_parts(2, 0);
+            let output_key = EntityKey::from_raw_parts(3, 0);
+            let gate_key = EntityKey::from_raw_parts(4, 0);
 
             entities.insert(input1_key, input1);
             entities.insert(input2_key, input2);
@@ -615,7 +615,7 @@ mod tests {
             let mut activations = HashMap::new();
             let mut trace = Vec::new();
 
-            let gate_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let gate_key = EntityKey::from_raw_parts(1, 0);
 
             // Create gate with no inputs
             let gate = LogicGate {
@@ -649,8 +649,8 @@ mod tests {
             let mut relationships = AHashMap::new();
             let mut activations = HashMap::new();
 
-            let entity_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let other_key = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let entity_key = EntityKey::from_raw_parts(1, 0);
+            let other_key = EntityKey::from_raw_parts(2, 0);
 
             // Create connected entities (not input entities)
             let mut entity = BrainInspiredEntity::new("entity".to_string(), EntityDirection::Output);
@@ -688,7 +688,7 @@ mod tests {
             let relationships = AHashMap::new();
             let mut activations = HashMap::new();
 
-            let entity_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let entity_key = EntityKey::from_raw_parts(1, 0);
 
             // Create input entity
             let entity = BrainInspiredEntity::new("input".to_string(), EntityDirection::Input);
@@ -719,7 +719,7 @@ mod tests {
             let relationships = AHashMap::new(); // No relationships
             let mut activations = HashMap::new();
 
-            let entity_key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let entity_key = EntityKey::from_raw_parts(1, 0);
 
             // Create disconnected entity
             let entity = BrainInspiredEntity::new("disconnected".to_string(), EntityDirection::Output);
@@ -749,8 +749,8 @@ mod tests {
             let mut previous = HashMap::new();
             let mut current = HashMap::new();
 
-            let key1 = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let key2 = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let key1 = EntityKey::from_raw_parts(1, 0);
+            let key2 = EntityKey::from_raw_parts(2, 0);
 
             // Very small changes (below threshold)
             previous.insert(key1, 0.5);
@@ -770,8 +770,8 @@ mod tests {
             let mut previous = HashMap::new();
             let mut current = HashMap::new();
 
-            let key1 = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
-            let key2 = slotmap::Key::from(slotmap::KeyData::from_ffi(2));
+            let key1 = EntityKey::from_raw_parts(1, 0);
+            let key2 = EntityKey::from_raw_parts(2, 0);
 
             // Large changes (above threshold)
             previous.insert(key1, 0.5);
@@ -791,7 +791,7 @@ mod tests {
             let previous = HashMap::new();
             let mut current = HashMap::new();
 
-            let key1 = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let key1 = EntityKey::from_raw_parts(1, 0);
 
             // New activation appears
             current.insert(key1, 0.5);
@@ -810,7 +810,7 @@ mod tests {
             let engine = ActivationPropagationEngine::new(config);
 
             let mut pattern = ActivationPattern::new("invalid_test".to_string());
-            let key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let key = EntityKey::from_raw_parts(1, 0);
             
             // Test with NaN activation
             pattern.activations.insert(key, f32::NAN);
@@ -825,7 +825,7 @@ mod tests {
             let engine = ActivationPropagationEngine::new(config);
 
             let mut pattern = ActivationPattern::new("infinity_test".to_string());
-            let key = slotmap::Key::from(slotmap::KeyData::from_ffi(1));
+            let key = EntityKey::from_raw_parts(1, 0);
             
             // Test with infinity activation
             pattern.activations.insert(key, f32::INFINITY);
@@ -865,7 +865,7 @@ mod tests {
         #[tokio::test]
         async fn test_propagate_activation_cycle_detection() {
             let config = create_test_config();
-            let engine = ActivationPropagationEngine::new(config);
+            let engine = ActivationPropagationEngine::new(config.clone());
 
             // Create a cycle: A -> B -> C -> A
             let entity_a = BrainInspiredEntity::new("a".to_string(), EntityDirection::Input);
@@ -953,7 +953,7 @@ mod tests {
 
             // Create logic gate
             let gate = LogicGate {
-                gate_id: slotmap::Key::from(slotmap::KeyData::from_ffi(999)),
+                gate_id: EntityKey::from_raw_parts(999, 0),
                 gate_type: LogicGateType::And,
                 input_nodes: vec![input1_key, input2_key],
                 output_nodes: vec![hidden_key],
