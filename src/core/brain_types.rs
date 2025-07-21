@@ -384,56 +384,567 @@ impl BrainInspiredRelationship {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
-    #[test]
-    fn test_logic_gate_and() {
-        let mut gate = LogicGate::new(LogicGateType::And, 0.5);
-        gate.input_nodes = vec![EntityKey::from(slotmap::KeyData::from_ffi(1)), EntityKey::from(slotmap::KeyData::from_ffi(2))];
-        
-        // Both inputs high
-        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.8);
-        
-        // One input low
-        assert_eq!(gate.calculate_output(&[0.3, 0.9]).unwrap(), 0.0);
+    // Helper function to create test keys
+    fn create_test_key(id: u64) -> EntityKey {
+        EntityKey::from(slotmap::KeyData::from_ffi(id))
     }
 
     #[test]
-    fn test_logic_gate_or() {
+    fn test_logic_gate_and_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::And, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // Both inputs above threshold
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.8);
+        
+        // One input below threshold
+        assert_eq!(gate.calculate_output(&[0.3, 0.9]).unwrap(), 0.0);
+        
+        // Both inputs below threshold
+        assert_eq!(gate.calculate_output(&[0.2, 0.3]).unwrap(), 0.0);
+        
+        // Both inputs at threshold
+        assert_eq!(gate.calculate_output(&[0.5, 0.5]).unwrap(), 0.5);
+        
+        // Zero inputs
+        assert_eq!(gate.calculate_output(&[0.0, 0.0]).unwrap(), 0.0);
+        
+        // Maximum inputs
+        assert_eq!(gate.calculate_output(&[1.0, 1.0]).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn test_logic_gate_and_empty_inputs() {
+        let gate = LogicGate::new(LogicGateType::And, 0.5);
+        
+        // Empty input array with empty input nodes
+        assert!(gate.calculate_output(&[]).is_ok());
+    }
+
+    #[test]
+    fn test_logic_gate_and_mismatch_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::And, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // Input count mismatch
+        assert!(gate.calculate_output(&[0.8]).is_err());
+        assert!(gate.calculate_output(&[0.8, 0.9, 0.7]).is_err());
+    }
+
+    #[test]
+    fn test_logic_gate_or_valid_inputs() {
         let mut gate = LogicGate::new(LogicGateType::Or, 0.5);
-        gate.input_nodes = vec![EntityKey::from(slotmap::KeyData::from_ffi(1)), EntityKey::from(slotmap::KeyData::from_ffi(2))];
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
         
-        // At least one input high
+        // At least one input above threshold
         assert_eq!(gate.calculate_output(&[0.3, 0.9]).unwrap(), 0.9);
+        assert_eq!(gate.calculate_output(&[0.8, 0.3]).unwrap(), 0.8);
         
-        // Both inputs low
+        // Both inputs above threshold
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.9);
+        
+        // Both inputs below threshold
+        assert_eq!(gate.calculate_output(&[0.3, 0.4]).unwrap(), 0.0);
+        
+        // Zero inputs
+        assert_eq!(gate.calculate_output(&[0.0, 0.0]).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_logic_gate_not_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Not, 0.5);
+        gate.input_nodes = vec![create_test_key(1)];
+        
+        // Single input inversion
+        assert_eq!(gate.calculate_output(&[0.8]).unwrap(), 0.2);
+        assert_eq!(gate.calculate_output(&[0.0]).unwrap(), 1.0);
+        assert_eq!(gate.calculate_output(&[1.0]).unwrap(), 0.0);
+        assert_eq!(gate.calculate_output(&[0.5]).unwrap(), 0.5);
+    }
+
+    #[test]
+    fn test_logic_gate_not_invalid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Not, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // NOT gate with more than one input should fail
+        assert!(gate.calculate_output(&[0.8, 0.9]).is_err());
+        
+        gate.input_nodes = vec![];
+        assert!(gate.calculate_output(&[]).is_err());
+    }
+
+    #[test]
+    fn test_logic_gate_xor_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Xor, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // XOR true cases
+        assert_eq!(gate.calculate_output(&[0.8, 0.3]).unwrap(), 0.8);
+        assert_eq!(gate.calculate_output(&[0.3, 0.8]).unwrap(), 0.8);
+        
+        // XOR false cases (both above or both below threshold)
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.0);
         assert_eq!(gate.calculate_output(&[0.3, 0.4]).unwrap(), 0.0);
     }
 
     #[test]
-    fn test_entity_activation_decay() {
-        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+    fn test_logic_gate_xor_invalid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Xor, 0.5);
+        gate.input_nodes = vec![create_test_key(1)];
         
-        // Initial activation
-        entity.activate(0.8, 0.1);
-        assert!((entity.activation_state - 0.8).abs() < 0.01);
+        // XOR with wrong number of inputs
+        assert!(gate.calculate_output(&[0.8]).is_err());
         
-        // Activation adds up
-        entity.activate(0.3, 0.1);
-        assert!(entity.activation_state > 0.8);
-        assert!(entity.activation_state <= 1.0);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2), create_test_key(3)];
+        assert!(gate.calculate_output(&[0.8, 0.9, 0.7]).is_err());
     }
 
     #[test]
-    fn test_hebbian_learning() {
-        let mut relationship = BrainInspiredRelationship::new(
-            EntityKey::default(),
-            EntityKey::default(),
+    fn test_logic_gate_nand_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Nand, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // NAND: NOT AND
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.0); // AND would be true, so NAND is false
+        assert_eq!(gate.calculate_output(&[0.3, 0.9]).unwrap(), 1.0); // AND would be false, so NAND is true
+        assert_eq!(gate.calculate_output(&[0.3, 0.4]).unwrap(), 1.0); // AND would be false, so NAND is true
+    }
+
+    #[test]
+    fn test_logic_gate_nor_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Nor, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // NOR: NOT OR
+        assert_eq!(gate.calculate_output(&[0.3, 0.9]).unwrap(), 0.0); // OR would be true, so NOR is false
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.0); // OR would be true, so NOR is false
+        assert_eq!(gate.calculate_output(&[0.3, 0.4]).unwrap(), 1.0); // OR would be false, so NOR is true
+    }
+
+    #[test]
+    fn test_logic_gate_xnor_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Xnor, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // XNOR: NOT XOR
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 0.9); // XOR would be false, so XNOR is true
+        assert_eq!(gate.calculate_output(&[0.3, 0.4]).unwrap(), 0.4); // XOR would be false, so XNOR is true
+        assert_eq!(gate.calculate_output(&[0.8, 0.3]).unwrap(), 0.0); // XOR would be true, so XNOR is false
+    }
+
+    #[test]
+    fn test_logic_gate_xnor_invalid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Xnor, 0.5);
+        gate.input_nodes = vec![create_test_key(1)];
+        
+        // XNOR with wrong number of inputs
+        assert!(gate.calculate_output(&[0.8]).is_err());
+    }
+
+    #[test]
+    fn test_logic_gate_identity_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Identity, 0.5);
+        gate.input_nodes = vec![create_test_key(1)];
+        
+        // Identity gate passes through input unchanged
+        assert_eq!(gate.calculate_output(&[0.8]).unwrap(), 0.8);
+        assert_eq!(gate.calculate_output(&[0.0]).unwrap(), 0.0);
+        assert_eq!(gate.calculate_output(&[1.0]).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn test_logic_gate_identity_invalid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Identity, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        
+        // Identity with wrong number of inputs
+        assert!(gate.calculate_output(&[0.8, 0.9]).is_err());
+        
+        gate.input_nodes = vec![];
+        assert!(gate.calculate_output(&[]).is_err());
+    }
+
+    #[test]
+    fn test_logic_gate_threshold_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Threshold, 1.0);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2), create_test_key(3)];
+        
+        // Sum above threshold
+        assert_eq!(gate.calculate_output(&[0.5, 0.6, 0.7]).unwrap(), 1.0); // Sum is 1.8, clamped to 1.0
+        
+        // Sum at threshold
+        assert_eq!(gate.calculate_output(&[0.3, 0.3, 0.4]).unwrap(), 1.0);
+        
+        // Sum below threshold
+        assert_eq!(gate.calculate_output(&[0.2, 0.2, 0.2]).unwrap(), 0.0);
+        
+        // Empty inputs
+        gate.input_nodes = vec![];
+        assert_eq!(gate.calculate_output(&[]).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_logic_gate_inhibitory_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Inhibitory, 0.5);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2), create_test_key(3)];
+        
+        // Primary input minus inhibitory inputs
+        assert_eq!(gate.calculate_output(&[0.8, 0.2, 0.1]).unwrap(), 0.5); // 0.8 - (0.2 + 0.1) = 0.5
+        
+        // Strong inhibition
+        assert_eq!(gate.calculate_output(&[0.5, 0.3, 0.4]).unwrap(), 0.0); // 0.5 - 0.7 = -0.2, clamped to 0.0
+        
+        // No inhibition
+        assert_eq!(gate.calculate_output(&[0.8, 0.0, 0.0]).unwrap(), 0.8);
+        
+        // Single input (no inhibition)
+        gate.input_nodes = vec![create_test_key(1)];
+        assert_eq!(gate.calculate_output(&[0.8]).unwrap(), 0.8);
+        
+        // Empty inputs
+        gate.input_nodes = vec![];
+        assert_eq!(gate.calculate_output(&[]).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_logic_gate_weighted_valid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Weighted, 1.0);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        gate.weight_matrix = vec![0.5, 0.8];
+        
+        // Weighted sum above threshold
+        assert_eq!(gate.calculate_output(&[0.8, 0.9]).unwrap(), 1.0); // 0.8*0.5 + 0.9*0.8 = 1.12, clamped to 1.0
+        
+        // Weighted sum at threshold
+        gate.weight_matrix = vec![0.5, 0.5];
+        assert_eq!(gate.calculate_output(&[1.0, 1.0]).unwrap(), 1.0); // 1.0*0.5 + 1.0*0.5 = 1.0
+        
+        // Weighted sum below threshold
+        assert_eq!(gate.calculate_output(&[0.5, 0.5]).unwrap(), 0.0); // 0.5*0.5 + 0.5*0.5 = 0.5 < 1.0
+    }
+
+    #[test]
+    fn test_logic_gate_weighted_invalid_inputs() {
+        let mut gate = LogicGate::new(LogicGateType::Weighted, 1.0);
+        gate.input_nodes = vec![create_test_key(1), create_test_key(2)];
+        gate.weight_matrix = vec![0.5]; // Mismatch in weight matrix size
+        
+        assert!(gate.calculate_output(&[0.8, 0.9]).is_err());
+        
+        gate.weight_matrix = vec![0.5, 0.8, 0.3]; // Too many weights
+        assert!(gate.calculate_output(&[0.8, 0.9]).is_err());
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_new() {
+        let entity = BrainInspiredEntity::new("test_concept".to_string(), EntityDirection::Input);
+        
+        assert_eq!(entity.concept_id, "test_concept");
+        assert_eq!(entity.direction, EntityDirection::Input);
+        assert_eq!(entity.activation_state, 0.0);
+        assert!(entity.properties.is_empty());
+        assert!(entity.embedding.is_empty());
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_activate_initial() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        
+        // Initial activation on zero state
+        let result = entity.activate(0.8, 0.1);
+        assert!((result - 0.8).abs() < 0.01);
+        assert!((entity.activation_state - 0.8).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_activate_accumulation() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        
+        // First activation
+        entity.activate(0.5, 0.1);
+        
+        // Second activation should accumulate (without significant decay due to immediate timing)
+        let result = entity.activate(0.4, 0.1);
+        assert!(result > 0.5); // Should be greater than initial
+        assert!(result <= 1.0); // Should be clamped at 1.0
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_activate_clamping() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        
+        // Activation that would exceed 1.0 should be clamped
+        let result = entity.activate(1.5, 0.1);
+        assert_eq!(result, 1.0);
+        assert_eq!(entity.activation_state, 1.0);
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_activate_zero_decay() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        
+        // Test with zero decay rate
+        entity.activate(0.8, 0.0);
+        let result = entity.activate(0.2, 0.0);
+        assert_eq!(result, 1.0); // 0.8 + 0.2 = 1.0
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_activate_temporal_updates() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        let initial_time = entity.last_activation;
+        
+        // Activation should update timestamp
+        entity.activate(0.5, 0.1);
+        assert!(entity.last_activation > initial_time);
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_new() {
+        let source = create_test_key(1);
+        let target = create_test_key(2);
+        let rel = BrainInspiredRelationship::new(source, target, RelationType::RelatedTo);
+        
+        assert_eq!(rel.source, source);
+        assert_eq!(rel.target, target);
+        assert_eq!(rel.source_key, source);
+        assert_eq!(rel.target_key, target);
+        assert_eq!(rel.relation_type, RelationType::RelatedTo);
+        assert_eq!(rel.weight, 1.0);
+        assert_eq!(rel.strength, 1.0);
+        assert!(!rel.is_inhibitory);
+        assert_eq!(rel.temporal_decay, 0.1);
+        assert_eq!(rel.activation_count, 0);
+        assert_eq!(rel.usage_count, 0);
+        assert!(rel.metadata.is_empty());
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_strengthen_basic() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
             RelationType::RelatedTo
         );
         
-        let initial_weight = relationship.weight;
-        relationship.strengthen(0.1);
-        assert!(relationship.weight >= initial_weight, "Weight should increase or stay same: {} >= {}", relationship.weight, initial_weight);
-        assert_eq!(relationship.activation_count, 1);
+        let initial_weight = rel.weight;
+        let initial_count = rel.activation_count;
+        let initial_time = rel.last_strengthened;
+        
+        rel.strengthen(0.1);
+        
+        assert!(rel.weight >= initial_weight);
+        assert_eq!(rel.strength, rel.weight);
+        assert_eq!(rel.activation_count, initial_count + 1);
+        assert_eq!(rel.usage_count, rel.activation_count);
+        assert!(rel.last_strengthened > initial_time);
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_strengthen_clamping() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        // Strengthen beyond maximum
+        rel.strengthen(0.5); // Should clamp at 1.0
+        assert_eq!(rel.weight, 1.0);
+        assert_eq!(rel.strength, 1.0);
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_strengthen_zero_rate() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        let initial_weight = rel.weight;
+        rel.strengthen(0.0);
+        
+        assert_eq!(rel.weight, initial_weight);
+        assert_eq!(rel.activation_count, 1); // Counter should still increment
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_strengthen_negative_rate() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        // Negative learning rate should decrease weight
+        rel.strengthen(-0.2);
+        assert!(rel.weight < 1.0);
+        assert_eq!(rel.strength, rel.weight);
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_strengthen_multiple_calls() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        // Multiple strengthening calls
+        rel.strengthen(0.1);
+        rel.strengthen(0.1);
+        rel.strengthen(0.1);
+        
+        assert_eq!(rel.activation_count, 3);
+        assert_eq!(rel.usage_count, 3);
+        assert!(rel.weight <= 1.0); // Should be clamped
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_apply_decay() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        let initial_weight = rel.weight;
+        let result = rel.apply_decay();
+        
+        // Immediate decay should have minimal effect
+        assert!(result <= initial_weight);
+        assert_eq!(rel.weight, result);
+        assert_eq!(rel.strength, rel.weight);
+    }
+
+    #[test]
+    fn test_activation_pattern_new() {
+        let pattern = ActivationPattern::new("test query".to_string());
+        
+        assert_eq!(pattern.query, "test query");
+        assert!(pattern.activations.is_empty());
+    }
+
+    #[test]
+    fn test_activation_pattern_get_top_activations_empty() {
+        let pattern = ActivationPattern::new("test".to_string());
+        
+        let top = pattern.get_top_activations(5);
+        assert!(top.is_empty());
+    }
+
+    #[test]
+    fn test_activation_pattern_get_top_activations_populated() {
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations.insert(create_test_key(1), 0.8);
+        pattern.activations.insert(create_test_key(2), 0.6);
+        pattern.activations.insert(create_test_key(3), 0.9);
+        pattern.activations.insert(create_test_key(4), 0.4);
+        
+        let top = pattern.get_top_activations(2);
+        assert_eq!(top.len(), 2);
+        assert_eq!(top[0].1, 0.9); // Highest activation
+        assert_eq!(top[1].1, 0.8); // Second highest
+    }
+
+    #[test]
+    fn test_activation_pattern_get_top_activations_limit_exceeded() {
+        let mut pattern = ActivationPattern::new("test".to_string());
+        pattern.activations.insert(create_test_key(1), 0.5);
+        
+        let top = pattern.get_top_activations(5);
+        assert_eq!(top.len(), 1); // Should only return available activations
+    }
+
+    #[test]
+    fn test_logic_gate_type_display() {
+        assert_eq!(format!("{}", LogicGateType::And), "and");
+        assert_eq!(format!("{}", LogicGateType::Or), "or");
+        assert_eq!(format!("{}", LogicGateType::Not), "not");
+        assert_eq!(format!("{}", LogicGateType::Xor), "xor");
+        assert_eq!(format!("{}", LogicGateType::Nand), "nand");
+        assert_eq!(format!("{}", LogicGateType::Nor), "nor");
+        assert_eq!(format!("{}", LogicGateType::Xnor), "xnor");
+        assert_eq!(format!("{}", LogicGateType::Identity), "identity");
+        assert_eq!(format!("{}", LogicGateType::Threshold), "threshold");
+        assert_eq!(format!("{}", LogicGateType::Inhibitory), "inhibitory");
+        assert_eq!(format!("{}", LogicGateType::Weighted), "weighted");
+    }
+
+    #[test]
+    fn test_logic_gate_new() {
+        let gate = LogicGate::new(LogicGateType::And, 0.7);
+        
+        assert_eq!(gate.gate_type, LogicGateType::And);
+        assert_eq!(gate.threshold, 0.7);
+        assert!(gate.input_nodes.is_empty());
+        assert!(gate.output_nodes.is_empty());
+        assert!(gate.weight_matrix.is_empty());
+    }
+
+    // Edge case tests for extreme values
+    #[test]
+    fn test_logic_gate_extreme_threshold_values() {
+        let mut gate = LogicGate::new(LogicGateType::Threshold, f32::MAX);
+        gate.input_nodes = vec![create_test_key(1)];
+        
+        // No input should exceed MAX threshold
+        assert_eq!(gate.calculate_output(&[1.0]).unwrap(), 0.0);
+        
+        // Test with negative threshold
+        gate.threshold = -1.0;
+        assert_eq!(gate.calculate_output(&[0.5]).unwrap(), 0.5); // Should activate since 0.5 > -1.0
+    }
+
+    #[test]
+    fn test_brain_inspired_entity_extreme_activation_values() {
+        let mut entity = BrainInspiredEntity::new("test".to_string(), EntityDirection::Input);
+        
+        // Test with very large activation
+        let result = entity.activate(f32::MAX, 0.1);
+        assert_eq!(result, 1.0); // Should be clamped
+        
+        // Test with negative activation
+        entity.activation_state = 0.0;
+        let result = entity.activate(-0.5, 0.1);
+        assert!(result >= 0.0); // Result should never be negative due to max(0.0) in some implementations
+    }
+
+    #[test]
+    fn test_brain_inspired_relationship_extreme_learning_rates() {
+        let mut rel = BrainInspiredRelationship::new(
+            create_test_key(1),
+            create_test_key(2),
+            RelationType::RelatedTo
+        );
+        
+        // Test with very large learning rate
+        rel.strengthen(f32::MAX);
+        assert_eq!(rel.weight, 1.0); // Should be clamped
+        
+        // Test with very negative learning rate
+        rel.weight = 1.0;
+        rel.strengthen(-f32::MAX);
+        assert!(rel.weight <= 1.0); // Weight can't exceed 1.0 even after negative adjustment
+    }
+
+    // Test serialization/deserialization compatibility (basic structure validation)
+    #[test]
+    fn test_enum_serialization_compatibility() {
+        // Test that enums have expected discriminant values for serialization stability
+        use std::mem::discriminant;
+        
+        assert_eq!(discriminant(&EntityDirection::Input), discriminant(&EntityDirection::Input));
+        assert_ne!(discriminant(&EntityDirection::Input), discriminant(&EntityDirection::Output));
+        
+        assert_eq!(discriminant(&LogicGateType::And), discriminant(&LogicGateType::And));
+        assert_ne!(discriminant(&LogicGateType::And), discriminant(&LogicGateType::Or));
+        
+        assert_eq!(discriminant(&RelationType::IsA), discriminant(&RelationType::IsA));
+        assert_ne!(discriminant(&RelationType::IsA), discriminant(&RelationType::HasInstance));
     }
 }

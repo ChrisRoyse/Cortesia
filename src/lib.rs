@@ -60,6 +60,7 @@ pub use crate::core::brain_types::{
     BrainInspiredEntity, EntityDirection, LogicGate, LogicGateType,
     BrainInspiredRelationship, ActivationPattern, ActivationStep, GraphOperation, TrainingExample
 };
+pub use crate::core::{Phase1IntegrationLayer, Phase1Config, QueryResult as Phase1QueryResult, CognitiveQueryResult, Phase1Statistics};
 pub use crate::versioning::temporal_graph::{TemporalKnowledgeGraph, TimeRange, TemporalEntity, TemporalRelationship};
 pub use crate::neural::neural_server::{NeuralProcessingServer, NeuralOperation, NeuralParameters, NeuralRequest, NeuralResponse, TrainingResult, PredictionResult, ModelMetadata, ModelType};
 pub use crate::neural::structure_predictor::GraphStructurePredictor;
@@ -77,7 +78,7 @@ pub use crate::text::{TextCompressor, utils as text_utils, TextChunk, Chunker, S
 pub use crate::cognitive::{
     CognitiveOrchestrator, CognitiveOrchestratorConfig, OrchestratorStatistics,
     CognitivePattern, CognitivePatternType, PatternParameters, PatternResult, 
-    ReasoningStrategy, ReasoningResult, ComplexityEstimate,
+    ReasoningStrategy, ReasoningResult, ComplexityEstimate, QualityMetrics,
     ConvergentThinking, ConvergentResult,
     DivergentThinking, DivergentResult, ExplorationType, ExplorationPath,
     LateralThinking, LateralResult, BridgePath, NoveltyAnalysis,

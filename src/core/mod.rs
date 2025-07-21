@@ -26,3 +26,6 @@ pub use zero_copy_types::BenchmarkResult;
 pub mod phase1_types;
 pub mod phase1_helpers;
 pub mod phase1_integration;
+
+pub use phase1_integration::Phase1IntegrationLayer;
+pub use phase1_types::{Phase1Config, QueryResult, CognitiveQueryResult, Phase1Statistics};

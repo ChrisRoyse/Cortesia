@@ -659,3 +659,345 @@ struct LocalConfidenceInterval {
     upper_bound: f32,
     reliability_score: f32,
 }
+
+#[cfg(test)]
+mod critical_thinking_unit_tests {
+    use super::*;
+    use std::collections::HashMap;
+    use crate::core::activation_engine::PropagationResult;
+    
+    async fn create_test_critical_thinking() -> CriticalThinking {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()
+            .expect("Failed to create test graph"));
+        CriticalThinking::new(graph)
+    }
+    
+    fn create_test_fact_info(entity_key: EntityKey, description: &str, confidence: f32, source: &str) -> FactInfo {
+        FactInfo {
+            entity_key,
+            fact_description: description.to_string(),
+            confidence,
+            source: source.to_string(),
+            timestamp: SystemTime::now(),
+        }
+    }
+    
+    fn create_test_query_results(facts: Vec<FactInfo>) -> QueryResults {
+        QueryResults {
+            facts,
+            metadata: PropagationResult {
+                final_activations: HashMap::new(),
+                activation_trace: vec![],
+                total_energy: 0.0,
+                iterations_completed: 1,
+                converged: true,
+            },
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_identify_contradictions_direct_conflict() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let facts = vec![
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "has 3 legs", 
+                0.8, 
+                "source1"
+            ),
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "has 4 legs", 
+                0.7, 
+                "source2"
+            ),
+        ];
+        
+        let results = create_test_query_results(facts);
+        let contradictions = thinking.identify_contradictions(&results).await
+            .expect("Should identify contradictions");
+        
+        assert_eq!(contradictions.len(), 1, "Should find one contradiction");
+        assert_eq!(contradictions[0].conflict_type, ConflictType::DirectContradiction);
+        assert_eq!(contradictions[0].conflicting_facts.len(), 2);
+    }
+    
+    #[tokio::test]
+    async fn test_identify_contradictions_temperature_conflict() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let facts = vec![
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "temperature is warm", 
+                0.9, 
+                "sensor1"
+            ),
+            create_test_fact_info(
+                EntityKey::from_hash("entity2"), 
+                "temperature is cold", 
+                0.8, 
+                "sensor2"
+            ),
+        ];
+        
+        let results = create_test_query_results(facts);
+        let contradictions = thinking.identify_contradictions(&results).await
+            .expect("Should identify contradictions");
+        
+        assert_eq!(contradictions.len(), 1, "Should find temperature contradiction");
+        assert!(contradictions[0].contradiction_type.contains("direct_conflict"));
+    }
+    
+    #[tokio::test]
+    async fn test_identify_contradictions_no_conflicts() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let facts = vec![
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "is an animal", 
+                0.9, 
+                "source1"
+            ),
+            create_test_fact_info(
+                EntityKey::from_hash("entity2"), 
+                "has fur", 
+                0.8, 
+                "source2"
+            ),
+        ];
+        
+        let results = create_test_query_results(facts);
+        let contradictions = thinking.identify_contradictions(&results).await
+            .expect("Should complete without error");
+        
+        assert_eq!(contradictions.len(), 0, "Should find no contradictions");
+    }
+    
+    #[tokio::test]
+    async fn test_apply_inhibitory_logic_direct_conflict() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let higher_conf_key = EntityKey::from_hash("high_conf");
+        let lower_conf_key = EntityKey::from_hash("low_conf");
+        
+        let facts = vec![
+            create_test_fact_info(higher_conf_key, "high confidence fact", 0.9, "source1"),
+            create_test_fact_info(lower_conf_key, "low confidence fact", 0.3, "source2"),
+        ];
+        
+        let contradictions = vec![
+            Contradiction {
+                statement_a: "high confidence fact".to_string(),
+                statement_b: "low confidence fact".to_string(),
+                conflict_type: ConflictType::DirectContradiction,
+                severity: 0.6,
+                contradiction_type: "direct_conflict".to_string(),
+                conflicting_facts: vec![higher_conf_key, lower_conf_key],
+            }
+        ];
+        
+        let base_results = create_test_query_results(facts);
+        let resolution = thinking.apply_inhibitory_logic(base_results, contradictions).await
+            .expect("Should resolve conflicts");
+        
+        assert_eq!(resolution.strategy, ResolutionStrategy::PreferHigherConfidence);
+        assert_eq!(resolution.conflicts_resolved, 1);
+        // Should retain higher confidence fact and remove lower confidence one
+        assert_eq!(resolution.resolved_facts.len(), 1);
+        assert_eq!(resolution.resolved_facts[0].entity_key, higher_conf_key);
+    }
+    
+    #[tokio::test]
+    async fn test_validate_information_sources_basic() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let facts = vec![
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "neural fact", 
+                0.8, 
+                "neural_query"
+            ),
+            create_test_fact_info(
+                EntityKey::from_hash("entity2"), 
+                "user fact", 
+                0.6, 
+                "user_input"
+            ),
+        ];
+        
+        let resolution = InhibitoryResolution {
+            resolved_facts: facts,
+            strategy: ResolutionStrategy::PreferTrusted,
+            conflicts_resolved: 0,
+        };
+        
+        let validation = thinking.validate_information_sources(&resolution, ValidationLevel::Basic).await
+            .expect("Should validate sources");
+        
+        assert_eq!(validation.confidence_intervals.len(), 2);
+        assert_eq!(validation.validation_level, ValidationLevel::Basic);
+        assert!(validation.source_reliability.contains_key("neural_query"));
+        assert!(validation.source_reliability.contains_key("user_input"));
+        
+        // Neural query should have higher reliability than user input
+        assert!(validation.source_reliability["neural_query"] > validation.source_reliability["user_input"]);
+    }
+    
+    #[tokio::test]
+    async fn test_validate_information_sources_rigorous() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let facts = vec![
+            create_test_fact_info(
+                EntityKey::from_hash("entity1"), 
+                "test fact", 
+                1.0, 
+                "neural_query"
+            ),
+        ];
+        
+        let resolution = InhibitoryResolution {
+            resolved_facts: facts,
+            strategy: ResolutionStrategy::PreferTrusted,
+            conflicts_resolved: 0,
+        };
+        
+        let validation = thinking.validate_information_sources(&resolution, ValidationLevel::Rigorous).await
+            .expect("Should validate sources");
+        
+        // Rigorous validation should apply stricter confidence intervals
+        assert_eq!(validation.confidence_intervals.len(), 1);
+        let interval = &validation.confidence_intervals[0];
+        assert!(interval.lower_bound < interval.upper_bound);
+        assert!(interval.upper_bound <= 0.8); // Rigorous should cap at 0.8
+    }
+    
+    #[tokio::test]
+    async fn test_resolve_exceptions_empty_resolution() {
+        let thinking = create_test_critical_thinking().await;
+        
+        // Test that empty facts don't cause issues
+        let empty_facts: Vec<FactInfo> = vec![];
+        let contradiction = Contradiction {
+            statement_a: "".to_string(),
+            statement_b: "".to_string(),
+            conflict_type: ConflictType::DirectContradiction,
+            severity: 0.0,
+            contradiction_type: "direct_conflict".to_string(),
+            conflicting_facts: vec![],
+        };
+        
+        let resolved = thinking.resolve_direct_conflict(&empty_facts, &contradiction).await
+            .expect("Should handle empty facts gracefully");
+        
+        assert_eq!(resolved.len(), 0);
+    }
+    
+    #[tokio::test]
+    async fn test_are_contradictory_numeric_values() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let fact1 = create_test_fact_info(
+            EntityKey::from_hash("entity1"), 
+            "has 3 legs", 
+            0.8, 
+            "source1"
+        );
+        let fact2 = create_test_fact_info(
+            EntityKey::from_hash("entity1"), 
+            "has 4 legs", 
+            0.7, 
+            "source2"
+        );
+        
+        let contradictory = thinking.are_contradictory(&fact1, &fact2).await
+            .expect("Should check contradiction");
+        
+        assert!(contradictory, "Facts with different leg counts should be contradictory");
+    }
+    
+    #[tokio::test]
+    async fn test_are_contradictory_temperature() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let fact1 = create_test_fact_info(
+            EntityKey::from_hash("entity1"), 
+            "weather is warm today", 
+            0.8, 
+            "source1"
+        );
+        let fact2 = create_test_fact_info(
+            EntityKey::from_hash("entity2"), 
+            "weather is cold today", 
+            0.7, 
+            "source2"
+        );
+        
+        let contradictory = thinking.are_contradictory(&fact1, &fact2).await
+            .expect("Should check contradiction");
+        
+        assert!(contradictory, "Warm and cold should be contradictory");
+    }
+    
+    #[tokio::test]
+    async fn test_are_contradictory_confidence_based() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let entity_key = EntityKey::from_hash("same_entity");
+        let fact1 = create_test_fact_info(entity_key, "high confidence", 0.9, "source1");
+        let fact2 = create_test_fact_info(entity_key, "low confidence", 0.3, "source2");
+        
+        let contradictory = thinking.are_contradictory(&fact1, &fact2).await
+            .expect("Should check contradiction");
+        
+        assert!(contradictory, "Same entity with very different confidence should be contradictory");
+    }
+    
+    #[tokio::test]
+    async fn test_calculate_source_reliability() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let neural_reliability = thinking.calculate_source_reliability("neural_query").await
+            .expect("Should calculate neural query reliability");
+        assert_eq!(neural_reliability, 0.8);
+        
+        let user_reliability = thinking.calculate_source_reliability("user_input").await
+            .expect("Should calculate user input reliability");
+        assert_eq!(user_reliability, 0.6);
+        
+        let external_reliability = thinking.calculate_source_reliability("external_api").await
+            .expect("Should calculate external API reliability");
+        assert_eq!(external_reliability, 0.7);
+        
+        let unknown_reliability = thinking.calculate_source_reliability("unknown_source").await
+            .expect("Should calculate unknown source reliability");
+        assert_eq!(unknown_reliability, 0.5);
+    }
+    
+    #[tokio::test]
+    async fn test_generate_query_embedding() {
+        let thinking = create_test_critical_thinking().await;
+        
+        let embedding = thinking.generate_query_embedding("test query with words").await
+            .expect("Should generate embedding");
+        
+        assert_eq!(embedding.len(), 128, "Should generate 128-dimensional embedding");
+        assert!(embedding.iter().any(|&x| x > 0.0), "Should have non-zero values");
+    }
+    
+    #[tokio::test]
+    async fn test_is_stop_word() {
+        let thinking = create_test_critical_thinking().await;
+        
+        assert!(thinking.is_stop_word("the"));
+        assert!(thinking.is_stop_word("is"));
+        assert!(thinking.is_stop_word("and"));
+        assert!(thinking.is_stop_word("what"));
+        assert!(!thinking.is_stop_word("dog"));
+        assert!(!thinking.is_stop_word("analyze"));
+    }
+}

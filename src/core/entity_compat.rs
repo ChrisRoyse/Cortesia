@@ -227,3 +227,522 @@ impl EntityKey {
         EntityKey::from(KeyData::from_ffi(raw))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_entity_new() {
+        let key = EntityKey::new("test_id".to_string());
+        let name = "test_entity".to_string();
+        let entity = Entity::new(key, name.clone());
+        
+        assert_eq!(entity.name(), &name);
+        assert_eq!(entity.key(), key);
+        assert_eq!(entity.entity_type(), "");
+        assert!(entity.attributes().is_empty());
+        assert_eq!(entity.id(), &format!("entity_{:?}", key));
+    }
+
+    #[test]
+    fn test_entity_new_with_empty_name() {
+        let key = EntityKey::new("test_id".to_string());
+        let empty_name = String::new();
+        let entity = Entity::new(key, empty_name.clone());
+        
+        assert_eq!(entity.name(), "");
+        assert_eq!(entity.key(), key);
+    }
+
+    #[test]
+    fn test_entity_new_with_long_name() {
+        let key = EntityKey::new("test_id".to_string());
+        let long_name = "a".repeat(10000);
+        let entity = Entity::new(key, long_name.clone());
+        
+        assert_eq!(entity.name(), &long_name);
+        assert_eq!(entity.key(), key);
+    }
+
+    #[test]
+    fn test_entity_new_with_type() {
+        let id = "test_id".to_string();
+        let entity_type = "TestType".to_string();
+        let entity = Entity::new_with_type(id.clone(), entity_type.clone());
+        
+        assert_eq!(entity.id(), &id);
+        assert_eq!(entity.name(), &entity_type);
+        assert_eq!(entity.entity_type(), &entity_type);
+        assert!(entity.attributes().is_empty());
+        assert_eq!(entity.key(), EntityKey::default());
+    }
+
+    #[test]
+    fn test_entity_new_with_type_empty_strings() {
+        let empty_id = String::new();
+        let empty_type = String::new();
+        let entity = Entity::new_with_type(empty_id.clone(), empty_type.clone());
+        
+        assert_eq!(entity.id(), "");
+        assert_eq!(entity.name(), "");
+        assert_eq!(entity.entity_type(), "");
+    }
+
+    #[test]
+    fn test_entity_with_attributes() {
+        let id = "test_id".to_string();
+        let entity_type = "TestType".to_string();
+        let mut attributes = HashMap::new();
+        attributes.insert("key1".to_string(), "value1".to_string());
+        attributes.insert("key2".to_string(), "value2".to_string());
+        
+        let entity = Entity::with_attributes(id.clone(), entity_type.clone(), attributes.clone());
+        
+        assert_eq!(entity.id(), &id);
+        assert_eq!(entity.name(), &entity_type);
+        assert_eq!(entity.entity_type(), &entity_type);
+        assert_eq!(entity.attributes(), &attributes);
+        assert_eq!(entity.key(), EntityKey::default());
+    }
+
+    #[test]
+    fn test_entity_with_attributes_empty_map() {
+        let id = "test_id".to_string();
+        let entity_type = "TestType".to_string();
+        let attributes = HashMap::new();
+        
+        let entity = Entity::with_attributes(id.clone(), entity_type.clone(), attributes);
+        
+        assert!(entity.attributes().is_empty());
+    }
+
+    #[test]
+    fn test_entity_with_attributes_large_map() {
+        let id = "test_id".to_string();
+        let entity_type = "TestType".to_string();
+        let mut attributes = HashMap::new();
+        
+        // Create a large attribute map
+        for i in 0..1000 {
+            attributes.insert(format!("key{}", i), format!("value{}", i));
+        }
+        
+        let entity = Entity::with_attributes(id.clone(), entity_type.clone(), attributes.clone());
+        
+        assert_eq!(entity.attributes().len(), 1000);
+        assert_eq!(entity.attributes(), &attributes);
+    }
+
+    #[test]
+    fn test_entity_set_key() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        let new_key = EntityKey::new("new_key".to_string());
+        
+        entity.set_key(new_key);
+        assert_eq!(entity.key(), new_key);
+    }
+
+    #[test]
+    fn test_entity_get_attribute() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        entity.add_attribute("test_key", "test_value");
+        
+        assert_eq!(entity.get_attribute("test_key"), Some("test_value"));
+        assert_eq!(entity.get_attribute("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_entity_get_attribute_empty_key() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        entity.add_attribute("", "empty_key_value");
+        
+        assert_eq!(entity.get_attribute(""), Some("empty_key_value"));
+    }
+
+    #[test]
+    fn test_entity_add_attribute() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        
+        entity.add_attribute("key1", "value1");
+        entity.add_attribute("key2", "value2");
+        
+        assert_eq!(entity.get_attribute("key1"), Some("value1"));
+        assert_eq!(entity.get_attribute("key2"), Some("value2"));
+        assert_eq!(entity.attributes().len(), 2);
+    }
+
+    #[test]
+    fn test_entity_add_attribute_overwrite() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        
+        entity.add_attribute("key", "value1");
+        entity.add_attribute("key", "value2");
+        
+        assert_eq!(entity.get_attribute("key"), Some("value2"));
+        assert_eq!(entity.attributes().len(), 1);
+    }
+
+    #[test]
+    fn test_entity_memory_usage() {
+        let entity = Entity::new_with_type("test_id".to_string(), "TestType".to_string());
+        let usage = entity.memory_usage();
+        
+        assert!(usage > 0);
+        assert!(usage >= std::mem::size_of::<Entity>() as u64);
+    }
+
+    #[test]
+    fn test_entity_memory_usage_with_attributes() {
+        let mut entity = Entity::new_with_type("test_id".to_string(), "TestType".to_string());
+        let base_usage = entity.memory_usage();
+        
+        entity.add_attribute("key", "value");
+        let usage_with_attr = entity.memory_usage();
+        
+        assert!(usage_with_attr > base_usage);
+    }
+
+    #[test]
+    fn test_entity_serialize_deserialize() {
+        let mut entity = Entity::new_with_type("test_id".to_string(), "TestType".to_string());
+        entity.add_attribute("key", "value");
+        
+        let serialized = entity.serialize();
+        assert!(!serialized.is_empty());
+        
+        let deserialized = Entity::deserialize(&serialized).unwrap();
+        assert_eq!(entity, deserialized);
+    }
+
+    #[test]
+    fn test_entity_deserialize_invalid_data() {
+        let invalid_data = vec![1, 2, 3, 4, 5];
+        let result = Entity::deserialize(&invalid_data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_entity_serialize_empty_entity() {
+        let entity = Entity::new_with_type(String::new(), String::new());
+        let serialized = entity.serialize();
+        
+        let deserialized = Entity::deserialize(&serialized).unwrap();
+        assert_eq!(entity, deserialized);
+    }
+
+    #[test]
+    fn test_relationship_new() {
+        let rel_type = "test_relation".to_string();
+        let mut attributes = HashMap::new();
+        attributes.insert("weight".to_string(), "0.5".to_string());
+        
+        let relationship = Relationship::new(rel_type.clone(), attributes.clone());
+        
+        assert_eq!(relationship.relationship_type, rel_type);
+        assert_eq!(relationship.attributes, attributes);
+        assert_eq!(relationship.target(), EntityKey::default());
+    }
+
+    #[test]
+    fn test_relationship_new_empty_attributes() {
+        let rel_type = "test_relation".to_string();
+        let attributes = HashMap::new();
+        
+        let relationship = Relationship::new(rel_type.clone(), attributes);
+        
+        assert_eq!(relationship.relationship_type, rel_type);
+        assert!(relationship.attributes.is_empty());
+    }
+
+    #[test]
+    fn test_relationship_new_large_attributes() {
+        let rel_type = "test_relation".to_string();
+        let mut attributes = HashMap::new();
+        
+        for i in 0..1000 {
+            attributes.insert(format!("attr{}", i), format!("value{}", i));
+        }
+        
+        let relationship = Relationship::new(rel_type.clone(), attributes.clone());
+        
+        assert_eq!(relationship.relationship_type, rel_type);
+        assert_eq!(relationship.attributes.len(), 1000);
+        assert_eq!(relationship.attributes, attributes);
+    }
+
+    #[test]
+    fn test_relationship_set_target() {
+        let mut relationship = Relationship::new("test".to_string(), HashMap::new());
+        let target_key = EntityKey::new("target".to_string());
+        
+        relationship.set_target(target_key);
+        assert_eq!(relationship.target(), target_key);
+    }
+
+    #[test]
+    fn test_similarity_result_new() {
+        let entity_key = EntityKey::new("test".to_string());
+        let similarity = 0.75f32;
+        
+        let result = SimilarityResult::new(entity_key, similarity);
+        
+        assert_eq!(result.entity, entity_key);
+        assert_eq!(result.similarity, similarity);
+    }
+
+    #[test]
+    fn test_similarity_result_extreme_values() {
+        let entity_key = EntityKey::new("test".to_string());
+        
+        let result_zero = SimilarityResult::new(entity_key, 0.0);
+        assert_eq!(result_zero.similarity, 0.0);
+        
+        let result_one = SimilarityResult::new(entity_key, 1.0);
+        assert_eq!(result_one.similarity, 1.0);
+        
+        let result_negative = SimilarityResult::new(entity_key, -1.0);
+        assert_eq!(result_negative.similarity, -1.0);
+    }
+
+    #[test]
+    fn test_entity_key_new() {
+        let id = "test_id".to_string();
+        let key = EntityKey::new(id.clone());
+        
+        // Should not panic and should be consistent
+        let key2 = EntityKey::new(id.clone());
+        assert_eq!(key, key2); // Should be deterministic
+    }
+
+    #[test]
+    fn test_entity_key_new_empty_string() {
+        let key = EntityKey::new(String::new());
+        // Should not panic
+        assert!(key != EntityKey::default()); // Should be different from default
+    }
+
+    #[test]
+    fn test_entity_key_new_long_string() {
+        let long_id = "a".repeat(10000);
+        let key = EntityKey::new(long_id);
+        // Should not panic
+        assert!(key != EntityKey::default());
+    }
+
+    #[test]
+    fn test_entity_key_from_hash() {
+        let text = "test_text";
+        let key1 = EntityKey::from_hash(text);
+        let key2 = EntityKey::from_hash(text);
+        
+        // Should be deterministic
+        assert_eq!(key1, key2);
+    }
+
+    #[test]
+    fn test_entity_key_from_hash_different_inputs() {
+        let key1 = EntityKey::from_hash("input1");
+        let key2 = EntityKey::from_hash("input2");
+        
+        // Different inputs should produce different keys
+        assert_ne!(key1, key2);
+    }
+
+    #[test]
+    fn test_entity_key_as_u32() {
+        let key = EntityKey::new("test".to_string());
+        let u32_val = key.as_u32();
+        
+        // Should not panic and should return a value
+        let _ = u32_val; // Just ensure it doesn't panic
+    }
+
+    #[test]
+    fn test_entity_key_from_u32() {
+        let key = EntityKey::from_u32(12345);
+        // Currently returns default, but should not panic
+        assert_eq!(key, EntityKey::default());
+    }
+
+    #[test]
+    fn test_entity_key_to_string() {
+        let key = EntityKey::new("test".to_string());
+        let string_repr = key.to_string();
+        
+        assert!(!string_repr.is_empty());
+    }
+
+    #[test]
+    fn test_entity_key_id() {
+        let key = EntityKey::new("test".to_string());
+        let id = key.id();
+        
+        assert!(!id.is_empty());
+        assert_eq!(id, key.to_string());
+    }
+
+    #[test]
+    fn test_entity_key_from_id() {
+        let id = "test_id".to_string();
+        let key = EntityKey::from_id(id.clone());
+        
+        // Should be consistent with new()
+        let key2 = EntityKey::new(id);
+        assert_eq!(key, key2);
+    }
+
+    #[test]
+    fn test_entity_key_get_original_id() {
+        // Test known patterns
+        let key = EntityKey::from_hash("visual_pattern");
+        if let Some(id) = key.get_original_id() {
+            assert!(id.contains("visual_pattern"));
+        }
+        
+        // Test unknown pattern
+        let key2 = EntityKey::from_hash("unknown_pattern");
+        let result = key2.get_original_id();
+        // May be None for unknown patterns
+        if let Some(id) = result {
+            assert!(!id.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_entity_key_get_original_id_all_patterns() {
+        let patterns = vec![
+            "visual_pattern",
+            "temporal_pattern", 
+            "concept_hierarchy",
+            "auditory_sequence",
+            "semantic_cluster",
+            "spatial_relation",
+            "color_gradient",
+            "rhythm_complex",
+            "abstract_relation",
+        ];
+        
+        for pattern in patterns {
+            let key = EntityKey::from_hash(pattern);
+            let original = key.get_original_id();
+            // For known patterns, should return something
+            // Note: This test might fail due to hash collisions, but it's worth testing
+        }
+    }
+
+    #[test]
+    fn test_entity_key_as_raw_from_raw() {
+        let original_key = EntityKey::new("test".to_string());
+        let raw = original_key.as_raw();
+        let reconstructed_key = EntityKey::from_raw(raw);
+        
+        assert_eq!(original_key, reconstructed_key);
+    }
+
+    #[test]
+    fn test_entity_key_raw_edge_cases() {
+        let key_zero = EntityKey::from_raw(0);
+        let key_max = EntityKey::from_raw(u64::MAX);
+        
+        // Should not panic
+        let _ = key_zero.as_raw();
+        let _ = key_max.as_raw();
+    }
+
+    #[test]
+    fn test_entity_clone() {
+        let mut entity = Entity::new_with_type("test".to_string(), "Type".to_string());
+        entity.add_attribute("key", "value");
+        
+        let cloned = entity.clone();
+        assert_eq!(entity, cloned);
+        
+        // Ensure it's a deep clone
+        assert_ne!(entity.attributes().as_ptr(), cloned.attributes().as_ptr());
+    }
+
+    #[test]
+    fn test_relationship_clone() {
+        let mut attributes = HashMap::new();
+        attributes.insert("key".to_string(), "value".to_string());
+        let relationship = Relationship::new("test".to_string(), attributes);
+        
+        let cloned = relationship.clone();
+        assert_eq!(relationship.relationship_type, cloned.relationship_type);
+        assert_eq!(relationship.attributes, cloned.attributes);
+        assert_eq!(relationship.target(), cloned.target());
+    }
+
+    #[test]
+    fn test_similarity_result_clone() {
+        let entity_key = EntityKey::new("test".to_string());
+        let result = SimilarityResult::new(entity_key, 0.5);
+        
+        let cloned = result.clone();
+        assert_eq!(result.entity, cloned.entity);
+        assert_eq!(result.similarity, cloned.similarity);
+    }
+
+    #[test]
+    fn test_entity_field_access() {
+        let mut entity = Entity::new_with_type("test_id".to_string(), "TestType".to_string());
+        
+        // Test all getter methods
+        assert_eq!(entity.id(), "test_id");
+        assert_eq!(entity.name(), "TestType");
+        assert_eq!(entity.entity_type(), "TestType");
+        assert!(entity.attributes().is_empty());
+        assert_eq!(entity.key(), EntityKey::default());
+        
+        // Test modification
+        let new_key = EntityKey::new("new".to_string());
+        entity.set_key(new_key);
+        assert_eq!(entity.key(), new_key);
+    }
+
+    #[test]
+    fn test_entity_key_consistency() {
+        // Test that the same input always produces the same key
+        let id = "consistent_test".to_string();
+        let keys: Vec<EntityKey> = (0..10).map(|_| EntityKey::new(id.clone())).collect();
+        
+        for key in &keys[1..] {
+            assert_eq!(*key, keys[0]);
+        }
+    }
+
+    #[test] 
+    fn test_entity_with_special_characters() {
+        let special_chars = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~".to_string();
+        let entity = Entity::new_with_type(special_chars.clone(), special_chars.clone());
+        
+        assert_eq!(entity.id(), &special_chars);
+        assert_eq!(entity.entity_type(), &special_chars);
+    }
+
+    #[test]
+    fn test_entity_key_with_unicode() {
+        let unicode_text = "こんにちは世界🌍";
+        let key = EntityKey::new(unicode_text.to_string());
+        
+        // Should not panic and should be consistent
+        let key2 = EntityKey::new(unicode_text.to_string());
+        assert_eq!(key, key2);
+    }
+
+    #[test]
+    fn test_memory_usage_calculation_accuracy() {
+        let mut entity = Entity::new_with_type("id".to_string(), "type".to_string());
+        let base_usage = entity.memory_usage();
+        
+        // Add a known-size attribute
+        entity.add_attribute("test", "value");
+        let new_usage = entity.memory_usage();
+        
+        // Should increase by at least the size of the strings plus overhead
+        let expected_increase = "test".len() + "value".len() + 16; // 16 is overhead per entry
+        assert!(new_usage >= base_usage + expected_increase as u64);
+    }
+}

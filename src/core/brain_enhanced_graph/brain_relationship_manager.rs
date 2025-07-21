@@ -537,3 +537,593 @@ impl RelationshipPattern {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::types::{EntityData, Relationship};
+    use crate::core::brain_enhanced_graph::brain_graph_types::BrainEnhancedConfig;
+    use std::collections::HashMap;
+    use tokio;
+
+    /// Helper function to create a test brain graph
+    async fn create_test_graph() -> Result<BrainEnhancedKnowledgeGraph> {
+        BrainEnhancedKnowledgeGraph::new_for_test()
+    }
+
+    /// Helper function to create test entities
+    async fn create_test_entities(graph: &BrainEnhancedKnowledgeGraph, count: usize) -> Result<Vec<EntityKey>> {
+        let mut entity_keys = Vec::new();
+        
+        for i in 0..count {
+            let entity_data = EntityData {
+                type_id: 1,
+                embedding: vec![0.1 * (i as f32 + 1.0); 96],
+                properties: format!("{{\"name\": \"test_entity_{}\"}}", i),
+            };
+            
+            let entity_key = graph.insert_brain_entity(i as u32, entity_data).await?;
+            entity_keys.push(entity_key);
+        }
+        
+        Ok(entity_keys)
+    }
+
+    /// Helper function to create a test relationship
+    fn create_test_relationship(from: EntityKey, to: EntityKey, weight: f32) -> Relationship {
+        Relationship {
+            from,
+            to,
+            rel_type: 0,
+            weight,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_create_learned_relationship_with_co_activated_entities() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set high activations for both entities (co-activation)
+        graph.set_entity_activation(entities[0], 0.8).await;
+        graph.set_entity_activation(entities[1], 0.9).await;
+        
+        // Test creating learned relationship
+        let result = graph.create_learned_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify relationship was created
+        assert!(graph.has_relationship(entities[0], entities[1]).await);
+        
+        // Check synaptic weight was set correctly
+        let weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        let expected_weight = 0.8 * 0.9 * graph.config.learning_rate; // source * target * learning_rate
+        assert!((weight - expected_weight).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_create_learned_relationship_with_non_co_activated_entities() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set low activations (no co-activation)
+        graph.set_entity_activation(entities[0], 0.1).await;
+        graph.set_entity_activation(entities[1], 0.05).await;
+        
+        // Test creating learned relationship
+        let result = graph.create_learned_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify no relationship was created due to low Hebbian weight
+        let has_relationship = graph.has_relationship(entities[0], entities[1]).await;
+        assert!(!has_relationship);
+    }
+
+    #[tokio::test]
+    async fn test_create_learned_relationship_with_hebbian_learning_disabled() {
+        let mut graph = create_test_graph().await.unwrap();
+        
+        // Disable Hebbian learning
+        let mut config = graph.config.clone();
+        config.enable_hebbian_learning = false;
+        graph.config = config;
+        
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set high activations
+        graph.set_entity_activation(entities[0], 0.8).await;
+        graph.set_entity_activation(entities[1], 0.9).await;
+        
+        // Test creating learned relationship
+        let result = graph.create_learned_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify no relationship was created due to disabled learning
+        assert!(!graph.has_relationship(entities[0], entities[1]).await);
+    }
+
+    #[tokio::test]
+    async fn test_create_learned_relationship_with_threshold_edge_case() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set activations that result in exactly threshold weight (0.1)
+        let learning_rate = graph.config.learning_rate;
+        let activation = (0.1 / learning_rate).sqrt(); // activation^2 * learning_rate = 0.1
+        
+        graph.set_entity_activation(entities[0], activation).await;
+        graph.set_entity_activation(entities[1], activation).await;
+        
+        let result = graph.create_learned_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Should create relationship at threshold
+        assert!(graph.has_relationship(entities[0], entities[1]).await);
+    }
+
+    #[tokio::test]
+    async fn test_strengthen_relationship_existing_relationship() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Create initial relationship
+        let relationship = create_test_relationship(entities[0], entities[1], 0.5);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        // Set high activations for strengthening
+        graph.set_entity_activation(entities[0], 0.7).await;
+        graph.set_entity_activation(entities[1], 0.8).await;
+        
+        let initial_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        
+        // Test strengthening
+        let result = graph.strengthen_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify weight increased
+        let new_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert!(new_weight > initial_weight);
+        
+        // Check strengthening calculation
+        let expected_strengthening = (0.7 * 0.8 * graph.config.learning_rate).min(0.1);
+        let expected_weight = (initial_weight + expected_strengthening).clamp(0.0, 1.0);
+        assert!((new_weight - expected_weight).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_strengthen_relationship_nonexistent_relationship() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set activations
+        graph.set_entity_activation(entities[0], 0.7).await;
+        graph.set_entity_activation(entities[1], 0.8).await;
+        
+        // Test strengthening non-existent relationship
+        let result = graph.strengthen_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify no relationship was created or modified
+        assert!(!graph.has_relationship(entities[0], entities[1]).await);
+        
+        // Synaptic weight should remain at default
+        let weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert_eq!(weight, 0.1); // Default weight
+    }
+
+    #[tokio::test]
+    async fn test_strengthen_relationship_weight_clamping() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Create relationship with high initial weight
+        let relationship = create_test_relationship(entities[0], entities[1], 0.95);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        // Set very high activations to test clamping
+        graph.set_entity_activation(entities[0], 1.0).await;
+        graph.set_entity_activation(entities[1], 1.0).await;
+        
+        // Test strengthening
+        let result = graph.strengthen_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify weight is clamped to 1.0
+        let weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert!(weight <= 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_weaken_relationship_existing_relationship() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Create relationship with moderate weight
+        let relationship = create_test_relationship(entities[0], entities[1], 0.5);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        let initial_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        
+        // Test weakening
+        let result = graph.weaken_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify weight decreased
+        let new_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert!(new_weight < initial_weight);
+        
+        // Check weakening calculation
+        let decay_factor = 1.0 - graph.config.synaptic_strength_decay;
+        let expected_weight = initial_weight * (1.0 - decay_factor);
+        assert!((new_weight - expected_weight).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_weaken_relationship_removes_very_weak_relationship() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Create relationship with very low weight
+        let relationship = create_test_relationship(entities[0], entities[1], 0.005);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        // Test weakening
+        let result = graph.weaken_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify relationship was removed
+        assert!(!graph.has_relationship(entities[0], entities[1]).await);
+    }
+
+    #[tokio::test]
+    async fn test_weaken_relationship_nonexistent_relationship() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Test weakening non-existent relationship
+        let result = graph.weaken_relationship(entities[0], entities[1]).await;
+        assert!(result.is_ok());
+        
+        // Verify no relationship exists
+        assert!(!graph.has_relationship(entities[0], entities[1]).await);
+    }
+
+    #[tokio::test]
+    async fn test_get_neighbors_with_weights_sorted_order() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 4).await.unwrap();
+        
+        // Create relationships with different weights
+        let relationships = vec![
+            create_test_relationship(entities[0], entities[1], 0.3),
+            create_test_relationship(entities[0], entities[2], 0.8),
+            create_test_relationship(entities[0], entities[3], 0.5),
+        ];
+        
+        for rel in relationships {
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        // Get neighbors with weights
+        let neighbors = graph.get_neighbors_with_weights(entities[0]).await;
+        
+        // Verify count
+        assert_eq!(neighbors.len(), 3);
+        
+        // Verify sorted order (descending by weight)
+        assert_eq!(neighbors[0].0, entities[2]); // Highest weight (0.8)
+        assert_eq!(neighbors[1].0, entities[3]); // Medium weight (0.5)
+        assert_eq!(neighbors[2].0, entities[1]); // Lowest weight (0.3)
+        
+        // Verify weights
+        assert!((neighbors[0].1 - 0.8).abs() < 0.001);
+        assert!((neighbors[1].1 - 0.5).abs() < 0.001);
+        assert!((neighbors[2].1 - 0.3).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_get_neighbors_with_weights_no_neighbors() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 1).await.unwrap();
+        
+        // Get neighbors for entity with no relationships
+        let neighbors = graph.get_neighbors_with_weights(entities[0]).await;
+        
+        // Verify empty result
+        assert!(neighbors.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_calculate_path_weight_simple_path() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 3).await.unwrap();
+        
+        // Create path: entity[0] -> entity[1] -> entity[2]
+        let relationships = vec![
+            create_test_relationship(entities[0], entities[1], 0.6),
+            create_test_relationship(entities[1], entities[2], 0.8),
+        ];
+        
+        for rel in relationships {
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        let path = vec![entities[0], entities[1], entities[2]];
+        let path_weight = graph.calculate_path_weight(&path).await;
+        
+        // Expected weight: 0.6 * 0.8 * (1.0 / sqrt(3)) = path weight * length penalty
+        let expected_weight = 0.6 * 0.8 * (1.0 / (3.0_f32).sqrt());
+        assert!((path_weight - expected_weight).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_path_weight_single_entity() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 1).await.unwrap();
+        
+        let path = vec![entities[0]];
+        let path_weight = graph.calculate_path_weight(&path).await;
+        
+        // Single entity path should have 0 weight
+        assert_eq!(path_weight, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_path_weight_empty_path() {
+        let graph = create_test_graph().await.unwrap();
+        
+        let path = vec![];
+        let path_weight = graph.calculate_path_weight(&path).await;
+        
+        // Empty path should have 0 weight
+        assert_eq!(path_weight, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_generate_path_signature_consistency() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 3).await.unwrap();
+        
+        let path1 = vec![entities[0], entities[1], entities[2]];
+        let path2 = vec![entities[0], entities[1], entities[2]];
+        let path3 = vec![entities[2], entities[1], entities[0]];
+        
+        let sig1 = graph.generate_path_signature(&path1);
+        let sig2 = graph.generate_path_signature(&path2);
+        let sig3 = graph.generate_path_signature(&path3);
+        
+        // Same paths should have same signature
+        assert_eq!(sig1, sig2);
+        
+        // Different paths should have different signatures
+        assert_ne!(sig1, sig3);
+        
+        // Signatures should not be empty
+        assert!(!sig1.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_is_bridge_entity_true_case() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 4).await.unwrap();
+        
+        // Create bridge pattern: entity[1] - entity[0] - entity[2]
+        // entity[3] connected to entity[0] but not to entity[1] or entity[2]
+        let relationships = vec![
+            create_test_relationship(entities[1], entities[0], 0.5),
+            create_test_relationship(entities[0], entities[2], 0.5),
+            create_test_relationship(entities[0], entities[3], 0.5),
+        ];
+        
+        for rel in relationships {
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        // entity[0] should be a bridge
+        let is_bridge = graph.is_bridge_entity(entities[0]).await;
+        assert!(is_bridge);
+    }
+
+    #[tokio::test]
+    async fn test_is_bridge_entity_false_case() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 3).await.unwrap();
+        
+        // Create triangle: all entities connected to each other
+        let relationships = vec![
+            create_test_relationship(entities[0], entities[1], 0.5),
+            create_test_relationship(entities[1], entities[2], 0.5),
+            create_test_relationship(entities[2], entities[0], 0.5),
+        ];
+        
+        for rel in relationships {
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        // No entity should be a bridge in a triangle
+        let is_bridge = graph.is_bridge_entity(entities[0]).await;
+        assert!(!is_bridge);
+    }
+
+    #[tokio::test]
+    async fn test_is_bridge_entity_insufficient_neighbors() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Create single relationship
+        let relationship = create_test_relationship(entities[0], entities[1], 0.5);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        // Entity with only one neighbor cannot be a bridge
+        let is_bridge = graph.is_bridge_entity(entities[0]).await;
+        assert!(!is_bridge);
+    }
+
+    #[tokio::test]
+    async fn test_synaptic_weight_management_internal() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Test default weight
+        let default_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert_eq!(default_weight, 0.1);
+        
+        // Test setting weight
+        graph.set_synaptic_weight(entities[0], entities[1], 0.7).await;
+        let weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert!((weight - 0.7).abs() < 0.001);
+        
+        // Test updating weight through relationship
+        graph.update_relationship_weight(entities[0], entities[1], 0.9).await.unwrap();
+        let updated_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        assert!((updated_weight - 0.9).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_learning_algorithm_hebbian_weight_calculation() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Test various activation combinations
+        let test_cases = vec![
+            (0.0, 0.0, 0.0), // No activation
+            (1.0, 1.0, graph.config.learning_rate), // Full activation
+            (0.5, 0.6, 0.5 * 0.6 * graph.config.learning_rate), // Partial activation
+        ];
+        
+        for (source_activation, target_activation, expected_hebbian) in test_cases {
+            graph.set_entity_activation(entities[0], source_activation).await;
+            graph.set_entity_activation(entities[1], target_activation).await;
+            
+            // Test create_learned_relationship
+            graph.create_learned_relationship(entities[0], entities[1]).await.unwrap();
+            
+            if expected_hebbian > 0.1 {
+                assert!(graph.has_relationship(entities[0], entities[1]).await);
+                let weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+                assert!((weight - expected_hebbian).abs() < 0.001);
+                
+                // Clean up for next test
+                graph.remove_relationship(entities[0], entities[1]).await.unwrap();
+            } else {
+                assert!(!graph.has_relationship(entities[0], entities[1]).await);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_relationship_statistics_calculation() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 4).await.unwrap();
+        
+        // Create relationships with different weights
+        let relationships = vec![
+            create_test_relationship(entities[0], entities[1], 0.2), // Weak
+            create_test_relationship(entities[1], entities[2], 0.8), // Strong
+            create_test_relationship(entities[2], entities[3], 0.5), // Medium
+            create_test_relationship(entities[3], entities[0], 0.9), // Strong
+        ];
+        
+        for rel in relationships {
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        let stats = graph.get_relationship_statistics().await;
+        
+        assert_eq!(stats.total_relationships, 4);
+        assert_eq!(stats.strong_relationships, 2); // Weights > 0.7
+        assert_eq!(stats.weak_relationships, 1);   // Weights < 0.3
+        
+        // Check average weight calculation
+        let expected_avg = (0.2 + 0.8 + 0.5 + 0.9) / 4.0;
+        assert!((stats.avg_synaptic_weight - expected_avg).abs() < 0.001);
+        
+        assert!((stats.max_synaptic_weight - 0.9).abs() < 0.001);
+        assert!((stats.min_synaptic_weight - 0.2).abs() < 0.001);
+        
+        // Test helper methods
+        assert!((stats.weight_range() - 0.7).abs() < 0.001);
+        assert!((stats.strong_relationship_ratio() - 0.5).abs() < 0.001);
+        assert!((stats.weak_relationship_ratio() - 0.25).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_relationship_operations() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Test concurrent synaptic weight operations
+        let mut handles = vec![];
+        
+        for i in 0..10 {
+            let graph_clone = &graph;
+            let entities_clone = entities.clone();
+            
+            let handle = tokio::spawn(async move {
+                let weight = 0.1 + (i as f32 * 0.05);
+                graph_clone.set_synaptic_weight(entities_clone[0], entities_clone[1], weight).await;
+                graph_clone.get_synaptic_weight(entities_clone[0], entities_clone[1]).await
+            });
+            
+            handles.push(handle);
+        }
+        
+        // Wait for all operations to complete
+        for handle in handles {
+            let result = handle.await.unwrap();
+            assert!(result >= 0.1 && result <= 0.6); // Should be within expected range
+        }
+    }
+
+    #[tokio::test]
+    async fn test_edge_case_zero_activations() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 2).await.unwrap();
+        
+        // Set zero activations
+        graph.set_entity_activation(entities[0], 0.0).await;
+        graph.set_entity_activation(entities[1], 0.0).await;
+        
+        // Test learned relationship creation
+        graph.create_learned_relationship(entities[0], entities[1]).await.unwrap();
+        assert!(!graph.has_relationship(entities[0], entities[1]).await);
+        
+        // Create relationship manually and test strengthening
+        let relationship = create_test_relationship(entities[0], entities[1], 0.5);
+        graph.insert_brain_relationship(relationship).await.unwrap();
+        
+        let initial_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        graph.strengthen_relationship(entities[0], entities[1]).await.unwrap();
+        let new_weight = graph.get_synaptic_weight(entities[0], entities[1]).await;
+        
+        // Weight should remain the same (no strengthening with zero activations)
+        assert!((new_weight - initial_weight).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_relationship_pattern_detection() {
+        let graph = create_test_graph().await.unwrap();
+        let entities = create_test_entities(&graph, 7).await.unwrap();
+        
+        // Create star pattern: entity[0] connected to entities[1-5]
+        for i in 1..6 {
+            let rel = create_test_relationship(entities[0], entities[i], 0.5);
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        // Create hub pattern: entities[1-5] connected to entity[6]
+        for i in 1..6 {
+            let rel = create_test_relationship(entities[i], entities[6], 0.5);
+            graph.insert_brain_relationship(rel).await.unwrap();
+        }
+        
+        let patterns = graph.get_relationship_patterns().await;
+        
+        // Should find both star and hub patterns
+        assert!(patterns.len() >= 2);
+        
+        let pattern_types: Vec<&str> = patterns.iter().map(|p| p.pattern_type()).collect();
+        assert!(pattern_types.contains(&"star"));
+        assert!(pattern_types.contains(&"hub"));
+    }
+}

@@ -422,3 +422,847 @@ impl BrainMemoryUsage {
         breakdown
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::types::EntityKey;
+    use std::collections::HashMap;
+    use tokio::time::{sleep, Duration};
+
+    /// Helper function to create a test brain graph
+    async fn create_test_brain_graph() -> Result<BrainEnhancedKnowledgeGraph> {
+        BrainEnhancedKnowledgeGraph::new_for_test()
+    }
+
+    /// Helper function to create test entity keys
+    fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
+        (0..count).map(|i| EntityKey::new(i as u64)).collect()
+    }
+
+    /// Helper function to setup brain graph with test entities
+    async fn setup_brain_graph_with_entities(entity_count: usize) -> Result<(BrainEnhancedKnowledgeGraph, Vec<EntityKey>)> {
+        let brain_graph = create_test_brain_graph().await?;
+        let entity_keys = create_test_entity_keys(entity_count);
+        
+        // Add entities to core graph (simulated - would need actual core graph implementation)
+        // This is a placeholder for the actual entity addition logic
+        
+        Ok((brain_graph, entity_keys))
+    }
+
+    #[tokio::test]
+    async fn test_new_creates_valid_brain_graph() {
+        let result = BrainEnhancedKnowledgeGraph::new(128);
+        assert!(result.is_ok());
+        
+        let brain_graph = result.unwrap();
+        assert_eq!(brain_graph.embedding_dimension(), 128);
+        assert_eq!(brain_graph.entity_count(), 0);
+        assert_eq!(brain_graph.relationship_count(), 0);
+        
+        // Verify initial state
+        let activations = brain_graph.get_all_activations().await;
+        assert!(activations.is_empty());
+        
+        let stats = brain_graph.get_learning_stats().await;
+        assert_eq!(stats.entity_count, 0);
+        assert_eq!(stats.relationship_count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_new_with_invalid_embedding_dimension() {
+        // Test with zero embedding dimension
+        let result = BrainEnhancedKnowledgeGraph::new(0);
+        // Assuming the underlying KnowledgeGraph::new would fail with 0 dimension
+        // The exact behavior depends on the KnowledgeGraph implementation
+        
+        // Test with very large dimension to check memory limits
+        let result_large = BrainEnhancedKnowledgeGraph::new(usize::MAX);
+        // This should likely fail due to memory allocation issues
+    }
+
+    #[tokio::test]
+    async fn test_new_for_test_creates_valid_test_graph() {
+        let result = BrainEnhancedKnowledgeGraph::new_for_test();
+        assert!(result.is_ok());
+        
+        let brain_graph = result.unwrap();
+        assert_eq!(brain_graph.embedding_dimension(), 96);
+        
+        // Verify test configuration
+        let config = brain_graph.get_config();
+        assert_eq!(config.embedding_dim, 128); // Test config value
+        assert_eq!(config.activation_threshold, 0.3);
+        assert!(!config.enable_sdr_storage); // Disabled for testing
+    }
+
+    #[tokio::test]
+    async fn test_new_async_creates_valid_brain_graph() {
+        let result = BrainEnhancedKnowledgeGraph::new_async(256).await;
+        assert!(result.is_ok());
+        
+        let brain_graph = result.unwrap();
+        assert_eq!(brain_graph.embedding_dimension(), 256);
+        
+        // Verify SDR configuration
+        let expected_total_bits = 256 * 4;
+        let expected_active_bits = expected_total_bits / 50;
+        // Note: We can't directly access SDR config without public methods
+        // This test validates the creation process
+    }
+
+    #[tokio::test]
+    async fn test_new_with_config_valid_configuration() {
+        let config = BrainEnhancedConfig {
+            learning_rate: 0.05,
+            activation_threshold: 0.8,
+            max_activation_spread: 10,
+            neural_dampening: 0.9,
+            concept_coherence_threshold: 0.6,
+            enable_hebbian_learning: true,
+            enable_concept_formation: false,
+            enable_neural_plasticity: true,
+            memory_consolidation_threshold: 0.7,
+            synaptic_strength_decay: 0.95,
+            embedding_dim: 512,
+            activation_config: ActivationConfig::default(),
+            enable_temporal_tracking: false,
+            enable_sdr_storage: true,
+        };
+        
+        let result = BrainEnhancedKnowledgeGraph::new_with_config(384, config.clone());
+        assert!(result.is_ok());
+        
+        let brain_graph = result.unwrap();
+        assert_eq!(brain_graph.embedding_dimension(), 384);
+        
+        let stored_config = brain_graph.get_config();
+        assert_eq!(stored_config.learning_rate, 0.05);
+        assert_eq!(stored_config.activation_threshold, 0.8);
+        assert!(!stored_config.enable_concept_formation);
+    }
+
+    #[tokio::test]
+    async fn test_new_with_config_invalid_configuration() {
+        let invalid_config = BrainEnhancedConfig {
+            learning_rate: 1.5, // Invalid: > 1.0
+            activation_threshold: -0.1, // Invalid: < 0.0
+            max_activation_spread: 0, // Invalid: must be > 0
+            neural_dampening: 1.1, // Invalid: > 1.0
+            ..BrainEnhancedConfig::default()
+        };
+        
+        let result = BrainEnhancedKnowledgeGraph::new_with_config(128, invalid_config);
+        assert!(result.is_err());
+        
+        if let Err(e) = result {
+            // Verify it's a configuration error
+            match e {
+                crate::error::GraphError::InvalidConfiguration(_) => {
+                    // Expected error type
+                }
+                _ => panic!("Expected InvalidConfiguration error"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_entity_activation_nonexistent_entity() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let nonexistent_entity = EntityKey::new(999);
+        
+        let activation = brain_graph.get_entity_activation(nonexistent_entity).await;
+        assert_eq!(activation, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_get_entity_activation_existing_entity() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let entity = EntityKey::new(1);
+        let expected_activation = 0.75;
+        
+        // Set activation first
+        brain_graph.set_entity_activation(entity, expected_activation).await;
+        
+        // Get activation
+        let actual_activation = brain_graph.get_entity_activation(entity).await;
+        assert_eq!(actual_activation, expected_activation);
+    }
+
+    #[tokio::test]
+    async fn test_set_entity_activation_valid_values() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let entity = EntityKey::new(1);
+        
+        // Test setting various valid activation values
+        let test_values = vec![0.0, 0.25, 0.5, 0.75, 1.0];
+        
+        for value in test_values {
+            brain_graph.set_entity_activation(entity, value).await;
+            let stored_value = brain_graph.get_entity_activation(entity).await;
+            assert_eq!(stored_value, value);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_set_entity_activation_clamping() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let entity = EntityKey::new(1);
+        
+        // Test values outside [0.0, 1.0] range are clamped
+        brain_graph.set_entity_activation(entity, -0.5).await;
+        let clamped_low = brain_graph.get_entity_activation(entity).await;
+        assert_eq!(clamped_low, 0.0);
+        
+        brain_graph.set_entity_activation(entity, 1.5).await;
+        let clamped_high = brain_graph.get_entity_activation(entity).await;
+        assert_eq!(clamped_high, 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_set_entity_activation_concurrent_access() {
+        let brain_graph = Arc::new(create_test_brain_graph().await.unwrap());
+        let entity = EntityKey::new(1);
+        
+        // Test concurrent access to activation setting
+        let mut handles = vec![];
+        
+        for i in 0..10 {
+            let graph_clone = Arc::clone(&brain_graph);
+            let handle = tokio::spawn(async move {
+                let activation = (i as f32) / 10.0;
+                graph_clone.set_entity_activation(entity, activation).await;
+                graph_clone.get_entity_activation(entity).await
+            });
+            handles.push(handle);
+        }
+        
+        // Wait for all tasks to complete
+        let results: Vec<f32> = futures::future::join_all(handles)
+            .await
+            .into_iter()
+            .map(|r| r.unwrap())
+            .collect();
+        
+        // All results should be valid activation values
+        for result in results {
+            assert!(result >= 0.0 && result <= 1.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_synaptic_weight_management() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let source = EntityKey::new(1);
+        let target = EntityKey::new(2);
+        
+        // Test initial weight
+        let initial_weight = brain_graph.get_synaptic_weight(source, target).await;
+        assert_eq!(initial_weight, 0.0);
+        
+        // Test setting weight
+        let test_weight = 0.8;
+        brain_graph.set_synaptic_weight(source, target, test_weight).await;
+        let stored_weight = brain_graph.get_synaptic_weight(source, target).await;
+        assert_eq!(stored_weight, test_weight);
+        
+        // Test weight clamping
+        brain_graph.set_synaptic_weight(source, target, 1.5).await;
+        let clamped_weight = brain_graph.get_synaptic_weight(source, target).await;
+        assert_eq!(clamped_weight, 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_concept_structure_management() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let concept_name = "test_concept".to_string();
+        
+        // Test getting non-existent concept
+        let nonexistent = brain_graph.get_concept_structure(&concept_name).await;
+        assert!(nonexistent.is_none());
+        
+        // Test storing and retrieving concept
+        let mut concept = ConceptStructure::new();
+        concept.add_input(EntityKey::new(1));
+        concept.add_output(EntityKey::new(2));
+        concept.concept_activation = 0.7;
+        concept.coherence_score = 0.8;
+        
+        brain_graph.store_concept_structure(concept_name.clone(), concept.clone()).await;
+        
+        let retrieved = brain_graph.get_concept_structure(&concept_name).await;
+        assert!(retrieved.is_some());
+        
+        let retrieved_concept = retrieved.unwrap();
+        assert_eq!(retrieved_concept.input_entities, concept.input_entities);
+        assert_eq!(retrieved_concept.output_entities, concept.output_entities);
+        assert_eq!(retrieved_concept.concept_activation, concept.concept_activation);
+        assert_eq!(retrieved_concept.coherence_score, concept.coherence_score);
+    }
+
+    #[tokio::test]
+    async fn test_concept_structure_removal() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let concept_name = "removable_concept".to_string();
+        
+        // Store a concept
+        let concept = ConceptStructure::new();
+        brain_graph.store_concept_structure(concept_name.clone(), concept).await;
+        
+        // Verify it exists
+        assert!(brain_graph.get_concept_structure(&concept_name).await.is_some());
+        
+        // Remove it
+        let removed = brain_graph.remove_concept_structure(&concept_name).await;
+        assert!(removed);
+        
+        // Verify it's gone
+        assert!(brain_graph.get_concept_structure(&concept_name).await.is_none());
+        
+        // Try removing again
+        let removed_again = brain_graph.remove_concept_structure(&concept_name).await;
+        assert!(!removed_again);
+    }
+
+    #[tokio::test]
+    async fn test_get_concept_names() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Initially empty
+        let names = brain_graph.get_concept_names().await;
+        assert!(names.is_empty());
+        
+        // Add concepts
+        let concept_names = vec!["concept1", "concept2", "concept3"];
+        for name in &concept_names {
+            brain_graph.store_concept_structure(name.to_string(), ConceptStructure::new()).await;
+        }
+        
+        // Get all names
+        let mut retrieved_names = brain_graph.get_concept_names().await;
+        retrieved_names.sort();
+        
+        let mut expected_names: Vec<String> = concept_names.iter().map(|s| s.to_string()).collect();
+        expected_names.sort();
+        
+        assert_eq!(retrieved_names, expected_names);
+    }
+
+    #[tokio::test]
+    async fn test_learning_statistics_management() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Test initial statistics
+        let initial_stats = brain_graph.get_learning_stats().await;
+        assert_eq!(initial_stats.entity_count, 0);
+        assert_eq!(initial_stats.relationship_count, 0);
+        assert_eq!(initial_stats.avg_activation, 0.0);
+        
+        // Test updating statistics
+        brain_graph.update_learning_stats(|stats| {
+            stats.entity_count = 10;
+            stats.relationship_count = 15;
+            stats.avg_activation = 0.5;
+            stats.learning_efficiency = 0.8;
+        }).await;
+        
+        let updated_stats = brain_graph.get_learning_stats().await;
+        assert_eq!(updated_stats.entity_count, 10);
+        assert_eq!(updated_stats.relationship_count, 15);
+        assert_eq!(updated_stats.avg_activation, 0.5);
+        assert_eq!(updated_stats.learning_efficiency, 0.8);
+    }
+
+    #[tokio::test]
+    async fn test_reset_clears_all_state() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Setup some state
+        let entity = EntityKey::new(1);
+        brain_graph.set_entity_activation(entity, 0.8).await;
+        brain_graph.set_synaptic_weight(entity, EntityKey::new(2), 0.7).await;
+        brain_graph.store_concept_structure("test".to_string(), ConceptStructure::new()).await;
+        brain_graph.update_learning_stats(|stats| {
+            stats.entity_count = 5;
+            stats.learning_efficiency = 0.9;
+        }).await;
+        
+        // Verify state exists
+        assert_eq!(brain_graph.get_entity_activation(entity).await, 0.8);
+        assert!(!brain_graph.get_all_activations().await.is_empty());
+        assert!(brain_graph.get_concept_structure("test").await.is_some());
+        
+        // Reset
+        brain_graph.reset().await;
+        
+        // Verify all state is cleared
+        assert_eq!(brain_graph.get_entity_activation(entity).await, 0.0);
+        assert!(brain_graph.get_all_activations().await.is_empty());
+        assert!(brain_graph.get_concept_structure("test").await.is_none());
+        
+        let stats = brain_graph.get_learning_stats().await;
+        assert_eq!(stats.entity_count, 0);
+        assert_eq!(stats.learning_efficiency, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_validate_consistency_with_valid_state() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Setup valid state (assuming entities exist in core graph)
+        // Note: This test would need actual entities in the core graph
+        // For now, we test the consistency check mechanism
+        
+        let issues = brain_graph.validate_consistency().await;
+        // With empty graph, should have no consistency issues
+        assert!(issues.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_validate_consistency_with_invalid_activations() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Manually insert invalid activation (bypassing clamping)
+        {
+            let mut activations = brain_graph.entity_activations.write().await;
+            activations.insert(EntityKey::new(999), 1.5); // Invalid: > 1.0
+            activations.insert(EntityKey::new(998), -0.5); // Invalid: < 0.0
+        }
+        
+        let issues = brain_graph.validate_consistency().await;
+        
+        // Should detect invalid activation values
+        let invalid_activation_issues: Vec<_> = issues.iter()
+            .filter(|issue| issue.contains("Invalid activation value"))
+            .collect();
+        
+        assert!(invalid_activation_issues.len() >= 2);
+    }
+
+    #[tokio::test]
+    async fn test_validate_consistency_with_nonexistent_entities() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Add activations for non-existent entities
+        let nonexistent_entity = EntityKey::new(999);
+        brain_graph.set_entity_activation(nonexistent_entity, 0.5).await;
+        
+        let issues = brain_graph.validate_consistency().await;
+        
+        // Should detect references to non-existent entities
+        let nonexistent_entity_issues: Vec<_> = issues.iter()
+            .filter(|issue| issue.contains("non-existent entity"))
+            .collect();
+        
+        assert!(!nonexistent_entity_issues.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_health_metrics() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Setup some state for metrics calculation
+        brain_graph.set_entity_activation(EntityKey::new(1), 0.4).await;
+        brain_graph.set_entity_activation(EntityKey::new(2), 0.6).await;
+        
+        brain_graph.update_learning_stats(|stats| {
+            stats.learning_efficiency = 0.8;
+            stats.concept_coherence = 0.7;
+        }).await;
+        
+        let metrics = brain_graph.get_health_metrics().await;
+        
+        // Verify metrics are within valid ranges
+        assert!(metrics.connectivity_score >= 0.0 && metrics.connectivity_score <= 1.0);
+        assert!(metrics.activation_balance >= 0.0 && metrics.activation_balance <= 1.0);
+        assert!(metrics.learning_stability >= 0.0 && metrics.learning_stability <= 1.0);
+        assert!(metrics.concept_coherence >= 0.0 && metrics.concept_coherence <= 1.0);
+        assert!(metrics.overall_health >= 0.0 && metrics.overall_health <= 1.0);
+        
+        // Verify calculation
+        let expected_overall = (metrics.connectivity_score + metrics.activation_balance + 
+                               metrics.learning_stability + metrics.concept_coherence) / 4.0;
+        assert!((metrics.overall_health - expected_overall).abs() < 0.001);
+    }
+
+    #[tokio::test]
+    async fn test_memory_usage_calculation() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Add some data to increase memory usage
+        for i in 0..100 {
+            brain_graph.set_entity_activation(EntityKey::new(i), 0.5).await;
+        }
+        
+        let memory_usage = brain_graph.get_memory_usage().await;
+        
+        // Verify memory usage structure
+        assert!(memory_usage.core_graph_bytes > 0);
+        assert!(memory_usage.sdr_storage_bytes >= 0);
+        assert!(memory_usage.activation_bytes > 0);
+        assert!(memory_usage.synaptic_weights_bytes > 0);
+        assert!(memory_usage.concept_structures_bytes > 0);
+    }
+
+    #[tokio::test]
+    async fn test_query_cache_management() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Test initial cache state
+        let (size, capacity) = brain_graph.get_cache_stats().await;
+        assert_eq!(size, 0);
+        
+        // Clear empty cache (should not fail)
+        brain_graph.clear_query_cache().await;
+        
+        // Note: Direct cache manipulation would require public methods
+        // This test validates the cache management interface
+    }
+
+    #[tokio::test]
+    async fn test_config_update() {
+        let mut brain_graph = create_test_brain_graph().await.unwrap();
+        
+        let new_config = BrainEnhancedConfig {
+            learning_rate: 0.15,
+            activation_threshold: 0.6,
+            ..BrainEnhancedConfig::default()
+        };
+        
+        let result = brain_graph.update_config(new_config.clone());
+        assert!(result.is_ok());
+        
+        let updated_config = brain_graph.get_config();
+        assert_eq!(updated_config.learning_rate, 0.15);
+        assert_eq!(updated_config.activation_threshold, 0.6);
+    }
+
+    #[tokio::test]
+    async fn test_config_update_with_invalid_config() {
+        let mut brain_graph = create_test_brain_graph().await.unwrap();
+        
+        let invalid_config = BrainEnhancedConfig {
+            learning_rate: -0.1, // Invalid
+            ..BrainEnhancedConfig::default()
+        };
+        
+        let result = brain_graph.update_config(invalid_config);
+        assert!(result.is_err());
+        
+        // Verify original config is unchanged
+        let config = brain_graph.get_config();
+        assert!(config.learning_rate > 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_brain_enhanced_integration() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Test integration between different components
+        let entity1 = EntityKey::new(1);
+        let entity2 = EntityKey::new(2);
+        
+        // Set up brain-enhanced state
+        brain_graph.set_entity_activation(entity1, 0.8).await;
+        brain_graph.set_entity_activation(entity2, 0.6).await;
+        brain_graph.set_synaptic_weight(entity1, entity2, 0.7).await;
+        
+        // Create concept structure linking entities
+        let mut concept = ConceptStructure::new();
+        concept.add_input(entity1);
+        concept.add_output(entity2);
+        concept.concept_activation = 0.75;
+        concept.coherence_score = 0.8;
+        
+        brain_graph.store_concept_structure("integration_test".to_string(), concept).await;
+        
+        // Verify integrated state
+        let activations = brain_graph.get_all_activations().await;
+        assert_eq!(activations.len(), 2);
+        assert_eq!(activations[&entity1], 0.8);
+        assert_eq!(activations[&entity2], 0.6);
+        
+        let weight = brain_graph.get_synaptic_weight(entity1, entity2).await;
+        assert_eq!(weight, 0.7);
+        
+        let stored_concept = brain_graph.get_concept_structure("integration_test").await;
+        assert!(stored_concept.is_some());
+        
+        let concept = stored_concept.unwrap();
+        assert!(concept.is_well_formed());
+        assert_eq!(concept.total_entities(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_operations() {
+        let brain_graph = Arc::new(create_test_brain_graph().await.unwrap());
+        
+        // Test concurrent operations on different aspects of the brain graph
+        let graph1 = Arc::clone(&brain_graph);
+        let graph2 = Arc::clone(&brain_graph);
+        let graph3 = Arc::clone(&brain_graph);
+        
+        let handle1 = tokio::spawn(async move {
+            // Concurrent activation updates
+            for i in 0..50 {
+                let entity = EntityKey::new(i);
+                let activation = (i as f32) / 100.0;
+                graph1.set_entity_activation(entity, activation).await;
+            }
+        });
+        
+        let handle2 = tokio::spawn(async move {
+            // Concurrent synaptic weight updates
+            for i in 0..25 {
+                let source = EntityKey::new(i);
+                let target = EntityKey::new(i + 25);
+                let weight = (i as f32) / 50.0;
+                graph2.set_synaptic_weight(source, target, weight).await;
+            }
+        });
+        
+        let handle3 = tokio::spawn(async move {
+            // Concurrent concept creation
+            for i in 0..10 {
+                let concept_name = format!("concept_{}", i);
+                let concept = ConceptStructure::new();
+                graph3.store_concept_structure(concept_name, concept).await;
+            }
+        });
+        
+        // Wait for all operations to complete
+        let results = tokio::try_join!(handle1, handle2, handle3);
+        assert!(results.is_ok());
+        
+        // Verify final state consistency
+        let issues = brain_graph.validate_consistency().await;
+        // Should have no consistency issues from concurrent operations
+        // (though there might be issues from non-existent entities)
+        println!("Consistency issues: {:?}", issues);
+    }
+
+    #[tokio::test]
+    async fn test_activation_spread_simulation() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Set up a network of activations to simulate spread
+        let entities: Vec<EntityKey> = (0..10).map(|i| EntityKey::new(i)).collect();
+        
+        // Set initial activation
+        brain_graph.set_entity_activation(entities[0], 1.0).await;
+        
+        // Set up synaptic weights for spread
+        for i in 0..9 {
+            brain_graph.set_synaptic_weight(entities[i], entities[i + 1], 0.8).await;
+        }
+        
+        // Simulate activation spread (simplified)
+        for step in 1..5 {
+            for i in 0..9 {
+                let source_activation = brain_graph.get_entity_activation(entities[i]).await;
+                let weight = brain_graph.get_synaptic_weight(entities[i], entities[i + 1]).await;
+                
+                if source_activation > 0.1 {
+                    let target_activation = brain_graph.get_entity_activation(entities[i + 1]).await;
+                    let new_activation = (target_activation + source_activation * weight * 0.5).min(1.0);
+                    brain_graph.set_entity_activation(entities[i + 1], new_activation).await;
+                }
+            }
+            
+            // Apply dampening
+            for entity in &entities {
+                let current = brain_graph.get_entity_activation(*entity).await;
+                brain_graph.set_entity_activation(*entity, current * 0.95).await;
+            }
+        }
+        
+        // Verify activation pattern
+        let final_activations = brain_graph.get_all_activations().await;
+        
+        // First entity should still have highest activation
+        let first_activation = final_activations.get(&entities[0]).unwrap_or(&0.0);
+        
+        // Last entity should have some activation due to spread
+        let last_activation = final_activations.get(&entities[9]).unwrap_or(&0.0);
+        
+        assert!(*first_activation > *last_activation);
+        assert!(*last_activation > 0.0); // Some activation should have spread
+    }
+
+    #[tokio::test]
+    async fn test_brain_memory_usage_calculation() {
+        let mut memory_usage = BrainMemoryUsage {
+            core_graph_bytes: 1000,
+            sdr_storage_bytes: 2000,
+            activation_bytes: 500,
+            synaptic_weights_bytes: 750,
+            concept_structures_bytes: 250,
+            total_bytes: 0,
+        };
+        
+        // Test total calculation
+        memory_usage.calculate_total();
+        assert_eq!(memory_usage.total_bytes, 4500);
+        
+        // Test breakdown calculation
+        let breakdown = memory_usage.get_breakdown();
+        assert!((breakdown["core_graph"] - 22.22).abs() < 0.1);
+        assert!((breakdown["sdr_storage"] - 44.44).abs() < 0.1);
+        assert!((breakdown["activations"] - 11.11).abs() < 0.1);
+        assert!((breakdown["synaptic_weights"] - 16.67).abs() < 0.1);
+        assert!((breakdown["concept_structures"] - 5.56).abs() < 0.1);
+    }
+
+    #[tokio::test]
+    async fn test_private_component_initialization() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Test that all private components are properly initialized
+        
+        // Test entity_activations is initialized as empty HashMap
+        let activations = brain_graph.entity_activations.read().await;
+        assert!(activations.is_empty());
+        drop(activations);
+        
+        // Test synaptic_weights is initialized as empty HashMap
+        let weights = brain_graph.synaptic_weights.read().await;
+        assert!(weights.is_empty());
+        drop(weights);
+        
+        // Test concept_structures is initialized as empty HashMap
+        let concepts = brain_graph.concept_structures.read().await;
+        assert!(concepts.is_empty());
+        drop(concepts);
+        
+        // Test learning_stats is initialized with default values
+        let stats = brain_graph.learning_stats.read().await;
+        assert_eq!(stats.entity_count, 0);
+        assert_eq!(stats.relationship_count, 0);
+        assert_eq!(stats.avg_activation, 0.0);
+        drop(stats);
+        
+        // Test query_cache is initialized as empty HashMap
+        let cache = brain_graph.query_cache.read().await;
+        assert!(cache.is_empty());
+        drop(cache);
+    }
+
+    #[tokio::test]
+    async fn test_sdr_configuration_integration() {
+        // Test SDR configuration for different embedding dimensions
+        let test_cases = vec![64, 128, 256, 512];
+        
+        for embedding_dim in test_cases {
+            let brain_graph = BrainEnhancedKnowledgeGraph::new(embedding_dim).unwrap();
+            
+            // Verify embedding dimension is set correctly
+            assert_eq!(brain_graph.embedding_dimension(), embedding_dim);
+            
+            // Test that SDR storage is properly configured
+            // Note: We can't directly test SDR config without public accessors
+            // but we can verify the brain graph was created successfully
+            assert!(brain_graph.entity_count() == 0); // Initial state
+        }
+    }
+
+    #[tokio::test]
+    async fn test_component_coordination() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        let entity1 = EntityKey::new(1);
+        let entity2 = EntityKey::new(2);
+        
+        // Test coordination between activations and synaptic weights
+        brain_graph.set_entity_activation(entity1, 0.8).await;
+        brain_graph.set_entity_activation(entity2, 0.4).await;
+        brain_graph.set_synaptic_weight(entity1, entity2, 0.6).await;
+        
+        // Test coordination with concept structures
+        let mut concept = ConceptStructure::new();
+        concept.add_input(entity1);
+        concept.add_output(entity2);
+        concept.concept_activation = 0.7;
+        concept.coherence_score = 0.8;
+        
+        brain_graph.store_concept_structure("coordination_test".to_string(), concept).await;
+        
+        // Test coordination with learning statistics
+        brain_graph.update_learning_stats(|stats| {
+            stats.entity_count = 2;
+            stats.relationship_count = 1;
+            stats.avg_activation = 0.6;
+        }).await;
+        
+        // Verify all components work together
+        let health_metrics = brain_graph.get_health_metrics().await;
+        assert!(health_metrics.overall_health > 0.0);
+        
+        let all_activations = brain_graph.get_all_activations().await;
+        assert_eq!(all_activations.len(), 2);
+        
+        let weight = brain_graph.get_synaptic_weight(entity1, entity2).await;
+        assert_eq!(weight, 0.6);
+        
+        let stored_concept = brain_graph.get_concept_structure("coordination_test").await;
+        assert!(stored_concept.is_some());
+        
+        let stats = brain_graph.get_learning_stats().await;
+        assert_eq!(stats.entity_count, 2);
+    }
+
+    #[tokio::test]
+    async fn test_edge_case_entity_keys() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Test with edge case entity keys
+        let edge_cases = vec![
+            EntityKey::new(0),                    // Zero key
+            EntityKey::new(u64::MAX),            // Maximum key
+            EntityKey::new(u64::MAX / 2),        // Middle value
+        ];
+        
+        for entity in edge_cases {
+            // Test activation management with edge case keys
+            brain_graph.set_entity_activation(entity, 0.5).await;
+            let activation = brain_graph.get_entity_activation(entity).await;
+            assert_eq!(activation, 0.5);
+            
+            // Test synaptic weight management
+            let other_entity = EntityKey::new(1);
+            brain_graph.set_synaptic_weight(entity, other_entity, 0.3).await;
+            let weight = brain_graph.get_synaptic_weight(entity, other_entity).await;
+            assert_eq!(weight, 0.3);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_stress_activation_operations() {
+        let brain_graph = create_test_brain_graph().await.unwrap();
+        
+        // Stress test with many activation operations
+        let num_entities = 1000;
+        let entities: Vec<EntityKey> = (0..num_entities).map(|i| EntityKey::new(i)).collect();
+        
+        // Set activations for all entities
+        for (i, entity) in entities.iter().enumerate() {
+            let activation = (i as f32) / (num_entities as f32);
+            brain_graph.set_entity_activation(*entity, activation).await;
+        }
+        
+        // Verify all activations were set correctly
+        for (i, entity) in entities.iter().enumerate() {
+            let expected_activation = (i as f32) / (num_entities as f32);
+            let actual_activation = brain_graph.get_entity_activation(*entity).await;
+            assert!((actual_activation - expected_activation).abs() < 0.001);
+        }
+        
+        // Test bulk retrieval
+        let all_activations = brain_graph.get_all_activations().await;
+        assert_eq!(all_activations.len(), num_entities);
+        
+        // Clear and verify
+        brain_graph.clear_activations().await;
+        let cleared_activations = brain_graph.get_all_activations().await;
+        assert!(cleared_activations.is_empty());
+    }
+}

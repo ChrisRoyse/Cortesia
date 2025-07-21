@@ -1116,3 +1116,452 @@ impl SystemStateChanges {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio;
+    use crate::core::{
+        brain_enhanced_graph::BrainEnhancedKnowledgeGraph,
+        activation_engine::ActivationPropagationEngine,
+        sdr_storage::SDRStorage,
+        sdr_types::SDRConfig,
+    };
+    use crate::cognitive::{
+        orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig},
+    };
+
+    async fn create_test_system() -> Result<Phase3IntegratedCognitiveSystem> {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64)?);
+        let orchestrator = Arc::new(
+            CognitiveOrchestrator::new(graph.clone(), CognitiveOrchestratorConfig::default()).await?
+        );
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+
+        Phase3IntegratedCognitiveSystem::new(
+            orchestrator,
+            activation_engine,
+            graph,
+            sdr_storage,
+        ).await
+    }
+
+    #[tokio::test]
+    async fn test_system_state_new() {
+        let state = SystemState::new();
+        assert!(state.current_focus.is_none());
+        assert!(state.active_patterns.is_empty());
+        assert_eq!(state.working_memory_load, 0.0);
+        assert_eq!(state.attention_capacity, 1.0);
+        assert_eq!(state.inhibition_strength, 0.5);
+        assert_eq!(state.system_performance, 1.0);
+        assert_eq!(state.user_satisfaction, 0.5);
+    }
+
+    #[tokio::test]
+    async fn test_system_state_update_performance() {
+        let mut state = SystemState::new();
+        
+        // Test normal update
+        state.update_performance(0.8);
+        assert_eq!(state.system_performance, 0.8);
+        
+        // Test clamping to upper bound
+        state.update_performance(1.5);
+        assert_eq!(state.system_performance, 1.0);
+        
+        // Test clamping to lower bound
+        state.update_performance(-0.1);
+        assert_eq!(state.system_performance, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_system_state_should_optimize() {
+        let mut state = SystemState::new();
+        
+        // Should not optimize with good performance and recent optimization
+        assert!(!state.should_optimize());
+        
+        // Should optimize with poor performance
+        state.system_performance = 0.5;
+        assert!(state.should_optimize());
+        
+        // Should optimize with old optimization time
+        state.system_performance = 1.0;
+        state.last_optimization = Instant::now() - Duration::from_secs(301);
+        assert!(state.should_optimize());
+    }
+
+    #[tokio::test]
+    async fn test_system_performance_metrics_new() {
+        let metrics = SystemPerformanceMetrics::new();
+        assert_eq!(metrics.total_queries, 0);
+        assert_eq!(metrics.successful_queries, 0);
+        assert_eq!(metrics.average_response_time, Duration::from_millis(0));
+        assert_eq!(metrics.working_memory_utilization, 0.0);
+        assert_eq!(metrics.attention_switches, 0);
+        assert_eq!(metrics.inhibition_events, 0);
+        assert_eq!(metrics.memory_consolidations, 0);
+        assert!(metrics.pattern_usage_stats.is_empty());
+        assert_eq!(metrics.overall_efficiency, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_system_performance_metrics_update_query_stats() {
+        let mut metrics = SystemPerformanceMetrics::new();
+        
+        // Test successful query
+        metrics.update_query_stats(true, Duration::from_millis(100));
+        assert_eq!(metrics.total_queries, 1);
+        assert_eq!(metrics.successful_queries, 1);
+        assert_eq!(metrics.get_success_rate(), 1.0);
+        
+        // Test failed query
+        metrics.update_query_stats(false, Duration::from_millis(150));
+        assert_eq!(metrics.total_queries, 2);
+        assert_eq!(metrics.successful_queries, 1);
+        assert_eq!(metrics.get_success_rate(), 0.5);
+        
+        // Test average calculation
+        assert!(metrics.average_response_time.as_millis() > 100);
+        assert!(metrics.average_response_time.as_millis() < 150);
+    }
+
+    #[tokio::test]
+    async fn test_system_performance_metrics_pattern_stats() {
+        let mut metrics = SystemPerformanceMetrics::new();
+        
+        metrics.update_pattern_stats(
+            CognitivePatternType::Convergent,
+            Duration::from_millis(50),
+            true,
+            0.8
+        );
+        
+        assert!(metrics.pattern_usage_stats.contains_key(&CognitivePatternType::Convergent));
+        let stats = &metrics.pattern_usage_stats[&CognitivePatternType::Convergent];
+        assert_eq!(stats.usage_count, 1);
+        assert_eq!(stats.success_rate, 1.0);
+        assert_eq!(stats.average_confidence, 0.8);
+        
+        // Test second update
+        metrics.update_pattern_stats(
+            CognitivePatternType::Convergent,
+            Duration::from_millis(100),
+            false,
+            0.6
+        );
+        
+        let stats = &metrics.pattern_usage_stats[&CognitivePatternType::Convergent];
+        assert_eq!(stats.usage_count, 2);
+        assert_eq!(stats.success_rate, 0.5);
+        assert_eq!(stats.average_confidence, 0.7);
+    }
+
+    #[tokio::test]
+    async fn test_initialize_working_memory() {
+        let system = create_test_system().await.unwrap();
+        let result = system.initialize_working_memory("test query").await;
+        
+        assert!(result.is_ok());
+        let operation = result.unwrap();
+        assert!(matches!(operation.operation_type, WorkingMemoryOpType::Store));
+        assert_eq!(operation.affected_buffers.len(), 1);
+        assert_eq!(operation.affected_buffers[0], "phonological");
+        assert_eq!(operation.memory_load_change, 0.1);
+    }
+
+    #[tokio::test]
+    async fn test_setup_attention_focus() {
+        let system = create_test_system().await.unwrap();
+        let result = system.setup_attention_focus("test query").await;
+        
+        assert!(result.is_ok());
+        let attention_shift = result.unwrap();
+        assert!(attention_shift.from_entities.is_empty());
+        assert!(attention_shift.to_entities.is_empty()); // No entities in test graph
+        assert_eq!(attention_shift.attention_strength, 0.8);
+        assert!(matches!(attention_shift.shift_reason, AttentionShiftReason::UserQuery));
+    }
+
+    #[tokio::test]
+    async fn test_apply_initial_inhibition() {
+        let system = create_test_system().await.unwrap();
+        let result = system.apply_initial_inhibition("test query").await;
+        
+        assert!(result.is_ok());
+        let inhibition_event = result.unwrap();
+        assert!(matches!(inhibition_event.event_type, InhibitionEventType::CompetitiveInhibition));
+        assert!(inhibition_event.affected_entities.is_empty());
+        assert_eq!(inhibition_event.inhibition_strength, 0.5);
+        assert!(inhibition_event.pattern_trigger.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_choose_adaptive_pattern() {
+        let system = create_test_system().await.unwrap();
+        
+        // Test analyze query
+        let pattern = system.choose_adaptive_pattern("analyze this data").await.unwrap();
+        assert!(matches!(pattern, CognitivePatternType::Critical));
+        
+        // Test creative query
+        let pattern = system.choose_adaptive_pattern("creative solutions").await.unwrap();
+        assert!(matches!(pattern, CognitivePatternType::Divergent));
+        
+        // Test system query
+        let pattern = system.choose_adaptive_pattern("system relationships").await.unwrap();
+        assert!(matches!(pattern, CognitivePatternType::Systems));
+        
+        // Test default query
+        let pattern = system.choose_adaptive_pattern("regular question").await.unwrap();
+        assert!(matches!(pattern, CognitivePatternType::Convergent));
+    }
+
+    #[tokio::test]
+    async fn test_execute_single_pattern_convergent() {
+        let system = create_test_system().await.unwrap();
+        let result = system.execute_single_pattern(CognitivePatternType::Convergent, "test query").await;
+        
+        assert!(result.is_ok());
+        let pattern_result = result.unwrap();
+        assert!(!pattern_result.response.is_empty());
+        assert!(pattern_result.confidence >= 0.0);
+        assert!(pattern_result.confidence <= 1.0);
+        assert!(pattern_result.execution_time > Duration::from_nanos(0));
+    }
+
+    #[tokio::test]
+    async fn test_execute_single_pattern_divergent() {
+        let system = create_test_system().await.unwrap();
+        let result = system.execute_single_pattern(CognitivePatternType::Divergent, "test query").await;
+        
+        assert!(result.is_ok());
+        let pattern_result = result.unwrap();
+        assert!(pattern_result.response.contains("paths"));
+        assert_eq!(pattern_result.confidence, 0.7);
+        assert!(pattern_result.execution_time > Duration::from_nanos(0));
+    }
+
+    #[tokio::test]
+    async fn test_execute_single_pattern_critical() {
+        let system = create_test_system().await.unwrap();
+        let result = system.execute_single_pattern(CognitivePatternType::Critical, "test query").await;
+        
+        assert!(result.is_ok());
+        let pattern_result = result.unwrap();
+        assert!(pattern_result.response.contains("facts"));
+        assert_eq!(pattern_result.confidence, 0.8);
+        assert!(pattern_result.execution_time > Duration::from_nanos(0));
+    }
+
+    #[tokio::test]
+    async fn test_consolidate_reasoning_memory() {
+        let system = create_test_system().await.unwrap();
+        let result = system.consolidate_reasoning_memory("test response", 0.9).await;
+        
+        assert!(result.is_ok());
+        let consolidation = result.unwrap();
+        assert_eq!(consolidation.source_memory, "working_memory");
+        assert_eq!(consolidation.target_memory, "long_term_memory");
+        assert_eq!(consolidation.items_consolidated, 1);
+        assert_eq!(consolidation.success_rate, 0.9);
+    }
+
+    #[tokio::test]
+    async fn test_should_optimize() {
+        let system = create_test_system().await.unwrap();
+        
+        // Initially should not optimize
+        let should_optimize = system.should_optimize().await;
+        assert!(!should_optimize);
+        
+        // Set poor performance to trigger optimization
+        {
+            let mut state = system.system_state.write().await;
+            state.system_performance = 0.5;
+        }
+        
+        let should_optimize = system.should_optimize().await;
+        assert!(should_optimize);
+    }
+
+    #[tokio::test]
+    async fn test_optimize_system_performance() {
+        let system = create_test_system().await.unwrap();
+        
+        // Set up initial state
+        {
+            let mut state = system.system_state.write().await;
+            state.working_memory_load = 0.9;
+            state.system_performance = 0.6;
+            state.attention_capacity = 0.8;
+        }
+        
+        let result = system.optimize_system_performance().await;
+        assert!(result.is_ok());
+        
+        // Check optimization effects
+        let state = system.system_state.read().await;
+        assert!(state.working_memory_load < 0.9); // Should be reduced
+        assert!(state.attention_capacity >= 0.8); // Should be increased or same
+        assert!(state.system_performance > 0.6); // Should be improved
+    }
+
+    #[tokio::test]
+    async fn test_execute_parallel_patterns() {
+        let system = create_test_system().await.unwrap();
+        let result = system.execute_parallel_patterns("test query").await;
+        
+        assert!(result.is_ok());
+        let pattern_results = result.unwrap();
+        assert!(!pattern_results.is_empty());
+        
+        // Check that we get results for multiple patterns
+        let convergent_found = pattern_results.iter().any(|(pt, _)| matches!(pt, CognitivePatternType::Convergent));
+        let divergent_found = pattern_results.iter().any(|(pt, _)| matches!(pt, CognitivePatternType::Divergent));
+        assert!(convergent_found);
+        assert!(divergent_found);
+    }
+
+    #[tokio::test]
+    async fn test_execute_sequential_patterns() {
+        let system = create_test_system().await.unwrap();
+        let result = system.execute_sequential_patterns("test query").await;
+        
+        assert!(result.is_ok());
+        let pattern_results = result.unwrap();
+        assert!(!pattern_results.is_empty());
+        
+        // Should have at least convergent pattern
+        let has_convergent = pattern_results.iter().any(|(pt, _)| matches!(pt, CognitivePatternType::Convergent));
+        assert!(has_convergent);
+        
+        // All results should have valid confidence
+        for (_, result) in &pattern_results {
+            assert!(result.confidence >= 0.0);
+            assert!(result.confidence <= 1.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_phase3_integration_config_default() {
+        let config = Phase3IntegrationConfig::default();
+        assert!(config.enable_working_memory);
+        assert!(config.enable_attention_management);
+        assert!(config.enable_competitive_inhibition);
+        assert!(config.enable_unified_memory);
+        assert!(matches!(config.pattern_integration_mode, PatternIntegrationMode::Orchestrated));
+        assert!(config.performance_monitoring);
+        assert!(config.automatic_optimization);
+    }
+
+    #[tokio::test]
+    async fn test_reasoning_trace_new() {
+        let trace = ReasoningTrace::new();
+        assert!(trace.activated_patterns.is_empty());
+        assert!(trace.working_memory_operations.is_empty());
+        assert!(trace.attention_shifts.is_empty());
+        assert!(trace.inhibition_events.is_empty());
+        assert!(trace.memory_consolidations.is_empty());
+        assert!(trace.pattern_interactions.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_system_state_changes_new() {
+        let changes = SystemStateChanges::new();
+        assert!(changes.working_memory_changes.is_empty());
+        assert!(changes.attention_changes.is_empty());
+        assert!(changes.inhibition_changes.is_empty());
+        assert!(changes.pattern_activations.is_empty());
+        assert!(changes.performance_changes.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_system_diagnostics_methods() {
+        let system = create_test_system().await.unwrap();
+        
+        // Test memory utilization
+        let memory_util = system.get_memory_utilization().await;
+        assert!(memory_util.is_ok());
+        let util = memory_util.unwrap();
+        assert!(util.working_memory_usage >= 0.0);
+        assert!(util.working_memory_usage <= 1.0);
+        
+        // Test attention status
+        let attention_status = system.get_attention_status().await;
+        assert!(attention_status.is_ok());
+        let status = attention_status.unwrap();
+        assert!(status.current_focus_strength >= 0.0);
+        assert!(status.current_focus_strength <= 1.0);
+        
+        // Test inhibition status
+        let inhibition_status = system.get_inhibition_status().await;
+        assert!(inhibition_status.is_ok());
+        let status = inhibition_status.unwrap();
+        assert!(status.global_inhibition_strength >= 0.0);
+        assert!(status.global_inhibition_strength <= 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_performance_data_collection() {
+        let system = create_test_system().await.unwrap();
+        let result = system.collect_performance_metrics(Duration::from_secs(1)).await;
+        
+        assert!(result.is_ok());
+        let perf_data = result.unwrap();
+        assert!(!perf_data.query_latencies.is_empty());
+        assert!(!perf_data.accuracy_scores.is_empty());
+        assert!(!perf_data.user_satisfaction.is_empty());
+        assert!(!perf_data.memory_usage.is_empty());
+        assert!(!perf_data.error_rates.is_empty());
+        assert!(perf_data.system_stability >= 0.0);
+        assert!(perf_data.system_stability <= 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_pattern_integration_modes() {
+        let mut system = create_test_system().await.unwrap();
+        
+        // Test Orchestrated mode
+        system.integration_config.pattern_integration_mode = PatternIntegrationMode::Orchestrated;
+        let result = system.execute_advanced_reasoning("test query").await;
+        assert!(result.is_ok());
+        
+        // Test Adaptive mode
+        system.integration_config.pattern_integration_mode = PatternIntegrationMode::Adaptive;
+        let result = system.execute_advanced_reasoning("creative thinking").await;
+        assert!(result.is_ok());
+        
+        // Test Parallel mode (may be slower, so keep query simple)
+        system.integration_config.pattern_integration_mode = PatternIntegrationMode::Parallel;
+        let result = system.execute_advanced_reasoning("simple").await;
+        assert!(result.is_ok());
+        
+        // Test Sequential mode
+        system.integration_config.pattern_integration_mode = PatternIntegrationMode::Sequential;
+        let result = system.execute_advanced_reasoning("test").await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_system_backward_compatibility() {
+        let system = create_test_system().await.unwrap();
+        
+        // Test integrated_query method for Phase 4 compatibility
+        let result = system.integrated_query("test query", None).await;
+        assert!(result.is_ok());
+        
+        let query_result = result.unwrap();
+        assert_eq!(query_result.query, "test query");
+        assert!(!query_result.response.is_empty());
+        assert!(query_result.confidence >= 0.0);
+        assert!(query_result.confidence <= 1.0);
+        
+        // Test get_base_orchestrator
+        let orchestrator = system.get_base_orchestrator();
+        assert!(orchestrator.is_ok());
+    }
+}

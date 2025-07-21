@@ -444,3 +444,546 @@ impl QueryStatistics {
         self.high_activation_ratio() < 0.3 // Not too many highly activated entities
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::brain_graph_types::*;
+    use crate::core::types::EntityKey;
+    use crate::core::sdr_types::SDRConfig;
+    use crate::core::sdr_storage::SDRStorage;
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    use tokio::sync::RwLock;
+
+    // Helper function to create a test brain graph
+    async fn create_test_brain_graph() -> BrainEnhancedKnowledgeGraph {
+        BrainEnhancedKnowledgeGraph::new_for_test().expect("Failed to create test graph")
+    }
+
+    // Helper to create test entity data
+    fn create_test_entity_data(id: u32, embedding: Vec<f32>) -> crate::core::types::EntityData {
+        crate::core::types::EntityData {
+            id,
+            entity_type: "test".to_string(),
+            properties: HashMap::new(),
+            embedding,
+            metadata: HashMap::new(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_neural_query_empty_embedding() {
+        let graph = create_test_brain_graph().await;
+        let empty_embedding = vec![];
+        
+        let result = graph.neural_query(&empty_embedding, 5).await;
+        assert!(result.is_err(), "Empty embedding should return error");
+    }
+
+    #[tokio::test]
+    async fn test_neural_query_zero_k() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        let result = graph.neural_query(&query_embedding, 0).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert_eq!(brain_result.entities.len(), 0);
+        assert_eq!(brain_result.total_activation, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_neural_query_basic_functionality() {
+        let mut graph = create_test_brain_graph().await;
+        
+        // Add some test entities
+        let entity1 = create_test_entity_data(1, vec![0.5; 384]);
+        let entity2 = create_test_entity_data(2, vec![0.3; 384]);
+        let entity3 = create_test_entity_data(3, vec![0.8; 384]);
+        
+        graph.core_graph.add_entity(entity1).unwrap();
+        graph.core_graph.add_entity(entity2).unwrap();
+        graph.core_graph.add_entity(entity3).unwrap();
+        
+        let query_embedding = vec![0.5; 384];
+        let result = graph.neural_query(&query_embedding, 2).await;
+        
+        assert!(result.is_ok());
+        let brain_result = result.unwrap();
+        assert!(brain_result.entities.len() <= 2);
+        assert!(brain_result.total_activation >= 0.0);
+        assert!(brain_result.query_time.as_millis() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_activate_concept_nonexistent() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.activate_concept("nonexistent_concept").await;
+        assert!(result.is_err());
+        
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Concept not found"));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_activate_concept_empty_name() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.activate_concept("").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_find_entity_by_concept_nonexistent() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.find_entity_by_concept("nonexistent_concept", 5).await;
+        assert!(result.is_err());
+        
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Concept not found"));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_find_entity_by_concept_zero_k() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.find_entity_by_concept("test_concept", 0).await;
+        // Should still work but return empty results
+        if result.is_ok() {
+            let entities = result.unwrap();
+            assert_eq!(entities.len(), 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_propagate_activation_empty_initial() {
+        let graph = create_test_brain_graph().await;
+        let empty_activations = HashMap::new();
+        
+        let result = graph.propagate_activation(&empty_activations).await;
+        assert!(result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_propagate_activation_below_threshold() {
+        let graph = create_test_brain_graph().await;
+        let mut initial_activations = HashMap::new();
+        
+        // Add activation below threshold (0.1)
+        initial_activations.insert(EntityKey::new(1), 0.05);
+        
+        let result = graph.propagate_activation(&initial_activations).await;
+        // Should only contain the initial activation, no propagation
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(&EntityKey::new(1)), Some(&0.05));
+    }
+
+    #[tokio::test]
+    async fn test_propagate_activation_above_threshold() {
+        let mut graph = create_test_brain_graph().await;
+        
+        // Add test entities with connections
+        let entity1 = create_test_entity_data(1, vec![0.5; 384]);
+        let entity2 = create_test_entity_data(2, vec![0.3; 384]);
+        
+        graph.core_graph.add_entity(entity1).unwrap();
+        graph.core_graph.add_entity(entity2).unwrap();
+        
+        // Add relationship
+        graph.core_graph.add_relationship(
+            EntityKey::new(1), 
+            EntityKey::new(2), 
+            "connects_to".to_string(),
+            HashMap::new()
+        ).unwrap();
+        
+        let mut initial_activations = HashMap::new();
+        initial_activations.insert(EntityKey::new(1), 0.5); // Above threshold
+        
+        let result = graph.propagate_activation(&initial_activations).await;
+        assert!(!result.is_empty());
+        assert!(result.contains_key(&EntityKey::new(1)));
+    }
+
+    #[tokio::test]
+    async fn test_apply_neural_dampening_empty() {
+        let graph = create_test_brain_graph().await;
+        let empty_activations = HashMap::new();
+        
+        let result = graph.apply_neural_dampening(&empty_activations).await;
+        assert!(result.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_apply_neural_dampening_with_plasticity() {
+        let graph = create_test_brain_graph().await;
+        let mut activations = HashMap::new();
+        activations.insert(EntityKey::new(1), 0.8);
+        activations.insert(EntityKey::new(2), 0.2);
+        
+        let result = graph.apply_neural_dampening(&activations).await;
+        
+        // With neural dampening (0.8) and plasticity decay (0.95)
+        // 0.8 * 0.8 * 0.95 = 0.608 (should be included)
+        // 0.2 * 0.8 * 0.95 = 0.152 (should be included as above threshold 0.1)
+        assert!(!result.is_empty());
+        
+        for (_, &activation) in &result {
+            assert!(activation <= 0.8); // Should be dampened
+        }
+    }
+
+    #[tokio::test]
+    async fn test_apply_neural_dampening_without_plasticity() {
+        let mut graph = create_test_brain_graph().await;
+        graph.config.enable_neural_plasticity = false;
+        
+        let mut activations = HashMap::new();
+        activations.insert(EntityKey::new(1), 0.8);
+        activations.insert(EntityKey::new(2), 0.2);
+        
+        let result = graph.apply_neural_dampening(&activations).await;
+        
+        // With only neural dampening (0.8)
+        // 0.8 * 0.8 = 0.64
+        // 0.2 * 0.8 = 0.16
+        assert_eq!(result.len(), 2);
+        assert!(result.get(&EntityKey::new(1)).unwrap() - 0.64 < 0.01);
+        assert!(result.get(&EntityKey::new(2)).unwrap() - 0.16 < 0.01);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_concept_embedding_empty_concept() {
+        let graph = create_test_brain_graph().await;
+        let concept_structure = ConceptStructure {
+            concept_name: "test".to_string(),
+            central_entities: Vec::new(),
+            peripheral_entities: Vec::new(),
+            concept_activation: 0.5,
+            coherence_score: 0.8,
+            discovery_timestamp: std::time::SystemTime::now(),
+        };
+        
+        let result = graph.calculate_concept_embedding(&concept_structure).await;
+        assert!(result.is_ok());
+        
+        let embedding = result.unwrap();
+        assert_eq!(embedding.len(), 384); // Should match embedding dimension
+        assert!(embedding.iter().all(|&x| x == 0.0)); // Should be all zeros for empty concept
+    }
+
+    #[tokio::test]
+    async fn test_calculate_concept_embedding_with_entities() {
+        let mut graph = create_test_brain_graph().await;
+        
+        // Add test entities
+        let entity1 = create_test_entity_data(1, vec![0.5; 384]);
+        let entity2 = create_test_entity_data(2, vec![1.0; 384]);
+        
+        graph.core_graph.add_entity(entity1).unwrap();
+        graph.core_graph.add_entity(entity2).unwrap();
+        
+        let concept_structure = ConceptStructure {
+            concept_name: "test".to_string(),
+            central_entities: vec![EntityKey::new(1), EntityKey::new(2)],
+            peripheral_entities: Vec::new(),
+            concept_activation: 0.5,
+            coherence_score: 0.8,
+            discovery_timestamp: std::time::SystemTime::now(),
+        };
+        
+        let result = graph.calculate_concept_embedding(&concept_structure).await;
+        assert!(result.is_ok());
+        
+        let embedding = result.unwrap();
+        assert_eq!(embedding.len(), 384);
+        // Average should be (0.5 + 1.0) / 2 = 0.75
+        assert!((embedding[0] - 0.75).abs() < 0.01);
+    }
+
+    #[tokio::test]
+    async fn test_generate_cache_key_consistency() {
+        let graph = create_test_brain_graph().await;
+        let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        
+        let key1 = graph.generate_cache_key(&embedding, 5);
+        let key2 = graph.generate_cache_key(&embedding, 5);
+        
+        assert_eq!(key1, key2); // Same inputs should produce same key
+    }
+
+    #[tokio::test]
+    async fn test_generate_cache_key_different_k() {
+        let graph = create_test_brain_graph().await;
+        let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        
+        let key1 = graph.generate_cache_key(&embedding, 5);
+        let key2 = graph.generate_cache_key(&embedding, 10);
+        
+        assert_ne!(key1, key2); // Different k should produce different keys
+    }
+
+    #[tokio::test]
+    async fn test_generate_cache_key_different_embeddings() {
+        let graph = create_test_brain_graph().await;
+        let embedding1 = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        let embedding2 = vec![0.2, 0.3, 0.4, 0.5, 0.6];
+        
+        let key1 = graph.generate_cache_key(&embedding1, 5);
+        let key2 = graph.generate_cache_key(&embedding2, 5);
+        
+        assert_ne!(key1, key2); // Different embeddings should produce different keys
+    }
+
+    #[tokio::test]
+    async fn test_sdr_query_basic() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.sdr_query("test query", 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert!(brain_result.query_time.as_millis() >= 0);
+        // Result might be empty if no entities match, which is fine for this test
+    }
+
+    #[tokio::test]
+    async fn test_sdr_query_empty_string() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.sdr_query("", 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert_eq!(brain_result.entities.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_sdr_query_zero_k() {
+        let graph = create_test_brain_graph().await;
+        
+        let result = graph.sdr_query("test", 0).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert_eq!(brain_result.entities.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_multi_modal_query_without_concept() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        let result = graph.multi_modal_query(&query_embedding, None, 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert!(brain_result.query_time.as_millis() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_multi_modal_query_with_nonexistent_concept() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        let result = graph.multi_modal_query(&query_embedding, Some("nonexistent"), 5).await;
+        assert!(result.is_ok());
+        
+        // Should work but concept boost won't apply
+        let brain_result = result.unwrap();
+        assert!(brain_result.query_time.as_millis() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_constrained_query_no_entities_in_range() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        // Set impossible constraints
+        let result = graph.constrained_query(&query_embedding, 0.9, 1.0, 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert_eq!(brain_result.entities.len(), 0);
+        assert_eq!(brain_result.total_activation, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_constrained_query_invalid_range() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        // Min > Max should still work (will find no entities)
+        let result = graph.constrained_query(&query_embedding, 0.8, 0.2, 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert_eq!(brain_result.entities.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_hybrid_query_basic() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.5; 384];
+        
+        let result = graph.hybrid_query(&query_embedding, "test query", 5).await;
+        assert!(result.is_ok());
+        
+        let brain_result = result.unwrap();
+        assert!(brain_result.query_time.as_millis() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_hybrid_query_empty_inputs() {
+        let graph = create_test_brain_graph().await;
+        let empty_embedding = vec![];
+        
+        let result = graph.hybrid_query(&empty_embedding, "", 5).await;
+        // Should handle gracefully - neural_query might fail but SDR should work
+        if result.is_ok() {
+            let brain_result = result.unwrap();
+            assert!(brain_result.query_time.as_millis() >= 0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_query_stats_empty() {
+        let graph = create_test_brain_graph().await;
+        
+        let stats = graph.get_query_stats().await;
+        assert_eq!(stats.total_queries, 0);
+        assert_eq!(stats.cache_size, 0);
+        assert_eq!(stats.average_activation, 0.0);
+        assert_eq!(stats.highly_activated_entities, 0);
+        assert_eq!(stats.total_activated_entities, 0);
+    }
+
+    #[tokio::test]
+    async fn test_query_statistics_methods() {
+        let stats = QueryStatistics {
+            total_queries: 10,
+            cache_size: 5,
+            cache_capacity: 10,
+            average_activation: 0.5,
+            highly_activated_entities: 2,
+            total_activated_entities: 10,
+        };
+        
+        assert_eq!(stats.cache_utilization(), 0.5);
+        assert_eq!(stats.high_activation_ratio(), 0.2);
+        assert!(stats.is_healthy());
+    }
+
+    #[tokio::test]
+    async fn test_query_statistics_edge_cases() {
+        let stats = QueryStatistics {
+            total_queries: 0,
+            cache_size: 0,
+            cache_capacity: 0,
+            average_activation: 0.0,
+            highly_activated_entities: 0,
+            total_activated_entities: 0,
+        };
+        
+        assert_eq!(stats.cache_utilization(), 0.0);
+        assert_eq!(stats.high_activation_ratio(), 0.0);
+        assert!(!stats.is_healthy()); // Low activation is unhealthy
+    }
+
+    #[tokio::test]
+    async fn test_query_statistics_unhealthy_conditions() {
+        // Too high activation
+        let stats_high = QueryStatistics {
+            total_queries: 10,
+            cache_size: 5,
+            cache_capacity: 10,
+            average_activation: 0.95, // Too high
+            highly_activated_entities: 2,
+            total_activated_entities: 10,
+        };
+        assert!(!stats_high.is_healthy());
+        
+        // Too low activation
+        let stats_low = QueryStatistics {
+            total_queries: 10,
+            cache_size: 5,
+            cache_capacity: 10,
+            average_activation: 0.1, // Too low
+            highly_activated_entities: 2,
+            total_activated_entities: 10,
+        };
+        assert!(!stats_low.is_healthy());
+        
+        // Too many highly activated entities
+        let stats_high_ratio = QueryStatistics {
+            total_queries: 10,
+            cache_size: 5,
+            cache_capacity: 10,
+            average_activation: 0.5,
+            highly_activated_entities: 8, // 80% is too high
+            total_activated_entities: 10,
+        };
+        assert!(!stats_high_ratio.is_healthy());
+    }
+
+    #[tokio::test]
+    async fn test_neural_query_caching() {
+        let graph = create_test_brain_graph().await;
+        let query_embedding = vec![0.1; 384];
+        
+        // First query - should miss cache
+        let result1 = graph.neural_query(&query_embedding, 5).await;
+        assert!(result1.is_ok());
+        
+        // Second query with same parameters - should hit cache
+        let result2 = graph.neural_query(&query_embedding, 5).await;
+        assert!(result2.is_ok());
+        
+        // Results should be identical due to caching
+        let brain_result1 = result1.unwrap();
+        let brain_result2 = result2.unwrap();
+        assert_eq!(brain_result1.entities, brain_result2.entities);
+        assert_eq!(brain_result1.total_activation, brain_result2.total_activation);
+    }
+
+    #[tokio::test]
+    async fn test_activation_propagation_depth_limit() {
+        let mut graph = create_test_brain_graph().await;
+        graph.config.max_activation_spread = 1; // Limit to 1 hop
+        
+        // Create a chain of entities: 1 -> 2 -> 3
+        let entity1 = create_test_entity_data(1, vec![0.5; 384]);
+        let entity2 = create_test_entity_data(2, vec![0.5; 384]);
+        let entity3 = create_test_entity_data(3, vec![0.5; 384]);
+        
+        graph.core_graph.add_entity(entity1).unwrap();
+        graph.core_graph.add_entity(entity2).unwrap();
+        graph.core_graph.add_entity(entity3).unwrap();
+        
+        graph.core_graph.add_relationship(
+            EntityKey::new(1), EntityKey::new(2), 
+            "connects".to_string(), HashMap::new()
+        ).unwrap();
+        graph.core_graph.add_relationship(
+            EntityKey::new(2), EntityKey::new(3), 
+            "connects".to_string(), HashMap::new()
+        ).unwrap();
+        
+        let mut initial_activations = HashMap::new();
+        initial_activations.insert(EntityKey::new(1), 0.8);
+        
+        let result = graph.propagate_activation(&initial_activations).await;
+        
+        // Should only propagate to depth 1 (entities 1 and 2)
+        assert!(result.contains_key(&EntityKey::new(1)));
+        // Entity 3 should not be activated due to depth limit
+        assert!(!result.contains_key(&EntityKey::new(3)) || 
+                result.get(&EntityKey::new(3)).unwrap() == &0.0);
+    }
+}

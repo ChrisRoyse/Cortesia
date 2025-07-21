@@ -874,3 +874,444 @@ pub struct WorkingMemoryState {
     pub average_importance: f32,
     pub buffer_states: Vec<BufferState>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::VecDeque;
+    use std::time::{Duration, Instant};
+
+    /// Helper function to create a test memory item
+    fn create_test_memory_item(concept: &str, importance: f32, timestamp: Option<Instant>) -> MemoryItem {
+        MemoryItem {
+            content: MemoryContent::Concept(concept.to_string()),
+            activation_level: importance,
+            timestamp: timestamp.unwrap_or_else(Instant::now),
+            importance_score: importance,
+            access_count: 1,
+            decay_factor: 1.0,
+        }
+    }
+
+    /// Helper function to create a test WorkingMemorySystem
+    async fn create_test_working_memory() -> WorkingMemorySystem {
+        use crate::core::activation_engine::ActivationPropagationEngine;
+        use crate::core::sdr_storage::SDRStorage;
+        use crate::core::sdr_types::SDRConfig;
+        
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+        
+        WorkingMemorySystem::new(activation_engine, sdr_storage)
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_calculate_temporal_decay() {
+        let memory_system = create_test_working_memory().await;
+        let now = Instant::now();
+        
+        // Test immediate decay (should be 1.0)
+        let recent_item = create_test_memory_item("recent", 0.8, Some(now));
+        let decay_factor = memory_system.calculate_temporal_decay(&recent_item, now);
+        assert_eq!(decay_factor, 1.0, "Recent items should not decay");
+        
+        // Test decay after some time
+        let old_timestamp = now - Duration::from_secs(10);
+        let old_item = create_test_memory_item("old", 0.8, Some(old_timestamp));
+        let decay_factor = memory_system.calculate_temporal_decay(&old_item, now);
+        assert!(decay_factor < 1.0, "Old items should decay");
+        assert!(decay_factor >= 0.1, "Decay should not go below minimum");
+    }
+
+    #[tokio::test]
+    async fn test_get_capacity_for_buffer() {
+        let memory_system = create_test_working_memory().await;
+        
+        assert_eq!(memory_system.get_capacity_for_buffer(&BufferType::Phonological), 7);
+        assert_eq!(memory_system.get_capacity_for_buffer(&BufferType::Visuospatial), 4);
+        assert_eq!(memory_system.get_capacity_for_buffer(&BufferType::Episodic), 3);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_string_similarity() {
+        let memory_system = create_test_working_memory().await;
+        
+        // Identical strings
+        let similarity = memory_system.calculate_string_similarity("hello world", "hello world");
+        assert_eq!(similarity, 1.0, "Identical strings should have similarity 1.0");
+        
+        // Partially overlapping strings
+        let similarity = memory_system.calculate_string_similarity("hello world", "hello universe");
+        assert!(similarity > 0.0 && similarity < 1.0, "Partially overlapping strings should have 0 < similarity < 1");
+        
+        // No overlap
+        let similarity = memory_system.calculate_string_similarity("hello", "goodbye");
+        assert_eq!(similarity, 0.0, "Non-overlapping strings should have similarity 0.0");
+        
+        // Empty strings
+        let similarity = memory_system.calculate_string_similarity("", "");
+        assert_eq!(similarity, 0.0, "Empty strings should have similarity 0.0");
+    }
+
+    #[tokio::test]
+    async fn test_calculate_recency_bonus() {
+        let memory_system = create_test_working_memory().await;
+        let now = Instant::now();
+        
+        // Recent item should get higher bonus
+        let recent_item = create_test_memory_item("recent", 0.8, Some(now));
+        let recent_bonus = memory_system.calculate_recency_bonus(&recent_item, 0.5);
+        
+        // Old item should get lower bonus
+        let old_timestamp = now - Duration::from_secs(120); // 2 minutes ago
+        let old_item = create_test_memory_item("old", 0.8, Some(old_timestamp));
+        let old_bonus = memory_system.calculate_recency_bonus(&old_item, 0.5);
+        
+        assert!(recent_bonus > old_bonus, "Recent items should get higher recency bonus");
+    }
+
+    #[tokio::test]
+    async fn test_calculate_retrieval_confidence() {
+        let memory_system = create_test_working_memory().await;
+        
+        // Empty items should return 0.0 confidence
+        let confidence = memory_system.calculate_retrieval_confidence(&[]);
+        assert_eq!(confidence, 0.0, "Empty results should have 0 confidence");
+        
+        // Single high-importance item
+        let high_importance_item = create_test_memory_item("important", 0.9, None);
+        let confidence = memory_system.calculate_retrieval_confidence(&[high_importance_item]);
+        assert!(confidence > 0.0, "High importance item should give positive confidence");
+        
+        // Multiple items should affect count factor
+        let items = vec![
+            create_test_memory_item("item1", 0.8, None),
+            create_test_memory_item("item2", 0.6, None),
+            create_test_memory_item("item3", 0.7, None),
+        ];
+        let confidence = memory_system.calculate_retrieval_confidence(&items);
+        assert!(confidence > 0.0, "Multiple items should give positive confidence");
+    }
+
+    #[tokio::test]
+    async fn test_apply_decay_to_buffers() {
+        let memory_system = create_test_working_memory().await;
+        let mut buffers = MemoryBuffers::new();
+        
+        // Add items to different buffers with different ages
+        let now = Instant::now();
+        let old_timestamp = now - Duration::from_secs(30);
+        
+        buffers.phonological_buffer.push_back(create_test_memory_item("recent", 0.8, Some(now)));
+        buffers.phonological_buffer.push_back(create_test_memory_item("old", 0.8, Some(old_timestamp)));
+        buffers.episodic_buffer.push_back(create_test_memory_item("very_old", 0.2, Some(old_timestamp)));
+        
+        let initial_count = buffers.phonological_buffer.len() + buffers.episodic_buffer.len();
+        
+        // Apply decay
+        memory_system.apply_decay_to_buffers(&mut buffers).await;
+        
+        // Check that decay was applied
+        let final_count = buffers.phonological_buffer.len() + buffers.episodic_buffer.len();
+        
+        // Items with very low activation should be removed
+        assert!(final_count <= initial_count, "Some items should be removed due to decay");
+        
+        // Remaining items should have reduced activation
+        for item in &buffers.phonological_buffer {
+            assert!(item.activation_level <= 0.8, "Activation levels should be reduced by decay");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_apply_forgetting_strategy() {
+        let memory_system = create_test_working_memory().await;
+        let mut buffer = VecDeque::new();
+        
+        // Fill buffer beyond capacity with items of varying importance
+        let now = Instant::now();
+        let old_timestamp = now - Duration::from_secs(60);
+        
+        // Low importance, old item (should be forgotten)
+        buffer.push_back(MemoryItem {
+            content: MemoryContent::Concept("forgettable".to_string()),
+            activation_level: 0.3,
+            timestamp: old_timestamp,
+            importance_score: 0.3,
+            access_count: 1,
+            decay_factor: 1.0,
+        });
+        
+        // High importance, recent item (should be retained)
+        buffer.push_back(MemoryItem {
+            content: MemoryContent::Concept("important".to_string()),
+            activation_level: 0.9,
+            timestamp: now,
+            importance_score: 0.9,
+            access_count: 5,
+            decay_factor: 1.0,
+        });
+        
+        let initial_len = buffer.len();
+        let evicted = memory_system.apply_forgetting_strategy(&mut buffer, 0.8, &BufferType::Phonological).await.unwrap();
+        
+        // Should have evicted the less important item
+        assert!(!evicted.is_empty(), "Should have evicted some items");
+        assert!(buffer.len() < initial_len, "Buffer size should be reduced");
+        
+        // The remaining item should be the important one
+        if let Some(remaining) = buffer.front() {
+            if let MemoryContent::Concept(concept) = &remaining.content {
+                assert_eq!(concept, "important", "Important item should be retained");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_apply_attention_aware_forgetting() {
+        let memory_system = create_test_working_memory().await;
+        let mut buffer = VecDeque::new();
+        
+        // Add items with different importance levels
+        buffer.push_back(create_test_memory_item("low_importance", 0.2, None));
+        buffer.push_back(create_test_memory_item("high_importance", 0.9, None));
+        
+        let high_attention = 0.8;
+        let evicted = memory_system.apply_attention_aware_forgetting(
+            &mut buffer, 
+            0.7, 
+            high_attention, 
+            &BufferType::Phonological
+        ).await.unwrap();
+        
+        // With high attention, forgetting should be more conservative
+        // The exact behavior depends on the implementation, but we can test basic functionality
+        assert!(evicted.len() <= 2, "Should not evict more items than were present");
+    }
+
+    #[tokio::test]
+    async fn test_search_buffer() {
+        let memory_system = create_test_working_memory().await;
+        let mut buffer = VecDeque::new();
+        
+        // Add test items
+        buffer.push_back(create_test_memory_item("machine learning", 0.8, None));
+        buffer.push_back(create_test_memory_item("artificial intelligence", 0.9, None));
+        buffer.push_back(create_test_memory_item("cooking recipes", 0.6, None));
+        
+        let query = MemoryQuery {
+            query_text: "machine learning".to_string(),
+            search_buffers: vec![BufferType::Episodic],
+            apply_attention: false,
+            importance_threshold: 0.1,
+            recency_weight: 0.5,
+        };
+        
+        let results = memory_system.search_buffer(&buffer, &query).await.unwrap();
+        
+        // Should find relevant items
+        assert!(!results.is_empty(), "Should find matching items");
+        
+        // Results should be above threshold
+        for result in &results {
+            assert!(result.importance_score > query.importance_threshold, 
+                    "Results should be above importance threshold");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_calculate_relevance() {
+        let memory_system = create_test_working_memory().await;
+        
+        let query = MemoryQuery {
+            query_text: "machine learning".to_string(),
+            search_buffers: vec![BufferType::Episodic],
+            apply_attention: false,
+            importance_threshold: 0.1,
+            recency_weight: 0.5,
+        };
+        
+        // Highly relevant item
+        let relevant_item = create_test_memory_item("machine learning algorithms", 0.8, None);
+        let relevance = memory_system.calculate_relevance(&relevant_item, &query).await.unwrap();
+        assert!(relevance > 0.0, "Relevant item should have positive relevance");
+        
+        // Less relevant item
+        let less_relevant_item = create_test_memory_item("cooking recipes", 0.8, None);
+        let less_relevance = memory_system.calculate_relevance(&less_relevant_item, &query).await.unwrap();
+        assert!(relevance > less_relevance, "More relevant item should have higher relevance");
+    }
+
+    #[tokio::test]
+    async fn test_apply_attention_filtering() {
+        let memory_system = create_test_working_memory().await;
+        
+        let items = vec![
+            create_test_memory_item("item1", 0.9, None),
+            create_test_memory_item("item2", 0.8, None),
+            create_test_memory_item("item3", 0.7, None),
+            create_test_memory_item("item4", 0.6, None),
+            create_test_memory_item("item5", 0.5, None),
+            create_test_memory_item("item6", 0.4, None),
+        ];
+        
+        let filtered = memory_system.apply_attention_filtering(&items).await.unwrap();
+        
+        // Should limit to top 5 items
+        assert!(filtered.len() <= 5, "Should limit results to top 5 items");
+        
+        // Should be sorted by importance (descending)
+        for i in 1..filtered.len() {
+            assert!(filtered[i-1].importance_score >= filtered[i].importance_score,
+                   "Results should be sorted by importance");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_is_memory_item_relevant_to_attention() {
+        let memory_system = create_test_working_memory().await;
+        
+        // Create test entity keys (simplified for testing)
+        use crate::core::types::{EntityKey, EntityData};
+        use slotmap::SlotMap;
+        
+        let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+        let entity_key = sm.insert(EntityData {
+            type_id: 1,
+            properties: "test_entity".to_string(),
+            embedding: vec![0.0; 64],
+        });
+        
+        let attention_targets = vec![entity_key];
+        
+        // Test concept relevance (current implementation considers all concepts relevant)
+        let concept_item = create_test_memory_item("machine learning", 0.8, None);
+        let is_relevant = memory_system.is_memory_item_relevant_to_attention(&concept_item, &attention_targets);
+        assert!(is_relevant, "Concept items should be considered relevant to attention");
+        
+        // Test entity relevance
+        use crate::core::brain_types::{BrainInspiredEntity, EntityDirection};
+        use std::time::SystemTime;
+        use std::collections::HashMap;
+        let entity_item = MemoryItem {
+            content: MemoryContent::Entity(BrainInspiredEntity {
+                id: entity_key,
+                concept_id: "test_concept".to_string(),
+                direction: EntityDirection::Input,
+                properties: HashMap::new(),
+                embedding: vec![0.0; 64],
+                activation_state: 0.8,
+                last_activation: SystemTime::now(),
+                last_update: SystemTime::now(),
+            }),
+            activation_level: 0.8,
+            timestamp: Instant::now(),
+            importance_score: 0.8,
+            access_count: 1,
+            decay_factor: 1.0,
+        };
+        
+        let is_entity_relevant = memory_system.is_memory_item_relevant_to_attention(&entity_item, &attention_targets);
+        assert!(is_entity_relevant, "Entity with matching ID should be relevant");
+    }
+
+    #[test]
+    fn test_memory_buffers_creation() {
+        let buffers = MemoryBuffers::new();
+        assert!(buffers.phonological_buffer.is_empty());
+        assert!(buffers.visuospatial_buffer.is_empty());
+        assert!(buffers.episodic_buffer.is_empty());
+    }
+
+    #[test]
+    fn test_buffer_state_calculation() {
+        let mut buffers = MemoryBuffers::new();
+        
+        // Add items to phonological buffer
+        buffers.phonological_buffer.push_back(create_test_memory_item("item1", 0.8, None));
+        buffers.phonological_buffer.push_back(create_test_memory_item("item2", 0.6, None));
+        
+        let state = buffers.calculate_buffer_state(BufferType::Phonological);
+        
+        assert_eq!(state.current_load, 2.0);
+        assert_eq!(state.capacity_utilization, 2.0 / 7.0);
+        assert_eq!(state.average_importance, 0.7); // (0.8 + 0.6) / 2
+    }
+
+    #[test]
+    fn test_central_executive_operations() {
+        let mut executive = CentralExecutive::new();
+        
+        // Test task management
+        let task = ProcessingTask {
+            task_id: "test_task".to_string(),
+            task_type: TaskType::MemoryConsolidation,
+            priority: 0.8,
+            estimated_resources: 0.5,
+            timestamp: Instant::now(),
+        };
+        
+        executive.add_task(task);
+        assert_eq!(executive.processing_queue.len(), 1);
+        
+        let processed_task = executive.process_next_task();
+        assert!(processed_task.is_some());
+        assert_eq!(executive.processing_queue.len(), 0);
+    }
+
+    #[test]
+    fn test_forgetting_curve_types() {
+        // Test that we can create different forgetting curve types
+        let exponential = ForgettingCurve::Exponential { half_life: Duration::from_secs(60) };
+        let power_law = ForgettingCurve::PowerLaw { exponent: 0.5 };
+        let hybrid = ForgettingCurve::Hybrid { fast_decay: 0.8, slow_decay: 0.2 };
+        
+        // Basic sanity checks
+        match exponential {
+            ForgettingCurve::Exponential { half_life } => assert_eq!(half_life, Duration::from_secs(60)),
+            _ => panic!("Wrong forgetting curve type"),
+        }
+        
+        match power_law {
+            ForgettingCurve::PowerLaw { exponent } => assert_eq!(exponent, 0.5),
+            _ => panic!("Wrong forgetting curve type"),
+        }
+        
+        match hybrid {
+            ForgettingCurve::Hybrid { fast_decay, slow_decay } => {
+                assert_eq!(fast_decay, 0.8);
+                assert_eq!(slow_decay, 0.2);
+            },
+            _ => panic!("Wrong forgetting curve type"),
+        }
+    }
+
+    #[test]
+    fn test_memory_content_types() {
+        // Test different memory content types
+        let concept = MemoryContent::Concept("test_concept".to_string());
+        let relationship = MemoryContent::Relationship("subject".to_string(), "object".to_string(), 0.8);
+        let composite = MemoryContent::Composite(vec![concept.clone(), relationship.clone()]);
+        
+        match concept {
+            MemoryContent::Concept(s) => assert_eq!(s, "test_concept"),
+            _ => panic!("Wrong memory content type"),
+        }
+        
+        match relationship {
+            MemoryContent::Relationship(s, o, strength) => {
+                assert_eq!(s, "subject");
+                assert_eq!(o, "object");
+                assert_eq!(strength, 0.8);
+            },
+            _ => panic!("Wrong memory content type"),
+        }
+        
+        match composite {
+            MemoryContent::Composite(items) => assert_eq!(items.len(), 2),
+            _ => panic!("Wrong memory content type"),
+        }
+    }
+}

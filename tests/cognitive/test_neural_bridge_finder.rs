@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod neural_bridge_finder_tests {
     use tokio;
-    use crate::cognitive::neural_bridge_finder::NeuralBridgeFinder;
-    use crate::cognitive::types::BridgePath;
-    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::cognitive::neural_bridge_finder::NeuralBridgeFinder;
+    use llmkg::cognitive::types::BridgePath;
+    use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
     #[tokio::test]
     async fn test_calculate_path_novelty_diverse_concepts() {

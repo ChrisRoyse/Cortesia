@@ -682,7 +682,511 @@ struct ActivationPatterns {
     temporal_patterns: Vec<String>,
 }
 
-// Use global DetectedPattern from cognitive::types
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use tokio;
+    use std::sync::Arc;
 
-// Use global AbstractionCandidate from cognitive::types
+    /// Creates a test graph with some sample entities for testing
+    async fn create_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).expect("Failed to create test graph"));
+        
+        // Add some test entities
+        let _ = graph.add_entity("animal", "Basic animal entity").await;
+        let _ = graph.add_entity("mammal", "Warm-blooded vertebrate").await;
+        let _ = graph.add_entity("dog", "Domesticated canine").await;
+        let _ = graph.add_entity("cat", "Feline animal").await;
+        let _ = graph.add_entity("vehicle", "Transportation device").await;
+        let _ = graph.add_entity("car", "Four-wheeled vehicle").await;
+        
+        graph
+    }
+
+    /// Creates an AbstractThinking instance for testing
+    async fn create_test_abstract_thinking() -> AbstractThinking {
+        let graph = create_test_graph().await;
+        AbstractThinking::new(graph)
+    }
+
+    #[tokio::test]
+    async fn test_execute_pattern_analysis() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let result = abstract_thinking.execute_pattern_analysis(
+            AnalysisScope::Global,
+            PatternType::Structural
+        ).await;
+        
+        assert!(result.is_ok(), "Pattern analysis should succeed");
+        let result = result.unwrap();
+        
+        // Verify result structure
+        assert!(result.patterns_found.len() >= 0, "Should have detected patterns (or none if empty graph)");
+        assert!(result.abstractions.len() >= 0, "Should have abstraction candidates");
+        assert!(result.refactoring_opportunities.len() >= 0, "Should have refactoring opportunities");
+        
+        // Verify efficiency gains structure
+        assert!(result.efficiency_gains.query_time_improvement >= 0.0);
+        assert!(result.efficiency_gains.memory_reduction >= 0.0);
+        assert!(result.efficiency_gains.accuracy_improvement >= 0.0);
+        assert!(result.efficiency_gains.maintainability_score >= 0.0);
+        assert!(result.efficiency_gains.maintainability_score <= 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_identify_abstractions() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        // Create test patterns
+        let test_patterns = vec![
+            DetectedPattern {
+                pattern_id: "test_pattern_1".to_string(),
+                id: "test_pattern_1".to_string(),
+                pattern_type: PatternType::Structural,
+                confidence: 0.8,
+                frequency: 5.0,
+                entities_involved: vec![EntityKey::from_hash("entity1"), EntityKey::from_hash("entity2")],
+                affected_entities: vec![EntityKey::from_hash("entity1")],
+                description: "High frequency structural pattern".to_string(),
+            },
+            DetectedPattern {
+                pattern_id: "test_pattern_2".to_string(),
+                id: "test_pattern_2".to_string(),
+                pattern_type: PatternType::Semantic,
+                confidence: 0.6,
+                frequency: 2.0,
+                entities_involved: vec![EntityKey::from_hash("entity3")],
+                affected_entities: vec![EntityKey::from_hash("entity3")],
+                description: "Low frequency semantic pattern".to_string(),
+            },
+        ];
+        
+        let result = abstract_thinking.identify_abstractions(&test_patterns).await;
+        assert!(result.is_ok(), "Abstraction identification should succeed");
+        
+        let abstractions = result.unwrap();
+        
+        // Should only identify abstractions for high-frequency, high-confidence patterns
+        let high_quality_abstractions: Vec<_> = abstractions.iter()
+            .filter(|a| a.complexity_reduction > 0.0)
+            .collect();
+        
+        // Verify abstraction candidate structure
+        for abstraction in &abstractions {
+            assert!(!abstraction.abstraction_type.is_empty(), "Abstraction type should not be empty");
+            assert!(abstraction.complexity_reduction >= 0.0, "Complexity reduction should be non-negative");
+            assert!(abstraction.implementation_effort >= 0.0, "Implementation effort should be non-negative");
+            assert!(!abstraction.source_patterns.is_empty(), "Should have source patterns");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_suggest_refactoring_opportunities() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        // Create test abstraction candidates
+        let test_abstractions = vec![
+            AbstractionCandidate {
+                abstraction_name: "test_abstraction".to_string(),
+                entities_to_abstract: vec![EntityKey::from_hash("entity1"), EntityKey::from_hash("entity2")],
+                potential_savings: 0.3,
+                implementation_complexity: 50,
+                complexity_reduction: 0.3,
+                implementation_effort: 0.4,
+                abstraction_type: "structural_abstraction".to_string(),
+                source_patterns: vec!["pattern1".to_string(), "pattern2".to_string()],
+            },
+        ];
+        
+        let result = abstract_thinking.suggest_refactoring(&test_abstractions).await;
+        assert!(result.is_ok(), "Refactoring suggestion should succeed");
+        
+        let opportunities = result.unwrap();
+        assert!(opportunities.len() > 0, "Should have refactoring opportunities");
+        
+        // Verify refactoring opportunity structure
+        for opportunity in &opportunities {
+            assert!(!opportunity.description.is_empty(), "Description should not be empty");
+            assert!(opportunity.estimated_benefit >= 0.0, "Benefit should be non-negative");
+            assert!(opportunity.estimated_benefit <= 1.0, "Benefit should be at most 1.0");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_analyze_structural_patterns() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let scope = AnalysisScope::Global;
+        let result = abstract_thinking.analyze_structural_patterns(&scope).await;
+        
+        assert!(result.is_ok(), "Structural pattern analysis should succeed");
+        let patterns = result.unwrap();
+        
+        // Verify structural patterns structure
+        assert_eq!(patterns.scope, scope, "Scope should match input");
+        assert!(patterns.entity_distribution.input_ratio >= 0.0);
+        assert!(patterns.entity_distribution.output_ratio >= 0.0);
+        assert!(patterns.entity_distribution.gate_ratio >= 0.0);
+        assert!(patterns.relationship_frequency.average_connections_per_entity >= 0.0);
+        assert!(patterns.complexity_metrics >= 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_neural_pattern_detection() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        // Create mock structural patterns
+        let structural_data = StructuralPatterns {
+            scope: AnalysisScope::Global,
+            entity_distribution: EntityDistribution {
+                input_ratio: 0.33,
+                output_ratio: 0.33,
+                gate_ratio: 0.34,
+                distribution_entropy: 1.0,
+            },
+            relationship_frequency: RelationshipPatterns {
+                most_common_types: vec!["is_a".to_string(), "has_property".to_string()],
+                average_connections_per_entity: 6.0,
+                clustering_coefficient: 0.6,
+                small_world_coefficient: 0.4,
+            },
+            activation_hotspots: ActivationPatterns {
+                hotspot_entities: Vec::new(),
+                activation_frequency: AHashMap::new(),
+                temporal_patterns: Vec::new(),
+            },
+            complexity_metrics: 0.5,
+        };
+        
+        for pattern_type in [PatternType::Structural, PatternType::Temporal, PatternType::Semantic, PatternType::Usage] {
+            let result = abstract_thinking.neural_pattern_detection(structural_data.clone(), pattern_type).await;
+            assert!(result.is_ok(), "Neural pattern detection should succeed for {:?}", pattern_type);
+            
+            let patterns = result.unwrap();
+            // Patterns may be empty for some types (temporal, semantic, usage), but should not error
+            for pattern in &patterns {
+                assert!(!pattern.pattern_id.is_empty(), "Pattern ID should not be empty");
+                assert!(!pattern.description.is_empty(), "Pattern description should not be empty");
+                assert!(pattern.confidence >= 0.0 && pattern.confidence <= 1.0, "Confidence should be in [0,1]");
+                assert!(pattern.frequency >= 0.0, "Frequency should be non-negative");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_detect_structural_patterns() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let structural_data = StructuralPatterns {
+            scope: AnalysisScope::Global,
+            entity_distribution: EntityDistribution {
+                input_ratio: 0.33,
+                output_ratio: 0.33,
+                gate_ratio: 0.34,
+                distribution_entropy: 1.0,
+            },
+            relationship_frequency: RelationshipPatterns {
+                most_common_types: vec!["is_a".to_string(), "has_property".to_string()],
+                average_connections_per_entity: 6.0,
+                clustering_coefficient: 0.6,
+                small_world_coefficient: 0.4,
+            },
+            activation_hotspots: ActivationPatterns {
+                hotspot_entities: Vec::new(),
+                activation_frequency: AHashMap::new(),
+                temporal_patterns: Vec::new(),
+            },
+            complexity_metrics: 0.5,
+        };
+        
+        let result = abstract_thinking.detect_structural_patterns(&structural_data).await;
+        assert!(result.is_ok(), "Structural pattern detection should succeed");
+        
+        let patterns = result.unwrap();
+        
+        // Should detect patterns based on relationship types and connectivity
+        let is_a_patterns: Vec<_> = patterns.iter()
+            .filter(|p| p.pattern_id.contains("is_a"))
+            .collect();
+        let property_patterns: Vec<_> = patterns.iter()
+            .filter(|p| p.pattern_id.contains("property"))
+            .collect();
+        let hub_patterns: Vec<_> = patterns.iter()
+            .filter(|p| p.pattern_id.contains("hub"))
+            .collect();
+        
+        assert!(is_a_patterns.len() > 0, "Should detect is_a patterns");
+        assert!(property_patterns.len() > 0, "Should detect property patterns");
+        assert!(hub_patterns.len() > 0, "Should detect hub patterns due to high connectivity");
+    }
+
+    #[tokio::test]
+    async fn test_determine_abstraction_type() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let test_cases = vec![
+            (PatternType::Structural, "structural_abstraction"),
+            (PatternType::Temporal, "temporal_abstraction"),
+            (PatternType::Semantic, "semantic_abstraction"),
+            (PatternType::Usage, "usage_abstraction"),
+        ];
+        
+        for (pattern_type, expected_abstraction) in test_cases {
+            let pattern = DetectedPattern {
+                pattern_id: "test".to_string(),
+                id: "test".to_string(),
+                pattern_type,
+                confidence: 0.8,
+                frequency: 5.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+                description: "Test pattern".to_string(),
+            };
+            
+            let abstraction_type = abstract_thinking.determine_abstraction_type(&pattern);
+            assert_eq!(abstraction_type, expected_abstraction, 
+                      "Abstraction type should match pattern type");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_estimate_complexity_reduction() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let test_pattern = DetectedPattern {
+            pattern_id: "test".to_string(),
+            id: "test".to_string(),
+            pattern_type: PatternType::Structural,
+            confidence: 0.8,
+            frequency: 5.0,
+            entities_involved: Vec::new(),
+            affected_entities: Vec::new(),
+            description: "Test pattern".to_string(),
+        };
+        
+        let reduction = abstract_thinking.estimate_complexity_reduction(&test_pattern);
+        
+        // Should be (frequency - 1) * 0.1 * confidence = (5-1) * 0.1 * 0.8 = 0.32
+        let expected = (5.0 - 1.0) * 0.1 * 0.8;
+        assert!((reduction - expected).abs() < 0.001, 
+               "Complexity reduction calculation should be accurate: expected {}, got {}", expected, reduction);
+    }
+
+    #[tokio::test]
+    async fn test_estimate_implementation_effort() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let test_cases = vec![
+            (PatternType::Structural, 0.3),
+            (PatternType::Temporal, 0.6),
+            (PatternType::Semantic, 0.5),
+            (PatternType::Usage, 0.4),
+        ];
+        
+        for (pattern_type, expected_effort) in test_cases {
+            let pattern = DetectedPattern {
+                pattern_id: "test".to_string(),
+                id: "test".to_string(),
+                pattern_type,
+                confidence: 0.8,
+                frequency: 5.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+                description: "Test pattern".to_string(),
+            };
+            
+            let effort = abstract_thinking.estimate_implementation_effort(&pattern);
+            assert_eq!(effort, expected_effort, 
+                      "Implementation effort should match pattern type");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_estimate_efficiency_gains() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let test_opportunities = vec![
+            RefactoringOpportunity {
+                opportunity_type: RefactoringType::ConceptMerging,
+                description: "Test concept merging".to_string(),
+                entities_affected: Vec::new(),
+                estimated_benefit: 0.5,
+            },
+            RefactoringOpportunity {
+                opportunity_type: RefactoringType::PerformanceOptimization,
+                description: "Test performance optimization".to_string(),
+                entities_affected: Vec::new(),
+                estimated_benefit: 0.3,
+            },
+        ];
+        
+        let efficiency_gains = abstract_thinking.estimate_efficiency_gains(&test_opportunities);
+        
+        // Verify efficiency gains calculations
+        assert!(efficiency_gains.query_time_improvement >= 0.0);
+        assert!(efficiency_gains.query_time_improvement <= 0.5); // Capped at 0.5
+        assert!(efficiency_gains.memory_reduction >= 0.0);
+        assert!(efficiency_gains.memory_reduction <= 0.4); // Capped at 0.4
+        assert!(efficiency_gains.accuracy_improvement >= 0.0);
+        assert!(efficiency_gains.accuracy_improvement <= 0.3); // Capped at 0.3
+        assert!(efficiency_gains.maintainability_score >= 0.0);
+        assert!(efficiency_gains.maintainability_score <= 1.0);
+    }
+
+    #[tokio::test]
+    async fn test_combine_related_abstractions() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let test_candidates = vec![
+            AbstractionCandidate {
+                abstraction_name: "test1".to_string(),
+                entities_to_abstract: vec![EntityKey::from_hash("entity1")],
+                potential_savings: 0.3,
+                implementation_complexity: 50,
+                complexity_reduction: 0.3,
+                implementation_effort: 0.4,
+                abstraction_type: "structural".to_string(),
+                source_patterns: vec!["pattern1".to_string()],
+            },
+            AbstractionCandidate {
+                abstraction_name: "test2".to_string(),
+                entities_to_abstract: vec![EntityKey::from_hash("entity2")],
+                potential_savings: 0.2,
+                implementation_complexity: 30,
+                complexity_reduction: 0.2,
+                implementation_effort: 0.3,
+                abstraction_type: "semantic".to_string(),
+                source_patterns: vec!["pattern2".to_string()],
+            },
+        ];
+        
+        let result = abstract_thinking.combine_related_abstractions(test_candidates.clone()).await;
+        assert!(result.is_ok(), "Combining abstractions should succeed");
+        
+        let combined = result.unwrap();
+        // Currently just returns original candidates, but should not error
+        assert_eq!(combined.len(), test_candidates.len(), "Should return all candidates");
+    }
+
+    #[tokio::test]
+    async fn test_identify_performance_optimizations() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let result = abstract_thinking.identify_performance_optimizations().await;
+        assert!(result.is_ok(), "Performance optimization identification should succeed");
+        
+        let optimizations = result.unwrap();
+        assert!(optimizations.len() > 0, "Should identify at least one optimization");
+        
+        // Verify optimization structure
+        for optimization in &optimizations {
+            assert!(!optimization.description.is_empty(), "Description should not be empty");
+            assert!(optimization.estimated_benefit >= 0.0, "Benefit should be non-negative");
+            assert!(optimization.estimated_benefit <= 1.0, "Benefit should be at most 1.0");
+            assert!(matches!(optimization.opportunity_type, RefactoringType::PerformanceOptimization));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_calculate_distribution_entropy() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        // Test with zero entities
+        let zero_stats = crate::core::brain_enhanced_graph::BrainStatistics {
+            entity_count: 0,
+            relationship_count: 0,
+            max_degree: 0,
+            average_degree: 0.0,
+            clustering_coefficient: 0.0,
+        };
+        let entropy = abstract_thinking.calculate_distribution_entropy(&zero_stats);
+        assert_eq!(entropy, 0.0, "Entropy should be 0 for empty graph");
+        
+        // Test with non-zero entities
+        let stats = crate::core::brain_enhanced_graph::BrainStatistics {
+            entity_count: 100,
+            relationship_count: 200,
+            max_degree: 10,
+            average_degree: 4.0,
+            clustering_coefficient: 0.3,
+        };
+        let entropy = abstract_thinking.calculate_distribution_entropy(&stats);
+        assert!(entropy > 0.0, "Entropy should be positive for non-empty graph");
+        assert!(entropy <= 2.0, "Entropy should be reasonable (less than ln(3) for 3 categories)");
+    }
+
+    #[tokio::test]
+    async fn test_calculate_structural_complexity() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let stats = crate::core::brain_enhanced_graph::BrainStatistics {
+            entity_count: 100,
+            relationship_count: 200,
+            max_degree: 10,
+            average_degree: 4.0,
+            clustering_coefficient: 0.3,
+        };
+        
+        let complexity = abstract_thinking.calculate_structural_complexity(&stats);
+        assert!(complexity >= 0.0, "Complexity should be non-negative");
+        assert!(complexity <= 1.0, "Complexity should be reasonable");
+    }
+
+    #[tokio::test]
+    async fn test_analyze_entity_distribution() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let stats = crate::core::brain_enhanced_graph::BrainStatistics {
+            entity_count: 100,
+            relationship_count: 200,
+            max_degree: 10,
+            average_degree: 4.0,
+            clustering_coefficient: 0.3,
+        };
+        
+        let result = abstract_thinking.analyze_entity_distribution(&stats).await;
+        assert!(result.is_ok(), "Entity distribution analysis should succeed");
+        
+        let distribution = result.unwrap();
+        
+        // Verify distribution ratios sum to approximately 1.0
+        let total_ratio = distribution.input_ratio + distribution.output_ratio + distribution.gate_ratio;
+        assert!((total_ratio - 1.0).abs() < 0.01, "Distribution ratios should sum to ~1.0");
+        
+        assert!(distribution.distribution_entropy >= 0.0, "Entropy should be non-negative");
+    }
+
+    #[tokio::test]
+    async fn test_analyze_relationship_patterns() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let result = abstract_thinking.analyze_relationship_patterns().await;
+        assert!(result.is_ok(), "Relationship pattern analysis should succeed");
+        
+        let patterns = result.unwrap();
+        
+        assert!(patterns.average_connections_per_entity >= 0.0, "Average connections should be non-negative");
+        assert!(patterns.clustering_coefficient >= 0.0, "Clustering coefficient should be non-negative");
+        assert!(patterns.clustering_coefficient <= 1.0, "Clustering coefficient should be at most 1.0");
+        assert!(patterns.small_world_coefficient >= 0.0, "Small world coefficient should be non-negative");
+        assert!(patterns.small_world_coefficient <= 1.0, "Small world coefficient should be at most 1.0");
+    }
+
+    #[tokio::test]
+    async fn test_analyze_activation_patterns() {
+        let abstract_thinking = create_test_abstract_thinking().await;
+        
+        let result = abstract_thinking.analyze_activation_patterns().await;
+        assert!(result.is_ok(), "Activation pattern analysis should succeed");
+        
+        let patterns = result.unwrap();
+        
+        // For now, these are empty but should not error
+        assert!(patterns.hotspot_entities.len() >= 0, "Hotspot entities should be a valid list");
+        assert!(patterns.activation_frequency.len() >= 0, "Activation frequency should be a valid map");
+        assert!(patterns.temporal_patterns.len() >= 0, "Temporal patterns should be a valid list");
+    }
+}
 

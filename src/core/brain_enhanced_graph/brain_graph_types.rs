@@ -485,3 +485,987 @@ impl GraphHealthMetrics {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    /// Helper function to create a test EntityKey
+    fn create_test_entity(id: u64) -> EntityKey {
+        EntityKey(id)
+    }
+
+    #[cfg(test)]
+    mod brain_query_result_tests {
+        use super::*;
+
+        #[test]
+        fn test_new_query_result() {
+            let result = BrainQueryResult::new();
+            assert!(result.entities.is_empty());
+            assert!(result.activations.is_empty());
+            assert_eq!(result.query_time, Duration::from_millis(0));
+            assert_eq!(result.total_activation, 0.0);
+        }
+
+        #[test]
+        fn test_default_query_result() {
+            let result = BrainQueryResult::default();
+            assert!(result.entities.is_empty());
+            assert!(result.activations.is_empty());
+            assert_eq!(result.query_time, Duration::from_millis(0));
+            assert_eq!(result.total_activation, 0.0);
+        }
+
+        #[test]
+        fn test_add_entity() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+
+            result.add_entity(entity1, 0.5);
+            result.add_entity(entity2, 0.8);
+
+            assert_eq!(result.entities.len(), 2);
+            assert_eq!(result.activations.len(), 2);
+            assert_eq!(result.total_activation, 1.3);
+            assert_eq!(result.get_activation(&entity1), Some(0.5));
+            assert_eq!(result.get_activation(&entity2), Some(0.8));
+        }
+
+        #[test]
+        fn test_get_activation_nonexistent() {
+            let result = BrainQueryResult::new();
+            let entity = create_test_entity(999);
+            assert_eq!(result.get_activation(&entity), None);
+        }
+
+        #[test]
+        fn test_get_sorted_entities() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            let entity3 = create_test_entity(3);
+
+            result.add_entity(entity1, 0.3);
+            result.add_entity(entity2, 0.8);
+            result.add_entity(entity3, 0.5);
+
+            let sorted = result.get_sorted_entities();
+            assert_eq!(sorted.len(), 3);
+            assert_eq!(sorted[0], (entity2, 0.8));
+            assert_eq!(sorted[1], (entity3, 0.5));
+            assert_eq!(sorted[2], (entity1, 0.3));
+        }
+
+        #[test]
+        fn test_get_sorted_entities_empty() {
+            let result = BrainQueryResult::new();
+            let sorted = result.get_sorted_entities();
+            assert!(sorted.is_empty());
+        }
+
+        #[test]
+        fn test_get_top_k() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            let entity3 = create_test_entity(3);
+
+            result.add_entity(entity1, 0.3);
+            result.add_entity(entity2, 0.8);
+            result.add_entity(entity3, 0.5);
+
+            let top_2 = result.get_top_k(2);
+            assert_eq!(top_2.len(), 2);
+            assert_eq!(top_2[0], (entity2, 0.8));
+            assert_eq!(top_2[1], (entity3, 0.5));
+
+            let top_10 = result.get_top_k(10);
+            assert_eq!(top_10.len(), 3); // Should only return available entities
+        }
+
+        #[test]
+        fn test_get_top_k_empty() {
+            let result = BrainQueryResult::new();
+            let top_k = result.get_top_k(5);
+            assert!(top_k.is_empty());
+        }
+
+        #[test]
+        fn test_get_entities_above_threshold() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            let entity3 = create_test_entity(3);
+
+            result.add_entity(entity1, 0.3);
+            result.add_entity(entity2, 0.8);
+            result.add_entity(entity3, 0.5);
+
+            let above_threshold = result.get_entities_above_threshold(0.4);
+            assert_eq!(above_threshold.len(), 2);
+            assert!(above_threshold.contains(&(entity2, 0.8)));
+            assert!(above_threshold.contains(&(entity3, 0.5)));
+        }
+
+        #[test]
+        fn test_get_entities_above_threshold_none() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            result.add_entity(entity1, 0.3);
+
+            let above_threshold = result.get_entities_above_threshold(0.5);
+            assert!(above_threshold.is_empty());
+        }
+
+        #[test]
+        fn test_get_average_activation() {
+            let mut result = BrainQueryResult::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+
+            result.add_entity(entity1, 0.4);
+            result.add_entity(entity2, 0.6);
+
+            assert_eq!(result.get_average_activation(), 0.5);
+        }
+
+        #[test]
+        fn test_get_average_activation_empty() {
+            let result = BrainQueryResult::new();
+            assert_eq!(result.get_average_activation(), 0.0);
+        }
+
+        #[test]
+        fn test_is_empty() {
+            let mut result = BrainQueryResult::new();
+            assert!(result.is_empty());
+
+            let entity = create_test_entity(1);
+            result.add_entity(entity, 0.5);
+            assert!(!result.is_empty());
+        }
+
+        #[test]
+        fn test_entity_count() {
+            let mut result = BrainQueryResult::new();
+            assert_eq!(result.entity_count(), 0);
+
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            result.add_entity(entity1, 0.5);
+            result.add_entity(entity2, 0.7);
+
+            assert_eq!(result.entity_count(), 2);
+        }
+
+        #[test]
+        fn test_add_entity_with_zero_activation() {
+            let mut result = BrainQueryResult::new();
+            let entity = create_test_entity(1);
+            result.add_entity(entity, 0.0);
+
+            assert_eq!(result.entity_count(), 1);
+            assert_eq!(result.get_activation(&entity), Some(0.0));
+            assert_eq!(result.total_activation, 0.0);
+        }
+
+        #[test]
+        fn test_add_entity_with_negative_activation() {
+            let mut result = BrainQueryResult::new();
+            let entity = create_test_entity(1);
+            result.add_entity(entity, -0.5);
+
+            assert_eq!(result.entity_count(), 1);
+            assert_eq!(result.get_activation(&entity), Some(-0.5));
+            assert_eq!(result.total_activation, -0.5);
+        }
+    }
+
+    #[cfg(test)]
+    mod concept_structure_tests {
+        use super::*;
+
+        #[test]
+        fn test_new_concept_structure() {
+            let concept = ConceptStructure::new();
+            assert!(concept.input_entities.is_empty());
+            assert!(concept.output_entities.is_empty());
+            assert!(concept.gate_entities.is_empty());
+            assert_eq!(concept.concept_activation, 0.0);
+            assert_eq!(concept.coherence_score, 0.0);
+        }
+
+        #[test]
+        fn test_default_concept_structure() {
+            let concept = ConceptStructure::default();
+            assert!(concept.input_entities.is_empty());
+            assert!(concept.output_entities.is_empty());
+            assert!(concept.gate_entities.is_empty());
+            assert_eq!(concept.concept_activation, 0.0);
+            assert_eq!(concept.coherence_score, 0.0);
+        }
+
+        #[test]
+        fn test_add_input() {
+            let mut concept = ConceptStructure::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+
+            concept.add_input(entity1);
+            concept.add_input(entity2);
+
+            assert_eq!(concept.input_entities.len(), 2);
+            assert!(concept.input_entities.contains(&entity1));
+            assert!(concept.input_entities.contains(&entity2));
+        }
+
+        #[test]
+        fn test_add_output() {
+            let mut concept = ConceptStructure::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+
+            concept.add_output(entity1);
+            concept.add_output(entity2);
+
+            assert_eq!(concept.output_entities.len(), 2);
+            assert!(concept.output_entities.contains(&entity1));
+            assert!(concept.output_entities.contains(&entity2));
+        }
+
+        #[test]
+        fn test_add_gate() {
+            let mut concept = ConceptStructure::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+
+            concept.add_gate(entity1);
+            concept.add_gate(entity2);
+
+            assert_eq!(concept.gate_entities.len(), 2);
+            assert!(concept.gate_entities.contains(&entity1));
+            assert!(concept.gate_entities.contains(&entity2));
+        }
+
+        #[test]
+        fn test_total_entities() {
+            let mut concept = ConceptStructure::new();
+            assert_eq!(concept.total_entities(), 0);
+
+            concept.add_input(create_test_entity(1));
+            concept.add_input(create_test_entity(2));
+            concept.add_output(create_test_entity(3));
+            concept.add_gate(create_test_entity(4));
+
+            assert_eq!(concept.total_entities(), 4);
+        }
+
+        #[test]
+        fn test_is_well_formed_valid() {
+            let mut concept = ConceptStructure::new();
+            concept.add_input(create_test_entity(1));
+            concept.add_output(create_test_entity(2));
+            concept.coherence_score = 0.8;
+
+            assert!(concept.is_well_formed());
+        }
+
+        #[test]
+        fn test_is_well_formed_no_inputs() {
+            let mut concept = ConceptStructure::new();
+            concept.add_output(create_test_entity(2));
+            concept.coherence_score = 0.8;
+
+            assert!(!concept.is_well_formed());
+        }
+
+        #[test]
+        fn test_is_well_formed_no_outputs() {
+            let mut concept = ConceptStructure::new();
+            concept.add_input(create_test_entity(1));
+            concept.coherence_score = 0.8;
+
+            assert!(!concept.is_well_formed());
+        }
+
+        #[test]
+        fn test_is_well_formed_low_coherence() {
+            let mut concept = ConceptStructure::new();
+            concept.add_input(create_test_entity(1));
+            concept.add_output(create_test_entity(2));
+            concept.coherence_score = 0.3;
+
+            assert!(!concept.is_well_formed());
+        }
+
+        #[test]
+        fn test_get_all_entities() {
+            let mut concept = ConceptStructure::new();
+            let input_entity = create_test_entity(1);
+            let output_entity = create_test_entity(2);
+            let gate_entity = create_test_entity(3);
+
+            concept.add_input(input_entity);
+            concept.add_output(output_entity);
+            concept.add_gate(gate_entity);
+
+            let all_entities = concept.get_all_entities();
+            assert_eq!(all_entities.len(), 3);
+            assert!(all_entities.contains(&input_entity));
+            assert!(all_entities.contains(&output_entity));
+            assert!(all_entities.contains(&gate_entity));
+        }
+
+        #[test]
+        fn test_get_all_entities_empty() {
+            let concept = ConceptStructure::new();
+            let all_entities = concept.get_all_entities();
+            assert!(all_entities.is_empty());
+        }
+
+        #[test]
+        fn test_activation_density() {
+            let mut concept = ConceptStructure::new();
+            concept.add_input(create_test_entity(1));
+            concept.add_output(create_test_entity(2));
+            concept.concept_activation = 1.0;
+
+            assert_eq!(concept.activation_density(), 0.5);
+        }
+
+        #[test]
+        fn test_activation_density_empty() {
+            let concept = ConceptStructure::new();
+            assert_eq!(concept.activation_density(), 0.0);
+        }
+
+        #[test]
+        fn test_activation_density_zero_activation() {
+            let mut concept = ConceptStructure::new();
+            concept.add_input(create_test_entity(1));
+            concept.add_output(create_test_entity(2));
+            concept.concept_activation = 0.0;
+
+            assert_eq!(concept.activation_density(), 0.0);
+        }
+    }
+
+    #[cfg(test)]
+    mod brain_statistics_tests {
+        use super::*;
+
+        #[test]
+        fn test_new_brain_statistics() {
+            let stats = BrainStatistics::new();
+            assert_eq!(stats.entity_count, 0);
+            assert_eq!(stats.relationship_count, 0);
+            assert_eq!(stats.avg_activation, 0.0);
+            assert_eq!(stats.max_activation, 0.0);
+            assert_eq!(stats.min_activation, 0.0);
+            assert_eq!(stats.graph_density, 0.0);
+            assert_eq!(stats.clustering_coefficient, 0.0);
+            assert_eq!(stats.average_path_length, 0.0);
+            assert!(stats.betweenness_centrality.is_empty());
+            assert!(stats.activation_distribution.is_empty());
+            assert_eq!(stats.concept_coherence, 0.0);
+            assert_eq!(stats.learning_efficiency, 0.0);
+        }
+
+        #[test]
+        fn test_default_brain_statistics() {
+            let stats = BrainStatistics::default();
+            assert_eq!(stats.entity_count, 0);
+            assert_eq!(stats.relationship_count, 0);
+            assert_eq!(stats.avg_activation, 0.0);
+        }
+
+        #[test]
+        fn test_graph_health_score() {
+            let mut stats = BrainStatistics::new();
+            stats.graph_density = 0.5;
+            stats.clustering_coefficient = 0.6;
+            stats.concept_coherence = 0.7;
+            stats.learning_efficiency = 0.8;
+
+            let expected = 0.5 * 0.3 + 0.6 * 0.2 + 0.7 * 0.3 + 0.8 * 0.2;
+            assert_eq!(stats.graph_health_score(), expected);
+        }
+
+        #[test]
+        fn test_graph_health_score_zero() {
+            let stats = BrainStatistics::new();
+            assert_eq!(stats.graph_health_score(), 0.0);
+        }
+
+        #[test]
+        fn test_get_activation_stats() {
+            let mut stats = BrainStatistics::new();
+            stats.avg_activation = 0.5;
+            stats.max_activation = 1.0;
+            stats.min_activation = 0.1;
+            stats.activation_distribution.insert("high".to_string(), 10);
+
+            let activation_stats = stats.get_activation_stats();
+            assert_eq!(activation_stats.average, 0.5);
+            assert_eq!(activation_stats.maximum, 1.0);
+            assert_eq!(activation_stats.minimum, 0.1);
+            assert_eq!(activation_stats.range, 0.9);
+            assert_eq!(activation_stats.distribution.get("high"), Some(&10));
+        }
+
+        #[test]
+        fn test_get_connectivity_stats() {
+            let mut stats = BrainStatistics::new();
+            stats.entity_count = 100;
+            stats.relationship_count = 200;
+            stats.graph_density = 0.4;
+            stats.clustering_coefficient = 0.6;
+            stats.average_path_length = 3.5;
+
+            let connectivity_stats = stats.get_connectivity_stats();
+            assert_eq!(connectivity_stats.entity_count, 100);
+            assert_eq!(connectivity_stats.relationship_count, 200);
+            assert_eq!(connectivity_stats.density, 0.4);
+            assert_eq!(connectivity_stats.clustering_coefficient, 0.6);
+            assert_eq!(connectivity_stats.average_path_length, 3.5);
+        }
+
+        #[test]
+        fn test_is_well_connected_valid() {
+            let mut stats = BrainStatistics::new();
+            stats.graph_density = 0.2;
+            stats.clustering_coefficient = 0.4;
+            stats.average_path_length = 4.0;
+
+            assert!(stats.is_well_connected());
+        }
+
+        #[test]
+        fn test_is_well_connected_low_density() {
+            let mut stats = BrainStatistics::new();
+            stats.graph_density = 0.05;
+            stats.clustering_coefficient = 0.4;
+            stats.average_path_length = 4.0;
+
+            assert!(!stats.is_well_connected());
+        }
+
+        #[test]
+        fn test_is_well_connected_low_clustering() {
+            let mut stats = BrainStatistics::new();
+            stats.graph_density = 0.2;
+            stats.clustering_coefficient = 0.2;
+            stats.average_path_length = 4.0;
+
+            assert!(!stats.is_well_connected());
+        }
+
+        #[test]
+        fn test_is_well_connected_long_path() {
+            let mut stats = BrainStatistics::new();
+            stats.graph_density = 0.2;
+            stats.clustering_coefficient = 0.4;
+            stats.average_path_length = 8.0;
+
+            assert!(!stats.is_well_connected());
+        }
+
+        #[test]
+        fn test_get_most_central_entities() {
+            let mut stats = BrainStatistics::new();
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            let entity3 = create_test_entity(3);
+
+            stats.betweenness_centrality.insert(entity1, 0.3);
+            stats.betweenness_centrality.insert(entity2, 0.8);
+            stats.betweenness_centrality.insert(entity3, 0.5);
+
+            let most_central = stats.get_most_central_entities(2);
+            assert_eq!(most_central.len(), 2);
+            assert_eq!(most_central[0], (entity2, 0.8));
+            assert_eq!(most_central[1], (entity3, 0.5));
+        }
+
+        #[test]
+        fn test_get_most_central_entities_empty() {
+            let stats = BrainStatistics::new();
+            let most_central = stats.get_most_central_entities(5);
+            assert!(most_central.is_empty());
+        }
+
+        #[test]
+        fn test_get_most_central_entities_more_than_available() {
+            let mut stats = BrainStatistics::new();
+            let entity1 = create_test_entity(1);
+            stats.betweenness_centrality.insert(entity1, 0.5);
+
+            let most_central = stats.get_most_central_entities(5);
+            assert_eq!(most_central.len(), 1);
+            assert_eq!(most_central[0], (entity1, 0.5));
+        }
+    }
+
+    #[cfg(test)]
+    mod brain_enhanced_config_tests {
+        use super::*;
+
+        #[test]
+        fn test_default_config() {
+            let config = BrainEnhancedConfig::default();
+            assert_eq!(config.learning_rate, 0.1);
+            assert_eq!(config.activation_threshold, 0.5);
+            assert_eq!(config.max_activation_spread, 5);
+            assert_eq!(config.neural_dampening, 0.95);
+            assert_eq!(config.concept_coherence_threshold, 0.7);
+            assert!(config.enable_hebbian_learning);
+            assert!(config.enable_concept_formation);
+            assert!(config.enable_neural_plasticity);
+            assert_eq!(config.memory_consolidation_threshold, 0.8);
+            assert_eq!(config.synaptic_strength_decay, 0.99);
+            assert_eq!(config.embedding_dim, 384);
+            assert!(config.enable_temporal_tracking);
+            assert!(config.enable_sdr_storage);
+        }
+
+        #[test]
+        fn test_for_testing_config() {
+            let config = BrainEnhancedConfig::for_testing();
+            assert_eq!(config.learning_rate, 0.2);
+            assert_eq!(config.activation_threshold, 0.3);
+            assert_eq!(config.max_activation_spread, 3);
+            assert_eq!(config.neural_dampening, 0.9);
+            assert_eq!(config.concept_coherence_threshold, 0.5);
+            assert_eq!(config.memory_consolidation_threshold, 0.6);
+            assert_eq!(config.synaptic_strength_decay, 0.95);
+            assert_eq!(config.embedding_dim, 128);
+            assert!(!config.enable_sdr_storage);
+        }
+
+        #[test]
+        fn test_high_performance_config() {
+            let config = BrainEnhancedConfig::high_performance();
+            assert_eq!(config.learning_rate, 0.05);
+            assert_eq!(config.activation_threshold, 0.7);
+            assert_eq!(config.max_activation_spread, 3);
+            assert_eq!(config.neural_dampening, 0.98);
+            assert_eq!(config.concept_coherence_threshold, 0.8);
+            assert!(!config.enable_concept_formation); // Disabled for performance
+            assert_eq!(config.memory_consolidation_threshold, 0.9);
+            assert_eq!(config.embedding_dim, 256);
+        }
+
+        #[test]
+        fn test_exploratory_config() {
+            let config = BrainEnhancedConfig::exploratory();
+            assert_eq!(config.learning_rate, 0.15);
+            assert_eq!(config.activation_threshold, 0.4);
+            assert_eq!(config.max_activation_spread, 7);
+            assert_eq!(config.neural_dampening, 0.9);
+            assert_eq!(config.concept_coherence_threshold, 0.6);
+            assert_eq!(config.memory_consolidation_threshold, 0.7);
+            assert_eq!(config.synaptic_strength_decay, 0.98);
+            assert_eq!(config.embedding_dim, 192);
+        }
+
+        #[test]
+        fn test_validate_valid_config() {
+            let config = BrainEnhancedConfig::default();
+            assert!(config.validate().is_ok());
+        }
+
+        #[test]
+        fn test_validate_invalid_learning_rate_zero() {
+            let mut config = BrainEnhancedConfig::default();
+            config.learning_rate = 0.0;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Learning rate"));
+        }
+
+        #[test]
+        fn test_validate_invalid_learning_rate_too_high() {
+            let mut config = BrainEnhancedConfig::default();
+            config.learning_rate = 1.5;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Learning rate"));
+        }
+
+        #[test]
+        fn test_validate_invalid_activation_threshold_negative() {
+            let mut config = BrainEnhancedConfig::default();
+            config.activation_threshold = -0.1;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Activation threshold"));
+        }
+
+        #[test]
+        fn test_validate_invalid_activation_threshold_too_high() {
+            let mut config = BrainEnhancedConfig::default();
+            config.activation_threshold = 1.1;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Activation threshold"));
+        }
+
+        #[test]
+        fn test_validate_invalid_max_activation_spread_zero() {
+            let mut config = BrainEnhancedConfig::default();
+            config.max_activation_spread = 0;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Max activation spread"));
+        }
+
+        #[test]
+        fn test_validate_invalid_neural_dampening_zero() {
+            let mut config = BrainEnhancedConfig::default();
+            config.neural_dampening = 0.0;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Neural dampening"));
+        }
+
+        #[test]
+        fn test_validate_invalid_neural_dampening_too_high() {
+            let mut config = BrainEnhancedConfig::default();
+            config.neural_dampening = 1.1;
+            assert!(config.validate().is_err());
+            assert!(config.validate().unwrap_err().contains("Neural dampening"));
+        }
+
+        #[test]
+        fn test_validate_edge_case_values() {
+            let mut config = BrainEnhancedConfig::default();
+            config.learning_rate = 1.0; // Edge case: exactly 1.0
+            config.activation_threshold = 0.0; // Edge case: exactly 0.0
+            config.neural_dampening = 1.0; // Edge case: exactly 1.0
+            assert!(config.validate().is_ok());
+        }
+    }
+
+    #[cfg(test)]
+    mod activation_config_tests {
+        use super::*;
+
+        #[test]
+        fn test_default_activation_config() {
+            let config = ActivationConfig::default();
+            assert_eq!(config.default_threshold, 0.5);
+            assert_eq!(config.max_iterations, 100);
+            assert_eq!(config.decay_factor, 0.95);
+        }
+    }
+
+    #[cfg(test)]
+    mod graph_health_metrics_tests {
+        use super::*;
+
+        #[test]
+        fn test_is_healthy_valid() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.7,
+                activation_balance: 0.6,
+                learning_stability: 0.7,
+                concept_coherence: 0.8,
+                overall_health: 0.8,
+            };
+            assert!(metrics.is_healthy());
+        }
+
+        #[test]
+        fn test_is_healthy_low_overall_health() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.7,
+                activation_balance: 0.6,
+                learning_stability: 0.7,
+                concept_coherence: 0.8,
+                overall_health: 0.6, // Too low
+            };
+            assert!(!metrics.is_healthy());
+        }
+
+        #[test]
+        fn test_is_healthy_low_connectivity() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.5, // Too low
+                activation_balance: 0.6,
+                learning_stability: 0.7,
+                concept_coherence: 0.8,
+                overall_health: 0.8,
+            };
+            assert!(!metrics.is_healthy());
+        }
+
+        #[test]
+        fn test_is_healthy_low_activation_balance() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.7,
+                activation_balance: 0.4, // Too low
+                learning_stability: 0.7,
+                concept_coherence: 0.8,
+                overall_health: 0.8,
+            };
+            assert!(!metrics.is_healthy());
+        }
+
+        #[test]
+        fn test_is_healthy_low_learning_stability() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.7,
+                activation_balance: 0.6,
+                learning_stability: 0.5, // Too low
+                concept_coherence: 0.8,
+                overall_health: 0.8,
+            };
+            assert!(!metrics.is_healthy());
+        }
+
+        #[test]
+        fn test_get_health_report_healthy() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.7,
+                activation_balance: 0.6,
+                learning_stability: 0.7,
+                concept_coherence: 0.8,
+                overall_health: 0.8,
+            };
+            let report = metrics.get_health_report();
+            assert!(report.contains("Overall Health: 0.80"));
+            assert!(report.contains("Connectivity: 0.70"));
+            assert!(report.contains("Activation Balance: 0.60"));
+            assert!(report.contains("Learning Stability: 0.70"));
+            assert!(report.contains("Concept Coherence: 0.80"));
+            assert!(report.contains("Status: Healthy"));
+        }
+
+        #[test]
+        fn test_get_health_report_unhealthy() {
+            let metrics = GraphHealthMetrics {
+                connectivity_score: 0.3,
+                activation_balance: 0.2,
+                learning_stability: 0.4,
+                concept_coherence: 0.3,
+                overall_health: 0.4,
+            };
+            let report = metrics.get_health_report();
+            assert!(report.contains("Status: Needs Attention"));
+        }
+    }
+
+    #[cfg(test)]
+    mod activation_stats_tests {
+        use super::*;
+
+        #[test]
+        fn test_activation_stats_creation() {
+            let mut distribution = HashMap::new();
+            distribution.insert("low".to_string(), 10);
+            distribution.insert("high".to_string(), 5);
+
+            let stats = ActivationStats {
+                average: 0.5,
+                maximum: 1.0,
+                minimum: 0.1,
+                range: 0.9,
+                distribution,
+            };
+
+            assert_eq!(stats.average, 0.5);
+            assert_eq!(stats.maximum, 1.0);
+            assert_eq!(stats.minimum, 0.1);
+            assert_eq!(stats.range, 0.9);
+            assert_eq!(stats.distribution.get("low"), Some(&10));
+            assert_eq!(stats.distribution.get("high"), Some(&5));
+        }
+    }
+
+    #[cfg(test)]
+    mod connectivity_stats_tests {
+        use super::*;
+
+        #[test]
+        fn test_connectivity_stats_creation() {
+            let stats = ConnectivityStats {
+                entity_count: 100,
+                relationship_count: 200,
+                density: 0.4,
+                clustering_coefficient: 0.6,
+                average_path_length: 3.5,
+            };
+
+            assert_eq!(stats.entity_count, 100);
+            assert_eq!(stats.relationship_count, 200);
+            assert_eq!(stats.density, 0.4);
+            assert_eq!(stats.clustering_coefficient, 0.6);
+            assert_eq!(stats.average_path_length, 3.5);
+        }
+    }
+
+    #[cfg(test)]
+    mod enum_tests {
+        use super::*;
+
+        #[test]
+        fn test_activation_pattern_variants() {
+            let focused = ActivationPattern::Focused;
+            let distributed = ActivationPattern::Distributed;
+            let sparse = ActivationPattern::Sparse;
+            let clustered = ActivationPattern::Clustered;
+
+            // Test that enums can be created and matched
+            match focused {
+                ActivationPattern::Focused => assert!(true),
+                _ => assert!(false),
+            }
+
+            match distributed {
+                ActivationPattern::Distributed => assert!(true),
+                _ => assert!(false),
+            }
+
+            match sparse {
+                ActivationPattern::Sparse => assert!(true),
+                _ => assert!(false),
+            }
+
+            match clustered {
+                ActivationPattern::Clustered => assert!(true),
+                _ => assert!(false),
+            }
+        }
+
+        #[test]
+        fn test_learning_mode_variants() {
+            let supervised = LearningMode::Supervised;
+            let unsupervised = LearningMode::Unsupervised;
+            let reinforcement = LearningMode::Reinforcement;
+            let hebbian = LearningMode::Hebbian;
+
+            match supervised {
+                LearningMode::Supervised => assert!(true),
+                _ => assert!(false),
+            }
+
+            match unsupervised {
+                LearningMode::Unsupervised => assert!(true),
+                _ => assert!(false),
+            }
+
+            match reinforcement {
+                LearningMode::Reinforcement => assert!(true),
+                _ => assert!(false),
+            }
+
+            match hebbian {
+                LearningMode::Hebbian => assert!(true),
+                _ => assert!(false),
+            }
+        }
+
+        #[test]
+        fn test_query_mode_variants() {
+            let exact = QueryMode::Exact;
+            let fuzzy = QueryMode::Fuzzy;
+            let associative = QueryMode::Associative;
+            let conceptual = QueryMode::Conceptual;
+
+            match exact {
+                QueryMode::Exact => assert!(true),
+                _ => assert!(false),
+            }
+
+            match fuzzy {
+                QueryMode::Fuzzy => assert!(true),
+                _ => assert!(false),
+            }
+
+            match associative {
+                QueryMode::Associative => assert!(true),
+                _ => assert!(false),
+            }
+
+            match conceptual {
+                QueryMode::Conceptual => assert!(true),
+                _ => assert!(false),
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod integration_tests {
+        use super::*;
+
+        #[test]
+        fn test_brain_query_result_with_concept_structure() {
+            let mut query_result = BrainQueryResult::new();
+            let mut concept = ConceptStructure::new();
+
+            let entity1 = create_test_entity(1);
+            let entity2 = create_test_entity(2);
+            let entity3 = create_test_entity(3);
+
+            // Add entities to concept
+            concept.add_input(entity1);
+            concept.add_output(entity2);
+            concept.add_gate(entity3);
+
+            // Add same entities to query result
+            query_result.add_entity(entity1, 0.7);
+            query_result.add_entity(entity2, 0.8);
+            query_result.add_entity(entity3, 0.5);
+
+            // Verify integration
+            assert_eq!(query_result.entity_count(), concept.total_entities());
+            
+            let all_concept_entities = concept.get_all_entities();
+            for entity in all_concept_entities {
+                assert!(query_result.get_activation(&entity).is_some());
+            }
+        }
+
+        #[test]
+        fn test_config_validation_with_activation_config() {
+            let mut config = BrainEnhancedConfig::default();
+            
+            // Test that activation config is properly embedded
+            assert_eq!(config.activation_config.default_threshold, 0.5);
+            assert_eq!(config.activation_config.max_iterations, 100);
+            assert_eq!(config.activation_config.decay_factor, 0.95);
+
+            // Modify activation config
+            config.activation_config.default_threshold = 0.3;
+            config.activation_config.max_iterations = 50;
+            config.activation_config.decay_factor = 0.9;
+
+            // Config should still be valid
+            assert!(config.validate().is_ok());
+        }
+
+        #[test]
+        fn test_statistics_health_integration() {
+            let mut stats = BrainStatistics::new();
+            
+            // Set up stats for healthy graph
+            stats.graph_density = 0.3;
+            stats.clustering_coefficient = 0.5;
+            stats.concept_coherence = 0.8;
+            stats.learning_efficiency = 0.7;
+            stats.average_path_length = 4.0;
+
+            // Test health calculations
+            assert!(stats.is_well_connected());
+            assert!(stats.graph_health_score() > 0.5);
+
+            // Create health metrics from stats
+            let health_metrics = GraphHealthMetrics {
+                connectivity_score: stats.graph_density,
+                activation_balance: stats.clustering_coefficient,
+                learning_stability: stats.learning_efficiency,
+                concept_coherence: stats.concept_coherence,
+                overall_health: stats.graph_health_score(),
+            };
+
+            assert!(health_metrics.is_healthy());
+        }
+    }
+}

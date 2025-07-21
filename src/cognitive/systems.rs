@@ -623,6 +623,444 @@ impl HierarchyCache {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use tokio;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::core::types::EntityKey;
+
+    /// Helper function to create a test SystemsThinking instance
+    async fn create_test_systems_thinking() -> SystemsThinking {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        SystemsThinking::new(graph)
+    }
+
+    /// Helper function to create a test graph with hierarchical data
+    async fn create_test_graph_with_hierarchy() -> Arc<BrainEnhancedKnowledgeGraph> {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        
+        // Add test entities for hierarchical testing
+        let mammal_key = graph.add_entity("mammal", "A warm-blooded vertebrate").await.unwrap();
+        let dog_key = graph.add_entity("dog", "A domesticated mammal").await.unwrap();
+        let cat_key = graph.add_entity("cat", "An independent mammal").await.unwrap();
+        let elephant_key = graph.add_entity("elephant", "A large mammal").await.unwrap();
+        
+        // Add hierarchical relationships (is_a)
+        graph.add_weighted_edge(dog_key, mammal_key, 0.9).await.unwrap();
+        graph.add_weighted_edge(cat_key, mammal_key, 0.9).await.unwrap();
+        graph.add_weighted_edge(elephant_key, mammal_key, 0.9).await.unwrap();
+        
+        graph
+    }
+
+    #[tokio::test]
+    async fn test_is_stop_word() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test known stop words
+        assert!(systems.is_stop_word("the"));
+        assert!(systems.is_stop_word("and"));
+        assert!(systems.is_stop_word("or"));
+        assert!(systems.is_stop_word("in"));
+        
+        // Test non-stop words
+        assert!(!systems.is_stop_word("dog"));
+        assert!(!systems.is_stop_word("properties"));
+        assert!(!systems.is_stop_word("system"));
+        
+        // Test case insensitivity
+        assert!(systems.is_stop_word("THE"));
+        assert!(systems.is_stop_word("And"));
+    }
+
+    #[tokio::test]
+    async fn test_is_generic_word() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test known generic words
+        assert!(systems.is_generic_word("properties"));
+        assert!(systems.is_generic_word("attributes"));
+        assert!(systems.is_generic_word("inherit"));
+        assert!(systems.is_generic_word("what"));
+        
+        // Test non-generic words
+        assert!(!systems.is_generic_word("dog"));
+        assert!(!systems.is_generic_word("mammal"));
+        assert!(!systems.is_generic_word("system"));
+        
+        // Test case insensitivity
+        assert!(systems.is_generic_word("PROPERTIES"));
+        assert!(systems.is_generic_word("Attributes"));
+    }
+
+    #[tokio::test]
+    async fn test_infer_reasoning_type() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test attribute inheritance queries
+        let attr_type = systems.infer_reasoning_type("What properties does a dog have?", None);
+        assert!(matches!(attr_type, SystemsReasoningType::AttributeInheritance));
+        
+        let attr_type2 = systems.infer_reasoning_type("What attributes are inherited?", None);
+        assert!(matches!(attr_type2, SystemsReasoningType::AttributeInheritance));
+        
+        // Test classification queries
+        let class_type = systems.infer_reasoning_type("How do we classify this animal?", None);
+        assert!(matches!(class_type, SystemsReasoningType::Classification));
+        
+        let class_type2 = systems.infer_reasoning_type("What category does this belong to?", None);
+        assert!(matches!(class_type2, SystemsReasoningType::Classification));
+        
+        // Test system analysis queries
+        let sys_type = systems.infer_reasoning_type("How do these systems interact?", None);
+        assert!(matches!(sys_type, SystemsReasoningType::SystemAnalysis));
+        
+        // Test emergent properties queries
+        let emergent_type = systems.infer_reasoning_type("What emergent behaviors arise?", None);
+        assert!(matches!(emergent_type, SystemsReasoningType::EmergentProperties));
+        
+        // Test default case
+        let default_type = systems.infer_reasoning_type("Random question", None);
+        assert!(matches!(default_type, SystemsReasoningType::AttributeInheritance));
+    }
+
+    #[tokio::test]
+    async fn test_calculate_complexity() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test with minimal traversal
+        let minimal_traversal = HierarchyTraversalInternal {
+            path: vec![EntityKey::default()],
+            inherited_attributes: vec![],
+            exceptions: vec![],
+            depth: 1,
+        };
+        let complexity = systems.calculate_complexity(&minimal_traversal);
+        assert!(complexity >= 0.0 && complexity <= 1.0);
+        assert!(complexity < 0.2); // Should be low complexity
+        
+        // Test with complex traversal
+        let complex_traversal = HierarchyTraversalInternal {
+            path: vec![EntityKey::default(), EntityKey::default(), EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                AttributeInfo {
+                    name: "attr1".to_string(),
+                    value: "val1".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_path: vec![EntityKey::default()],
+                    confidence: 0.8,
+                },
+                AttributeInfo {
+                    name: "attr2".to_string(),
+                    value: "val2".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_path: vec![EntityKey::default()],
+                    confidence: 0.7,
+                },
+            ],
+            exceptions: vec![
+                ExceptionInfo {
+                    exception_type: "contradiction".to_string(),
+                    description: "Test exception".to_string(),
+                    source_entity: EntityKey::default(),
+                    target_entity: EntityKey::default(),
+                },
+            ],
+            depth: 4,
+        };
+        let high_complexity = systems.calculate_complexity(&complex_traversal);
+        assert!(high_complexity > complexity); // Should be higher than minimal
+        assert!(high_complexity <= 1.0); // Should not exceed 1.0
+    }
+
+    #[tokio::test]
+    async fn test_identify_hierarchy_root() {
+        let graph = create_test_graph_with_hierarchy().await;
+        let systems = SystemsThinking::new(graph);
+        
+        // Test finding a known entity
+        let result = systems.identify_hierarchy_root("What properties does a dog have?").await;
+        assert!(result.is_ok());
+        
+        // Test with generic query
+        let result2 = systems.identify_hierarchy_root("What are the properties?").await;
+        assert!(result2.is_ok()); // Should find fallback entity
+        
+        // Test with stop words only
+        let result3 = systems.identify_hierarchy_root("the and or").await;
+        assert!(result3.is_ok()); // Should find fallback entity
+    }
+
+    #[tokio::test]
+    async fn test_calculate_confidence() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test with empty result
+        let empty_result = SystemsResult {
+            hierarchy_path: vec![],
+            inherited_attributes: vec![],
+            exception_handling: vec![],
+            system_complexity: 0.0,
+        };
+        let confidence = systems.calculate_confidence(&empty_result);
+        assert!(confidence >= 0.0 && confidence <= 1.0);
+        assert!(confidence < 0.6); // Should be low confidence
+        
+        // Test with good result
+        let good_result = SystemsResult {
+            hierarchy_path: vec![EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                InheritedAttribute {
+                    attribute_name: "warm_blooded".to_string(),
+                    value: "true".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 1,
+                    confidence: 0.9,
+                },
+                InheritedAttribute {
+                    attribute_name: "domesticated".to_string(),
+                    value: "true".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 2,
+                    confidence: 0.8,
+                },
+            ],
+            exception_handling: vec![],
+            system_complexity: 0.3,
+        };
+        let high_confidence = systems.calculate_confidence(&good_result);
+        assert!(high_confidence > confidence); // Should be higher than empty
+        assert!(high_confidence >= 0.6); // Should be reasonably high
+        
+        // Test with exceptions (should lower confidence)
+        let result_with_exceptions = SystemsResult {
+            hierarchy_path: vec![EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                InheritedAttribute {
+                    attribute_name: "warm_blooded".to_string(),
+                    value: "true".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 1,
+                    confidence: 0.9,
+                },
+            ],
+            exception_handling: vec![
+                Exception {
+                    exception_type: ExceptionType::Contradiction,
+                    description: "Test contradiction".to_string(),
+                    affected_entities: vec![EntityKey::default(), EntityKey::default()],
+                    resolution_strategy: "Test resolution".to_string(),
+                },
+            ],
+            system_complexity: 0.5,
+        };
+        let exception_confidence = systems.calculate_confidence(&result_with_exceptions);
+        assert!(exception_confidence < high_confidence); // Should be lower due to exceptions
+    }
+
+    #[tokio::test]
+    async fn test_format_systems_answer() {
+        let systems = create_test_systems_thinking().await;
+        let query = "What properties does a dog have?";
+        
+        let result = SystemsResult {
+            hierarchy_path: vec![EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                InheritedAttribute {
+                    attribute_name: "warm_blooded".to_string(),
+                    value: "true".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 1,
+                    confidence: 0.9,
+                },
+                InheritedAttribute {
+                    attribute_name: "domesticated".to_string(),
+                    value: "true".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 2,
+                    confidence: 0.8,
+                },
+            ],
+            exception_handling: vec![
+                Exception {
+                    exception_type: ExceptionType::Contradiction,
+                    description: "Test contradiction".to_string(),
+                    affected_entities: vec![EntityKey::default()],
+                    resolution_strategy: "Test resolution".to_string(),
+                },
+            ],
+            system_complexity: 0.3,
+        };
+        
+        let answer = systems.format_systems_answer(query, &result);
+        
+        // Check that the answer contains expected sections
+        assert!(answer.contains("Systems Analysis for:"));
+        assert!(answer.contains("Hierarchy Path"));
+        assert!(answer.contains("Inherited Attributes"));
+        assert!(answer.contains("warm_blooded"));
+        assert!(answer.contains("domesticated"));
+        assert!(answer.contains("Exceptions Resolved"));
+        assert!(answer.contains("System Complexity"));
+        assert!(answer.contains("0.30"));
+    }
+
+    #[tokio::test]
+    async fn test_resolve_attribute_inheritance() {
+        let systems = create_test_systems_thinking().await;
+        
+        let attributes = vec![
+            AttributeInfo {
+                name: "warm_blooded".to_string(),
+                value: "true".to_string(),
+                source_entity: EntityKey::default(),
+                inheritance_path: vec![EntityKey::default()],
+                confidence: 0.9,
+            },
+            AttributeInfo {
+                name: "domesticated".to_string(),
+                value: "true".to_string(),
+                source_entity: EntityKey::default(),
+                inheritance_path: vec![EntityKey::default(), EntityKey::default()],
+                confidence: 0.8,
+            },
+        ];
+        
+        let exceptions = vec![];
+        
+        let result = systems.resolve_attribute_inheritance(
+            "test_attribute".to_string(),
+            attributes,
+            &exceptions,
+        ).await;
+        
+        assert!(result.is_ok());
+        let inherited = result.unwrap();
+        assert_eq!(inherited.len(), 2);
+        assert_eq!(inherited[0].attribute_name, "warm_blooded");
+        assert_eq!(inherited[0].value, "true");
+        assert_eq!(inherited[0].inheritance_depth, 1);
+        assert_eq!(inherited[1].attribute_name, "domesticated");
+        assert_eq!(inherited[1].inheritance_depth, 2);
+    }
+
+    #[tokio::test]
+    async fn test_select_best_parent() {
+        let systems = create_test_systems_thinking().await;
+        
+        // Test with multiple parents
+        let parents = vec![EntityKey::default(), EntityKey::default(), EntityKey::default()];
+        let reasoning_type = SystemsReasoningType::AttributeInheritance;
+        
+        let result = systems.select_best_parent(parents.clone(), &reasoning_type).await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), EntityKey::default()); // Should return first parent
+        
+        // Test with no parents
+        let empty_parents = vec![];
+        let result2 = systems.select_best_parent(empty_parents, &reasoning_type).await;
+        assert!(result2.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_generate_basic_attributes() {
+        let graph = create_test_graph_with_hierarchy().await;
+        let systems = SystemsThinking::new(graph.clone());
+        
+        // Add an entity with known properties
+        let dog_key = graph.add_entity("dog", "A domesticated mammal").await.unwrap();
+        
+        let result = systems.generate_basic_attributes(dog_key).await;
+        assert!(result.is_ok());
+        
+        if let Ok(Some(attributes)) = result {
+            assert!(!attributes.is_empty());
+            // Should generate dog-specific attributes
+            let has_domesticated = attributes.iter().any(|attr| attr.name == "domesticated");
+            let has_warm_blooded = attributes.iter().any(|attr| attr.name == "warm_blooded");
+            assert!(has_domesticated || has_warm_blooded);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_create_reasoning_trace() {
+        let systems = create_test_systems_thinking().await;
+        
+        let result = SystemsResult {
+            hierarchy_path: vec![EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                InheritedAttribute {
+                    attribute_name: "test_attr".to_string(),
+                    value: "test_val".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 1,
+                    confidence: 0.8,
+                },
+            ],
+            exception_handling: vec![
+                Exception {
+                    exception_type: ExceptionType::Contradiction,
+                    description: "Test exception".to_string(),
+                    affected_entities: vec![EntityKey::default()],
+                    resolution_strategy: "Test resolution".to_string(),
+                },
+            ],
+            system_complexity: 0.3,
+        };
+        
+        let trace = systems.create_reasoning_trace(&result);
+        
+        // Should create steps for hierarchy traversal, attribute inheritance, and exception handling
+        assert!(trace.len() >= 1);
+        assert!(trace.iter().any(|step| step.concept_id == "hierarchy_traversal"));
+        assert!(trace.iter().any(|step| step.concept_id == "attribute_inheritance"));
+        assert!(trace.iter().any(|step| step.concept_id == "exception_handling"));
+    }
+
+    #[tokio::test]
+    async fn test_create_additional_metadata() {
+        let systems = create_test_systems_thinking().await;
+        
+        let result = SystemsResult {
+            hierarchy_path: vec![EntityKey::default(), EntityKey::default(), EntityKey::default()],
+            inherited_attributes: vec![
+                InheritedAttribute {
+                    attribute_name: "attr1".to_string(),
+                    value: "val1".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 1,
+                    confidence: 0.8,
+                },
+                InheritedAttribute {
+                    attribute_name: "attr2".to_string(),
+                    value: "val2".to_string(),
+                    source_entity: EntityKey::default(),
+                    inheritance_depth: 2,
+                    confidence: 0.7,
+                },
+            ],
+            exception_handling: vec![
+                Exception {
+                    exception_type: ExceptionType::Contradiction,
+                    description: "Test exception".to_string(),
+                    affected_entities: vec![EntityKey::default()],
+                    resolution_strategy: "Test resolution".to_string(),
+                },
+            ],
+            system_complexity: 0.456,
+        };
+        
+        let metadata = systems.create_additional_metadata(&result);
+        
+        assert_eq!(metadata.get("hierarchy_depth").unwrap(), "3");
+        assert_eq!(metadata.get("attributes_count").unwrap(), "2");
+        assert_eq!(metadata.get("exceptions_count").unwrap(), "1");
+        assert_eq!(metadata.get("complexity_score").unwrap(), "0.456");
+    }
+}
+
 /// Hierarchy traversal result (internal)
 #[derive(Debug, Clone)]
 struct HierarchyTraversalInternal {

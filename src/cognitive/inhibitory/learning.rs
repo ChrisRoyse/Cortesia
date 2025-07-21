@@ -375,3 +375,472 @@ fn calculate_variance(values: &[f32]) -> f32 {
     
     variance
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cognitive::inhibitory::{
+        CompetitiveInhibitionSystem, GroupCompetitionResult, InhibitionPerformanceMetrics,
+        CompetitionGroup, CompetitionType, TemporalDynamics, InhibitionConfig
+    };
+    use crate::core::brain_types::ActivationPattern;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::core::activation_engine::ActivationPropagationEngine;
+    use crate::core::types::EntityKey;
+    use crate::cognitive::critical::CriticalThinking;
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    use std::time::{Duration, SystemTime};
+
+    fn create_test_system() -> CompetitiveInhibitionSystem {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        let critical_thinking = Arc::new(CriticalThinking::new(graph));
+        
+        CompetitiveInhibitionSystem::new(activation_engine, critical_thinking)
+    }
+
+    fn create_test_pattern_with_strengths(strengths: Vec<f32>) -> (ActivationPattern, Vec<EntityKey>) {
+        let mut activations = HashMap::new();
+        let mut entity_keys = Vec::new();
+        
+        for (i, strength) in strengths.into_iter().enumerate() {
+            let entity = EntityKey::from_hash(&format!("entity_{}", i));
+            activations.insert(entity, strength);
+            entity_keys.push(entity);
+        }
+        
+        (ActivationPattern { activations }, entity_keys)
+    }
+
+    fn create_test_competition_results(entities: &[EntityKey]) -> Vec<GroupCompetitionResult> {
+        vec![
+            GroupCompetitionResult {
+                group_id: "test_group_1".to_string(),
+                pre_competition: vec![(entities[0], 0.8), (entities[1], 0.6)],
+                post_competition: vec![(entities[0], 0.8), (entities[1], 0.2)],
+                winner: Some(entities[0]),
+                competition_intensity: 0.7,
+                suppressed_entities: vec![entities[1]],
+            },
+            GroupCompetitionResult {
+                group_id: "test_group_2".to_string(),
+                pre_competition: vec![(entities[2], 0.5), (entities[3], 0.4)],
+                post_competition: vec![(entities[2], 0.5), (entities[3], 0.1)],
+                winner: Some(entities[2]),
+                competition_intensity: 0.5,
+                suppressed_entities: vec![entities[3]],
+            },
+        ]
+    }
+
+    fn create_test_performance_history() -> Vec<InhibitionPerformanceMetrics> {
+        vec![
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.8,
+                effectiveness_score: 0.7,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(12),
+                processing_time_ms: 12.0,
+                entities_processed: 3,
+                competition_groups_resolved: 1,
+                competitions_resolved: 1,
+                exceptions_handled: 1,
+                efficiency_score: 0.6,
+                effectiveness_score: 0.5,
+            },
+        ]
+    }
+
+    #[tokio::test]
+    async fn test_apply_adaptive_learning() {
+        let system = create_test_system();
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6, 0.4, 0.3]);
+        let results = create_test_competition_results(&entities);
+        
+        // Should complete without error
+        let result = apply_adaptive_learning(&system, &pattern, &results).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_apply_learning_mechanisms_disabled() {
+        let mut system = create_test_system();
+        system.inhibition_config.enable_learning = false;
+        
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        let results = create_test_competition_results(&entities);
+        let history = create_test_performance_history();
+        
+        let result = apply_learning_mechanisms(&system, &pattern, &results, &history).await.unwrap();
+        
+        assert!(!result.learning_applied);
+        assert!(result.parameter_adjustments.is_empty());
+        assert_eq!(result.performance_improvement_estimate, 0.0);
+        assert_eq!(result.learning_confidence, 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_apply_learning_mechanisms_enabled() {
+        let system = create_test_system();
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6, 0.4, 0.3]);
+        let results = create_test_competition_results(&entities);
+        let history = create_test_performance_history();
+        
+        let result = apply_learning_mechanisms(&system, &pattern, &results, &history).await.unwrap();
+        
+        // Should process learning mechanisms
+        assert!(result.learning_confidence > 0.0);
+        // May or may not apply adjustments depending on conditions
+    }
+
+    #[tokio::test]
+    async fn test_learn_inhibition_strength_adjustment_weak_competition() {
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.4, 0.3]);
+        
+        // Create results with low competition intensity (weak competition)
+        let results = vec![
+            GroupCompetitionResult {
+                group_id: "weak_group".to_string(),
+                pre_competition: vec![(entities[0], 0.4), (entities[1], 0.3)],
+                post_competition: vec![(entities[0], 0.4), (entities[1], 0.3)],
+                winner: None, // No clear winner
+                competition_intensity: 0.2,
+                suppressed_entities: vec![],
+            }
+        ];
+        
+        let history = create_test_performance_history();
+        let adjustment = learn_inhibition_strength_adjustment(&pattern, &results, &history).await.unwrap();
+        
+        // Should suggest increasing inhibition strength
+        assert!(adjustment.is_some());
+        let adj = adjustment.unwrap();
+        assert_eq!(adj.parameter_name, "global_inhibition_strength");
+        assert!(adj.new_value > adj.old_value);
+        assert_eq!(adj.adjustment_type, ParameterAdjustmentType::StrengthOptimization);
+    }
+
+    #[tokio::test]
+    async fn test_learn_inhibition_strength_adjustment_strong_competition() {
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.9, 0.8]);
+        
+        // Create results with very strong competition (too aggressive)
+        let results = vec![
+            GroupCompetitionResult {
+                group_id: "strong_group".to_string(),
+                pre_competition: vec![(entities[0], 0.9), (entities[1], 0.8)],
+                post_competition: vec![(entities[0], 0.9), (entities[1], 0.0)],
+                winner: Some(entities[0]),
+                competition_intensity: 0.95,
+                suppressed_entities: vec![entities[1]],
+            }
+        ];
+        
+        let history = create_test_performance_history();
+        let adjustment = learn_inhibition_strength_adjustment(&pattern, &results, &history).await.unwrap();
+        
+        // Should suggest decreasing inhibition strength
+        assert!(adjustment.is_some());
+        let adj = adjustment.unwrap();
+        assert_eq!(adj.parameter_name, "global_inhibition_strength");
+        assert!(adj.new_value < adj.old_value);
+    }
+
+    #[tokio::test]
+    async fn test_learn_inhibition_strength_adjustment_balanced() {
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        
+        // Create results with balanced competition
+        let results = vec![
+            GroupCompetitionResult {
+                group_id: "balanced_group".to_string(),
+                pre_competition: vec![(entities[0], 0.8), (entities[1], 0.6)],
+                post_competition: vec![(entities[0], 0.8), (entities[1], 0.3)],
+                winner: Some(entities[0]),
+                competition_intensity: 0.7,
+                suppressed_entities: vec![],
+            }
+        ];
+        
+        let history = create_test_performance_history();
+        let adjustment = learn_inhibition_strength_adjustment(&pattern, &results, &history).await.unwrap();
+        
+        // Should not suggest adjustment for balanced competition
+        assert!(adjustment.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_learn_competition_group_optimization_aggressive() {
+        let (_, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6, 0.4, 0.3]);
+        
+        // Create results with high suppression rate
+        let results = vec![
+            GroupCompetitionResult {
+                group_id: "aggressive_group".to_string(),
+                pre_competition: vec![(entities[0], 0.8), (entities[1], 0.6), (entities[2], 0.4)],
+                post_competition: vec![(entities[0], 0.8), (entities[1], 0.0), (entities[2], 0.0)],
+                winner: Some(entities[0]),
+                competition_intensity: 0.8,
+                suppressed_entities: vec![entities[1], entities[2]],
+            }
+        ];
+        
+        let history = create_test_performance_history();
+        let adjustment = learn_competition_group_optimization(&results, &history).await.unwrap();
+        
+        // Should suggest increasing soft competition factor
+        assert!(adjustment.is_some());
+        let adj = adjustment.unwrap();
+        assert_eq!(adj.parameter_name, "soft_competition_factor");
+        assert!(adj.new_value > adj.old_value);
+        assert_eq!(adj.adjustment_type, ParameterAdjustmentType::CompetitionOptimization);
+    }
+
+    #[tokio::test]
+    async fn test_learn_competition_group_optimization_moderate() {
+        let (_, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        
+        // Create results with moderate suppression
+        let results = vec![
+            GroupCompetitionResult {
+                group_id: "moderate_group".to_string(),
+                pre_competition: vec![(entities[0], 0.8), (entities[1], 0.6)],
+                post_competition: vec![(entities[0], 0.8), (entities[1], 0.3)],
+                winner: Some(entities[0]),
+                competition_intensity: 0.6,
+                suppressed_entities: vec![],
+            }
+        ];
+        
+        let history = create_test_performance_history();
+        let adjustment = learn_competition_group_optimization(&results, &history).await.unwrap();
+        
+        // Should not suggest adjustment for moderate suppression
+        assert!(adjustment.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_learn_temporal_dynamics_optimization_insufficient_history() {
+        let (pattern, _) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        let history = vec![create_test_performance_history()[0].clone()]; // Only one entry
+        
+        let adjustment = learn_temporal_dynamics_optimization(&pattern, &history).await.unwrap();
+        
+        // Should not suggest adjustment with insufficient history
+        assert!(adjustment.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_learn_temporal_dynamics_optimization_high_variance() {
+        let (pattern, _) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        
+        // Create history with high variance in effectiveness scores
+        let history = vec![
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.9, // High
+                effectiveness_score: 0.9,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.3, // Low
+                effectiveness_score: 0.3,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.8, // High again
+                effectiveness_score: 0.8,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.2, // Low again
+                effectiveness_score: 0.2,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.7,
+                effectiveness_score: 0.7,
+            },
+        ];
+        
+        let adjustment = learn_temporal_dynamics_optimization(&pattern, &history).await.unwrap();
+        
+        // Should suggest temporal adjustment for high variance
+        assert!(adjustment.is_some());
+        let adj = adjustment.unwrap();
+        assert_eq!(adj.parameter_name, "temporal_integration_window");
+        assert!(adj.new_value > adj.old_value);
+        assert_eq!(adj.adjustment_type, ParameterAdjustmentType::TemporalOptimization);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_performance_metrics() {
+        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.8, 0.6, 0.4]);
+        let results = create_test_competition_results(&entities);
+        
+        let metrics = calculate_performance_metrics(&pattern, &results);
+        
+        assert!(metrics.efficiency_score >= 0.0 && metrics.efficiency_score <= 1.0);
+        assert!(metrics.effectiveness_score >= 0.0 && metrics.effectiveness_score <= 1.0);
+        assert_eq!(metrics.entities_processed, pattern.activations.len());
+        assert_eq!(metrics.competition_groups_resolved, results.len());
+        assert!(metrics.processing_time_ms > 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_performance_metrics_empty_results() {
+        let (pattern, _) = create_test_pattern_with_strengths(vec![0.8, 0.6]);
+        let results = vec![];
+        
+        let metrics = calculate_performance_metrics(&pattern, &results);
+        
+        assert_eq!(metrics.efficiency_score, 0.5); // Default for empty results
+        assert_eq!(metrics.competition_groups_resolved, 0);
+        assert_eq!(metrics.entities_processed, pattern.activations.len());
+    }
+
+    #[tokio::test]
+    async fn test_generate_adaptation_suggestions() {
+        let metrics = InhibitionPerformanceMetrics {
+            timestamp: SystemTime::now(),
+            processing_time: Duration::from_millis(10),
+            processing_time_ms: 10.0,
+            entities_processed: 4,
+            competition_groups_resolved: 2,
+            competitions_resolved: 2,
+            exceptions_handled: 0,
+            efficiency_score: 0.4, // Low efficiency
+            effectiveness_score: 0.3, // Low effectiveness
+        };
+        
+        let suggestions = generate_adaptation_suggestions(&metrics);
+        
+        // Should generate suggestions for low performance
+        assert!(!suggestions.is_empty());
+        
+        // Should suggest strength adjustment for low efficiency
+        assert!(suggestions.iter().any(|s| matches!(s.suggestion_type, AdaptationType::StrengthAdjustment)));
+        
+        // Should suggest threshold modification for low effectiveness
+        assert!(suggestions.iter().any(|s| matches!(s.suggestion_type, AdaptationType::ThresholdModification)));
+        
+        for suggestion in &suggestions {
+            assert!(suggestion.expected_improvement > 0.0);
+            assert!(suggestion.confidence > 0.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_calculate_learning_confidence() {
+        // Test with empty history
+        let empty_history = vec![];
+        let confidence = calculate_learning_confidence(&empty_history);
+        assert_eq!(confidence, 0.5);
+        
+        // Test with consistent history
+        let consistent_history = vec![
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.8,
+                effectiveness_score: 0.8,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.82,
+                effectiveness_score: 0.82,
+            },
+            InhibitionPerformanceMetrics {
+                timestamp: SystemTime::now(),
+                processing_time: Duration::from_millis(10),
+                processing_time_ms: 10.0,
+                entities_processed: 4,
+                competition_groups_resolved: 2,
+                competitions_resolved: 2,
+                exceptions_handled: 0,
+                efficiency_score: 0.78,
+                effectiveness_score: 0.78,
+            },
+        ];
+        
+        let confidence = calculate_learning_confidence(&consistent_history);
+        assert!(confidence > 0.5); // Should be higher for consistent performance
+        assert!(confidence <= 0.95); // Maximum confidence
+    }
+
+    #[tokio::test]
+    async fn test_calculate_variance() {
+        // Test with empty values
+        let empty_values = vec![];
+        assert_eq!(calculate_variance(&empty_values), 0.0);
+        
+        // Test with single value
+        let single_value = vec![0.5];
+        assert_eq!(calculate_variance(&single_value), 0.0);
+        
+        // Test with identical values
+        let identical_values = vec![0.7, 0.7, 0.7];
+        assert_eq!(calculate_variance(&identical_values), 0.0);
+        
+        // Test with varying values
+        let varying_values = vec![0.1, 0.5, 0.9];
+        let variance = calculate_variance(&varying_values);
+        assert!(variance > 0.0);
+        
+        // Manually calculate expected variance for verification
+        let mean = 0.5;
+        let expected_variance = ((0.1 - mean).powi(2) + (0.5 - mean).powi(2) + (0.9 - mean).powi(2)) / 3.0;
+        assert!((variance - expected_variance).abs() < 0.001);
+    }
+}

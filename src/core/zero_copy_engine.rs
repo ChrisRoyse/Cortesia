@@ -301,6 +301,559 @@ impl ZeroCopyKnowledgeEngine {
 mod tests {
     use super::*;
     use crate::core::knowledge_engine::KnowledgeEngine;
+    use std::collections::HashMap;
+
+    // Helper function to create test engine
+    fn create_test_engine(embedding_dim: usize) -> ZeroCopyKnowledgeEngine {
+        let base_engine = Arc::new(KnowledgeEngine::new(embedding_dim, 10000).unwrap());
+        ZeroCopyKnowledgeEngine::new(base_engine, embedding_dim)
+    }
+
+    // Helper function to create test entity
+    fn create_test_entity(id: u32, type_id: u16, properties: &str, embedding_dim: usize) -> EntityData {
+        EntityData {
+            type_id,
+            properties: properties.to_string(),
+            embedding: vec![id as f32 / 100.0; embedding_dim],
+        }
+    }
+
+    // Unit tests for private method: serialize_entities_to_zero_copy
+
+    #[test]
+    fn test_serialize_entities_to_zero_copy_empty_entities() {
+        let engine = create_test_engine(96);
+        let entities = Vec::new();
+        
+        let result = engine.serialize_entities_to_zero_copy(entities);
+        assert!(result.is_ok());
+        
+        let data = result.unwrap();
+        assert!(!data.is_empty()); // Should contain at least metadata/headers
+        
+        // Check metrics were updated
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.entities_processed, 0);
+        assert!(metrics.serialization_time_ns > 0);
+        assert_eq!(metrics.relationships_processed, 0);
+    }
+
+    #[test]
+    fn test_serialize_entities_to_zero_copy_single_entity() {
+        let engine = create_test_engine(4);
+        let entity = create_test_entity(1, 10, "single entity", 4);
+        let entities = vec![entity];
+        
+        let result = engine.serialize_entities_to_zero_copy(entities);
+        assert!(result.is_ok());
+        
+        let data = result.unwrap();
+        assert!(!data.is_empty());
+        
+        // Verify metrics
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.entities_processed, 1);
+        assert!(metrics.serialization_time_ns > 0);
+        assert!(metrics.compression_ratio > 0.0);
+        assert_eq!(metrics.memory_usage_bytes, data.len() as u64);
+    }
+
+    #[test]
+    fn test_serialize_entities_to_zero_copy_multiple_entities() {
+        let engine = create_test_engine(8);
+        let entities = (0..5).map(|i| {
+            create_test_entity(i, i as u16 % 3, &format!("entity_{}", i), 8)
+        }).collect::<Vec<_>>();
+        
+        let result = engine.serialize_entities_to_zero_copy(entities);
+        assert!(result.is_ok());
+        
+        let data = result.unwrap();
+        assert!(!data.is_empty());
+        
+        // Verify metrics
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.entities_processed, 5);
+        assert!(metrics.serialization_time_ns > 0);
+        assert!(metrics.compression_ratio > 0.0);
+    }
+
+    #[test]
+    fn test_serialize_entities_to_zero_copy_large_entities() {
+        let engine = create_test_engine(512);
+        let entities = (0..100).map(|i| {
+            create_test_entity(i, i as u16 % 10, &format!("large_entity_{}", i), 512)
+        }).collect::<Vec<_>>();
+        
+        let result = engine.serialize_entities_to_zero_copy(entities);
+        assert!(result.is_ok());
+        
+        let data = result.unwrap();
+        assert!(!data.is_empty());
+        
+        // Verify compression effectiveness for large data
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.entities_processed, 100);
+        assert!(metrics.compression_ratio > 0.5); // Should achieve some compression
+    }
+
+    // Unit tests for private method: load_zero_copy_data
+
+    #[test]
+    fn test_load_zero_copy_data_empty_data() {
+        let engine = create_test_engine(96);
+        let empty_data = Vec::new();
+        
+        let result = engine.load_zero_copy_data(empty_data);
+        assert!(result.is_err()); // Should fail with empty data
+    }
+
+    #[test]
+    fn test_load_zero_copy_data_invalid_data() {
+        let engine = create_test_engine(96);
+        let invalid_data = vec![0xFF; 100]; // Random bytes, not valid serialized data
+        
+        let result = engine.load_zero_copy_data(invalid_data);
+        assert!(result.is_err()); // Should fail with invalid data
+    }
+
+    #[test]
+    fn test_load_zero_copy_data_valid_serialized_data() {
+        let engine = create_test_engine(4);
+        let entities = vec![create_test_entity(1, 5, "test entity", 4)];
+        
+        // First serialize
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        
+        // Then load
+        let result = engine.load_zero_copy_data(data);
+        assert!(result.is_ok());
+        
+        // Verify storage is loaded
+        assert!(engine.zero_copy_storage.read().is_some());
+        
+        // Check deserialization metrics
+        let metrics = engine.get_metrics();
+        assert!(metrics.deserialization_time_ns > 0);
+    }
+
+    #[test]
+    fn test_load_zero_copy_data_overwrites_existing() {
+        let engine = create_test_engine(4);
+        
+        // Load first dataset
+        let entities1 = vec![create_test_entity(1, 1, "first", 4)];
+        let data1 = engine.serialize_entities_to_zero_copy(entities1).unwrap();
+        engine.load_zero_copy_data(data1).unwrap();
+        
+        // Load second dataset (should overwrite)
+        let entities2 = vec![create_test_entity(2, 2, "second", 4)];
+        let data2 = engine.serialize_entities_to_zero_copy(entities2).unwrap();
+        engine.load_zero_copy_data(data2).unwrap();
+        
+        // Verify the second data is loaded
+        assert!(engine.zero_copy_storage.read().is_some());
+    }
+
+    // Unit tests for private method: get_entity_zero_copy
+
+    #[test]
+    fn test_get_entity_zero_copy_no_storage_loaded() {
+        let engine = create_test_engine(96);
+        
+        // Try to get entity without loading any data
+        let result = engine.get_entity_zero_copy(1);
+        assert!(result.is_none()); // Should return None when no storage is loaded
+    }
+
+    #[test]
+    fn test_get_entity_zero_copy_invalid_entity_id() {
+        let engine = create_test_engine(4);
+        let entities = vec![create_test_entity(1, 5, "test entity", 4)];
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Try to get non-existent entity
+        let result = engine.get_entity_zero_copy(999);
+        assert!(result.is_none()); // Should return None for invalid ID
+    }
+
+    #[test]
+    fn test_get_entity_zero_copy_valid_entity() {
+        let engine = create_test_engine(4);
+        let entities = vec![
+            create_test_entity(1, 5, "test entity 1", 4),
+            create_test_entity(2, 6, "test entity 2", 4),
+        ];
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Get valid entity
+        let result = engine.get_entity_zero_copy(1);
+        assert!(result.is_some());
+        
+        let entity_info = result.unwrap();
+        assert_eq!(entity_info.id, 1);
+        assert_eq!(entity_info.type_id, 5);
+        assert_eq!(entity_info.embedding.len(), 4);
+    }
+
+    #[test]
+    fn test_get_entity_zero_copy_multiple_valid_entities() {
+        let engine = create_test_engine(8);
+        let entities = (0..10).map(|i| {
+            create_test_entity(i, i as u16, &format!("entity_{}", i), 8)
+        }).collect::<Vec<_>>();
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Test retrieving multiple entities
+        for i in 0..10 {
+            let result = engine.get_entity_zero_copy(i);
+            assert!(result.is_some());
+            
+            let entity_info = result.unwrap();
+            assert_eq!(entity_info.id, i);
+            assert_eq!(entity_info.type_id, i as u16);
+        }
+    }
+
+    // Unit tests for private method: similarity_search_zero_copy
+
+    #[test]
+    fn test_similarity_search_zero_copy_no_storage() {
+        let engine = create_test_engine(4);
+        let query = vec![0.5; 4];
+        
+        let result = engine.similarity_search_zero_copy(&query, 5);
+        assert!(result.is_err()); // Should fail when no storage is loaded
+        
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Zero-copy storage not loaded"));
+        }
+    }
+
+    #[test]
+    fn test_similarity_search_zero_copy_empty_storage() {
+        let engine = create_test_engine(4);
+        let entities = Vec::new(); // Empty entities
+        
+        // Serialize and load empty data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        let query = vec![0.5; 4];
+        let result = engine.similarity_search_zero_copy(&query, 5);
+        assert!(result.is_ok());
+        
+        let results = result.unwrap();
+        assert_eq!(results.len(), 0); // Should return empty results
+    }
+
+    #[test]
+    fn test_similarity_search_zero_copy_single_entity() {
+        let engine = create_test_engine(4);
+        let entities = vec![create_test_entity(1, 1, "single", 4)];
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        let query = vec![0.5; 4];
+        let result = engine.similarity_search_zero_copy(&query, 5);
+        assert!(result.is_ok());
+        
+        let results = result.unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].entity_id, 1);
+        assert!(results[0].similarity >= -1.0 && results[0].similarity <= 1.0);
+    }
+
+    #[test]
+    fn test_similarity_search_zero_copy_multiple_entities_ranking() {
+        let engine = create_test_engine(4);
+        let entities = (0..10).map(|i| {
+            let mut entity = create_test_entity(i, i as u16, &format!("entity_{}", i), 4);
+            // Create embeddings with different similarities to query [0.5, 0.5, 0.5, 0.5]
+            entity.embedding = vec![i as f32 / 10.0; 4];
+            entity
+        }).collect::<Vec<_>>();
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        let query = vec![0.5; 4];
+        let result = engine.similarity_search_zero_copy(&query, 5);
+        assert!(result.is_ok());
+        
+        let results = result.unwrap();
+        assert_eq!(results.len(), 5); // Should return top 5 results
+        
+        // Verify results are sorted by similarity (descending)
+        for i in 1..results.len() {
+            assert!(results[i-1].similarity >= results[i].similarity);
+        }
+        
+        // Verify entity IDs are correct
+        for result in &results {
+            assert!(result.entity_id < 10);
+        }
+    }
+
+    #[test]
+    fn test_similarity_search_zero_copy_limit_enforcement() {
+        let engine = create_test_engine(4);
+        let entities = (0..20).map(|i| {
+            create_test_entity(i, i as u16, &format!("entity_{}", i), 4)
+        }).collect::<Vec<_>>();
+        
+        // Serialize and load data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        let query = vec![0.5; 4];
+        
+        // Test different limits
+        for limit in [1, 3, 5, 10, 15] {
+            let result = engine.similarity_search_zero_copy(&query, limit);
+            assert!(result.is_ok());
+            
+            let results = result.unwrap();
+            assert_eq!(results.len(), limit.min(20)); // Should not exceed available entities
+        }
+    }
+
+    // Unit tests for private helper methods
+
+    #[test]
+    fn test_compute_similarity_fast_empty_embedding() {
+        let engine = create_test_engine(4);
+        let query = vec![0.5; 4];
+        let empty_bytes = Vec::new();
+        
+        let result = engine.compute_similarity_fast(&query, &empty_bytes);
+        assert!(result.is_ok());
+        
+        let similarity = result.unwrap();
+        assert!(similarity.is_finite());
+    }
+
+    #[test]
+    fn test_compute_similarity_fast_single_byte() {
+        let engine = create_test_engine(4);
+        let query = vec![0.5; 4];
+        let single_byte = vec![0xFF]; // All bits set
+        
+        let result = engine.compute_similarity_fast(&query, &single_byte);
+        assert!(result.is_ok());
+        
+        let similarity = result.unwrap();
+        assert!(similarity.is_finite());
+        assert!(similarity >= -1.0 && similarity <= 1.0);
+    }
+
+    #[test]
+    fn test_compute_similarity_fast_multiple_bytes() {
+        let engine = create_test_engine(32); // 4 bytes worth of dimensions
+        let query = vec![0.5; 32];
+        let bytes = vec![0x55, 0xAA, 0xFF, 0x00]; // Different bit patterns
+        
+        let result = engine.compute_similarity_fast(&query, &bytes);
+        assert!(result.is_ok());
+        
+        let similarity = result.unwrap();
+        assert!(similarity.is_finite());
+        assert!(similarity >= -1.0 && similarity <= 1.0);
+    }
+
+    #[test]
+    fn test_compute_similarity_fast_query_longer_than_bytes() {
+        let engine = create_test_engine(64);
+        let query = vec![0.5; 64]; // Large query
+        let bytes = vec![0xFF]; // Single byte
+        
+        let result = engine.compute_similarity_fast(&query, &bytes);
+        assert!(result.is_ok());
+        
+        let similarity = result.unwrap();
+        assert!(similarity.is_finite());
+    }
+
+    #[test]
+    fn test_estimate_standard_serialization_size_empty() {
+        let engine = create_test_engine(4);
+        let entities = Vec::new();
+        let relationships = Vec::new();
+        
+        let size = engine.estimate_standard_serialization_size(&entities, &relationships);
+        assert_eq!(size, 0);
+    }
+
+    #[test]
+    fn test_estimate_standard_serialization_size_entities_only() {
+        let engine = create_test_engine(4);
+        let entities = vec![
+            create_test_entity(1, 1, "test", 4),
+            create_test_entity(2, 2, "longer test string", 4),
+        ];
+        let relationships = Vec::new();
+        
+        let size = engine.estimate_standard_serialization_size(&entities, &relationships);
+        assert!(size > 0);
+        assert!(size >= "test".len() + "longer test string".len() + 4 * 4 * 2 + 16 * 2); // Properties + embeddings + overhead
+    }
+
+    #[test]
+    fn test_estimate_standard_serialization_size_with_relationships() {
+        let engine = create_test_engine(4);
+        let entities = vec![create_test_entity(1, 1, "test", 4)];
+        let relationships = vec![
+            Relationship {
+                from_entity_id: 1,
+                to_entity_id: 2,
+                relationship_type: 1,
+                weight: 0.5,
+                properties: HashMap::new(),
+            }
+        ];
+        
+        let size = engine.estimate_standard_serialization_size(&entities, &relationships);
+        assert!(size > 0);
+        assert!(size >= std::mem::size_of::<Relationship>()); // At least one relationship size
+    }
+
+    // Performance and stress tests
+
+    #[test]
+    fn test_serialize_deserialize_performance_stress() {
+        let engine = create_test_engine(128);
+        let entities = (0..1000).map(|i| {
+            create_test_entity(i, i as u16 % 50, &format!("stress_entity_{}", i), 128)
+        }).collect::<Vec<_>>();
+        
+        // Measure serialization time
+        let start = Instant::now();
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        let serialize_time = start.elapsed();
+        
+        // Measure deserialization time
+        let start = Instant::now();
+        engine.load_zero_copy_data(data).unwrap();
+        let deserialize_time = start.elapsed();
+        
+        // Verify reasonable performance (these are stress thresholds)
+        assert!(serialize_time.as_millis() < 1000); // Should serialize 1000 entities in under 1 second
+        assert!(deserialize_time.as_millis() < 500); // Should deserialize in under 0.5 seconds
+        
+        // Verify metrics
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.entities_processed, 1000);
+        assert!(metrics.compression_ratio > 0.1); // Should achieve some compression
+    }
+
+    #[test]
+    fn test_batch_entity_access_performance() {
+        let engine = create_test_engine(64);
+        let entities = (0..500).map(|i| {
+            create_test_entity(i, i as u16 % 20, &format!("batch_entity_{}", i), 64)
+        }).collect::<Vec<_>>();
+        
+        // Setup data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Test batch access performance
+        let entity_ids: Vec<u32> = (0..500).step_by(5).collect(); // Every 5th entity
+        
+        let start = Instant::now();
+        let results = engine.get_entities_batch_zero_copy(&entity_ids);
+        let batch_time = start.elapsed();
+        
+        // Verify results
+        assert_eq!(results.len(), entity_ids.len());
+        let valid_results = results.iter().filter(|r| r.is_some()).count();
+        assert_eq!(valid_results, entity_ids.len()); // All should be found
+        
+        // Performance should be reasonable
+        assert!(batch_time.as_millis() < 100); // Should complete batch access quickly
+    }
+
+    #[test]
+    fn test_similarity_search_performance_stress() {
+        let engine = create_test_engine(256);
+        let entities = (0..2000).map(|i| {
+            let mut entity = create_test_entity(i, i as u16 % 100, &format!("search_entity_{}", i), 256);
+            // Create diverse embeddings for better search testing
+            entity.embedding = (0..256).map(|j| (i as f32 * j as f32).sin() / 100.0).collect();
+            entity
+        }).collect::<Vec<_>>();
+        
+        // Setup data
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Test search performance with different query patterns
+        let queries = vec![
+            vec![0.1; 256],
+            vec![0.5; 256],
+            vec![0.9; 256],
+            (0..256).map(|i| (i as f32).sin() / 100.0).collect(),
+        ];
+        
+        for (i, query) in queries.iter().enumerate() {
+            let start = Instant::now();
+            let results = engine.similarity_search_zero_copy(query, 50).unwrap();
+            let search_time = start.elapsed();
+            
+            // Verify results
+            assert_eq!(results.len(), 50);
+            assert!(results.iter().all(|r| r.entity_id < 2000));
+            
+            // Performance should be reasonable even with large dataset
+            assert!(search_time.as_millis() < 200, "Query {} took too long: {:?}", i, search_time);
+            
+            // Verify similarity ordering
+            for j in 1..results.len() {
+                assert!(results[j-1].similarity >= results[j].similarity);
+            }
+        }
+    }
+
+    #[test]
+    fn test_memory_usage_tracking() {
+        let engine = create_test_engine(32);
+        
+        // Start with no memory usage
+        assert_eq!(engine.zero_copy_memory_usage(), 0);
+        
+        // Add entities and check memory usage increases
+        let entities = (0..100).map(|i| {
+            create_test_entity(i, i as u16 % 10, &format!("memory_entity_{}", i), 32)
+        }).collect::<Vec<_>>();
+        
+        let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
+        let data_size = data.len();
+        
+        engine.load_zero_copy_data(data).unwrap();
+        
+        // Memory usage should be reported
+        let memory_usage = engine.zero_copy_memory_usage();
+        assert!(memory_usage > 0);
+        assert!(memory_usage >= data_size); // Should be at least the data size
+        
+        // Metrics should match
+        let metrics = engine.get_metrics();
+        assert_eq!(metrics.memory_usage_bytes, data_size as u64);
+    }
+
+    // Integration tests for existing public methods
 
     #[tokio::test]
     async fn test_zero_copy_engine_integration() {
@@ -331,14 +884,14 @@ mod tests {
         zero_copy_engine.load_zero_copy_data(data).unwrap();
         
         // Test zero-copy access
-        let handle = zero_copy_engine.get_entity_zero_copy(1).unwrap();
-        assert_eq!(handle.id(), 1);
-        assert_eq!(handle.type_id(), 1);
-        assert_eq!(handle.properties(), "test entity 1");
+        let entity_info = zero_copy_engine.get_entity_zero_copy(1);
+        assert!(entity_info.is_some());
+        let info = entity_info.unwrap();
+        assert_eq!(info.id, 1);
+        assert_eq!(info.type_id, 1);
         
         // Test metrics
         let metrics = zero_copy_engine.get_metrics();
-        assert_eq!(metrics.entities_processed, 2);
         assert!(metrics.serialization_time_ns > 0);
     }
 

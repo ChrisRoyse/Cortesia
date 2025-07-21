@@ -473,3 +473,1031 @@ impl EntityStatistics {
         self.activation_range() > 0.3 && self.avg_activation > 0.2 && self.avg_activation < 0.8
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::brain_graph_types::BrainEnhancedConfig;
+    use std::collections::HashMap;
+    use tokio;
+
+    /// Helper function to create a test brain graph
+    async fn create_test_brain_graph() -> BrainEnhancedKnowledgeGraph {
+        BrainEnhancedKnowledgeGraph::new_for_test().unwrap()
+    }
+
+    /// Helper function to create test entity data
+    fn create_test_entity_data(type_id: u16, properties: Option<HashMap<String, String>>) -> EntityData {
+        let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5]; // Simple 5-dimensional embedding
+        let props = if let Some(p) = properties {
+            serde_json::to_string(&p).unwrap_or_default()
+        } else {
+            "{}".to_string()
+        };
+        
+        EntityData {
+            type_id,
+            embedding,
+            properties: props,
+        }
+    }
+
+    /// Helper function to create entity data with no properties
+    fn create_empty_entity_data() -> EntityData {
+        EntityData {
+            type_id: 1,
+            embedding: vec![0.1, 0.2, 0.3],
+            properties: String::new(),
+        }
+    }
+
+    /// Helper function to create entity data with importance property
+    fn create_entity_with_importance(importance: f64) -> EntityData {
+        let mut props = HashMap::new();
+        props.insert("importance".to_string(), importance.to_string());
+        let properties_json = serde_json::json!({"importance": importance}).to_string();
+        
+        EntityData {
+            type_id: 1,
+            embedding: vec![0.5, 0.5, 0.5],
+            properties: properties_json,
+        }
+    }
+
+    mod insert_brain_entity_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_insert_brain_entity_basic() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            
+            let result = graph.insert_brain_entity(1, entity_data.clone()).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            
+            // Verify entity was inserted
+            assert!(graph.contains_entity(entity_key));
+            
+            // Verify activation was set
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!(activation > 0.0);
+            assert!(activation <= 1.0);
+        }
+
+        #[tokio::test]
+        async fn test_insert_brain_entity_with_properties() {
+            let graph = create_test_brain_graph().await;
+            let mut properties = HashMap::new();
+            properties.insert("name".to_string(), "test_entity".to_string());
+            properties.insert("type".to_string(), "concept".to_string());
+            
+            let entity_data = create_test_entity_data(2, Some(properties));
+            
+            let result = graph.insert_brain_entity(2, entity_data).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            
+            // Verify entity exists and has data
+            if let Some(stored_data) = graph.get_entity_data(entity_key) {
+                assert_eq!(stored_data.type_id, 2);
+                assert!(!stored_data.properties.is_empty());
+            } else {
+                panic!("Entity data should exist");
+            }
+        }
+
+        #[tokio::test]
+        async fn test_insert_brain_entity_with_no_properties() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_empty_entity_data();
+            
+            let result = graph.insert_brain_entity(3, entity_data).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            
+            // Verify entity was inserted even with empty properties
+            assert!(graph.contains_entity(entity_key));
+            
+            // Verify entity data
+            if let Some(stored_data) = graph.get_entity_data(entity_key) {
+                assert_eq!(stored_data.type_id, 1);
+                assert!(stored_data.properties.is_empty());
+            } else {
+                panic!("Entity data should exist");
+            }
+        }
+
+        #[tokio::test]
+        async fn test_insert_brain_entity_with_importance() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_entity_with_importance(0.8);
+            
+            let result = graph.insert_brain_entity(4, entity_data).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            
+            // Verify higher activation due to importance
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!(activation > 0.5); // Should be boosted by importance
+        }
+
+        #[tokio::test]
+        async fn test_insert_brain_entity_updates_statistics() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            
+            // Get initial stats
+            let initial_stats = graph.get_learning_stats().await;
+            let initial_count = initial_stats.entity_count;
+            
+            // Insert entity
+            let result = graph.insert_brain_entity(5, entity_data).await;
+            assert!(result.is_ok());
+            
+            // Verify stats were updated
+            let updated_stats = graph.get_learning_stats().await;
+            assert_eq!(updated_stats.entity_count, initial_count + 1);
+            assert!(updated_stats.avg_activation >= 0.0);
+            assert!(updated_stats.max_activation >= updated_stats.avg_activation);
+        }
+
+        #[tokio::test]
+        async fn test_insert_multiple_brain_entities() {
+            let graph = create_test_brain_graph().await;
+            
+            let entity1 = create_test_entity_data(1, None);
+            let entity2 = create_test_entity_data(2, None);
+            
+            let key1 = graph.insert_brain_entity(6, entity1).await.unwrap();
+            let key2 = graph.insert_brain_entity(7, entity2).await.unwrap();
+            
+            // Verify both entities exist and are different
+            assert!(graph.contains_entity(key1));
+            assert!(graph.contains_entity(key2));
+            assert_ne!(key1, key2);
+            
+            // Verify activations are set
+            assert!(graph.get_entity_activation(key1).await > 0.0);
+            assert!(graph.get_entity_activation(key2).await > 0.0);
+        }
+    }
+
+    mod get_entity_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_get_entity_exists() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(10, entity_data.clone()).await.unwrap();
+            
+            let result = graph.get_entity(entity_key).await;
+            assert!(result.is_some());
+            
+            let (retrieved_data, activation) = result.unwrap();
+            assert_eq!(retrieved_data.type_id, entity_data.type_id);
+            assert_eq!(retrieved_data.embedding, entity_data.embedding);
+            assert!(activation >= 0.0 && activation <= 1.0);
+        }
+
+        #[tokio::test]
+        async fn test_get_entity_nonexistent() {
+            let graph = create_test_brain_graph().await;
+            
+            // Use a default EntityKey that doesn't exist
+            let fake_key = EntityKey::default();
+            let result = graph.get_entity(fake_key).await;
+            assert!(result.is_none());
+        }
+
+        #[tokio::test]
+        async fn test_get_entity_with_activation() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(11, entity_data).await.unwrap();
+            
+            // Set a specific activation
+            graph.set_entity_activation(entity_key, 0.75).await;
+            
+            let result = graph.get_entity(entity_key).await;
+            assert!(result.is_some());
+            
+            let (_, activation) = result.unwrap();
+            assert!((activation - 0.75).abs() < f32::EPSILON);
+        }
+    }
+
+    mod insert_logic_gate_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_insert_logic_gate_and() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create input entities
+            let input1_data = create_test_entity_data(1, None);
+            let input2_data = create_test_entity_data(1, None);
+            let output_data = create_test_entity_data(1, None);
+            
+            let input1_key = graph.insert_brain_entity(20, input1_data).await.unwrap();
+            let input2_key = graph.insert_brain_entity(21, input2_data).await.unwrap();
+            let output_key = graph.insert_brain_entity(22, output_data).await.unwrap();
+            
+            // Insert AND gate
+            let gate_result = graph.insert_logic_gate(
+                23, 
+                "AND", 
+                vec![input1_key, input2_key], 
+                vec![output_key]
+            ).await;
+            
+            assert!(gate_result.is_ok());
+            let gate_key = gate_result.unwrap();
+            
+            // Verify gate entity exists
+            assert!(graph.contains_entity(gate_key));
+            
+            // Verify gate data
+            if let Some(gate_data) = graph.get_entity_data(gate_key) {
+                assert_eq!(gate_data.type_id, 0); // Logic gate type
+                assert!(gate_data.properties.contains("logic_gate"));
+                assert!(gate_data.properties.contains("AND"));
+            }
+        }
+
+        #[tokio::test]
+        async fn test_insert_logic_gate_or() {
+            let graph = create_test_brain_graph().await;
+            
+            let input_data = create_test_entity_data(1, None);
+            let output_data = create_test_entity_data(1, None);
+            
+            let input_key = graph.insert_brain_entity(24, input_data).await.unwrap();
+            let output_key = graph.insert_brain_entity(25, output_data).await.unwrap();
+            
+            let gate_result = graph.insert_logic_gate(
+                26, 
+                "OR", 
+                vec![input_key], 
+                vec![output_key]
+            ).await;
+            
+            assert!(gate_result.is_ok());
+            let gate_key = gate_result.unwrap();
+            
+            // Verify gate properties
+            if let Some(gate_data) = graph.get_entity_data(gate_key) {
+                assert!(gate_data.properties.contains("OR"));
+                assert!(gate_data.properties.contains("input_count"));
+                assert!(gate_data.properties.contains("output_count"));
+            }
+        }
+
+        #[tokio::test]
+        async fn test_insert_logic_gate_not() {
+            let graph = create_test_brain_graph().await;
+            
+            let input_data = create_test_entity_data(1, None);
+            let output_data = create_test_entity_data(1, None);
+            
+            let input_key = graph.insert_brain_entity(27, input_data).await.unwrap();
+            let output_key = graph.insert_brain_entity(28, output_data).await.unwrap();
+            
+            let gate_result = graph.insert_logic_gate(
+                29, 
+                "NOT", 
+                vec![input_key], 
+                vec![output_key]
+            ).await;
+            
+            assert!(gate_result.is_ok());
+            let gate_key = gate_result.unwrap();
+            
+            // Verify activation is set
+            let activation = graph.get_entity_activation(gate_key).await;
+            assert!(activation > 0.0);
+        }
+
+        #[tokio::test]
+        async fn test_insert_logic_gate_no_inputs() {
+            let graph = create_test_brain_graph().await;
+            
+            let output_data = create_test_entity_data(1, None);
+            let output_key = graph.insert_brain_entity(30, output_data).await.unwrap();
+            
+            let gate_result = graph.insert_logic_gate(
+                31, 
+                "CONSTANT", 
+                vec![], // No inputs
+                vec![output_key]
+            ).await;
+            
+            assert!(gate_result.is_ok());
+            let gate_key = gate_result.unwrap();
+            
+            // Verify gate was created even with no inputs
+            assert!(graph.contains_entity(gate_key));
+        }
+
+        #[tokio::test]
+        async fn test_insert_logic_gate_no_outputs() {
+            let graph = create_test_brain_graph().await;
+            
+            let input_data = create_test_entity_data(1, None);
+            let input_key = graph.insert_brain_entity(32, input_data).await.unwrap();
+            
+            let gate_result = graph.insert_logic_gate(
+                33, 
+                "SINK", 
+                vec![input_key], 
+                vec![] // No outputs
+            ).await;
+            
+            assert!(gate_result.is_ok());
+            let gate_key = gate_result.unwrap();
+            
+            // Verify gate was created even with no outputs
+            assert!(graph.contains_entity(gate_key));
+        }
+    }
+
+    mod update_entity_activation_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_update_entity_activation_valid() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(40, entity_data).await.unwrap();
+            
+            // Update activation
+            let result = graph.update_entity_activation(entity_key, 0.8).await;
+            assert!(result.is_ok());
+            
+            // Verify activation was updated
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 0.8).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_update_entity_activation_nonexistent() {
+            let graph = create_test_brain_graph().await;
+            
+            let fake_key = EntityKey::default();
+            let result = graph.update_entity_activation(fake_key, 0.5).await;
+            
+            assert!(result.is_err());
+            match result.unwrap_err() {
+                crate::error::GraphError::EntityKeyNotFound { key } => {
+                    assert_eq!(key, fake_key);
+                }
+                _ => panic!("Expected EntityKeyNotFound error"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_update_entity_activation_invalid_levels() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(41, entity_data).await.unwrap();
+            
+            // Test negative activation (should be clamped)
+            let result = graph.update_entity_activation(entity_key, -0.5).await;
+            assert!(result.is_ok());
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 0.0).abs() < f32::EPSILON);
+            
+            // Test activation > 1.0 (should be clamped)
+            let result = graph.update_entity_activation(entity_key, 1.5).await;
+            assert!(result.is_ok());
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 1.0).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_update_entity_activation_updates_stats() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(42, entity_data).await.unwrap();
+            
+            // Get initial stats
+            let initial_stats = graph.get_learning_stats().await;
+            
+            // Update activation
+            let result = graph.update_entity_activation(entity_key, 0.9).await;
+            assert!(result.is_ok());
+            
+            // Verify stats may have been updated
+            let updated_stats = graph.get_learning_stats().await;
+            // Note: The exact behavior depends on how statistics are calculated
+            assert!(updated_stats.max_activation >= 0.9);
+        }
+
+        #[tokio::test]
+        async fn test_update_entity_activation_boundary_values() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(43, entity_data).await.unwrap();
+            
+            // Test 0.0
+            let result = graph.update_entity_activation(entity_key, 0.0).await;
+            assert!(result.is_ok());
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 0.0).abs() < f32::EPSILON);
+            
+            // Test 1.0
+            let result = graph.update_entity_activation(entity_key, 1.0).await;
+            assert!(result.is_ok());
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 1.0).abs() < f32::EPSILON);
+        }
+    }
+
+    mod remove_brain_entity_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_exists() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(50, entity_data).await.unwrap();
+            
+            // Verify entity exists
+            assert!(graph.contains_entity(entity_key));
+            
+            // Remove entity
+            let result = graph.remove_brain_entity(entity_key).await;
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), true);
+            
+            // Verify entity no longer exists
+            assert!(!graph.contains_entity(entity_key));
+        }
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_nonexistent() {
+            let graph = create_test_brain_graph().await;
+            
+            let fake_key = EntityKey::default();
+            let result = graph.remove_brain_entity(fake_key).await;
+            
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap(), false);
+        }
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_clears_activation() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(51, entity_data).await.unwrap();
+            
+            // Set activation
+            graph.set_entity_activation(entity_key, 0.8).await;
+            
+            // Verify activation exists
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 0.8).abs() < f32::EPSILON);
+            
+            // Remove entity
+            let result = graph.remove_brain_entity(entity_key).await;
+            assert!(result.is_ok());
+            
+            // Verify activation is cleared (should return default 0.0)
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!((activation - 0.0).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_clears_synaptic_weights() {
+            let graph = create_test_brain_graph().await;
+            
+            let entity1_data = create_test_entity_data(1, None);
+            let entity2_data = create_test_entity_data(1, None);
+            
+            let entity1_key = graph.insert_brain_entity(52, entity1_data).await.unwrap();
+            let entity2_key = graph.insert_brain_entity(53, entity2_data).await.unwrap();
+            
+            // Set synaptic weight
+            graph.set_synaptic_weight(entity1_key, entity2_key, 0.7).await;
+            
+            // Verify weight exists
+            let weight = graph.get_synaptic_weight(entity1_key, entity2_key).await;
+            assert!((weight - 0.7).abs() < f32::EPSILON);
+            
+            // Remove first entity
+            let result = graph.remove_brain_entity(entity1_key).await;
+            assert!(result.is_ok());
+            
+            // Verify synaptic weight is cleared
+            let weight = graph.get_synaptic_weight(entity1_key, entity2_key).await;
+            assert!((weight - 0.0).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_updates_concept_structures() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(54, entity_data).await.unwrap();
+            
+            // Create a concept structure with this entity
+            let mut concept = ConceptStructure::new();
+            concept.add_input(entity_key);
+            concept.add_output(entity_key);
+            graph.store_concept_structure("test_concept".to_string(), concept).await;
+            
+            // Verify entity is in concept
+            let stored_concept = graph.get_concept_structure("test_concept").await.unwrap();
+            assert!(stored_concept.input_entities.contains(&entity_key));
+            assert!(stored_concept.output_entities.contains(&entity_key));
+            
+            // Remove entity
+            let result = graph.remove_brain_entity(entity_key).await;
+            assert!(result.is_ok());
+            
+            // Verify entity is removed from concept structures
+            let updated_concept = graph.get_concept_structure("test_concept").await.unwrap();
+            assert!(!updated_concept.input_entities.contains(&entity_key));
+            assert!(!updated_concept.output_entities.contains(&entity_key));
+        }
+
+        #[tokio::test]
+        async fn test_remove_brain_entity_updates_statistics() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(55, entity_data).await.unwrap();
+            
+            // Get initial count
+            let initial_stats = graph.get_learning_stats().await;
+            let initial_count = initial_stats.entity_count;
+            
+            // Remove entity
+            let result = graph.remove_brain_entity(entity_key).await;
+            assert!(result.is_ok());
+            
+            // Verify count decreased
+            let updated_stats = graph.get_learning_stats().await;
+            assert_eq!(updated_stats.entity_count, initial_count.saturating_sub(1));
+        }
+    }
+
+    mod private_method_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_calculate_initial_activation_basic() {
+            let graph = create_test_brain_graph().await;
+            let entity_data = create_test_entity_data(1, None);
+            
+            let activation = graph.calculate_initial_activation(&entity_data);
+            assert!(activation >= 0.0);
+            assert!(activation <= 1.0);
+        }
+
+        #[tokio::test]
+        async fn test_calculate_initial_activation_with_importance() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create entity with importance
+            let high_importance_data = create_entity_with_importance(0.8);
+            let low_importance_data = create_entity_with_importance(0.1);
+            
+            let high_activation = graph.calculate_initial_activation(&high_importance_data);
+            let low_activation = graph.calculate_initial_activation(&low_importance_data);
+            
+            // High importance should result in higher activation
+            assert!(high_activation > low_activation);
+        }
+
+        #[tokio::test]
+        async fn test_calculate_initial_activation_empty_embedding() {
+            let graph = create_test_brain_graph().await;
+            let mut entity_data = create_test_entity_data(1, None);
+            entity_data.embedding = vec![];
+            
+            let activation = graph.calculate_initial_activation(&entity_data);
+            // Should handle empty embedding gracefully
+            assert!(activation >= 0.0);
+            assert!(activation <= 1.0);
+        }
+
+        #[tokio::test]
+        async fn test_generate_gate_embedding_basic() {
+            let graph = create_test_brain_graph().await;
+            
+            let input1_data = create_test_entity_data(1, None);
+            let input2_data = create_test_entity_data(1, None);
+            let output_data = create_test_entity_data(1, None);
+            
+            let input1_key = graph.insert_brain_entity(60, input1_data).await.unwrap();
+            let input2_key = graph.insert_brain_entity(61, input2_data).await.unwrap();
+            let output_key = graph.insert_brain_entity(62, output_data).await.unwrap();
+            
+            let result = graph.generate_gate_embedding(
+                "AND", 
+                &[input1_key, input2_key], 
+                &[output_key]
+            );
+            
+            assert!(result.is_ok());
+            let embedding = result.unwrap();
+            assert!(!embedding.is_empty());
+            assert_eq!(embedding.len(), graph.embedding_dimension());
+            
+            // Verify normalized (magnitude should be close to 1.0)
+            let magnitude: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+            assert!((magnitude - 1.0).abs() < 0.1);
+        }
+
+        #[tokio::test]
+        async fn test_generate_gate_embedding_different_types() {
+            let graph = create_test_brain_graph().await;
+            
+            let input_data = create_test_entity_data(1, None);
+            let output_data = create_test_entity_data(1, None);
+            
+            let input_key = graph.insert_brain_entity(63, input_data).await.unwrap();
+            let output_key = graph.insert_brain_entity(64, output_data).await.unwrap();
+            
+            let and_embedding = graph.generate_gate_embedding("AND", &[input_key], &[output_key]).unwrap();
+            let or_embedding = graph.generate_gate_embedding("OR", &[input_key], &[output_key]).unwrap();
+            let not_embedding = graph.generate_gate_embedding("NOT", &[input_key], &[output_key]).unwrap();
+            
+            // Different gate types should produce different embeddings
+            assert_ne!(and_embedding, or_embedding);
+            assert_ne!(and_embedding, not_embedding);
+            assert_ne!(or_embedding, not_embedding);
+        }
+
+        #[tokio::test]
+        async fn test_generate_property_embedding() {
+            let graph = create_test_brain_graph().await;
+            
+            let mut properties = HashMap::new();
+            properties.insert("name".to_string(), "test".to_string());
+            properties.insert("type".to_string(), "concept".to_string());
+            
+            let result = graph.generate_property_embedding(&properties);
+            assert!(result.is_ok());
+            
+            let embedding = result.unwrap();
+            assert!(!embedding.is_empty());
+            assert_eq!(embedding.len(), graph.embedding_dimension());
+            
+            // Verify normalized
+            let magnitude: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+            assert!((magnitude - 1.0).abs() < 0.1);
+        }
+
+        #[tokio::test]
+        async fn test_generate_property_embedding_empty() {
+            let graph = create_test_brain_graph().await;
+            let empty_properties = HashMap::new();
+            
+            let result = graph.generate_property_embedding(&empty_properties);
+            assert!(result.is_ok());
+            
+            let embedding = result.unwrap();
+            // Should return zero vector for empty properties
+            assert!(embedding.iter().all(|&x| x == 0.0));
+        }
+
+        #[tokio::test]
+        async fn test_hash_string_consistency() {
+            let graph = create_test_brain_graph().await;
+            
+            let hash1 = graph.hash_string("test");
+            let hash2 = graph.hash_string("test");
+            let hash3 = graph.hash_string("different");
+            
+            // Same string should produce same hash
+            assert_eq!(hash1, hash2);
+            // Different strings should produce different hashes
+            assert_ne!(hash1, hash3);
+        }
+
+        #[tokio::test]
+        async fn test_trigger_concept_formation() {
+            let graph = create_test_brain_graph().await;
+            
+            // Need to enable concept formation
+            let mut config = graph.config.clone();
+            config.enable_concept_formation = true;
+            // Note: We can't modify the config in this immutable reference context,
+            // but we can test that the method doesn't panic
+            
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(70, entity_data).await.unwrap();
+            
+            let result = graph.trigger_concept_formation(entity_key).await;
+            assert!(result.is_ok());
+        }
+
+        #[tokio::test]
+        async fn test_apply_hebbian_learning() {
+            let graph = create_test_brain_graph().await;
+            
+            let entity1_data = create_test_entity_data(1, None);
+            let entity2_data = create_test_entity_data(1, None);
+            
+            let entity1_key = graph.insert_brain_entity(71, entity1_data).await.unwrap();
+            let entity2_key = graph.insert_brain_entity(72, entity2_data).await.unwrap();
+            
+            // Set initial activations
+            graph.set_entity_activation(entity1_key, 0.8).await;
+            graph.set_entity_activation(entity2_key, 0.7).await;
+            
+            let result = graph.apply_hebbian_learning(entity1_key, entity2_key).await;
+            assert!(result.is_ok());
+            
+            // Verify synaptic weight was updated
+            let weight = graph.get_synaptic_weight(entity1_key, entity2_key).await;
+            assert!(weight > 0.0);
+        }
+    }
+
+    mod entity_lifecycle_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_complete_entity_lifecycle() {
+            let graph = create_test_brain_graph().await;
+            
+            // 1. Create entity
+            let entity_data = create_test_entity_data(1, None);
+            let entity_key = graph.insert_brain_entity(80, entity_data.clone()).await.unwrap();
+            
+            // 2. Verify entity exists
+            assert!(graph.contains_entity(entity_key));
+            
+            // 3. Retrieve entity data
+            let retrieved = graph.get_entity(entity_key).await;
+            assert!(retrieved.is_some());
+            let (retrieved_data, initial_activation) = retrieved.unwrap();
+            assert_eq!(retrieved_data.type_id, entity_data.type_id);
+            
+            // 4. Update activation
+            let new_activation = 0.85;
+            let update_result = graph.update_entity_activation(entity_key, new_activation).await;
+            assert!(update_result.is_ok());
+            
+            // 5. Verify activation updated
+            let current_activation = graph.get_entity_activation(entity_key).await;
+            assert!((current_activation - new_activation).abs() < f32::EPSILON);
+            
+            // 6. Remove entity
+            let remove_result = graph.remove_brain_entity(entity_key).await;
+            assert!(remove_result.is_ok());
+            assert_eq!(remove_result.unwrap(), true);
+            
+            // 7. Verify entity no longer exists
+            assert!(!graph.contains_entity(entity_key));
+            let final_get = graph.get_entity(entity_key).await;
+            assert!(final_get.is_none());
+        }
+
+        #[tokio::test]
+        async fn test_batch_entity_operations() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create multiple entities
+            let entities = vec![
+                (81, create_test_entity_data(1, None)),
+                (82, create_test_entity_data(2, None)),
+                (83, create_test_entity_data(3, None)),
+            ];
+            
+            let keys = graph.batch_insert_entities(entities).await.unwrap();
+            assert_eq!(keys.len(), 3);
+            
+            // Verify all entities exist
+            for key in &keys {
+                assert!(graph.contains_entity(*key));
+            }
+            
+            // Update all activations
+            for (i, key) in keys.iter().enumerate() {
+                let activation = 0.1 * (i + 1) as f32;
+                let result = graph.update_entity_activation(*key, activation).await;
+                assert!(result.is_ok());
+            }
+            
+            // Verify activations
+            for (i, key) in keys.iter().enumerate() {
+                let expected_activation = 0.1 * (i + 1) as f32;
+                let actual_activation = graph.get_entity_activation(*key).await;
+                assert!((actual_activation - expected_activation).abs() < f32::EPSILON);
+            }
+            
+            // Remove all entities
+            for key in &keys {
+                let result = graph.remove_brain_entity(*key).await;
+                assert!(result.is_ok());
+                assert_eq!(result.unwrap(), true);
+            }
+            
+            // Verify all entities removed
+            for key in &keys {
+                assert!(!graph.contains_entity(*key));
+            }
+        }
+    }
+
+    mod edge_cases_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_large_embedding_entity() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create entity with large embedding
+            let large_embedding: Vec<f32> = (0..1000).map(|i| (i as f32) * 0.001).collect();
+            let mut entity_data = create_test_entity_data(1, None);
+            entity_data.embedding = large_embedding;
+            
+            let result = graph.insert_brain_entity(90, entity_data).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            assert!(graph.contains_entity(entity_key));
+        }
+
+        #[tokio::test]
+        async fn test_zero_embedding_entity() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create entity with zero embedding
+            let mut entity_data = create_test_entity_data(1, None);
+            entity_data.embedding = vec![0.0; 5];
+            
+            let result = graph.insert_brain_entity(91, entity_data).await;
+            assert!(result.is_ok());
+            
+            let entity_key = result.unwrap();
+            assert!(graph.contains_entity(entity_key));
+            
+            // Activation should still be calculated
+            let activation = graph.get_entity_activation(entity_key).await;
+            assert!(activation >= 0.0);
+        }
+
+        #[tokio::test]
+        async fn test_malformed_properties_json() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create entity with malformed JSON properties
+            let mut entity_data = create_test_entity_data(1, None);
+            entity_data.properties = "{ invalid json".to_string();
+            
+            let result = graph.insert_brain_entity(92, entity_data).await;
+            assert!(result.is_ok());
+            
+            // Should handle malformed JSON gracefully
+            let entity_key = result.unwrap();
+            assert!(graph.contains_entity(entity_key));
+        }
+
+        #[tokio::test]
+        async fn test_extremely_long_properties() {
+            let graph = create_test_brain_graph().await;
+            
+            // Create entity with very long properties string
+            let long_value = "x".repeat(10000);
+            let mut properties = HashMap::new();
+            properties.insert("long_key".to_string(), long_value);
+            
+            let entity_data = create_test_entity_data(1, Some(properties));
+            let result = graph.insert_brain_entity(93, entity_data).await;
+            assert!(result.is_ok());
+        }
+
+        #[tokio::test]
+        async fn test_concurrent_entity_operations() {
+            let graph = std::sync::Arc::new(create_test_brain_graph().await);
+            
+            // Test concurrent insertions
+            let mut handles = vec![];
+            
+            for i in 100..110 {
+                let graph_clone = graph.clone();
+                let handle = tokio::spawn(async move {
+                    let entity_data = create_test_entity_data(1, None);
+                    graph_clone.insert_brain_entity(i, entity_data).await
+                });
+                handles.push(handle);
+            }
+            
+            // Wait for all insertions to complete
+            let mut keys = vec![];
+            for handle in handles {
+                let result = handle.await.unwrap();
+                assert!(result.is_ok());
+                keys.push(result.unwrap());
+            }
+            
+            // Verify all entities were inserted
+            assert_eq!(keys.len(), 10);
+            for key in &keys {
+                assert!(graph.contains_entity(*key));
+            }
+        }
+    }
+
+    mod entity_statistics_tests {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_entity_statistics_empty() {
+            let graph = create_test_brain_graph().await;
+            
+            let stats = graph.get_entity_statistics().await;
+            assert_eq!(stats.total_entities, 0);
+            assert_eq!(stats.avg_activation, 0.0);
+            assert_eq!(stats.max_activation, 0.0);
+            assert_eq!(stats.min_activation, 1.0); // Default min value when no entities
+        }
+
+        #[tokio::test]
+        async fn test_entity_statistics_with_entities() {
+            let graph = create_test_brain_graph().await;
+            
+            // Insert a few entities
+            let entity1 = create_test_entity_data(1, None);
+            let entity2 = create_test_entity_data(1, None);
+            
+            let key1 = graph.insert_brain_entity(200, entity1).await.unwrap();
+            let key2 = graph.insert_brain_entity(201, entity2).await.unwrap();
+            
+            // Set specific activations
+            graph.set_entity_activation(key1, 0.3).await;
+            graph.set_entity_activation(key2, 0.7).await;
+            
+            let stats = graph.get_entity_statistics().await;
+            assert_eq!(stats.total_entities, 2);
+            assert!((stats.avg_activation - 0.5).abs() < f32::EPSILON);
+            assert!((stats.max_activation - 0.7).abs() < f32::EPSILON);
+            assert!((stats.min_activation - 0.3).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_entity_statistics_activation_range() {
+            let stats = EntityStatistics {
+                total_entities: 2,
+                avg_activation: 0.5,
+                max_activation: 0.8,
+                min_activation: 0.2,
+                type_distribution: HashMap::new(),
+            };
+            
+            assert!((stats.activation_range() - 0.6).abs() < f32::EPSILON);
+        }
+
+        #[tokio::test]
+        async fn test_entity_statistics_is_well_distributed() {
+            let well_distributed = EntityStatistics {
+                total_entities: 10,
+                avg_activation: 0.5,
+                max_activation: 0.8,
+                min_activation: 0.2,
+                type_distribution: HashMap::new(),
+            };
+            
+            let poorly_distributed = EntityStatistics {
+                total_entities: 10,
+                avg_activation: 0.9,
+                max_activation: 1.0,
+                min_activation: 0.95,
+                type_distribution: HashMap::new(),
+            };
+            
+            assert!(well_distributed.is_well_distributed());
+            assert!(!poorly_distributed.is_well_distributed());
+        }
+
+        #[tokio::test]
+        async fn test_entity_statistics_most_common_type() {
+            let mut type_distribution = HashMap::new();
+            type_distribution.insert("input".to_string(), 5);
+            type_distribution.insert("output".to_string(), 3);
+            type_distribution.insert("gate".to_string(), 7);
+            
+            let stats = EntityStatistics {
+                total_entities: 15,
+                avg_activation: 0.5,
+                max_activation: 1.0,
+                min_activation: 0.0,
+                type_distribution,
+            };
+            
+            let most_common = stats.most_common_type();
+            assert!(most_common.is_some());
+            let (type_name, count) = most_common.unwrap();
+            assert_eq!(type_name, "gate");
+            assert_eq!(count, 7);
+        }
+    }
+}

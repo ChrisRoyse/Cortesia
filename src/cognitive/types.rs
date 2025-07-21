@@ -151,7 +151,7 @@ pub enum ValidationLevel {
 }
 
 /// Pattern types for abstract thinking
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum PatternType {
     Structural,
     Temporal,

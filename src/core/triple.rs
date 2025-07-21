@@ -481,3 +481,760 @@ fn current_timestamp() -> u64 {
         .as_secs()
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    // Test constants and helpers
+    const TEST_EMBEDDING: [f32; 3] = [0.1, 0.2, 0.3];
+
+    fn create_test_embedding() -> Vec<f32> {
+        TEST_EMBEDDING.to_vec()
+    }
+
+    fn create_large_string(size: usize) -> String {
+        "a".repeat(size)
+    }
+
+    #[test]
+    fn test_triple_new_valid_creation() {
+        let result = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_ok());
+        let triple = result.unwrap();
+        assert_eq!(triple.subject, "Einstein");
+        assert_eq!(triple.predicate, "invented");
+        assert_eq!(triple.object, "relativity");
+        assert_eq!(triple.confidence, 1.0);
+        assert!(triple.source.is_none());
+    }
+
+    #[test]
+    fn test_triple_new_trims_whitespace() {
+        let result = Triple::new(
+            "  Einstein  ".to_string(),
+            "  invented  ".to_string(),
+            "  relativity  ".to_string(),
+        );
+        
+        assert!(result.is_ok());
+        let triple = result.unwrap();
+        assert_eq!(triple.subject, "Einstein");
+        assert_eq!(triple.predicate, "invented");
+        assert_eq!(triple.object, "relativity");
+    }
+
+    #[test]
+    fn test_triple_new_normalizes_predicate_case() {
+        let result = Triple::new(
+            "Einstein".to_string(),
+            "INVENTED".to_string(),
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_ok());
+        let triple = result.unwrap();
+        assert_eq!(triple.predicate, "invented");
+    }
+
+    #[test]
+    fn test_triple_new_subject_too_long() {
+        let long_subject = create_large_string(MAX_ENTITY_NAME_LENGTH + 1);
+        let result = Triple::new(
+            long_subject,
+            "invented".to_string(),
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_err());
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("Subject too long"));
+        } else {
+            panic!("Expected SerializationError for long subject");
+        }
+    }
+
+    #[test]
+    fn test_triple_new_predicate_too_long() {
+        let long_predicate = create_large_string(MAX_PREDICATE_LENGTH + 1);
+        let result = Triple::new(
+            "Einstein".to_string(),
+            long_predicate,
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_err());
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("Predicate too long"));
+        } else {
+            panic!("Expected SerializationError for long predicate");
+        }
+    }
+
+    #[test]
+    fn test_triple_new_object_too_long() {
+        let long_object = create_large_string(MAX_ENTITY_NAME_LENGTH + 1);
+        let result = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            long_object,
+        );
+        
+        assert!(result.is_err());
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("Object too long"));
+        } else {
+            panic!("Expected SerializationError for long object");
+        }
+    }
+
+    #[test]
+    fn test_triple_new_predicate_too_many_words() {
+        let result = Triple::new(
+            "Einstein".to_string(),
+            "very_long_complex_predicate_name".to_string(),
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_err());
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("too many words"));
+        } else {
+            panic!("Expected SerializationError for predicate with too many words");
+        }
+    }
+
+    #[test]
+    fn test_triple_new_predicate_max_words_allowed() {
+        let result = Triple::new(
+            "Einstein".to_string(),
+            "is_known_for".to_string(), // 3 words - should be allowed
+            "relativity".to_string(),
+        );
+        
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_triple_new_at_size_limits() {
+        let max_subject = create_large_string(MAX_ENTITY_NAME_LENGTH);
+        let max_predicate = create_large_string(MAX_PREDICATE_LENGTH);
+        let max_object = create_large_string(MAX_ENTITY_NAME_LENGTH);
+        
+        let result = Triple::new(max_subject, max_predicate, max_object);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_triple_with_metadata() {
+        let result = Triple::with_metadata(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+            0.8,
+            Some("Wikipedia".to_string()),
+        );
+        
+        assert!(result.is_ok());
+        let triple = result.unwrap();
+        assert_eq!(triple.confidence, 0.8);
+        assert_eq!(triple.source, Some("Wikipedia".to_string()));
+    }
+
+    #[test]
+    fn test_triple_with_metadata_clamps_confidence() {
+        // Test confidence > 1.0
+        let result = Triple::with_metadata(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+            1.5,
+            None,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().confidence, 1.0);
+
+        // Test confidence < 0.0
+        let result = Triple::with_metadata(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+            -0.5,
+            None,
+        );
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().confidence, 0.0);
+    }
+
+    #[test]
+    fn test_triple_id_generation() {
+        let triple1 = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        ).unwrap();
+        
+        let triple2 = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        ).unwrap();
+        
+        let triple3 = Triple::new(
+            "Newton".to_string(),
+            "invented".to_string(),
+            "calculus".to_string(),
+        ).unwrap();
+        
+        // Same triples should have same ID
+        assert_eq!(triple1.id(), triple2.id());
+        
+        // Different triples should have different IDs
+        assert_ne!(triple1.id(), triple3.id());
+        
+        // ID should have correct format
+        assert!(triple1.id().starts_with("triple_"));
+    }
+
+    #[test]
+    fn test_triple_hash_consistency() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let triple1 = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        ).unwrap();
+        
+        let triple2 = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        ).unwrap();
+        
+        let mut hasher1 = DefaultHasher::new();
+        let mut hasher2 = DefaultHasher::new();
+        
+        triple1.hash(&mut hasher1);
+        triple2.hash(&mut hasher2);
+        
+        assert_eq!(hasher1.finish(), hasher2.finish());
+    }
+
+    #[test]
+    fn test_triple_memory_footprint() {
+        let triple = Triple::new(
+            "Einstein".to_string(),
+            "invented".to_string(),
+            "relativity".to_string(),
+        ).unwrap();
+        
+        let expected_size = "Einstein".len() + "invented".len() + "relativity".len() + std::mem::size_of::<f32>();
+        assert_eq!(triple.memory_footprint(), expected_size);
+        
+        // Test with source
+        let mut triple_with_source = triple.clone();
+        triple_with_source.source = Some("Wikipedia".to_string());
+        
+        let expected_with_source = expected_size + "Wikipedia".len();
+        assert_eq!(triple_with_source.memory_footprint(), expected_with_source);
+    }
+
+    #[test]
+    fn test_triple_to_natural_language() {
+        let test_cases = vec![
+            ("Einstein", "is", "scientist", "Einstein is scientist"),
+            ("Python", "has", "syntax", "Python has syntax"),
+            ("Paris", "located_in", "France", "Paris is located in France"),
+            ("Theory", "created_by", "Einstein", "Theory was created by Einstein"),
+            ("Employee", "works_at", "Company", "Employee works at Company"),
+            ("A", "connected_to", "B", "A is connected to B"),
+            ("Custom", "custom_pred", "Value", "Custom custom pred Value"),
+        ];
+        
+        for (subject, predicate, object, expected) in test_cases {
+            let triple = Triple::new(
+                subject.to_string(),
+                predicate.to_string(),
+                object.to_string(),
+            ).unwrap();
+            
+            assert_eq!(triple.to_natural_language(), expected);
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_new_chunk_valid() {
+        let text = "This is a test chunk with valid size.".to_string();
+        let embedding = create_test_embedding();
+        let extracted_triples = vec![
+            Triple::new("test".to_string(), "is".to_string(), "chunk".to_string()).unwrap()
+        ];
+        
+        let result = KnowledgeNode::new_chunk(text.clone(), embedding, extracted_triples);
+        assert!(result.is_ok());
+        
+        let node = result.unwrap();
+        assert_eq!(node.node_type, NodeType::Chunk);
+        assert!(node.id.starts_with("node_"));
+        
+        if let NodeContent::Chunk { text: chunk_text, word_count, .. } = &node.content {
+            assert_eq!(chunk_text, &text);
+            assert_eq!(*word_count, 8); // "This is a test chunk with valid size."
+        } else {
+            panic!("Expected Chunk content");
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_new_chunk_too_large() {
+        let large_text = create_large_string(MAX_CHUNK_SIZE_BYTES + 1);
+        let embedding = create_test_embedding();
+        let extracted_triples = Vec::new();
+        
+        let result = KnowledgeNode::new_chunk(large_text, embedding, extracted_triples);
+        assert!(result.is_err());
+        
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("Chunk too large"));
+        } else {
+            panic!("Expected SerializationError for large chunk");
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_new_chunk_at_size_limit() {
+        let text = create_large_string(MAX_CHUNK_SIZE_BYTES);
+        let embedding = create_test_embedding();
+        let extracted_triples = Vec::new();
+        
+        let result = KnowledgeNode::new_chunk(text, embedding, extracted_triples);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_knowledge_node_new_chunk_word_count_calculation() {
+        let text = "One two three four five".to_string();
+        let embedding = create_test_embedding();
+        let extracted_triples = Vec::new();
+        
+        let result = KnowledgeNode::new_chunk(text, embedding, extracted_triples);
+        assert!(result.is_ok());
+        
+        let node = result.unwrap();
+        if let NodeContent::Chunk { word_count, .. } = &node.content {
+            assert_eq!(*word_count, 5);
+        } else {
+            panic!("Expected Chunk content");
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_new_chunk_size_calculation() {
+        let text = "Test".to_string();
+        let embedding = vec![0.1, 0.2]; // 2 * 4 bytes = 8 bytes
+        let extracted_triples = vec![
+            Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap()
+        ];
+        
+        let result = KnowledgeNode::new_chunk(text.clone(), embedding.clone(), extracted_triples.clone());
+        assert!(result.is_ok());
+        
+        let node = result.unwrap();
+        let expected_size = text.len() + 
+                           extracted_triples[0].memory_footprint() + 
+                           embedding.len() * 4;
+        assert_eq!(node.metadata.size_bytes, expected_size);
+    }
+
+    #[test]
+    fn test_knowledge_node_new_entity_valid() {
+        let name = "Einstein".to_string();
+        let description = "Famous physicist".to_string();
+        let entity_type = "Person".to_string();
+        let mut properties = HashMap::new();
+        properties.insert("birth_year".to_string(), "1879".to_string());
+        let embedding = create_test_embedding();
+        
+        let result = KnowledgeNode::new_entity(
+            name.clone(),
+            description.clone(),
+            entity_type.clone(),
+            properties.clone(),
+            embedding
+        );
+        
+        assert!(result.is_ok());
+        let node = result.unwrap();
+        assert_eq!(node.node_type, NodeType::Entity);
+        
+        if let NodeContent::Entity { name: entity_name, .. } = &node.content {
+            assert_eq!(entity_name, &name);
+        } else {
+            panic!("Expected Entity content");
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_new_entity_too_large() {
+        let large_name = create_large_string(MAX_CHUNK_SIZE_BYTES);
+        let description = "Description".to_string();
+        let entity_type = "Type".to_string();
+        let properties = HashMap::new();
+        let embedding = create_test_embedding();
+        
+        let result = KnowledgeNode::new_entity(
+            large_name,
+            description,
+            entity_type,
+            properties,
+            embedding
+        );
+        
+        assert!(result.is_err());
+        if let Err(GraphError::SerializationError(msg)) = result {
+            assert!(msg.contains("Entity data too large"));
+        } else {
+            panic!("Expected SerializationError for large entity");
+        }
+    }
+
+    #[test]
+    fn test_knowledge_node_generate_content_id() {
+        let content1 = "test content";
+        let content2 = "test content";
+        let content3 = "different content";
+        
+        let id1 = KnowledgeNode::generate_content_id(content1);
+        let id2 = KnowledgeNode::generate_content_id(content2);
+        let id3 = KnowledgeNode::generate_content_id(content3);
+        
+        // Same content should generate same ID
+        assert_eq!(id1, id2);
+        
+        // Different content should generate different ID
+        assert_ne!(id1, id3);
+        
+        // ID should have correct format
+        assert!(id1.starts_with("node_"));
+    }
+
+    #[test]
+    fn test_knowledge_node_mark_accessed() {
+        let triple = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let mut node = KnowledgeNode::new_triple(triple, create_test_embedding());
+        
+        let initial_access_count = node.metadata.access_count;
+        let initial_last_accessed = node.metadata.last_accessed;
+        
+        // Wait a moment to ensure timestamp difference
+        std::thread::sleep(std::time::Duration::from_millis(1));
+        
+        node.mark_accessed();
+        
+        assert_eq!(node.metadata.access_count, initial_access_count + 1);
+        assert!(node.metadata.last_accessed >= initial_last_accessed);
+    }
+
+    #[test]
+    fn test_knowledge_node_get_triples() {
+        // Test triple node
+        let triple = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let triple_node = KnowledgeNode::new_triple(triple.clone(), create_test_embedding());
+        
+        let triples = triple_node.get_triples();
+        assert_eq!(triples.len(), 1);
+        assert_eq!(triples[0], &triple);
+        
+        // Test chunk node
+        let text = "Test chunk".to_string();
+        let embedding = create_test_embedding();
+        let extracted_triples = vec![
+            Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap(),
+            Triple::new("C".to_string(), "has".to_string(), "D".to_string()).unwrap(),
+        ];
+        
+        let chunk_node = KnowledgeNode::new_chunk(text, embedding, extracted_triples.clone()).unwrap();
+        let chunk_triples = chunk_node.get_triples();
+        assert_eq!(chunk_triples.len(), 2);
+        
+        // Test entity node (should return empty)
+        let entity_node = KnowledgeNode::new_entity(
+            "Test".to_string(),
+            "Description".to_string(),
+            "Type".to_string(),
+            HashMap::new(),
+            create_test_embedding()
+        ).unwrap();
+        
+        let entity_triples = entity_node.get_triples();
+        assert_eq!(entity_triples.len(), 0);
+    }
+
+    #[test]
+    fn test_knowledge_node_to_llm_format() {
+        // Test triple node
+        let triple = Triple::new("Einstein".to_string(), "is".to_string(), "scientist".to_string()).unwrap();
+        let triple_node = KnowledgeNode::new_triple(triple, create_test_embedding());
+        
+        let llm_format = triple_node.to_llm_format();
+        assert!(llm_format.starts_with("FACT:"));
+        assert!(llm_format.contains("Einstein is scientist"));
+        
+        // Test chunk node
+        let text = "This is a test chunk".to_string();
+        let chunk_node = KnowledgeNode::new_chunk(text.clone(), create_test_embedding(), Vec::new()).unwrap();
+        
+        let chunk_format = chunk_node.to_llm_format();
+        assert!(chunk_format.starts_with("KNOWLEDGE"));
+        assert!(chunk_format.contains("5 words")); // "This is a test chunk"
+        assert!(chunk_format.contains(&text));
+        
+        // Test entity node
+        let entity_node = KnowledgeNode::new_entity(
+            "Einstein".to_string(),
+            "Famous physicist".to_string(),
+            "Person".to_string(),
+            HashMap::new(),
+            create_test_embedding()
+        ).unwrap();
+        
+        let entity_format = entity_node.to_llm_format();
+        assert!(entity_format.starts_with("ENTITY:"));
+        assert!(entity_format.contains("Einstein"));
+        assert!(entity_format.contains("Person"));
+        assert!(entity_format.contains("Famous physicist"));
+    }
+
+    #[test]
+    fn test_knowledge_node_calculate_quality_score() {
+        let triple = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let mut node = KnowledgeNode::new_triple(triple, create_test_embedding());
+        
+        // Initial quality score should be 1.0
+        assert_eq!(node.metadata.quality_score, 1.0);
+        
+        // Simulate some access
+        node.metadata.access_count = 10;
+        node.calculate_quality_score();
+        
+        // Quality score should be between 0.0 and 1.0
+        assert!(node.metadata.quality_score >= 0.0);
+        assert!(node.metadata.quality_score <= 1.0);
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_new() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Should contain core predicates
+        assert!(vocab.predicates.contains_key("is"));
+        assert!(vocab.predicates.contains_key("has"));
+        assert!(vocab.predicates.contains_key("located_in"));
+        assert!(vocab.predicates.contains_key("created_by"));
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_normalize_canonical() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Test canonical forms
+        assert_eq!(vocab.normalize("is"), "is");
+        assert_eq!(vocab.normalize("has"), "has");
+        assert_eq!(vocab.normalize("located_in"), "located_in");
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_normalize_case_and_spaces() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Test case normalization
+        assert_eq!(vocab.normalize("IS"), "is");
+        assert_eq!(vocab.normalize("HAS"), "has");
+        
+        // Test space to underscore conversion
+        assert_eq!(vocab.normalize("located in"), "located_in");
+        assert_eq!(vocab.normalize("created by"), "created_by");
+        
+        // Test trimming
+        assert_eq!(vocab.normalize("  is  "), "is");
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_normalize_unknown() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Unknown predicates should be cleaned and returned
+        assert_eq!(vocab.normalize("custom_predicate"), "custom_predicate");
+        assert_eq!(vocab.normalize("UNKNOWN PRED"), "unknown_pred");
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_suggest_predicates() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Test context-based suggestions
+        let suggestions = vocab.suggest_predicates("Entity classification");
+        assert!(suggestions.contains(&"is".to_string()));
+        
+        let suggestions = vocab.suggest_predicates("Property ownership");
+        assert!(suggestions.contains(&"has".to_string()));
+        
+        let suggestions = vocab.suggest_predicates("Spatial relationship");
+        assert!(suggestions.contains(&"located_in".to_string()));
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_suggest_predicates_fallback() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Test fallback for unknown context
+        let suggestions = vocab.suggest_predicates("completely unknown context");
+        assert_eq!(suggestions.len(), 3);
+        assert!(suggestions.contains(&"is".to_string()));
+        assert!(suggestions.contains(&"has".to_string()));
+        assert!(suggestions.contains(&"connected_to".to_string()));
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_suggest_predicates_predicate_name_match() {
+        let vocab = PredicateVocabulary::new();
+        
+        // Test direct predicate name matching
+        let suggestions = vocab.suggest_predicates("This causes that");
+        assert!(suggestions.contains(&"causes".to_string()));
+        
+        let suggestions = vocab.suggest_predicates("A follows B");
+        assert!(suggestions.contains(&"follows".to_string()));
+    }
+
+    #[test]
+    fn test_predicate_vocabulary_default() {
+        let vocab1 = PredicateVocabulary::new();
+        let vocab2 = PredicateVocabulary::default();
+        
+        // Default should be equivalent to new()
+        assert_eq!(vocab1.predicates.len(), vocab2.predicates.len());
+        
+        for (key, _) in &vocab1.predicates {
+            assert!(vocab2.predicates.contains_key(key));
+        }
+    }
+
+    #[test]
+    fn test_predicate_info_structure() {
+        let vocab = PredicateVocabulary::new();
+        
+        if let Some(info) = vocab.predicates.get("is") {
+            assert_eq!(info.canonical_form, "is");
+            assert_eq!(info.description, "Entity classification");
+            assert_eq!(info.typical_domain, "Entity");
+            assert_eq!(info.typical_range, "Type");
+            assert!(info.aliases.is_empty()); // Initially no aliases
+        } else {
+            panic!("Expected 'is' predicate to exist");
+        }
+    }
+
+    #[test]
+    fn test_current_timestamp() {
+        let timestamp1 = current_timestamp();
+        std::thread::sleep(std::time::Duration::from_millis(1));
+        let timestamp2 = current_timestamp();
+        
+        // Timestamps should be reasonable Unix timestamps
+        assert!(timestamp1 > 1_600_000_000); // After 2020
+        assert!(timestamp2 >= timestamp1);
+    }
+
+    #[test]
+    fn test_node_metadata_initialization() {
+        let triple = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let node = KnowledgeNode::new_triple(triple, create_test_embedding());
+        
+        assert!(node.metadata.created_at > 0);
+        assert!(node.metadata.last_accessed > 0);
+        assert_eq!(node.metadata.access_count, 0);
+        assert!(node.metadata.size_bytes > 0);
+        assert_eq!(node.metadata.quality_score, 1.0);
+        assert!(node.metadata.tags.is_empty());
+    }
+
+    #[test]
+    fn test_triple_equality_and_clone() {
+        let triple1 = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let triple2 = triple1.clone();
+        let triple3 = Triple::new("A".to_string(), "is".to_string(), "C".to_string()).unwrap();
+        
+        assert_eq!(triple1, triple2);
+        assert_ne!(triple1, triple3);
+    }
+
+    #[test]
+    fn test_node_type_equality() {
+        assert_eq!(NodeType::Triple, NodeType::Triple);
+        assert_eq!(NodeType::Chunk, NodeType::Chunk);
+        assert_ne!(NodeType::Triple, NodeType::Chunk);
+    }
+
+    // Edge case tests for validation logic
+    #[test]
+    fn test_triple_validation_edge_cases() {
+        // Empty strings
+        let result = Triple::new("".to_string(), "is".to_string(), "something".to_string());
+        assert!(result.is_ok()); // Empty should be allowed after trimming
+        
+        // Single character
+        let result = Triple::new("A".to_string(), "i".to_string(), "B".to_string());
+        assert!(result.is_ok());
+        
+        // Predicate with single word
+        let result = Triple::new("A".to_string(), "is".to_string(), "B".to_string());
+        assert!(result.is_ok());
+        
+        // Predicate with two words
+        let result = Triple::new("A".to_string(), "is_a".to_string(), "B".to_string());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_chunk_validation_edge_cases() {
+        // Empty text
+        let result = KnowledgeNode::new_chunk("".to_string(), create_test_embedding(), Vec::new());
+        assert!(result.is_ok());
+        
+        // Single character
+        let result = KnowledgeNode::new_chunk("a".to_string(), create_test_embedding(), Vec::new());
+        assert!(result.is_ok());
+        
+        // Text with only whitespace
+        let result = KnowledgeNode::new_chunk("   ".to_string(), create_test_embedding(), Vec::new());
+        assert!(result.is_ok());
+        
+        if let Ok(node) = result {
+            if let NodeContent::Chunk { word_count, .. } = &node.content {
+                assert_eq!(*word_count, 0); // Only whitespace should count as 0 words
+            }
+        }
+    }
+
+    #[test]
+    fn test_memory_footprint_edge_cases() {
+        // Triple with no source
+        let triple = Triple::new("A".to_string(), "is".to_string(), "B".to_string()).unwrap();
+        let expected = "A".len() + "is".len() + "B".len() + std::mem::size_of::<f32>();
+        assert_eq!(triple.memory_footprint(), expected);
+        
+        // Triple with empty source
+        let mut triple_empty_source = triple.clone();
+        triple_empty_source.source = Some("".to_string());
+        assert_eq!(triple_empty_source.memory_footprint(), expected); // Empty string adds 0
+    }
+}
+

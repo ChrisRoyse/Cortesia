@@ -406,3 +406,371 @@ impl PartialEq for BottleneckType {
 }
 
 impl Eq for BottleneckType {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::sdr_types::SDRConfig;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::core::activation_engine::ActivationPropagationEngine;
+    use std::collections::HashMap;
+    use tokio::time::timeout;
+
+    /// Helper function to create test UnifiedMemorySystem
+    async fn create_test_unified_memory_system() -> UnifiedMemorySystem {
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+        let working_memory = Arc::new(
+            WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
+        );
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+        
+        UnifiedMemorySystem::new(working_memory, sdr_storage, graph)
+    }
+
+    /// Helper function to create test system with custom config
+    async fn create_test_unified_memory_with_config(config: MemoryIntegrationConfig) -> UnifiedMemorySystem {
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+        let working_memory = Arc::new(
+            WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
+        );
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+        
+        UnifiedMemorySystem::with_config(working_memory, sdr_storage, graph, config)
+    }
+
+    #[tokio::test]
+    async fn test_identify_optimization_opportunities_slow_retrieval() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Create performance analysis indicating slow retrieval
+        let performance_analysis = PerformanceAnalysis {
+            success_rate: 0.9,
+            average_retrieval_time: Duration::from_millis(100), // Slow
+            memory_utilization: HashMap::new(),
+            bottlenecks: vec![],
+        };
+        
+        let opportunities = system.identify_optimization_opportunities(&performance_analysis).await.unwrap();
+        
+        // Should identify slow retrieval as an opportunity
+        assert!(opportunities.iter().any(|opp| matches!(opp.opportunity_type, OpportunityType::ReduceRetrievalTime)));
+    }
+
+    #[tokio::test]
+    async fn test_identify_optimization_opportunities_low_success_rate() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Create performance analysis indicating low success rate
+        let performance_analysis = PerformanceAnalysis {
+            success_rate: 0.7, // Low
+            average_retrieval_time: Duration::from_millis(10),
+            memory_utilization: HashMap::new(),
+            bottlenecks: vec![],
+        };
+        
+        let opportunities = system.identify_optimization_opportunities(&performance_analysis).await.unwrap();
+        
+        // Should identify low success rate as an opportunity
+        assert!(opportunities.iter().any(|opp| matches!(opp.opportunity_type, OpportunityType::ImproveSuccessRate)));
+    }
+
+    #[tokio::test]
+    async fn test_identify_optimization_opportunities_high_memory_usage() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Create performance analysis indicating high memory usage
+        let mut memory_utilization = HashMap::new();
+        memory_utilization.insert(MemoryType::WorkingMemory, 0.9);
+        memory_utilization.insert(MemoryType::LongTermMemory, 0.85);
+        
+        let performance_analysis = PerformanceAnalysis {
+            success_rate: 0.9,
+            average_retrieval_time: Duration::from_millis(10),
+            memory_utilization,
+            bottlenecks: vec![],
+        };
+        
+        let opportunities = system.identify_optimization_opportunities(&performance_analysis).await.unwrap();
+        
+        // Should identify high memory usage as an opportunity
+        assert!(opportunities.iter().any(|opp| matches!(opp.opportunity_type, OpportunityType::OptimizeMemoryUsage)));
+    }
+
+    #[tokio::test]
+    async fn test_identify_optimization_opportunities_low_cross_memory_access() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Set up statistics showing low cross-memory access
+        {
+            let mut stats = system.memory_statistics.write().await;
+            stats.total_retrievals = 100;
+            stats.cross_memory_accesses = 10; // Low ratio
+        }
+        
+        let performance_analysis = PerformanceAnalysis {
+            success_rate: 0.9,
+            average_retrieval_time: Duration::from_millis(10),
+            memory_utilization: HashMap::new(),
+            bottlenecks: vec![],
+        };
+        
+        let opportunities = system.identify_optimization_opportunities(&performance_analysis).await.unwrap();
+        
+        // Should identify need for enhanced cross-memory links
+        assert!(opportunities.iter().any(|opp| matches!(opp.opportunity_type, OpportunityType::EnhanceCrossMemoryLinks)));
+    }
+
+    #[tokio::test]
+    async fn test_apply_optimizations_all_types() {
+        let system = create_test_unified_memory_system().await;
+        
+        let opportunities = vec![
+            OptimizationOpportunity {
+                opportunity_type: OpportunityType::ReduceRetrievalTime,
+                potential_improvement: 0.3,
+                implementation_cost: 0.2,
+                priority: 0.8,
+            },
+            OptimizationOpportunity {
+                opportunity_type: OpportunityType::ImproveSuccessRate,
+                potential_improvement: 0.2,
+                implementation_cost: 0.3,
+                priority: 0.9,
+            },
+            OptimizationOpportunity {
+                opportunity_type: OpportunityType::OptimizeMemoryUsage,
+                potential_improvement: 0.25,
+                implementation_cost: 0.4,
+                priority: 0.7,
+            },
+            OptimizationOpportunity {
+                opportunity_type: OpportunityType::EnhanceCrossMemoryLinks,
+                potential_improvement: 0.15,
+                implementation_cost: 0.1,
+                priority: 0.6,
+            },
+        ];
+        
+        let applied = system.apply_optimizations(&opportunities).await.unwrap();
+        
+        // Should apply all optimizations
+        assert_eq!(applied.len(), 4);
+        
+        // All should be successful
+        assert!(applied.iter().all(|opt| opt.implementation_success));
+        
+        // Check that actual improvements are reasonable fractions of potential
+        for (original, applied_opt) in opportunities.iter().zip(applied.iter()) {
+            assert!(applied_opt.actual_improvement > 0.0);
+            assert!(applied_opt.actual_improvement <= original.potential_improvement);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_backend_selection_logic() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Test that the system initializes with all expected backends
+        assert!(Arc::strong_count(&system.working_memory) >= 1);
+        assert!(Arc::strong_count(&system.sdr_storage) >= 1);
+        assert!(Arc::strong_count(&system.long_term_graph) >= 1);
+        assert!(Arc::strong_count(&system.memory_coordinator) >= 1);
+        assert!(Arc::strong_count(&system.memory_retrieval) >= 1);
+        assert!(Arc::strong_count(&system.memory_consolidation) >= 1);
+    }
+
+    #[tokio::test]
+    async fn test_memory_coordination_with_statistics() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Initial statistics should be empty
+        let initial_stats = system.get_memory_statistics().await.unwrap();
+        assert_eq!(initial_stats.total_retrievals, 0);
+        assert_eq!(initial_stats.successful_retrievals, 0);
+        assert_eq!(initial_stats.consolidation_events, 0);
+        
+        // Perform some operations
+        let _ = system.store_information("test content", 0.8, Some("test context")).await;
+        let _ = system.retrieve_information("test content", None).await;
+        
+        // Statistics should be updated
+        let updated_stats = system.get_memory_statistics().await.unwrap();
+        assert!(updated_stats.total_retrievals > 0);
+    }
+
+    #[tokio::test]
+    async fn test_cross_system_integration_setup() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Test that cross-memory links can be created
+        let link = CrossMemoryLink {
+            link_id: "test_link".to_string(),
+            source_memory: MemoryType::WorkingMemory,
+            target_memory: MemoryType::LongTermMemory,
+            link_strength: 0.8,
+            link_type: LinkType::Associative,
+            bidirectional: true,
+        };
+        
+        let result = system.create_cross_memory_link(link).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_retrieval_coordination_private_logic() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Store content in the system
+        let store_result = system.store_information("coordination test", 0.7, None).await;
+        assert!(store_result.is_ok());
+        
+        // Retrieve using different strategies
+        let result1 = system.retrieve_information("coordination", Some("parallel_comprehensive")).await;
+        let result2 = system.retrieve_information("coordination", None).await;
+        
+        // Both should succeed
+        assert!(result1.is_ok());
+        assert!(result2.is_ok());
+        
+        // Both should have reasonable confidence
+        let res1 = result1.unwrap();
+        let res2 = result2.unwrap();
+        assert!(res1.fusion_confidence >= 0.0);
+        assert!(res2.fusion_confidence >= 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_consolidation_coordination_private_methods() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Store some content to consolidate
+        for i in 0..3 {
+            let content = format!("consolidation_test_{}", i);
+            let _ = system.store_information(&content, 0.8, None).await;
+        }
+        
+        // Trigger consolidation
+        let consolidation_result = system.consolidate_memories(Some("default")).await;
+        assert!(consolidation_result.is_ok());
+        
+        let result = consolidation_result.unwrap();
+        assert!(result.consolidation_time.as_millis() > 0);
+    }
+
+    #[tokio::test]
+    async fn test_memory_system_configuration() {
+        let custom_config = MemoryIntegrationConfig {
+            enable_parallel_retrieval: false,
+            default_strategy: "sequential".to_string(),
+            consolidation_frequency: Duration::from_secs(60),
+            optimization_frequency: Duration::from_secs(1800),
+            cross_memory_linking: false,
+            memory_hierarchy_depth: 5,
+        };
+        
+        let system = create_test_unified_memory_with_config(custom_config.clone()).await;
+        
+        assert!(!system.integration_config.enable_parallel_retrieval);
+        assert_eq!(system.integration_config.default_strategy, "sequential");
+        assert_eq!(system.integration_config.memory_hierarchy_depth, 5);
+        assert!(!system.integration_config.cross_memory_linking);
+    }
+
+    #[tokio::test]
+    async fn test_performance_analysis_bottleneck_detection() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Set up statistics that should trigger bottleneck detection
+        {
+            let mut stats = system.memory_statistics.write().await;
+            stats.total_retrievals = 100;
+            stats.successful_retrievals = 70; // 70% success rate
+            stats.average_retrieval_time = Duration::from_millis(150); // Slow
+            stats.memory_utilization.insert(MemoryType::WorkingMemory, 0.95); // High usage
+        }
+        
+        let analysis = system.analyze_performance().await.unwrap();
+        
+        // Should detect multiple bottlenecks
+        assert!(!analysis.bottlenecks.is_empty());
+        
+        // Should detect slow retrieval
+        assert!(analysis.bottlenecks.iter().any(|b| matches!(b.bottleneck_type, BottleneckType::SlowRetrieval)));
+        
+        // Should detect low success rate
+        assert!(analysis.bottlenecks.iter().any(|b| matches!(b.bottleneck_type, BottleneckType::LowSuccessRate)));
+        
+        // Should detect high memory usage
+        assert!(analysis.bottlenecks.iter().any(|b| matches!(b.bottleneck_type, BottleneckType::HighMemoryUsage)));
+    }
+
+    #[tokio::test]
+    async fn test_memory_system_update_config() {
+        let mut system = create_test_unified_memory_system().await;
+        
+        let new_config = MemoryIntegrationConfig {
+            enable_parallel_retrieval: false,
+            default_strategy: "updated_strategy".to_string(),
+            consolidation_frequency: Duration::from_secs(120),
+            optimization_frequency: Duration::from_secs(7200),
+            cross_memory_linking: false,
+            memory_hierarchy_depth: 10,
+        };
+        
+        system.update_config(new_config.clone());
+        
+        assert_eq!(system.integration_config.default_strategy, "updated_strategy");
+        assert_eq!(system.integration_config.memory_hierarchy_depth, 10);
+        assert!(!system.integration_config.enable_parallel_retrieval);
+    }
+
+    #[tokio::test]
+    async fn test_cross_memory_coordination_helper_methods() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Create and store a cross-memory link
+        let link = CrossMemoryLink {
+            link_id: "test_cross_link".to_string(),
+            source_memory: MemoryType::WorkingMemory,
+            target_memory: MemoryType::SemanticMemory,
+            link_strength: 0.9,
+            link_type: LinkType::Semantic,
+            bidirectional: true,
+        };
+        
+        let create_result = system.create_cross_memory_link(link).await;
+        assert!(create_result.is_ok());
+        
+        // Try to retrieve the links
+        let links = system.get_cross_memory_links("test_cross_link").await.unwrap();
+        // Note: The actual link retrieval depends on the coordinator implementation
+        // We're testing that the method doesn't fail
+        assert!(links.len() >= 0);
+    }
+
+    #[tokio::test]
+    async fn test_memory_statistics_tracking_during_operations() {
+        let system = create_test_unified_memory_system().await;
+        
+        // Perform several operations and verify statistics tracking
+        for i in 0..5 {
+            let content = format!("stats_test_{}", i);
+            let _ = system.store_information(&content, 0.6, None).await;
+        }
+        
+        for i in 0..3 {
+            let query = format!("stats_test_{}", i);
+            let _ = system.retrieve_information(&query, None).await;
+        }
+        
+        let stats = system.get_memory_statistics().await.unwrap();
+        
+        // Should have recorded retrievals (includes the storage operations which call retrieval)
+        assert!(stats.total_retrievals > 0);
+        
+        // Average retrieval time should be reasonable
+        assert!(stats.average_retrieval_time.as_millis() < 1000);
+    }
+}

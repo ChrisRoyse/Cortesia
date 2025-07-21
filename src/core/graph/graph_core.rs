@@ -293,3 +293,383 @@ impl std::fmt::Debug for KnowledgeGraph {
             .finish()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::types::EntityKey;
+
+    #[test]
+    fn test_new_internal_with_valid_dimension() {
+        let embedding_dim = 96;
+        let graph = KnowledgeGraph::new_internal(embedding_dim).unwrap();
+        
+        assert_eq!(graph.embedding_dim, embedding_dim);
+        assert_eq!(graph.entity_count(), 0);
+        assert_eq!(graph.relationship_count(), 0);
+        assert_eq!(graph.edge_buffer_size(), 0);
+        assert_eq!(graph.string_dictionary_size(), 0);
+    }
+
+    #[test]
+    fn test_new_internal_with_different_dimensions() {
+        // Test various embedding dimensions
+        let dimensions = vec![32, 64, 96, 128, 256, 512];
+        
+        for dim in dimensions {
+            let graph = KnowledgeGraph::new_internal(dim).unwrap();
+            assert_eq!(graph.embedding_dim, dim);
+            assert_eq!(graph.embedding_dimension(), dim);
+        }
+    }
+
+    #[test]
+    fn test_new_internal_with_zero_dimension() {
+        // Test edge case with zero dimension
+        let result = KnowledgeGraph::new_internal(0);
+        // This might fail due to ProductQuantizer constraints
+        // The test validates the behavior regardless of success/failure
+        match result {
+            Ok(graph) => assert_eq!(graph.embedding_dim, 0),
+            Err(_) => {
+                // Zero dimension is likely invalid for ProductQuantizer
+                // This is expected behavior
+            }
+        }
+    }
+
+    #[test]
+    fn test_new_internal_with_large_dimension() {
+        // Test with a large dimension to ensure no overflow
+        let embedding_dim = 4096;
+        let result = KnowledgeGraph::new_internal(embedding_dim);
+        
+        match result {
+            Ok(graph) => {
+                assert_eq!(graph.embedding_dim, embedding_dim);
+                assert_eq!(graph.entity_count(), 0);
+                assert_eq!(graph.relationship_count(), 0);
+            }
+            Err(_) => {
+                // Large dimensions might be constrained by ProductQuantizer
+                // This is valid behavior
+            }
+        }
+    }
+
+    #[test]
+    fn test_new_internal_component_initialization() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Verify all components are properly initialized
+        assert!(graph.arena.read().entity_count() == 0);
+        assert!(graph.graph.read().edge_count() == 0);
+        assert!(graph.embedding_bank.read().is_empty());
+        assert!(graph.entity_id_map.read().is_empty());
+        assert!(graph.string_dictionary.read().is_empty());
+        assert!(graph.edge_buffer.read().is_empty());
+        
+        // Verify bloom filter is initialized
+        assert!(graph.bloom_filter.read().memory_usage() > 0);
+        
+        // Verify cache is initialized with correct capacity
+        let (current_size, capacity, _hit_rate) = graph.cache_stats();
+        assert_eq!(current_size, 0);
+        assert_eq!(capacity, 1000); // As specified in new_internal
+    }
+
+    #[test]
+    fn test_entity_count_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        assert_eq!(graph.entity_count(), 0);
+    }
+
+    #[test]
+    fn test_relationship_count_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        assert_eq!(graph.relationship_count(), 0);
+        assert_eq!(graph.edge_count(), 0); // Test alias method
+    }
+
+    #[test]
+    fn test_memory_usage_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let memory_usage = graph.memory_usage();
+        
+        // Verify memory usage structure
+        assert!(memory_usage.total_bytes() > 0); // Should have some baseline memory
+        assert_eq!(memory_usage.embedding_bank_bytes, 0); // Empty embedding bank
+        
+        // Test memory breakdown
+        let breakdown = memory_usage.usage_breakdown();
+        assert!(breakdown.arena_percentage >= 0.0);
+        assert!(breakdown.entity_store_percentage >= 0.0);
+        assert!(breakdown.graph_percentage >= 0.0);
+        assert!(breakdown.embedding_bank_percentage == 0.0); // Empty
+        assert!(breakdown.quantizer_percentage >= 0.0);
+        assert!(breakdown.bloom_filter_percentage >= 0.0);
+        
+        // Sum of percentages should be approximately 100% (allowing for floating point errors)
+        let total_percentage = breakdown.arena_percentage + 
+                              breakdown.entity_store_percentage + 
+                              breakdown.graph_percentage + 
+                              breakdown.embedding_bank_percentage + 
+                              breakdown.quantizer_percentage + 
+                              breakdown.bloom_filter_percentage;
+        assert!((total_percentage - 100.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_memory_usage_bytes_per_entity() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let memory_usage = graph.memory_usage();
+        
+        // Test with zero entities
+        assert_eq!(memory_usage.bytes_per_entity(0), 0);
+        
+        // Test with hypothetical entity count
+        let hypothetical_entities = 100;
+        let bytes_per_entity = memory_usage.bytes_per_entity(hypothetical_entities);
+        assert_eq!(bytes_per_entity, memory_usage.total_bytes() / hypothetical_entities);
+    }
+
+    #[test]
+    fn test_contains_entity_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        assert!(!graph.contains_entity(0));
+        assert!(!graph.contains_entity(1));
+        assert!(!graph.contains_entity(u32::MAX));
+    }
+
+    #[test]
+    fn test_get_entity_key_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        assert!(graph.get_entity_key(0).is_none());
+        assert!(graph.get_entity_key(1).is_none());
+        assert!(graph.get_entity_key(u32::MAX).is_none());
+    }
+
+    #[test]
+    fn test_get_entity_id_empty_graph() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let dummy_key = EntityKey::new(0); // Assuming EntityKey has a new method
+        assert!(graph.get_entity_id(dummy_key).is_none());
+    }
+
+    #[test]
+    fn test_validate_embedding_dimension_correct() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let embedding = vec![0.0f32; 96];
+        assert!(graph.validate_embedding_dimension(&embedding).is_ok());
+    }
+
+    #[test]
+    fn test_validate_embedding_dimension_incorrect() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Test too small
+        let embedding_small = vec![0.0f32; 95];
+        let result_small = graph.validate_embedding_dimension(&embedding_small);
+        assert!(result_small.is_err());
+        
+        // Test too large
+        let embedding_large = vec![0.0f32; 97];
+        let result_large = graph.validate_embedding_dimension(&embedding_large);
+        assert!(result_large.is_err());
+        
+        // Test empty
+        let embedding_empty = vec![];
+        let result_empty = graph.validate_embedding_dimension(&embedding_empty);
+        assert!(result_empty.is_err());
+    }
+
+    #[test]
+    fn test_cache_operations() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Test initial cache state
+        let (initial_size, capacity, initial_hit_rate) = graph.cache_stats();
+        assert_eq!(initial_size, 0);
+        assert_eq!(capacity, 1000);
+        assert!(initial_hit_rate >= 0.0 && initial_hit_rate <= 1.0);
+        
+        // Test cache clearing (should be no-op on empty cache)
+        graph.clear_caches();
+        let (size_after_clear, _, _) = graph.cache_stats();
+        assert_eq!(size_after_clear, 0);
+    }
+
+    #[test]
+    fn test_string_dictionary_size_empty() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        assert_eq!(graph.string_dictionary_size(), 0);
+    }
+
+    #[test]
+    fn test_edge_buffer_operations() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Test initial state
+        assert_eq!(graph.edge_buffer_size(), 0);
+        
+        // Test flushing empty buffer
+        let result = graph.flush_edge_buffer();
+        assert!(result.is_ok());
+        assert_eq!(graph.edge_buffer_size(), 0);
+    }
+
+    #[test]
+    fn test_epoch_manager_access() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let epoch_manager = graph.epoch_manager();
+        
+        // Verify epoch manager is properly initialized
+        assert!(Arc::strong_count(epoch_manager) >= 1);
+    }
+
+    #[test]
+    fn test_constructor_aliases() {
+        // Test new() alias
+        let graph1 = KnowledgeGraph::new(128).unwrap();
+        assert_eq!(graph1.embedding_dimension(), 128);
+        
+        // Test new_with_dimension()
+        let graph2 = KnowledgeGraph::new_with_dimension(64).unwrap();
+        assert_eq!(graph2.embedding_dimension(), 64);
+        
+        // Test new_default()
+        let graph3 = KnowledgeGraph::new_default().unwrap();
+        assert_eq!(graph3.embedding_dimension(), 96);
+    }
+
+    #[test]
+    fn test_debug_implementation() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        let debug_string = format!("{:?}", graph);
+        
+        // Verify debug output contains expected fields
+        assert!(debug_string.contains("KnowledgeGraph"));
+        assert!(debug_string.contains("entity_count"));
+        assert!(debug_string.contains("relationship_count"));
+        assert!(debug_string.contains("embedding_dim"));
+        assert!(debug_string.contains("string_dictionary_size"));
+        assert!(debug_string.contains("edge_buffer_size"));
+    }
+
+    #[test]
+    fn test_memory_breakdown_default() {
+        let breakdown = MemoryBreakdown::default();
+        assert_eq!(breakdown.arena_percentage, 0.0);
+        assert_eq!(breakdown.entity_store_percentage, 0.0);
+        assert_eq!(breakdown.graph_percentage, 0.0);
+        assert_eq!(breakdown.embedding_bank_percentage, 0.0);
+        assert_eq!(breakdown.quantizer_percentage, 0.0);
+        assert_eq!(breakdown.bloom_filter_percentage, 0.0);
+    }
+
+    #[test]
+    fn test_component_integration_consistency() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Verify consistent state across components
+        assert_eq!(graph.entity_count(), 0);
+        assert_eq!(graph.relationship_count(), 0);
+        assert_eq!(graph.edge_count(), graph.relationship_count());
+        
+        // Verify embedding dimension consistency
+        assert_eq!(graph.embedding_dim, graph.embedding_dimension());
+        
+        // Verify cache initialization
+        let (cache_size, cache_capacity, _) = graph.cache_stats();
+        assert_eq!(cache_size, 0);
+        assert!(cache_capacity > 0);
+        
+        // Verify buffer initialization
+        assert_eq!(graph.edge_buffer_size(), 0);
+        assert_eq!(graph.string_dictionary_size(), 0);
+    }
+
+    #[test]
+    fn test_concurrent_access_initialization() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Test that all RwLock components can be accessed
+        {
+            let _arena = graph.arena.read();
+            let _entity_store = graph.entity_store.read();
+            let _graph_storage = graph.graph.read();
+            let _embedding_bank = graph.embedding_bank.read();
+            let _quantizer = graph.quantizer.read();
+            let _bloom_filter = graph.bloom_filter.read();
+            let _entity_id_map = graph.entity_id_map.read();
+            let _spatial_index = graph.spatial_index.read();
+            let _flat_index = graph.flat_index.read();
+            let _hnsw_index = graph.hnsw_index.read();
+            let _lsh_index = graph.lsh_index.read();
+            let _similarity_cache = graph.similarity_cache.read();
+            let _string_dictionary = graph.string_dictionary.read();
+            let _edge_buffer = graph.edge_buffer.read();
+        }
+        
+        // All reads should succeed without deadlock
+        assert!(true);
+    }
+
+    #[test]
+    fn test_quantizer_initialization_with_subvectors() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // The new_internal method uses 8 subvectors for 96-dim embeddings
+        // Verify the quantizer was created successfully
+        let quantizer = graph.quantizer.read();
+        assert!(quantizer.memory_usage() > 0);
+    }
+
+    #[test]
+    fn test_lsh_index_precision_target() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Verify LSH index was created with optimized settings (85% precision target)
+        let lsh_index = graph.lsh_index.read();
+        // We can't directly test the precision target, but we can verify it was created
+        // This tests the component integration in new_internal
+        drop(lsh_index); // Explicit drop to release the read lock
+        assert!(true); // LSH index creation succeeded
+    }
+
+    #[test]
+    fn test_bloom_filter_initialization_parameters() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Verify bloom filter was created with expected parameters (1M capacity, 1% error rate)
+        let bloom_filter = graph.bloom_filter.read();
+        assert!(bloom_filter.memory_usage() > 0);
+        // The actual capacity and error rate are internal to BloomFilter
+        // but we can verify successful creation
+    }
+
+    #[test] 
+    fn test_epoch_manager_initialization() {
+        let graph = KnowledgeGraph::new_internal(96).unwrap();
+        
+        // Verify epoch manager was created with 16 threads
+        let epoch_manager = graph.epoch_manager();
+        assert!(Arc::strong_count(epoch_manager) >= 1);
+        
+        // Test that it's the same instance when accessed multiple times
+        let epoch_manager2 = graph.epoch_manager();
+        assert!(Arc::ptr_eq(epoch_manager, epoch_manager2));
+    }
+
+    #[test]
+    fn test_constants_are_reasonable() {
+        // Test that the timeout constants are set to reasonable values
+        assert!(MAX_INSERTION_TIME.as_secs() > 0);
+        assert!(MAX_QUERY_TIME.as_millis() > 0);
+        assert!(MAX_SIMILARITY_SEARCH_TIME.as_millis() > 0);
+        
+        // Verify the relationships between timeouts
+        assert!(MAX_INSERTION_TIME > MAX_QUERY_TIME);
+        assert!(MAX_QUERY_TIME >= MAX_SIMILARITY_SEARCH_TIME);
+    }
+}

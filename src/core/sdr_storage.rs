@@ -250,6 +250,14 @@ impl SDRStorage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
+    use slotmap::SlotMap;
+
+    // Helper function to create test entity key
+    fn create_test_entity_key() -> EntityKey {
+        let mut slot_map = SlotMap::with_key();
+        slot_map.insert(())
+    }
 
     #[test]
     fn test_sdr_creation() {
@@ -259,6 +267,26 @@ mod tests {
         assert_eq!(sdr.total_bits, config.total_bits);
         assert_eq!(sdr.active_bits.len(), config.active_bits);
         assert!(sdr.sparsity() <= config.sparsity + 0.01); // Allow small tolerance
+    }
+
+    #[test]
+    fn test_sdr_creation_empty() {
+        let active_bits = HashSet::new();
+        let sdr = SDR::new(active_bits, 100);
+        
+        assert_eq!(sdr.total_bits, 100);
+        assert_eq!(sdr.active_bits.len(), 0);
+        assert_eq!(sdr.sparsity(), 0.0);
+    }
+
+    #[test]
+    fn test_sdr_creation_full() {
+        let active_bits: HashSet<usize> = (0..100).collect();
+        let sdr = SDR::new(active_bits, 100);
+        
+        assert_eq!(sdr.total_bits, 100);
+        assert_eq!(sdr.active_bits.len(), 100);
+        assert_eq!(sdr.sparsity(), 1.0);
     }
 
     #[test]
@@ -278,8 +306,38 @@ mod tests {
     }
 
     #[test]
-    fn test_sdr_similarity() {
+    fn test_sdr_from_dense_vector_empty() {
         let config = SDRConfig::default();
+        let empty_vector: Vec<f32> = vec![];
+        let sdr = SDR::from_dense_vector(&empty_vector, &config);
+        
+        assert_eq!(sdr.active_bits.len(), 0);
+        assert_eq!(sdr.sparsity(), 0.0);
+    }
+
+    #[test]
+    fn test_sdr_similarity_identical() {
+        let active_bits: HashSet<usize> = [1, 2, 3, 4, 5].iter().cloned().collect();
+        let sdr1 = SDR::new(active_bits.clone(), 100);
+        let sdr2 = SDR::new(active_bits, 100);
+        
+        assert_eq!(sdr1.overlap(&sdr2), 1.0);
+        assert_eq!(sdr1.jaccard_similarity(&sdr2), 1.0);
+        assert_eq!(sdr1.cosine_similarity(&sdr2), 1.0);
+    }
+
+    #[test]
+    fn test_sdr_similarity_disjoint() {
+        let sdr1 = SDR::new([1, 2, 3].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([4, 5, 6].iter().cloned().collect(), 100);
+        
+        assert_eq!(sdr1.overlap(&sdr2), 0.0);
+        assert_eq!(sdr1.jaccard_similarity(&sdr2), 0.0);
+        assert_eq!(sdr1.cosine_similarity(&sdr2), 0.0);
+    }
+
+    #[test]
+    fn test_sdr_similarity_partial_overlap() {
         let sdr1 = SDR::new([1, 2, 3, 4, 5].iter().cloned().collect(), 100);
         let sdr2 = SDR::new([3, 4, 5, 6, 7].iter().cloned().collect(), 100);
         
@@ -287,13 +345,118 @@ mod tests {
         let jaccard = sdr1.jaccard_similarity(&sdr2);
         let cosine = sdr1.cosine_similarity(&sdr2);
         
-        assert!(overlap > 0.0);
-        assert!(jaccard > 0.0);
-        assert!(cosine > 0.0);
+        assert!(overlap > 0.0 && overlap < 1.0);
+        assert!(jaccard > 0.0 && jaccard < 1.0);
+        assert!(cosine > 0.0 && cosine < 1.0);
+        
+        // Verify mathematical correctness
+        assert_eq!(overlap, jaccard); // For SDR, overlap and jaccard are the same
+        assert!((cosine - 0.6).abs() < 0.01); // 3/(sqrt(5)*sqrt(5)) = 0.6
+    }
+
+    #[test]
+    fn test_sdr_similarity_empty_sdrs() {
+        let sdr1 = SDR::new(HashSet::new(), 100);
+        let sdr2 = SDR::new(HashSet::new(), 100);
+        
+        assert_eq!(sdr1.overlap(&sdr2), 0.0);
+        assert_eq!(sdr1.jaccard_similarity(&sdr2), 0.0);
+        assert_eq!(sdr1.cosine_similarity(&sdr2), 0.0);
+    }
+
+    #[test]
+    fn test_sdr_similarity_different_dimensions() {
+        let sdr1 = SDR::new([1, 2, 3].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([1, 2, 3].iter().cloned().collect(), 200);
+        
+        assert_eq!(sdr1.overlap(&sdr2), 0.0);
+        assert_eq!(sdr1.jaccard_similarity(&sdr2), 0.0);
+        assert_eq!(sdr1.cosine_similarity(&sdr2), 0.0);
+    }
+
+    #[test]
+    fn test_sdr_to_dense_vector() {
+        let active_bits: HashSet<usize> = [1, 3, 5].iter().cloned().collect();
+        let sdr = SDR::new(active_bits, 10);
+        let dense = sdr.to_dense_vector();
+        
+        assert_eq!(dense.len(), 10);
+        assert_eq!(dense[1], 1.0);
+        assert_eq!(dense[3], 1.0);
+        assert_eq!(dense[5], 1.0);
+        assert_eq!(dense[0], 0.0);
+        assert_eq!(dense[2], 0.0);
+        assert_eq!(dense[4], 0.0);
+    }
+
+    #[test]
+    fn test_sdr_union() {
+        let sdr1 = SDR::new([1, 2, 3].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([3, 4, 5].iter().cloned().collect(), 100);
+        
+        let union = sdr1.union(&sdr2).unwrap();
+        let expected_bits: HashSet<usize> = [1, 2, 3, 4, 5].iter().cloned().collect();
+        
+        assert_eq!(union.active_bits, expected_bits);
+        assert_eq!(union.total_bits, 100);
+    }
+
+    #[test]
+    fn test_sdr_intersection() {
+        let sdr1 = SDR::new([1, 2, 3, 4].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([3, 4, 5, 6].iter().cloned().collect(), 100);
+        
+        let intersection = sdr1.intersection(&sdr2).unwrap();
+        let expected_bits: HashSet<usize> = [3, 4].iter().cloned().collect();
+        
+        assert_eq!(intersection.active_bits, expected_bits);
+        assert_eq!(intersection.total_bits, 100);
+    }
+
+    #[test]
+    fn test_sdr_union_different_dimensions() {
+        let sdr1 = SDR::new([1, 2, 3].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([3, 4, 5].iter().cloned().collect(), 200);
+        
+        assert!(sdr1.union(&sdr2).is_err());
+    }
+
+    #[test]
+    fn test_sdr_random_with_rng() {
+        let config = SDRConfig::default();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(42);
+        
+        let sdr1 = SDR::random_with_rng(&config, &mut rng);
+        let mut rng2 = rand::rngs::StdRng::seed_from_u64(42);
+        let sdr2 = SDR::random_with_rng(&config, &mut rng2);
+        
+        // Same seed should produce identical SDRs
+        assert_eq!(sdr1.active_bits, sdr2.active_bits);
     }
 
     #[tokio::test]
-    async fn test_sdr_storage() {
+    async fn test_sdr_storage_new() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config.clone());
+        
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 0);
+        assert_eq!(stats.total_entities, 0);
+        assert_eq!(stats.average_sparsity, 0.0);
+        assert_eq!(stats.config.total_bits, config.total_bits);
+    }
+
+    #[tokio::test]
+    async fn test_sdr_storage_new_default() {
+        let storage = SDRStorage::new_default().await.unwrap();
+        let stats = storage.get_statistics().await.unwrap();
+        
+        assert_eq!(stats.total_patterns, 0);
+        assert_eq!(stats.config.total_bits, SDRConfig::default().total_bits);
+    }
+
+    #[tokio::test]
+    async fn test_sdr_storage_store_pattern() {
         let config = SDRConfig::default();
         let storage = SDRStorage::new(config);
         
@@ -304,6 +467,22 @@ mod tests {
         
         let stats = storage.get_statistics().await.unwrap();
         assert_eq!(stats.total_patterns, 1);
+        assert_eq!(stats.total_entities, 0); // No entity associations yet
+    }
+
+    #[tokio::test]
+    async fn test_sdr_storage_multiple_patterns() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        for i in 0..10 {
+            let sdr = SDR::random(&storage.config);
+            let pattern = SDRPattern::new(format!("pattern_{}", i), sdr, format!("concept_{}", i));
+            storage.store_pattern(pattern).await.unwrap();
+        }
+        
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 10);
     }
 
     #[tokio::test]
@@ -311,7 +490,7 @@ mod tests {
         let config = SDRConfig::default();
         let storage = SDRStorage::new(config);
         
-        let entity_key = EntityKey::default();
+        let entity_key = create_test_entity_key();
         let dense_vector = vec![0.5; 100];
         
         let pattern_id = storage.store_dense_vector(
@@ -323,5 +502,359 @@ mod tests {
         let retrieved_pattern = storage.get_entity_pattern(entity_key).await.unwrap();
         assert!(retrieved_pattern.is_some());
         assert_eq!(retrieved_pattern.unwrap().pattern_id, pattern_id);
+        
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 1);
+        assert_eq!(stats.total_entities, 1);
+    }
+
+    #[tokio::test]
+    async fn test_get_entity_pattern_nonexistent() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let entity_key = create_test_entity_key();
+        let result = storage.get_entity_pattern(entity_key).await.unwrap();
+        
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_find_similar_patterns() {
+        let config = SDRConfig {
+            total_bits: 100,
+            active_bits: 10,
+            sparsity: 0.1,
+            overlap_threshold: 0.3,
+        };
+        let storage = SDRStorage::new(config.clone());
+        
+        // Store some patterns with known overlaps
+        let base_bits: HashSet<usize> = [1, 2, 3, 4, 5].iter().cloned().collect();
+        let sdr1 = SDR::new(base_bits.clone(), 100);
+        let pattern1 = SDRPattern::new("pattern1".to_string(), sdr1, "concept1".to_string());
+        storage.store_pattern(pattern1).await.unwrap();
+        
+        // Similar pattern (3 overlapping bits)
+        let similar_bits: HashSet<usize> = [3, 4, 5, 6, 7].iter().cloned().collect();
+        let sdr2 = SDR::new(similar_bits, 100);
+        let pattern2 = SDRPattern::new("pattern2".to_string(), sdr2, "concept2".to_string());
+        storage.store_pattern(pattern2).await.unwrap();
+        
+        // Dissimilar pattern (no overlap)
+        let dissimilar_bits: HashSet<usize> = [10, 11, 12, 13, 14].iter().cloned().collect();
+        let sdr3 = SDR::new(dissimilar_bits, 100);
+        let pattern3 = SDRPattern::new("pattern3".to_string(), sdr3, "concept3".to_string());
+        storage.store_pattern(pattern3).await.unwrap();
+        
+        // Query with pattern similar to pattern1
+        let query_sdr = SDR::new(base_bits, 100);
+        let results = storage.find_similar_patterns(&query_sdr, 10).await.unwrap();
+        
+        assert!(!results.is_empty());
+        // Should find pattern1 as most similar
+        assert_eq!(results[0].0, "pattern1");
+        assert_eq!(results[0].1, 1.0); // Identical
+    }
+
+    #[tokio::test]
+    async fn test_similarity_search() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        // Store a pattern
+        let sdr = SDR::random(&storage.config);
+        let pattern = SDRPattern::new("test_pattern".to_string(), sdr, "test content".to_string());
+        storage.store_pattern(pattern).await.unwrap();
+        
+        let results = storage.similarity_search("test query", 0.0).await.unwrap();
+        // Since we're using a placeholder implementation, we should get some results
+        assert!(!results.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_get_dense_vector() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let entity_key = create_test_entity_key();
+        let original_vector = vec![0.1, 0.9, 0.8, 0.2, 0.7];
+        
+        storage.store_dense_vector(
+            entity_key,
+            &original_vector,
+            "test_concept".to_string(),
+        ).await.unwrap();
+        
+        let retrieved_vector = storage.get_dense_vector(entity_key).await.unwrap();
+        assert!(retrieved_vector.is_some());
+        
+        let dense = retrieved_vector.unwrap();
+        assert!(!dense.is_empty());
+        // The retrieved vector should be a binary representation
+        for value in &dense {
+            assert!(*value == 0.0 || *value == 1.0);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_entity_mappings() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let entity1 = create_test_entity_key();
+        let entity2 = create_test_entity_key();
+        
+        let pattern_id1 = storage.store_dense_vector(
+            entity1,
+            &vec![0.5; 10],
+            "concept1".to_string(),
+        ).await.unwrap();
+        
+        let pattern_id2 = storage.store_dense_vector(
+            entity2,
+            &vec![0.7; 10],
+            "concept2".to_string(),
+        ).await.unwrap();
+        
+        let mappings = storage.get_entity_mappings().await;
+        assert_eq!(mappings.len(), 2);
+        assert_eq!(mappings.get(&pattern_id1).unwrap(), &entity1);
+        assert_eq!(mappings.get(&pattern_id2).unwrap(), &entity2);
+    }
+
+    #[tokio::test]
+    async fn test_compact_storage() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        // Store patterns, some with entity associations
+        let entity_key = create_test_entity_key();
+        let pattern_id1 = storage.store_dense_vector(
+            entity_key,
+            &vec![0.5; 10],
+            "used_concept".to_string(),
+        ).await.unwrap();
+        
+        // Store another pattern without entity association
+        let sdr = SDR::random(&storage.config);
+        let unused_pattern = SDRPattern::new("unused_pattern".to_string(), sdr, "unused_concept".to_string());
+        storage.store_pattern(unused_pattern).await.unwrap();
+        
+        let stats_before = storage.get_statistics().await.unwrap();
+        assert_eq!(stats_before.total_patterns, 2);
+        
+        let removed_count = storage.compact().await.unwrap();
+        assert_eq!(removed_count, 1); // Should remove unused pattern
+        
+        let stats_after = storage.get_statistics().await.unwrap();
+        assert_eq!(stats_after.total_patterns, 1);
+        
+        // Verify the used pattern is still there
+        let retrieved = storage.get_entity_pattern(entity_key).await.unwrap();
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().pattern_id, pattern_id1);
+    }
+
+    #[tokio::test]
+    async fn test_memory_usage() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let initial_usage = storage.memory_usage().await;
+        assert!(initial_usage > 0); // Base overhead
+        
+        // Add some patterns
+        for i in 0..5 {
+            let entity_key = create_test_entity_key();
+            storage.store_dense_vector(
+                entity_key,
+                &vec![0.5; 100],
+                format!("concept_{}", i),
+            ).await.unwrap();
+        }
+        
+        let usage_with_data = storage.memory_usage().await;
+        assert!(usage_with_data > initial_usage);
+    }
+
+    #[tokio::test]
+    async fn test_encode_text_deterministic() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let text = "hello world";
+        let sdr1 = storage.encode_text(text).await.unwrap();
+        let sdr2 = storage.encode_text(text).await.unwrap();
+        
+        // Same text should produce same SDR
+        assert_eq!(sdr1.active_bits, sdr2.active_bits);
+    }
+
+    #[tokio::test]
+    async fn test_store_with_metadata() {
+        let config = SDRConfig::default();
+        let storage = SDRStorage::new(config);
+        
+        let sdr = SDR::random(&storage.config);
+        let pattern_id = storage.store_with_metadata(
+            &sdr,
+            "test content".to_string(),
+            0.8,
+        ).await.unwrap();
+        
+        assert!(pattern_id.starts_with("pattern_"));
+        
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 1);
+    }
+
+    #[tokio::test]
+    async fn test_large_scale_storage() {
+        let config = SDRConfig {
+            total_bits: 1000,
+            active_bits: 50,
+            sparsity: 0.05,
+            overlap_threshold: 0.4,
+        };
+        let storage = SDRStorage::new(config);
+        
+        // Store 100 patterns
+        for i in 0..100 {
+            let entity_key = create_test_entity_key();
+            storage.store_dense_vector(
+                entity_key,
+                &vec![i as f32 / 100.0; 50],
+                format!("concept_{}", i),
+            ).await.unwrap();
+        }
+        
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 100);
+        assert_eq!(stats.total_entities, 100);
+        assert!(stats.average_sparsity > 0.0);
+        assert!(stats.total_active_bits > 0);
+        
+        // Test similarity search with many patterns
+        let query_sdr = SDR::random(&storage.config);
+        let results = storage.find_similar_patterns(&query_sdr, 10).await.unwrap();
+        assert!(results.len() <= 10);
+    }
+
+    // Test SimilarityIndex private methods indirectly through storage operations
+    #[tokio::test]
+    async fn test_similarity_index_operations() {
+        let config = SDRConfig {
+            total_bits: 100,
+            active_bits: 5,
+            sparsity: 0.05,
+            overlap_threshold: 0.2,
+        };
+        let storage = SDRStorage::new(config);
+        
+        // Test adding patterns to similarity index
+        let sdr1 = SDR::new([10, 20, 30, 40, 50].iter().cloned().collect(), 100);
+        let pattern1 = SDRPattern::new("p1".to_string(), sdr1, "c1".to_string());
+        storage.store_pattern(pattern1).await.unwrap();
+        
+        let sdr2 = SDR::new([30, 40, 50, 60, 70].iter().cloned().collect(), 100);
+        let pattern2 = SDRPattern::new("p2".to_string(), sdr2, "c2".to_string());
+        storage.store_pattern(pattern2).await.unwrap();
+        
+        // Test search functionality
+        let query_sdr = SDR::new([10, 20, 30, 35, 45].iter().cloned().collect(), 100);
+        let results = storage.find_similar_patterns(&query_sdr, 10).await.unwrap();
+        
+        assert_eq!(results.len(), 2);
+        // Should find p1 as more similar (3 overlapping bits vs 2)
+        assert_eq!(results[0].0, "p1");
+        assert!(results[0].1 > results[1].1);
+        
+        // Test pattern removal through compaction
+        let removed = storage.compact().await.unwrap();
+        assert_eq!(removed, 2); // Both patterns should be removed as they have no entity associations
+        
+        let empty_results = storage.find_similar_patterns(&query_sdr, 10).await.unwrap();
+        assert!(empty_results.is_empty());
+    }
+
+    // Test mathematical invariants and edge cases
+    #[test]
+    fn test_sdr_mathematical_invariants() {
+        let config = SDRConfig::default();
+        
+        // Test sparsity calculation accuracy
+        for active_count in [0, 1, 10, 100, 1000] {
+            let total_bits = 1000;
+            if active_count <= total_bits {
+                let active_bits: HashSet<usize> = (0..active_count).collect();
+                let sdr = SDR::new(active_bits, total_bits);
+                let expected_sparsity = active_count as f32 / total_bits as f32;
+                assert!((sdr.sparsity() - expected_sparsity).abs() < f32::EPSILON);
+            }
+        }
+        
+        // Test similarity metric bounds
+        let sdr1 = SDR::new([1, 2, 3].iter().cloned().collect(), 100);
+        let sdr2 = SDR::new([4, 5, 6].iter().cloned().collect(), 100);
+        
+        assert!(sdr1.overlap(&sdr2) >= 0.0 && sdr1.overlap(&sdr2) <= 1.0);
+        assert!(sdr1.jaccard_similarity(&sdr2) >= 0.0 && sdr1.jaccard_similarity(&sdr2) <= 1.0);
+        assert!(sdr1.cosine_similarity(&sdr2) >= 0.0 && sdr1.cosine_similarity(&sdr2) <= 1.0);
+    }
+
+    #[test]
+    fn test_sdr_bit_manipulation_edge_cases() {
+        // Test with bits at boundary positions
+        let sdr = SDR::new([0, 999].iter().cloned().collect(), 1000);
+        assert_eq!(sdr.active_bits.len(), 2);
+        assert!(sdr.active_bits.contains(&0));
+        assert!(sdr.active_bits.contains(&999));
+        
+        let dense = sdr.to_dense_vector();
+        assert_eq!(dense[0], 1.0);
+        assert_eq!(dense[999], 1.0);
+        assert_eq!(dense[500], 0.0);
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_storage_operations() {
+        use tokio::task::JoinSet;
+        
+        let config = SDRConfig::default();
+        let storage = Arc::new(SDRStorage::new(config));
+        
+        let mut join_set = JoinSet::new();
+        
+        // Spawn multiple concurrent storage operations
+        for i in 0..10 {
+            let storage_clone = storage.clone();
+            join_set.spawn(async move {
+                let entity_key = create_test_entity_key();
+                let vector = vec![i as f32 / 10.0; 100];
+                storage_clone.store_dense_vector(
+                    entity_key,
+                    &vector,
+                    format!("concurrent_concept_{}", i),
+                ).await.unwrap();
+                entity_key
+            });
+        }
+        
+        let mut entity_keys = Vec::new();
+        while let Some(result) = join_set.join_next().await {
+            entity_keys.push(result.unwrap());
+        }
+        
+        // Verify all operations completed successfully
+        let stats = storage.get_statistics().await.unwrap();
+        assert_eq!(stats.total_patterns, 10);
+        assert_eq!(stats.total_entities, 10);
+        
+        // Verify all entities can be retrieved
+        for entity_key in entity_keys {
+            let pattern = storage.get_entity_pattern(entity_key).await.unwrap();
+            assert!(pattern.is_some());
+        }
     }
 }
