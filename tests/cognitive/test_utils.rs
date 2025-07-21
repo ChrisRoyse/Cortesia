@@ -30,7 +30,7 @@ pub fn create_test_memory_items(activation_levels: Vec<f32>) -> Vec<MemoryItem> 
             activation_level: activation,
             timestamp: Instant::now(),
             importance_score: activation * 0.9,
-            access_count: 1,
+            access_count: 1u32,
             decay_factor: 0.1,
         })
         .collect()
@@ -41,7 +41,7 @@ pub fn create_memory_item(
     content: &str,
     activation_level: f32,
     importance_score: f32,
-    access_count: usize,
+    access_count: u32,
 ) -> MemoryItem {
     MemoryItem {
         content: MemoryContent::Concept(content.to_string()),

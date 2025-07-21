@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod divergent_tests {
     use tokio;
-    use crate::cognitive::divergent::DivergentThinking;
-    use crate::cognitive::types::{PatternResult, DivergentResult, ExplorationPath, CognitivePatternType};
-    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::cognitive::divergent::{DivergentThinking, calculate_concept_similarity, extract_seed_concept, infer_exploration_type, ExplorationType};
+    use llmkg::cognitive::types::{PatternResult, DivergentResult, ExplorationPath, CognitivePatternType};
+    use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
     #[tokio::test]
     async fn test_extract_seed_concept_basic() {
@@ -36,6 +36,22 @@ mod divergent_tests {
         // Test empty query
         let result = thinking.extract_seed_concept("").await;
         assert!(result.is_err(), "Empty query should return error");
+    }
+
+    #[tokio::test]
+    async fn test_seed_concept_extraction() {
+        let test_cases = vec![
+            ("examples of dogs", "dogs"),
+            ("brainstorm about artificial intelligence", "artificial intelligence"),
+            ("creative uses for plastic bottles", "plastic bottles"),
+            ("things related to space exploration", "space exploration"),
+            ("innovative applications of nanotechnology", "nanotechnology"),
+        ];
+        
+        for (query, expected) in test_cases {
+            let result = extract_seed_concept(query).await.unwrap();
+            assert_eq!(result, expected);
+        }
     }
 
     #[tokio::test]
@@ -185,6 +201,53 @@ mod divergent_tests {
                        "All paths should meet creativity threshold: {}", creativity_score);
             }
         }
+    }
+
+    #[test]
+    fn test_concept_similarity() {
+        // High similarity
+        assert!(calculate_concept_similarity("dog", "puppy") > 0.8);
+        assert!(calculate_concept_similarity("car", "automobile") > 0.8);
+        assert!(calculate_concept_similarity("happy", "joyful") > 0.7);
+        
+        // Medium similarity
+        assert!(calculate_concept_similarity("dog", "cat") > 0.4);
+        assert!(calculate_concept_similarity("computer", "laptop") > 0.6);
+        assert!(calculate_concept_similarity("tree", "forest") > 0.5);
+        
+        // Low similarity
+        assert!(calculate_concept_similarity("dog", "quantum") < 0.2);
+        assert!(calculate_concept_similarity("music", "mathematics") < 0.4);
+        assert!(calculate_concept_similarity("ocean", "desert") < 0.3);
+        
+        // Identical concepts
+        assert_eq!(calculate_concept_similarity("test", "test"), 1.0);
+        
+        // Empty strings
+        assert_eq!(calculate_concept_similarity("", "test"), 0.0);
+        assert_eq!(calculate_concept_similarity("test", ""), 0.0);
+        assert_eq!(calculate_concept_similarity("", ""), 0.0);
+    }
+
+    #[test]
+    fn test_exploration_type_inference() {
+        // Example queries
+        assert_eq!(
+            infer_exploration_type("give me examples of machine learning algorithms"),
+            ExplorationType::Examples
+        );
+        
+        // Creative queries
+        assert_eq!(
+            infer_exploration_type("brainstorm innovative uses for blockchain"),
+            ExplorationType::Creative
+        );
+        
+        // Related queries
+        assert_eq!(
+            infer_exploration_type("what concepts are related to quantum computing"),
+            ExplorationType::Related
+        );
     }
 
     // Helper functions

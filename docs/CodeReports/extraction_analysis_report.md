@@ -37,9 +37,24 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** This file requires comprehensive trait testing with multiple implementation variants, focusing on contract compliance and polymorphic behavior validation.
+### Current Test Organization
+**Status**: Tests need proper placement according to Rust testing best practices.
 
-**Unit Testing Suggestions:**
+**Identified Issues**:
+- No existing tests found for this module
+- Need to establish proper test organization for trait implementations
+- Integration tests must be separated from unit tests requiring private access
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/extraction/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/extraction/test_mod.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/extraction/mod.rs`)
 - **Happy Path:** Test each EntityExtractor implementation with well-formed text containing clear entities (e.g., "John Smith visited New York"). Verify entities are extracted with correct properties and confidence scores.
 - **Edge Cases:** 
   - Empty strings and whitespace-only text
@@ -48,7 +63,7 @@
   - Special characters and Unicode text
 - **Error Handling:** Test invalid input scenarios and verify proper Result error propagation from underlying extraction systems.
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/extraction/test_mod.rs`)
 - **Polymorphic behavior:** Create tests that use the EntityExtractor trait with different implementations to ensure consistent behavior across all variants.
 - **Advanced integration:** Test the bridge between simple regex extraction and AdvancedEntityExtractor to verify seamless fallback scenarios.
 
@@ -85,13 +100,29 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** This file requires extensive testing due to its complex NLP pipeline with multiple interdependent components. Focus on end-to-end pipeline testing, individual model validation, and integration with knowledge graph systems.
+### Current Test Organization
+**Status**: Tests need proper placement according to Rust testing best practices.
 
-**Unit Testing Suggestions:**
+**Identified Issues**:
+- No existing tests found for this complex NLP module
+- Complex pipeline with multiple interdependent components requires careful test organization
+- Private model implementations need unit tests within source file
+- Public API pipeline needs integration tests
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/extraction/advanced_nlp.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/extraction/test_advanced_nlp.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/extraction/advanced_nlp.rs`)
 - **Happy Path:** 
   - Test each NER model with texts containing clear examples of their target entity types
-  - Verify AdvancedEntityExtractor pipeline with sample texts containing multiple entity types and relations
   - Test relation extraction with sentences containing clear subject-predicate-object patterns
+  - Test individual component functionality (EntityLinker, CoreferenceResolver, etc.)
 - **Edge Cases:**
   - Empty text and single-word inputs
   - Text with overlapping entity boundaries
@@ -100,7 +131,7 @@
   - Ambiguous pronouns and references for coreference resolution
 - **Error Handling:** Test malformed regex patterns, confidence score boundary conditions, and entity merging with conflicting information.
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/extraction/test_advanced_nlp.rs`)
 - **Pipeline integration:** Test complete text-to-triples conversion with real-world documents, verifying entity extraction accuracy and relation quality.
 - **Knowledge graph integration:** Test entity linking with existing knowledge graph nodes and verify triple generation matches expected schema.
 - **Model coordination:** Test scenarios where multiple NER models identify overlapping entities and verify proper merging and confidence scoring.
@@ -125,10 +156,31 @@ The extraction directory follows a facade pattern where components interact with
 5. Output as structured entities, relations, or knowledge graph triples
 
 ### Directory-Wide Testing Strategy
-The extraction directory requires a comprehensive testing approach that validates both individual component functionality and end-to-end pipeline performance:
 
-**Core Testing Requirements:**
+### Current Test Organization
+**Status**: Entire extraction directory lacks proper test architecture - needs comprehensive testing structure implementation.
+
+**Identified Issues**:
+- No existing test files found for extraction modules
+- Need to establish proper separation between unit and integration tests
+- Complex NLP pipeline requires careful test organization
+- Missing test infrastructure for entity and relation validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source files (`src/extraction/*.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/extraction/test_*.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in respective `src/extraction/*.rs` files)
 - **Contract testing:** Ensure all EntityExtractor implementations maintain consistent behavior and error handling
+- **Individual component testing:** Test each NER model, EntityLinker, and CoreferenceResolver in isolation
+- **Edge case validation:** Test error conditions, boundary cases, and malformed inputs
+
+### Integration Testing Suggestions (place in `tests/extraction/test_*.rs` files)
 - **Pipeline integration testing:** Validate the complete text-to-knowledge-graph conversion process with diverse text samples
 - **Performance testing:** Evaluate extraction speed and memory usage with large documents
 - **Accuracy validation:** Compare extraction results against manually annotated datasets for precision and recall metrics

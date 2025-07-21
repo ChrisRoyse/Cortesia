@@ -58,9 +58,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test both the correctness of delta application and compaction behavior. Focus on concurrent access patterns and compaction edge cases.
+**Overall Approach:** Test both the correctness of delta application and compaction behavior. Focus on concurrent access patterns and compaction edge cases. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/hybrid_graph.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_hybrid_graph.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/hybrid_graph.rs`):**
 
 - **add_edge() and remove_edge():**
   - Happy Path: Add/remove edges, verify they appear/disappear in queries
@@ -77,7 +83,7 @@
   - Edge Cases: Compact empty delta, compact with only deletions
   - Error Handling: Concurrent reads/writes during compaction
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_hybrid_graph.rs`):**
 - Stress test with rapid add/remove operations to trigger multiple compactions
 - Verify performance characteristics remain stable across compactions
 - Test memory usage patterns with various delta sizes
@@ -134,9 +140,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on algorithmic correctness and comparison with the full implementation. Ensure basic functionality works correctly.
+**Overall Approach:** Focus on algorithmic correctness and comparison with the full implementation. Ensure basic functionality works correctly. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/index.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_index.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/index.rs`):**
 
 - **insert():**
   - Happy Path: Insert multiple vectors, verify graph structure
@@ -153,7 +165,7 @@
   - Edge Cases: Check level bounds
   - Error Handling: None needed
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_index.rs`):**
 - Compare results with full HNSW implementation
 - Benchmark performance differences
 - Test with standard ANN datasets
@@ -211,9 +223,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test cache behavior, eviction policies, and quantization effectiveness. Focus on cache hit rates and performance improvements.
+**Overall Approach:** Test cache behavior, eviction policies, and quantization effectiveness. Focus on cache hit rates and performance improvements. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/lru_cache.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_lru_cache.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/lru_cache.rs`):**
 
 - **LRU eviction:**
   - Happy Path: Fill cache, verify oldest entries evicted
@@ -230,7 +248,7 @@
   - Edge Cases: All unique queries (0% hit rate)
   - Error Handling: Cache overflow scenarios
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_lru_cache.rs`):**
 - Measure cache effectiveness with real query patterns
 - Test memory usage with various cache sizes
 - Benchmark performance improvement from caching
@@ -293,9 +311,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test hash distribution, recall/precision trade-offs, and multi-probing effectiveness. Focus on statistical properties and performance characteristics.
+**Overall Approach:** Test hash distribution, recall/precision trade-offs, and multi-probing effectiveness. Focus on statistical properties and performance characteristics. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/lsh.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_lsh.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/lsh.rs`):**
 
 - **Hash signature generation:**
   - Happy Path: Verify hash signatures are well-distributed
@@ -312,7 +336,7 @@
   - Edge Cases: Small datasets, perfect recall scenarios
   - Error Handling: Empty index
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_lsh.rs`):**
 - Benchmark recall vs ground truth on standard datasets
 - Test performance scaling with dataset size
 - Verify multi-table improves recall as expected
@@ -336,9 +360,19 @@
 - The simplified HNSW (index.rs) may be used for testing or specific scenarios
 
 **Directory-Wide Testing Strategy:**
+
+**Test Support Infrastructure (place in `src/test_support/` or similar):**
+- Shared test utilities for generating test data (embeddings, graphs, query patterns)
+- Common performance benchmarking framework for comparing similarity indices
+- Mock data generators for edge cases and stress testing
+- Test fixtures for consistent test environments across modules
+
+**Integration Test Suite (place in `tests/storage/`):**
 - Create benchmark suite comparing all similarity indices (Flat, HNSW, simplified HNSW, LSH)
 - Test cache effectiveness across different indices and query patterns
 - Verify hybrid graph maintains consistency through multiple compaction cycles
 - Integration tests should measure end-to-end query latency with caching
 - Stress tests for concurrent access patterns, especially during hybrid graph compaction
 - Statistical tests for LSH hash distribution and recall characteristics
+
+**CRITICAL VIOLATION WARNING:** Any integration tests that attempt to access private methods or internal state violate Rust testing best practices. Such tests must be moved to `#[cfg(test)]` modules within the respective source files.

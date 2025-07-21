@@ -31,9 +31,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires focused unit testing for data structure creation and conversion utilities, with integration testing for module exports.
+**Overall Approach:** This file requires focused unit testing for data structure creation and conversion utilities, with integration testing for module exports. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/mod.rs`):**
 - **FilteredEmbedding::new()**: 
   - Happy Path: Test creation with valid embedding vector, entity ID, confidence, and filter score
   - Edge Cases: Test with empty embedding vector, zero confidence, negative filter scores
@@ -47,7 +53,7 @@
   - Edge Cases: Test with empty arrays, single-element arrays
   - Error Handling: Verify memory safety with large datasets
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_mod.rs`):**
 - Verify all submodule exports are accessible and functional
 - Test type compatibility between FilteredEmbedding and EntityEmbedding in realistic usage scenarios
 - Create integration tests that use multiple embedding types together in a workflow
@@ -80,9 +86,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires comprehensive testing due to its algorithmic complexity and performance-critical nature. Focus on accuracy preservation, compression ratios, and edge cases in the quantization process.
+**Overall Approach:** This file requires comprehensive testing due to its algorithmic complexity and performance-critical nature. Focus on accuracy preservation, compression ratios, and edge cases in the quantization process. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/quantizer.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_quantizer.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/quantizer.rs`):**
 - **ProductQuantizer::new()**: 
   - Happy Path: Test creation with valid dimensions and subvector counts
   - Edge Cases: Test with dimension not divisible by subvector count, very small/large dimensions
@@ -100,7 +112,7 @@
   - Edge Cases: Test with identical embeddings (should return ~0 distance)
   - Error Handling: Test dimension mismatches, invalid quantized codes
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_quantizer.rs`):**
 - Test full quantization pipeline: train quantizer → encode embeddings → perform similarity search → verify quality
 - Create performance benchmarks measuring compression ratio vs. search quality trade-offs
 - Test concurrent access to quantizer through RwLock in multi-threaded scenarios
@@ -132,9 +144,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires intensive performance and correctness testing, especially for SIMD code paths. Focus on numerical accuracy, performance benchmarks, and hardware compatibility.
+**Overall Approach:** This file requires intensive performance and correctness testing, especially for SIMD code paths. Focus on numerical accuracy, performance benchmarks, and hardware compatibility. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/simd_search.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_simd_search.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/simd_search.rs`):**
 - **precompute_distances()**: 
   - Happy Path: Test distance table generation with known query vectors and codebooks
   - Edge Cases: Test with zero queries, single-dimensional vectors, extreme values
@@ -148,7 +166,7 @@
   - Edge Cases: Test with k larger than available embeddings, k=1, k=all
   - Error Handling: Test with empty embedding sets, invalid k values
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_simd_search.rs`):**
 - Create benchmark tests comparing SIMD vs. scalar performance across different hardware
 - Test end-to-end search pipeline: quantize → precompute → batch search → verify results
 - Validate that SIMD and scalar implementations produce equivalent results within numerical precision
@@ -180,9 +198,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires rigorous mathematical correctness testing and performance validation. Focus on numerical accuracy across different implementations and edge case handling.
+**Overall Approach:** This file requires rigorous mathematical correctness testing and performance validation. Focus on numerical accuracy across different implementations and edge case handling. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/similarity.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_similarity.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/similarity.rs`):**
 - **cosine_similarity()**: 
   - Happy Path: Test with known vectors having calculable similarity (e.g., orthogonal → 0, identical → 1)
   - Edge Cases: Test with zero vectors, unit vectors, very small/large magnitude vectors
@@ -196,7 +220,7 @@
   - Edge Cases: Test with vectors not aligned to SIMD boundaries, small vectors
   - Error Handling: Verify graceful fallback when SIMD not available or beneficial
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_similarity.rs`):**
 - Create performance benchmarks comparing scalar vs. SSE vs. AVX2 implementations
 - Test integration with quantizer for similarity-based clustering during training
 - Validate that auto-dispatch correctly selects optimal implementation based on hardware and vector size
@@ -226,10 +250,21 @@ Files in this directory are used in a layered architecture:
 
 ### Directory-Wide Testing Strategy
 
+**Test Infrastructure Requirements:**
+- **Test Support Module:** Create `src/test_support/embedding_test_utils.rs` for shared test utilities
+- **Common Test Data:** Standardized test embeddings, known similarity pairs, and benchmark datasets
+- **Performance Measurement:** Shared utilities for measuring compression ratios, search latency, and memory usage
+- **SIMD Test Support:** Hardware detection and graceful fallback testing utilities
+
+**Test Placement Guidelines:**
+- **Unit Tests:** Place in `#[cfg(test)]` modules within each source file for private method access
+- **Integration Tests:** Place in `tests/embedding/` directory using only public APIs
+- **Cross-Module Tests:** Tests involving multiple embedding components should be in `tests/embedding/test_integration.rs`
+
 **Comprehensive Integration Testing:** Create end-to-end tests that train quantizers, store embeddings, perform similarity searches, and validate that the complete pipeline maintains accuracy while achieving performance targets.
 
 **Performance Benchmarking:** Establish automated performance tests measuring compression ratios, search latency, and memory usage across different dataset sizes and hardware configurations.
 
 **Hardware Compatibility Testing:** Ensure graceful degradation and correct functionality across different CPU architectures (with and without AVX2/SSE4.1 support).
 
-**Shared Test Utilities:** Create common test embeddings, known similarity pairs, and performance measurement utilities that can be reused across all embedding module tests.
+**Violation Prevention:** Integration tests must not access private methods or internal state - this violates Rust testing best practices and should trigger build warnings.

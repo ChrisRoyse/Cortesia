@@ -32,14 +32,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Focus on integration testing due to the orchestrative nature of this component, with unit tests for individual methods and comprehensive error handling validation.
+**Overall Approach:** Focus on integration testing due to the orchestrative nature of this component, with unit tests for individual methods and comprehensive error handling validation. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/mod.rs`):**
 - **Happy Path:** Test successful federation manager creation, database registration, and simple federated query execution with mock databases.
 - **Edge Cases:** Test behavior with empty database lists, invalid query parameters, network timeouts, and partial database failures.
 - **Error Handling:** Verify proper error propagation when registry initialization fails, when no databases are available, and when all query executions fail.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_mod.rs`):**
 - Create tests that register multiple mock databases and verify that federated queries are correctly distributed and results properly merged.
 - Test similarity search functionality with various threshold values and result limits across multiple databases.
 
@@ -69,14 +75,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Heavy unit testing focused on serialization/deserialization, type conversion, and business logic validation within data structures.
+**Overall Approach:** Heavy unit testing focused on serialization/deserialization, type conversion, and business logic validation within data structures. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/types.rs`):**
 - **Happy Path:** Test serialization/deserialization of all major types, query type merge strategy determination, and capability checking logic.
 - **Edge Cases:** Test handling of empty collections, invalid enum values, extreme numeric values, and malformed JSON during deserialization.
 - **Error Handling:** Verify proper validation of database capabilities, timeout handling, and invalid query parameter combinations.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_types.rs`):**
 - Test complete query workflow from FederatedQuery creation through result processing to ensure type compatibility across the entire pipeline.
 
 ---
@@ -104,14 +116,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Complex integration testing due to distributed nature, with focused unit tests on transaction state management and timeout handling.
+**Overall Approach:** Complex integration testing due to distributed nature, with focused unit tests on transaction state management and timeout handling. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/coordinator.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_coordinator.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/coordinator.rs`):**
 - **Happy Path:** Test transaction creation, operation addition, state transitions, and successful two-phase commit scenarios.
 - **Edge Cases:** Test transaction timeouts, database unavailability during commit phases, partial failures, and transaction abortion scenarios.
 - **Error Handling:** Verify proper handling of prepare phase failures, commit phase timeouts, database disconnections, and cleanup of expired transactions.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_coordinator.rs`):**
 - Test complete distributed transaction scenarios with multiple mock databases, including failure recovery and consistency checking.
 - Create scenarios where some databases fail during prepare or commit phases to test rollback mechanisms.
 
@@ -140,14 +158,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Extensive unit testing focused on each merge strategy, with comprehensive edge case coverage for data transformation and combination logic.
+**Overall Approach:** Extensive unit testing focused on each merge strategy, with comprehensive edge case coverage for data transformation and combination logic. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/merger.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_merger.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/merger.rs`):**
 - **Happy Path:** Test each merge strategy with well-formed input data, verify correct sorting, deduplication, and result formatting.
 - **Edge Cases:** Test merging with empty result sets, single database results, duplicate entities across databases, and malformed data structures.
 - **Error Handling:** Verify proper handling of parsing failures, incompatible data formats, and missing required fields in raw results.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_merger.rs`):**
 - Test complete merge workflows with realistic multi-database result sets to ensure proper end-to-end result processing.
 - Create scenarios with mixed success/failure results to test robust merge behavior.
 
@@ -176,14 +200,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Mixed unit and integration testing focusing on registration lifecycle, health monitoring accuracy, and discovery mechanism validation.
+**Overall Approach:** Mixed unit and integration testing focusing on registration lifecycle, health monitoring accuracy, and discovery mechanism validation. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/registry.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_registry.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/registry.rs`):**
 - **Happy Path:** Test database registration/unregistration, health check caching, capability filtering, and statistics calculation.
 - **Edge Cases:** Test behavior with expired health cache, unavailable databases, invalid capability requirements, and concurrent access patterns.
 - **Error Handling:** Verify proper handling of database registration failures, health check timeouts, and discovery source unavailability.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_registry.rs`):**
 - Test complete database lifecycle from discovery through registration to health monitoring and eventual deregistration.
 - Create scenarios with multiple databases having different capabilities to test filtering and routing logic.
 
@@ -212,14 +242,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Complex integration testing for execution workflows, with focused unit testing on planning logic, optimization rules, and capability matching.
+**Overall Approach:** Complex integration testing for execution workflows, with focused unit testing on planning logic, optimization rules, and capability matching. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/federation/router.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/federation/test_router.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/federation/router.rs`):**
 - **Happy Path:** Test query plan generation, capability-based database filtering, execution step creation, and optimization rule application.
 - **Edge Cases:** Test planning with no capable databases, execution with partial failures, timeout handling, and concurrent execution scenarios.
 - **Error Handling:** Verify proper handling of database unavailability, execution timeouts, planning failures, and optimization errors.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/federation/test_router.rs`):**
 - Test complete query execution workflows from planning through parallel execution to result collection.
 - Create scenarios with mixed database capabilities to test intelligent routing and fallback mechanisms.
 
@@ -259,14 +295,23 @@ The files interact through well-defined interfaces, with the main entry point be
 
 A comprehensive testing strategy for the federation directory should include:
 
-1. **Unit Testing**: Each component should have extensive unit tests focusing on their specific responsibilities, error handling, and edge cases. Priority should be given to types validation, merge logic correctness, and transaction state management.
+**Test Placement Architecture:**
+- **Unit Tests**: Place in `#[cfg(test)]` modules within each source file (`src/federation/*.rs`) for testing private methods and internal logic
+- **Integration Tests**: Place in separate test files (`tests/federation/test_*.rs`) for testing public APIs and cross-component interactions
+- **Shared Test Infrastructure**: Create common test utilities in `src/test_support/federation/` for mock databases and test fixtures
 
-2. **Integration Testing**: Critical integration tests should cover complete federated query workflows, distributed transaction scenarios, and multi-database health monitoring. These tests should use mock databases to simulate various failure scenarios.
+**Testing Layers:**
+
+1. **Unit Testing**: Each component should have extensive unit tests focusing on their specific responsibilities, error handling, and edge cases. Priority should be given to types validation, merge logic correctness, and transaction state management. **CRITICAL**: Unit tests accessing private methods must be in source files, not in `tests/` directory.
+
+2. **Integration Testing**: Critical integration tests should cover complete federated query workflows, distributed transaction scenarios, and multi-database health monitoring. These tests should use mock databases to simulate various failure scenarios and only test public APIs.
 
 3. **Performance Testing**: Load testing should validate the parallel execution capabilities, caching effectiveness, and scalability limits of the federation system.
 
 4. **Chaos Testing**: Introduce database failures, network partitions, and timeout scenarios to test the resilience and recovery capabilities of the distributed system.
 
-5. **Shared Testing Infrastructure**: Create a comprehensive mock database framework that can simulate different database types, capabilities, and failure modes. This should include configurable latency, failure rates, and capacity constraints.
+5. **Shared Testing Infrastructure**: Create a comprehensive mock database framework in `src/test_support/federation/` that can simulate different database types, capabilities, and failure modes. This should include configurable latency, failure rates, and capacity constraints.
+
+**Test Architecture Violations Warning**: Any tests in the `tests/` directory that attempt to access private methods or fields will fail compilation and violate Rust testing best practices. Ensure all private access tests are properly placed in `#[cfg(test)]` modules within source files.
 
 The federation directory represents a sophisticated distributed systems implementation that requires careful testing to ensure reliability, consistency, and performance in production environments.

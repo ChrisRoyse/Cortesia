@@ -36,13 +36,21 @@
 
 #### 3. Testing Strategy
 
-**Unit Testing Suggestions:**
+**Overall Approach:** The adaptive learning system requires comprehensive testing of its central orchestration capabilities. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/system.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_system.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/system.rs`):**
 - **Learning Cycle Execution:** Test complete learning cycles with various performance scenarios
 - **Target Identification:** Test learning target generation from different analysis inputs
 - **Emergency Response:** Test rapid response to various emergency scenarios
 - **Integration Coordination:** Test coordination between multiple learning components
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_system.rs`):**
 - **End-to-End Learning:** Test complete learning cycles over extended periods
 - **Emergency Response Effectiveness:** Verify emergency adaptations resolve actual system issues
 - **Performance Improvement Validation:** Confirm learning cycles actually improve system metrics
@@ -74,13 +82,21 @@
 
 #### 3. Testing Strategy
 
-**Unit Testing Suggestions:**
+**Overall Approach:** The graph optimization agent requires testing of its orchestration and management capabilities. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/optimization_agent/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_optimization_agent.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/optimization_agent/mod.rs`):**
 - **Optimization Cycle Execution:** Test complete optimization cycles with various graph configurations
 - **Safety Validation:** Test safety mechanisms prevent harmful optimizations
 - **Rollback Functionality:** Test rollback mechanisms work correctly under failure conditions
 - **Impact Prediction Accuracy:** Verify prediction models accurately estimate optimization impact
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_optimization_agent.rs`):**
 - **Real Graph Optimization:** Test optimizations on actual knowledge graphs with performance measurement
 - **Safety Under Load:** Test safety mechanisms under high-concurrency optimization scenarios
 - **Long-term Optimization Effectiveness:** Verify optimizations provide sustained performance improvements
@@ -112,13 +128,21 @@
 
 #### 3. Testing Strategy
 
-**Unit Testing Suggestions:**
+**Overall Approach:** The optimization type system requires comprehensive testing of type integrity and calculations. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/optimization_agent/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_optimization_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/optimization_agent/types.rs`):**
 - **Type System Integrity:** Test all types can be constructed and used correctly
 - **Performance Metric Calculations:** Test performance scoring and comparison algorithms
 - **Safety Rule Validation:** Test safety rule evaluation and threshold management
 - **Priority Calculation:** Test optimization priority scoring algorithms
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_optimization_types.rs`):**
 - **Cross-Component Type Compatibility:** Verify types work correctly across optimization components
 - **Serialization Integrity:** Test complex optimization state can be serialized and restored
 
@@ -149,13 +173,21 @@
 
 #### 3. Testing Strategy
 
-**Unit Testing Suggestions:**
+**Overall Approach:** The execution engine requires testing of its rollback management and impact prediction capabilities. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/optimization_agent/execution_engine.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_execution_engine.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/optimization_agent/execution_engine.rs`):**
 - **Rollback Mechanism Testing:** Test checkpoint creation and restoration under various scenarios
 - **Prediction Model Accuracy:** Test individual and ensemble prediction model performance
 - **Performance Degradation Detection:** Test degradation detection algorithms with various metric patterns
 - **State Capture and Restoration:** Test graph state capture and restoration accuracy
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_execution_engine.rs`):**
 - **End-to-End Optimization Safety:** Test complete optimization cycles with rollback triggers
 - **Prediction Model Training:** Test prediction models improve accuracy over time
 - **System Recovery:** Test system recovery from various failure and degradation scenarios
@@ -205,7 +237,18 @@ The learning system demonstrates sophisticated interaction patterns:
 
 ### Comprehensive Testing Strategy
 
-The learning directory requires multi-dimensional testing:
+**Overall Directory Approach:** The learning directory requires multi-dimensional testing with strict adherence to test placement rules. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Rules for Learning Directory:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within source files (`src/learning/*/`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_*.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Test Support Infrastructure:**
+- **Test Utilities:** Common test utilities should be in `tests/learning/test_utils.rs`
+- **Mock Objects:** Shared mocks for learning components in `tests/learning/mocks.rs`
+- **Test Data:** Standardized test datasets for learning algorithms
 
 #### 1. Algorithm Testing
 - **Biological Plausibility:** Verify learning follows neuroscientific principles

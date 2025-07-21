@@ -34,15 +34,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on data structure integrity, default value correctness, and type system consistency.
+**Overall Approach:** Focus on data structure integrity, default value correctness, and type system consistency. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/types.rs`):**
 - **Default Value Validation:** Test that all default implementations provide reasonable starting values
 - **Happy Path:** Verify that all types can be constructed with valid data and serialize correctly
 - **Edge Cases:** Test boundary conditions for thresholds, time windows, and resource limits
 - **Error Handling:** Test invalid configurations and constraint violations
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_types.rs`):**
 - **Cross-Component Compatibility:** Verify that types work correctly across different adaptive learning components
 - **Serialization Integrity:** Test that complex nested structures maintain integrity through serialization
 
@@ -75,15 +81,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Requires testing of performance calculation algorithms, anomaly detection accuracy, and real-time monitoring capabilities.
+**Overall Approach:** Requires testing of performance calculation algorithms, anomaly detection accuracy, and real-time monitoring capabilities. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/monitoring.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_monitoring.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/monitoring.rs`):**
 - **Score Calculation:** Test performance scoring algorithms with known input data
 - **Happy Path:** Test monitoring with normal performance data and verify correct metrics
 - **Edge Cases:** Test with extreme performance values, empty data sets, and rapid data changes
 - **Error Handling:** Test handling of invalid performance data and system failures
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_monitoring.rs`):**
 - **Real-time Monitoring:** Test continuous monitoring under varying system loads
 - **Anomaly Detection Accuracy:** Verify that anomalies are correctly identified and false positives minimized
 - **Alert System Integration:** Test that performance alerts trigger appropriate system responses
@@ -117,15 +129,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on feedback aggregation accuracy, temporal weighting correctness, and correlation analysis validity.
+**Overall Approach:** Focus on feedback aggregation accuracy, temporal weighting correctness, and correlation analysis validity. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/feedback.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_feedback.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/feedback.rs`):**
 - **Feedback Weighting:** Test that temporal decay and type-based weighting work correctly
 - **Happy Path:** Test feedback aggregation with various feedback types and verify correct calculations
 - **Edge Cases:** Test with no feedback, very old feedback, and extreme satisfaction scores
 - **Error Handling:** Test handling of malformed feedback and invalid correlation calculations
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_feedback.rs`):**
 - **End-to-End Feedback Processing:** Test complete feedback lifecycle from collection to analysis
 - **Correlation Accuracy:** Verify that performance-satisfaction correlations accurately reflect reality
 - **Temporal Decay Validation:** Test that feedback influence correctly decreases over time
@@ -159,15 +177,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Requires testing of scheduling algorithms, resource management, and adaptive behavior under varying system conditions.
+**Overall Approach:** Requires testing of scheduling algorithms, resource management, and adaptive behavior under varying system conditions. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/scheduler.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_scheduler.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/scheduler.rs`):**
 - **Priority Scheduling:** Test that tasks are executed in correct priority order
 - **Happy Path:** Test normal task scheduling and execution flow
 - **Edge Cases:** Test with resource exhaustion, emergency conditions, and concurrent task limits
 - **Error Handling:** Test handling of failed tasks, resource conflicts, and invalid schedules
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_scheduler.rs`):**
 - **Adaptive Scheduling:** Test that scheduler correctly adapts to changing system conditions
 - **Resource Management:** Verify that resource constraints are properly enforced
 - **Emergency Response:** Test rapid scheduling of emergency tasks under crisis conditions
@@ -195,13 +219,25 @@ The adaptive learning subsystem demonstrates sophisticated interaction patterns:
 
 ### Comprehensive Testing Strategy for Adaptive Learning
 
-The adaptive learning subsystem requires multi-layered testing:
+The adaptive learning subsystem requires multi-layered testing with proper test placement:
 
+**Test Support Infrastructure:**
+- **Mock Learning Tasks:** Create test doubles for various learning task types in `tests/learning/test_support/`
+- **Performance Data Generators:** Synthetic performance data for testing monitoring components
+- **Feedback Simulators:** Automated feedback generation for testing feedback aggregation
+- **Resource Constraint Simulators:** Mock resource availability scenarios
+
+**Multi-Layer Testing Approach:**
 1. **Real-time Performance Testing:** Verify monitoring system accurately tracks performance under load
 2. **Feedback Loop Validation:** Test that feedback actually improves system performance over time
 3. **Adaptive Behavior Testing:** Verify scheduler adapts appropriately to changing conditions
 4. **Emergency Response Testing:** Test rapid response to system crises and performance degradation
 5. **Long-term Learning Validation:** Verify continuous improvement over extended periods
 6. **Resource Constraint Testing:** Ensure system respects resource limits while maintaining performance
+
+**Test Placement Best Practices:**
+- **Unit tests accessing private methods:** Place in `#[cfg(test)]` modules within source files
+- **Integration tests using public APIs:** Place in separate test files under `tests/learning/`
+- **Cross-component integration tests:** Place in `tests/learning/test_adaptive_learning_integration.rs`
 
 The adaptive learning subsystem represents a sophisticated implementation of closed-loop learning that continuously monitors, analyzes, and improves system performance based on both user feedback and internal metrics.

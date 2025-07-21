@@ -40,17 +40,36 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** This file requires comprehensive integration testing due to its role as the main system interface, plus unit testing for individual components.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Tests need to be organized according to Rust testing best practices
+
+**Identified Issues**:
+- Main MCP server requires both unit tests for private methods and integration tests for public API
+- Complex internal state management needs private access testing
+- Public MCP protocol compliance requires integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_mod.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/mod.rs`)
 - **Happy Path:** Test each handler method with valid inputs (knowledge_search with valid query, entity_lookup with existing entity)
 - **Edge Cases:** Empty queries, non-existent entities, invalid parameters, memory limits, cache behavior
 - **Error Handling:** Network failures, embedding generation failures, GraphRAG engine errors
+- **Private method testing:** Internal cache management, performance stats updates, embedding generation
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_mod.rs`)
 - **End-to-end MCP workflow:** Create request → handle_request → verify response format and content
 - **Performance monitoring:** Verify statistics are updated correctly across multiple operations
 - **Cache integration:** Test embedding cache hit/miss scenarios with the BatchProcessor
+- **MCP protocol compliance:** Verify all responses match MCP specification
 
 ---
 
@@ -80,16 +99,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on serialization/deserialization testing and data structure validation.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Type definitions primarily need unit testing for serialization/deserialization
+
+**Identified Issues**:
+- Serialization/deserialization logic requires comprehensive testing
+- Type validation needs private access for internal validation methods
+- Cross-module compatibility testing requires integration tests
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/shared_types.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_shared_types.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/shared_types.rs`)
 - **Happy Path:** Serialize and deserialize all struct types with typical data
 - **Edge Cases:** Empty fields, very large strings, null values, malformed JSON schemas
 - **Error Handling:** Invalid JSON, missing required fields, type mismatches
+- **Private validation:** Internal validation methods and constraint checking
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_shared_types.rs`)
 - **Cross-module compatibility:** Ensure types work correctly with actual MCP server implementations
 - **JSON schema validation:** Verify that tool input schemas properly validate real tool usage
+- **Protocol compliance:** Verify types match MCP specification requirements
 
 ---
 
@@ -122,17 +160,36 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Requires sophisticated integration testing due to neural and cognitive components, plus unit testing for individual algorithms.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Complex brain-inspired server requires both unit and integration testing approaches
+
+**Identified Issues**:
+- Neural processing pipelines need private access for internal state testing
+- Cognitive reasoning algorithms require private method access
+- End-to-end brain-inspired workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/brain_inspired_server.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_brain_inspired_server.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/brain_inspired_server.rs`)
 - **Happy Path:** Neural canonicalization, structure prediction, cognitive reasoning with standard inputs
 - **Edge Cases:** Empty text inputs, malformed structures, unsupported cognitive patterns, embedding generation failures
 - **Error Handling:** Neural server unavailability, cognitive orchestrator failures, temporal graph errors
+- **Private algorithms:** Internal neural processing, cognitive pattern matching, canonicalization logic
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_brain_inspired_server.rs`)
 - **Neural pipeline:** End-to-end testing of the full neural storage pipeline
 - **Cognitive reasoning:** Test different reasoning strategies and pattern types
 - **Temporal consistency:** Verify temporal metadata and versioning work correctly
+- **Brain-inspired workflows:** Complete cognitive processing workflows through public API
 
 ---
 
@@ -163,17 +220,36 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Requires extensive distributed system testing, mathematical algorithm validation, and federation protocol testing.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Federation server requires both unit testing for algorithms and integration testing for distributed operations
+
+**Identified Issues**:
+- Mathematical algorithms need private access for internal computation testing
+- Federation logic requires private method access for state management
+- Multi-database scenarios require integration testing across systems
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/federated_server.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_federated_server.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/federated_server.rs`)
 - **Happy Path:** Each mathematical operation (PageRank, centrality), cross-database queries, temporal operations
 - **Edge Cases:** Database unavailability, network partitions, version conflicts, mathematical edge cases
 - **Error Handling:** Federation failures, math engine errors, temporal query failures
+- **Private algorithms:** Internal mathematical computations, federation state management
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_federated_server.rs`)
 - **Multi-database scenarios:** Test federation across 2-5 databases with different schemas
 - **Performance validation:** Verify mathematical operations produce correct results
 - **Temporal consistency:** Test version management and temporal queries across databases
+- **Federation protocols:** End-to-end distributed operations through public API
 
 ---
 

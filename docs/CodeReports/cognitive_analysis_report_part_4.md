@@ -34,22 +34,39 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module is primarily a high-level integration task. The goal is to verify that the interface correctly translates and shuttles data between the cognitive and learning systems. This requires creating mock versions of both the cognitive system (to provide feedback) and the learning system (to provide optimizations).
-*   **Unit Testing Suggestions:**
-    *   **`CognitiveFeedbackProcessor::process_feedback`:**
-        *   **Happy Path:** Create a `LearningPerformanceData` object that indicates low accuracy. Call `process_feedback` and, using a mock, assert that the `trigger_optimization_feedback` method was called.
-        *   **Edge Cases:** Test with performance data that is good (no triggers should fire) and data where multiple thresholds are crossed (multiple triggers should fire).
-*   **Integration Testing Suggestions:**
-    *   **End-to-End Feedback and Optimization Loop:**
-        *   **Scenario:** This is the most important test. It verifies the complete, round-trip communication between the two systems via the interface.
-        *   **Test:**
-            1.  Instantiate the `CognitiveLearningInterface` with a mock `Phase4LearningSystem`.
-            2.  **Step 1 (Cognitive -> Learning):** Call `process_cognitive_feedback` with a `LearningPerformanceData` object that indicates a specific performance problem.
-            3.  **Step 2 (Learning -> Cognitive):** Configure the mock `Phase4LearningSystem` to return a specific `CognitiveOptimization` in response to the feedback from Step 1.
-            4.  Call `apply_learning_optimizations`.
-        *   **Verification:**
-            1.  Assert that the call in Step 1 correctly triggered the appropriate method on the mock learning system.
-            2.  Assert that the `CognitiveOptimization` returned by `apply_learning_optimizations` in Step 2 is the one that was configured in the mock, proving that the interface successfully retrieved the optimization.
+### Current Test Organization
+**Status**: Integration interface testing requires cross-system validation - complex mocking and round-trip communication testing.
+
+**Identified Issues**:
+- Feedback processing functions need unit tests for trigger logic validation
+- Cross-system integration requires complex mock coordination
+- Interface translation logic may need access to internal processing methods
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/cognitive_learning_interface.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_integration.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/cognitive_learning_interface.rs`)
+*   **`CognitiveFeedbackProcessor::process_feedback`:**
+    *   **Happy Path:** Create a `LearningPerformanceData` object that indicates low accuracy. Call `process_feedback` and, using a mock, assert that the `trigger_optimization_feedback` method was called.
+    *   **Edge Cases:** Test with performance data that is good (no triggers should fire) and data where multiple thresholds are crossed (multiple triggers should fire).
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_integration.rs`)
+*   **End-to-End Feedback and Optimization Loop:**
+    *   **Scenario:** This is the most important test. It verifies the complete, round-trip communication between the two systems via the interface.
+    *   **Test:**
+        1.  Instantiate the `CognitiveLearningInterface` with a mock `Phase4LearningSystem`.
+        2.  **Step 1 (Cognitive -> Learning):** Call `process_cognitive_feedback` with a `LearningPerformanceData` object that indicates a specific performance problem.
+        3.  **Step 2 (Learning -> Cognitive):** Configure the mock `Phase4LearningSystem` to return a specific `CognitiveOptimization` in response to the feedback from Step 1.
+        4.  Call `apply_learning_optimizations`.
+    *   **Verification:**
+        1.  Assert that the call in Step 1 correctly triggered the appropriate method on the mock learning system.
+        2.  Assert that the `CognitiveOptimization` returned by `apply_learning_optimizations` in Step 2 is the one that was configured in the mock, proving that the interface successfully retrieved the optimization.
 ### File Analysis: `src/cognitive/phase4_integration/mod.rs`
 
 **1. Purpose and Functionality**
@@ -69,7 +86,28 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** This file contains no executable logic and therefore does not require its own unit tests. Its correctness is implicitly tested by the compiler. If other modules can successfully import and use the re-exported types like `Phase4CognitiveSystem`, then this file is working as intended.
+### Current Test Organization
+**Status**: Module aggregator requires minimal testing - primarily compilation validation and API accessibility verification.
+
+**Identified Issues**:
+- No executable logic requiring functional testing
+- Module re-export correctness validated through compilation
+- Public API accessibility needs verification
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_integration_mod.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/mod.rs`)
+*   No unit testing required for pure module aggregation and re-exports.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_integration_mod.rs`)
+*   **API Accessibility Verification:** Compilation-based testing to verify that re-exported types like `Phase4CognitiveSystem` are accessible and can be imported by external modules.
 ### File Analysis: `src/cognitive/phase4_integration/orchestrator.rs`
 
 **1. Purpose and Functionality**
@@ -95,23 +133,40 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module should focus on the logic that modifies behavior based on learning inputs. The goal is to verify that given a set of learning insights, the orchestrator's strategic decisions (like pattern weighting and ensemble selection) change in the expected way.
-*   **Unit Testing Suggestions:**
-    *   **`get_learning_informed_weights`:**
-        *   **Happy Path:** Create a `LearningInsights` object that indicates `Divergent` thinking is highly effective. Call the function and assert that the weight for `Divergent` in the returned `HashMap` is significantly higher than its default value.
-    *   **`get_recommended_ensemble`:**
-        *   **Happy Path:** Create an `EnsembleRule` that is specific to a "test_context". Call `get_recommended_ensemble` with this context and assert that the returned pattern combination matches the one defined in the rule.
-        *   **Edge Cases:** Call the function with a context that has no specific rule. Assert that it correctly returns the default, balanced ensemble.
-*   **Integration Testing Suggestions:**
-    *   **End-to-End Learning and Adaptation Loop:**
-        *   **Scenario:** This is the core integration test. It verifies that a performance outcome correctly influences future decisions.
-        *   **Test:**
-            1.  Instantiate the `LearningEnhancedOrchestrator`.
-            2.  **Step 1:** Call `learn_from_execution` multiple times for the `Convergent` pattern with `success=false` and low `quality_score`.
-            3.  **Step 2:** Create a `LearningInsights` object that reflects this poor performance (low effectiveness for `Convergent`).
-            4.  **Step 3:** Call `update_learning_insights` with this new data.
-            5.  **Step 4:** Call `get_learning_informed_weights`.
-        *   **Verification:** Assert that the weight for the `Convergent` pattern in the map returned by Step 4 is now lower than its default value, proving that the system has successfully "learned" from the poor performance and is now less likely to choose that pattern.
+### Current Test Organization
+**Status**: Learning-enhanced orchestration testing requires behavioral change validation - complex learning insight integration and strategy modification.
+
+**Identified Issues**:
+- Learning insight integration functions need unit tests for weight modification logic
+- Ensemble recommendation logic may require access to internal rule evaluation
+- End-to-end learning loops require complex state tracking and validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/orchestrator.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_orchestrator.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/orchestrator.rs`)
+*   **`get_learning_informed_weights`:**
+    *   **Happy Path:** Create a `LearningInsights` object that indicates `Divergent` thinking is highly effective. Call the function and assert that the weight for `Divergent` in the returned `HashMap` is significantly higher than its default value.
+*   **`get_recommended_ensemble`:**
+    *   **Happy Path:** Create an `EnsembleRule` that is specific to a "test_context". Call `get_recommended_ensemble` with this context and assert that the returned pattern combination matches the one defined in the rule.
+    *   **Edge Cases:** Call the function with a context that has no specific rule. Assert that it correctly returns the default, balanced ensemble.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_orchestrator.rs`)
+*   **End-to-End Learning and Adaptation Loop:**
+    *   **Scenario:** This is the core integration test. It verifies that a performance outcome correctly influences future decisions.
+    *   **Test:**
+        1.  Instantiate the `LearningEnhancedOrchestrator`.
+        2.  **Step 1:** Call `learn_from_execution` multiple times for the `Convergent` pattern with `success=false` and low `quality_score`.
+        3.  **Step 2:** Create a `LearningInsights` object that reflects this poor performance (low effectiveness for `Convergent`).
+        4.  **Step 3:** Call `update_learning_insights` with this new data.
+        5.  **Step 4:** Call `get_learning_informed_weights`.
+    *   **Verification:** Assert that the weight for the `Convergent` pattern in the map returned by Step 4 is now lower than its default value, proving that the system has successfully "learned" from the poor performance and is now less likely to choose that pattern.
 ### File Analysis: `src/cognitive/phase4_integration/performance.rs`
 
 **1. Purpose and Functionality**
@@ -138,23 +193,40 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module is focused on data aggregation and calculation. Tests should involve creating a history of mock `PerformanceData` objects and then calling the analysis functions to verify that they produce the correct statistical results.
-*   **Unit Testing Suggestions:**
-    *   **`update_current_metrics`:**
-        *   **Happy Path:** Create a `performance_history` with a known set of `PerformanceData` objects. Call `update_current_metrics` and assert that the `CurrentPerformance` struct contains the correctly calculated averages for the recent data points.
-    *   **`get_performance_improvement`:**
-        *   **Happy Path:** Set a `PerformanceBaseline` with a known score. Then, populate the history in a way that results in a known `CurrentPerformance` score. Call `get_performance_improvement` and assert that it returns the correct difference.
-    *   **`detect_anomalies`:**
-        *   **Happy Path:** Create a history where the most recent `PerformanceData` point has a significantly lower score than the previous one. Call `detect_anomalies` and assert that it correctly identifies and returns a "Performance drop detected" message.
-*   **Integration Testing Suggestions:**
-    *   **Integration with `LearningEnhancedOrchestrator`:**
-        *   **Scenario:** Verify that the performance data is correctly recorded after a reasoning task.
-        *   **Test:**
-            1.  Instantiate a `CognitivePerformanceTracker`.
-            2.  Instantiate a `LearningEnhancedOrchestrator` (or a mock of it that produces a valid `PerformanceData` result).
-            3.  Execute a reasoning task.
-            4.  Take the resulting `PerformanceData` and pass it to the tracker's `record_performance` method.
-        *   **Verification:** Inspect the tracker's internal `performance_history` and assert that the new data point has been successfully added. This confirms the link between the orchestrator's output and the tracker's input.
+### Current Test Organization
+**Status**: Performance tracking testing requires statistical validation - complex data aggregation and calculation with anomaly detection.
+
+**Identified Issues**:
+- Statistical calculation functions need unit tests for accuracy verification
+- Performance data aggregation may require access to internal history structures
+- Anomaly detection logic needs edge case testing for threshold validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/performance.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_performance.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/performance.rs`)
+*   **`update_current_metrics`:**
+    *   **Happy Path:** Create a `performance_history` with a known set of `PerformanceData` objects. Call `update_current_metrics` and assert that the `CurrentPerformance` struct contains the correctly calculated averages for the recent data points.
+*   **`get_performance_improvement`:**
+    *   **Happy Path:** Set a `PerformanceBaseline` with a known score. Then, populate the history in a way that results in a known `CurrentPerformance` score. Call `get_performance_improvement` and assert that it returns the correct difference.
+*   **`detect_anomalies`:**
+    *   **Happy Path:** Create a history where the most recent `PerformanceData` point has a significantly lower score than the previous one. Call `detect_anomalies` and assert that it correctly identifies and returns a "Performance drop detected" message.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_performance.rs`)
+*   **Integration with `LearningEnhancedOrchestrator`:**
+    *   **Scenario:** Verify that the performance data is correctly recorded after a reasoning task.
+    *   **Test:**
+        1.  Instantiate a `CognitivePerformanceTracker`.
+        2.  Instantiate a `LearningEnhancedOrchestrator` (or a mock of it that produces a valid `PerformanceData` result).
+        3.  Execute a reasoning task.
+        4.  Take the resulting `PerformanceData` and pass it to the tracker's `record_performance` method.
+    *   **Verification:** Inspect the tracker's internal `performance_history` and assert that the new data point has been successfully added. This confirms the link between the orchestrator's output and the tracker's input.
 ---
 ### 3. File Analysis: `src/cognitive/phase4_integration/system.rs`
 
@@ -207,14 +279,32 @@ The primary data flow is initiated by a call to `execute_enhanced_query()`:
 
 **f. Testing Strategy**
 
-*   **Unit Tests**:
-    *   Verify the `new()` constructor correctly wires up all injected dependencies.
-    *   Test `create_performance_data` to ensure it accurately translates a `Phase3QueryResult` into the `PerformanceData` format.
-    *   Test `assess_learning_benefits` using a mock `CognitivePerformanceTracker` to validate that its analysis and recommendations are correct under various performance scenarios (improvement, degradation, stagnation).
-*   **Integration Tests**:
-    *   The most crucial integration test is for the `execute_enhanced_query` flow. This requires mocking all major sub-components. The test must verify that the components are invoked in the correct sequence and that the data flows between them as expected.
-    *   A dedicated test should cover the `trigger_adaptation` logic. It should simulate performance data that crosses an adaptation threshold and assert that the `AdaptationEngine` is correctly invoked.
-    *   Another test should validate the full feedback loop: call `integrate_learning_feedback` with specific data, then call `execute_enhanced_query` and assert that the new learned insights are being used (e.g., by inspecting the arguments passed to the mock orchestrator).
+### Current Test Organization
+**Status**: System-level integration testing requires complex orchestration - highest level cognitive system with full feedback loop validation.
+
+**Identified Issues**:
+- Constructor dependency wiring needs validation in source file
+- Complex multi-component orchestration requires extensive mocking coordination
+- Feedback loop testing spans multiple architectural boundaries and requires careful state tracking
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/system.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_system.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/system.rs`)
+*   Verify the `new()` constructor correctly wires up all injected dependencies.
+*   Test `create_performance_data` to ensure it accurately translates a `Phase3QueryResult` into the `PerformanceData` format.
+*   Test `assess_learning_benefits` using a mock `CognitivePerformanceTracker` to validate that its analysis and recommendations are correct under various performance scenarios (improvement, degradation, stagnation).
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_system.rs`)
+*   The most crucial integration test is for the `execute_enhanced_query` flow. This requires mocking all major sub-components. The test must verify that the components are invoked in the correct sequence and that the data flows between them as expected.
+*   A dedicated test should cover the `trigger_adaptation` logic. It should simulate performance data that crosses an adaptation threshold and assert that the `AdaptationEngine` is correctly invoked.
+*   Another test should validate the full feedback loop: call `integrate_learning_feedback` with specific data, then call `execute_enhanced_query` and assert that the new learned insights are being used (e.g., by inspecting the arguments passed to the mock orchestrator).
 ---
 ### 4. File Analysis: `src/cognitive/phase4_integration/types.rs`
 
@@ -273,10 +363,29 @@ This file contains no executable logic; it only defines data structures. However
 
 **f. Testing Strategy**
 
-Since this file contains only type definitions, there is no logic to test directly. However, the types themselves form the basis for testing the components that use them.
+### Current Test Organization
+**Status**: Type definitions require minimal direct testing - primarily serialization validation and test helper creation.
 
+**Identified Issues**:
+- Type definition correctness validated through compilation
+- Serialization/deserialization testing needed for data transfer objects
+- Complex type construction may need helper factories for testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase4_integration/types.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase4_types.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase4_integration/types.rs`)
 *   **Serialization/Deserialization Tests**: For any struct marked with `#[derive(Serialize, Deserialize)]` (like `LearningBenefitAssessment`), a unit test should be written to ensure that it can be correctly serialized to a format like JSON and then deserialized back into its original form without data loss.
 *   **Test Data Factories**: A common pattern for testing systems with complex DTOs is to create a "test factory" or "builder" module. This module would provide helper functions to easily construct valid instances of these types (e.g., `fn create_test_performance_data() -> PerformanceData`) for use in other unit and integration tests. This avoids cluttering the main tests with complex object setup.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase4_types.rs`)
+*   No integration testing required for pure type definitions.
 ---
 ## Directory-Level Summary: `src/cognitive/`
 

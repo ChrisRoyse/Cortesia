@@ -468,11 +468,16 @@ impl LateralThinking {
             "who" | "whom" | "whose" | "type" | "types" | "kind" | "kinds" | "about" |
             "can" | "could" | "should" | "would" | "will" | "was" | "were" | "been" |
             "being" | "have" | "has" | "had" | "do" | "does" | "did" | "many" | "much" |
-            "some" | "any" | "are" | "examples" | "instances"
+            "some" | "any" | "are" | "examples" | "instances" | "between" | "connections"
         )
     }
     
     fn calculate_concept_relevance(&self, entity_concept: &str, query_concept: &str) -> f32 {
+        // Handle empty strings
+        if entity_concept.is_empty() || query_concept.is_empty() {
+            return 0.0;
+        }
+        
         if entity_concept.to_lowercase().contains(&query_concept.to_lowercase()) {
             1.0
         } else if query_concept.to_lowercase().contains(&entity_concept.to_lowercase()) {
@@ -727,26 +732,80 @@ struct BridgeCandidate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+
     #[test]
-    fn test_lateral_query_parsing() {
-        let lateral = LateralThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
-        );
+    fn test_calculate_concept_relevance() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
         
-        // Test would check query parsing logic
-        assert_eq!(lateral.clean_concept("  Hello World!  "), "hello world");
-        assert!(lateral.is_stop_word("the"));
-        assert!(!lateral.is_stop_word("creativity"));
+        // Test exact matches
+        assert!(thinking.calculate_concept_relevance("dog", "dog") > 0.9);
+        assert_eq!(thinking.calculate_concept_relevance("dog", "dog"), 1.0);
+        
+        // Test substring matches
+        assert!(thinking.calculate_concept_relevance("entity_dog", "dog") > 0.7);
+        assert!(thinking.calculate_concept_relevance("dog", "entity_dog") > 0.5);
+        
+        // Test word overlap
+        assert!(thinking.calculate_concept_relevance("machine learning", "learning algorithms") > 0.0);
+        assert!(thinking.calculate_concept_relevance("artificial intelligence", "intelligence systems") > 0.0);
+        
+        // Test no relevance
+        assert_eq!(thinking.calculate_concept_relevance("car", "fish"), 0.0);
+        assert_eq!(thinking.calculate_concept_relevance("unrelated", "concepts"), 0.0);
+        
+        // Test empty strings
+        assert_eq!(thinking.calculate_concept_relevance("", "test"), 0.0);
+        assert_eq!(thinking.calculate_concept_relevance("test", ""), 0.0);
     }
-    
+
     #[test]
-    fn test_concept_relevance() {
-        let lateral = LateralThinking::new(
-            Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap()),
-        );
+    fn test_concept_relevance_word_overlap() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
         
-        assert_eq!(lateral.calculate_concept_relevance("dog", "dog"), 1.0);
-        assert!(lateral.calculate_concept_relevance("machine learning", "learning") > 0.5);
+        // Test word overlap similarity
+        assert!(thinking.calculate_concept_relevance("machine learning", "learning algorithms") > 0.0);
+        assert!(thinking.calculate_concept_relevance("artificial intelligence", "intelligence systems") > 0.0);
+        
+        // Test exact substring matching
+        assert!(thinking.calculate_concept_relevance("artificial intelligence", "intelligence") > 0.7);
+        assert!(thinking.calculate_concept_relevance("neural network", "network") > 0.7);
+    }
+
+    #[test]
+    fn test_clean_concept() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
+        
+        // Test cleaning and stop word removal
+        assert_eq!(thinking.clean_concept("  The dog and the cat  "), "dog cat");
+        assert_eq!(thinking.clean_concept("How is science related to art?"), "science art");
+        assert_eq!(thinking.clean_concept("connections between music and mathematics"), "music mathematics");
+        assert_eq!(thinking.clean_concept("What are the types of learning?"), "learning");
+    }
+
+    #[test]
+    fn test_is_stop_word() {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384).unwrap());
+        let thinking = LateralThinking::new(graph);
+        
+        // Test stop words
+        assert!(thinking.is_stop_word("the"));
+        assert!(thinking.is_stop_word("and"));
+        assert!(thinking.is_stop_word("is"));
+        assert!(thinking.is_stop_word("how"));
+        assert!(thinking.is_stop_word("related"));
+        assert!(thinking.is_stop_word("what?"));
+        assert!(thinking.is_stop_word("between"));
+        assert!(thinking.is_stop_word("connections"));
+        
+        // Test non-stop words
+        assert!(!thinking.is_stop_word("science"));
+        assert!(!thinking.is_stop_word("art"));
+        assert!(!thinking.is_stop_word("learning"));
+        assert!(!thinking.is_stop_word("intelligence"));
     }
 }
+

@@ -34,15 +34,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Requires extensive testing of meta-learning capabilities, algorithm selection logic, and transfer learning effectiveness.
+**Overall Approach:** Requires extensive testing of meta-learning capabilities, algorithm selection logic, and transfer learning effectiveness. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/meta_learning.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_meta_learning.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/meta_learning.rs`):**
 - **Algorithm Selection:** Test that appropriate algorithms are selected for different task types
 - **Happy Path:** Test meta-learning with simple task sequences and verify strategy improvements
 - **Edge Cases:** Test with dissimilar domains, insufficient learning history, and conflicting optimization criteria
 - **Error Handling:** Test handling of failed learning attempts and invalid domain mappings
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_meta_learning.rs`):**
 - **Cross-Algorithm Learning:** Test that insights from one algorithm improve performance of others
 - **Long-term Meta-Learning:** Verify that the system improves its learning strategies over extended periods
 - **Transfer Learning Validation:** Test knowledge transfer between related and unrelated domains
@@ -75,15 +81,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on pattern detection accuracy, neural network integration, and performance optimization through caching.
+**Overall Approach:** Focus on pattern detection accuracy, neural network integration, and performance optimization through caching. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/neural_pattern_detection.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_neural_pattern_detection.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/neural_pattern_detection.rs`):**
 - **Pattern Detection Accuracy:** Test each detector with known patterns and verify correct identification
 - **Happy Path:** Test pattern detection with clear, well-defined patterns
 - **Edge Cases:** Test with noisy data, minimal patterns, and edge-case timing scenarios
 - **Error Handling:** Test neural network failures, timeout scenarios, and invalid input data
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_neural_pattern_detection.rs`):**
 - **Neural Server Integration:** Test end-to-end pattern detection using actual neural models
 - **Cache Performance:** Verify that caching improves performance without affecting accuracy
 - **Multi-Pattern Detection:** Test detection of multiple simultaneous patterns
@@ -116,15 +128,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Requires testing of optimization algorithms, parameter constraint handling, and convergence behavior.
+**Overall Approach:** Requires testing of optimization algorithms, parameter constraint handling, and convergence behavior. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/parameter_tuning.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_parameter_tuning.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/parameter_tuning.rs`):**
 - **Optimization Algorithms:** Test each optimization strategy with known parameter landscapes
 - **Happy Path:** Test parameter tuning with simple optimization problems
 - **Edge Cases:** Test with conflicting constraints, unbounded parameter spaces, and resource exhaustion
 - **Error Handling:** Test convergence failures, constraint violations, and resource limit exceeded scenarios
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_parameter_tuning.rs`):**
 - **System-Wide Optimization:** Test end-to-end parameter tuning across multiple components
 - **Performance Validation:** Verify that tuned parameters actually improve system performance
 - **Resource Management:** Test that tuning respects resource budgets and time constraints
@@ -154,15 +172,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires minimal direct testing but integration testing to ensure proper module organization.
+**Overall Approach:** This file requires minimal direct testing but integration testing to ensure proper module organization. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/adaptive_learning/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_adaptive_learning_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/adaptive_learning/mod.rs`):**
 - **Module Accessibility:** Test that all re-exported types are accessible without compilation errors
 - **Happy Path:** Verify that importing adaptive learning components works correctly
 - **Edge Cases:** Test that backward compatibility aliases function properly
 - **Error Handling:** Verify that attempting to import non-existent types fails appropriately
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_adaptive_learning_mod.rs`):**
 - **Cross-Module Integration:** Test that adaptive learning components work together seamlessly
 - **External Integration:** Verify that other learning systems can properly integrate with adaptive learning
 
@@ -189,12 +213,23 @@ The analysis reveals a hierarchical learning architecture:
 
 ### Expanded Directory-Wide Testing Strategy
 
-The additional files require enhanced testing approaches:
+**Test Placement Architecture:** All learning module tests must follow strict placement rules to avoid testing architecture violations:
 
-1. **Neural Integration Testing:** Verify that neural network components work correctly with pattern detection
-2. **Meta-Learning Validation:** Test that meta-learning actually improves learning performance over time
-3. **Optimization Convergence:** Ensure parameter tuning algorithms converge to optimal solutions
-4. **System-Wide Coordination:** Test that all learning components work harmoniously together
-5. **Performance Benchmarking:** Establish that the learning system improves overall performance metrics
+- **Unit Tests in Source Files:** Tests requiring private access must be in `#[cfg(test)]` modules within `src/learning/` files
+- **Integration Tests in Test Directory:** Public API tests must be in separate `tests/learning/` files
+- **Test Support Infrastructure:** Common test utilities should be in `src/test_support/` for unit tests and `tests/common/` for integration tests
+
+**Enhanced Testing Approaches:**
+
+1. **Neural Integration Testing:** Verify that neural network components work correctly with pattern detection (integration tests in `tests/learning/`)
+2. **Meta-Learning Validation:** Test that meta-learning actually improves learning performance over time (requires both unit and integration tests)
+3. **Optimization Convergence:** Ensure parameter tuning algorithms converge to optimal solutions (unit tests for algorithms, integration tests for system impact)
+4. **System-Wide Coordination:** Test that all learning components work harmoniously together (integration tests only - public APIs)
+5. **Performance Benchmarking:** Establish that the learning system improves overall performance metrics (dedicated benchmark tests)
+
+**Critical Violation Warnings:**
+- **NEVER access private methods from integration tests** - this violates Rust testing best practices
+- **NEVER place tests requiring private access in `tests/` directory** - use `#[cfg(test)]` modules instead
+- **ALWAYS use public APIs for integration tests** - this ensures proper encapsulation
 
 The learning directory demonstrates a comprehensive approach to adaptive intelligence that combines multiple learning paradigms, neural pattern recognition, automated optimization, and meta-learning capabilities.

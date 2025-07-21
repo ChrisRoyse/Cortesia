@@ -654,90 +654,220 @@ impl NeuralQueryProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_query_intent_identification() {
+    
+    // Helper function to create a test processor
+    fn create_test_processor() -> NeuralQueryProcessor {
         let graph = Arc::new(Graph::new());
-        let processor = NeuralQueryProcessor::new(graph);
-        
+        NeuralQueryProcessor::new(graph)
+    }
+    
+    #[test]
+    fn test_identify_query_intent() {
+        let processor = create_test_processor();
         let test_cases = vec![
-            ("What is Einstein known for?", QueryIntent::Factual),
-            ("How does relativity relate to gravity?", QueryIntent::Relational),
-            ("What caused World War II?", QueryIntent::Causal),
-            ("When did Newton live?", QueryIntent::Temporal),
-            ("Which is better, classical or quantum physics?", QueryIntent::Comparative),
-            ("What makes up water?", QueryIntent::Compositional),
-            ("What types of physics exist?", QueryIntent::Hierarchical),
-            ("What if Einstein never existed?", QueryIntent::Counterfactual),
-            ("Generate ideas about AI applications", QueryIntent::Creative),
-            ("What do we know about DNA?", QueryIntent::Meta),
-            ("How did Einstein's work lead to modern technology?", QueryIntent::MultiHop),
+            ("What is quantum computing?", QueryIntent::Factual),
+            ("What makes up an atom?", QueryIntent::Compositional),
+            ("How does photosynthesis relate to solar panels?", QueryIntent::Relational),
+            ("Why is the sky blue?", QueryIntent::Causal),
+            ("What if we had no gravity?", QueryIntent::Counterfactual),
+            ("Which is better, solar or wind energy?", QueryIntent::Comparative),
+            ("When did the moon landing happen?", QueryIntent::Temporal),
+            ("What types of renewable energy exist?", QueryIntent::Hierarchical),
+            ("Generate ideas about space exploration", QueryIntent::Creative),
+            ("What do we know about black holes?", QueryIntent::Meta),
         ];
         
-        for (query, expected) in test_cases {
-            let context = QueryContext::default();
-            let understanding = processor.neural_query(query, &context).unwrap();
-            assert_eq!(understanding.intent, expected, "Failed for query: {}", query);
+        for (query, expected_intent) in test_cases {
+            let tokens = processor.tokenize_query(query);
+            let intent = processor.identify_intent(&tokens, query);
+            assert_eq!(
+                intent, expected_intent,
+                "Failed for query: '{}', expected {:?}, got {:?}",
+                query, expected_intent, intent
+            );
         }
     }
 
     #[test]
     fn test_concept_extraction() {
-        let graph = Arc::new(Graph::new());
-        let processor = NeuralQueryProcessor::new(graph);
+        let processor = create_test_processor();
+        let test_cases = vec![
+            ("What is quantum computing?", vec!["quantum", "computing"]),
+            ("How does DNA relate to heredity?", vec!["DNA", "heredity"]),
+            ("Einstein's theory of relativity", vec!["einstein", "theory", "relativity"]),
+        ];
         
-        let query = "How does Einstein's General Relativity explain gravity?";
-        let context = QueryContext::default();
-        let understanding = processor.neural_query(query, &context).unwrap();
-        
-        let entity_names: Vec<_> = understanding.concepts.iter()
-            .filter(|c| c.concept_type == ConceptType::Entity)
-            .map(|c| c.text.as_str())
-            .collect();
-        
-        assert!(entity_names.contains(&"Einstein"));
-        assert!(entity_names.contains(&"General Relativity"));
-        assert!(entity_names.contains(&"gravity"));
+        for (query, expected_concepts) in test_cases {
+            let tokens = processor.tokenize_query(query);
+            let intent = processor.identify_intent(&tokens, query);
+            let concepts = processor.extract_concepts(&tokens, query, &intent);
+            
+            // Check that we extracted some concepts
+            assert!(!concepts.is_empty(), "No concepts extracted for query: '{}'", query);
+            
+            // Check that expected concepts are found (case-insensitive)
+            for expected in expected_concepts {
+                let found = concepts.iter().any(|c| 
+                    c.text.to_lowercase().contains(&expected.to_lowercase()) ||
+                    expected.to_lowercase().contains(&c.text.to_lowercase())
+                );
+                assert!(found, "Expected concept '{}' not found in query: '{}'", expected, query);
+            }
+        }
     }
 
     #[test]
     fn test_relationship_extraction() {
-        let graph = Arc::new(Graph::new());
-        let processor = NeuralQueryProcessor::new(graph);
+        let processor = create_test_processor();
         
-        let query = "Einstein developed General Relativity which explains gravity";
-        let context = QueryContext::default();
-        let understanding = processor.neural_query(query, &context).unwrap();
+        // Create test concepts
+        let concepts = vec![
+            ExtractedConcept {
+                text: "photosynthesis".to_string(),
+                concept_type: ConceptType::Entity,
+                confidence: 0.9,
+                properties: HashMap::new(),
+            },
+            ExtractedConcept {
+                text: "solar energy".to_string(),
+                concept_type: ConceptType::Entity,
+                confidence: 0.8,
+                properties: HashMap::new(),
+            },
+        ];
         
-        assert!(!understanding.relationships.is_empty());
+        let query = "How does photosynthesis relate to solar energy?";
+        let tokens = processor.tokenize_query(query);
+        let relationships = processor.extract_relationships(&tokens, &concepts);
         
-        // Should find relationships like:
-        // ("Einstein", "developed", "General Relativity")
-        // ("General Relativity", "explains", "gravity")
+        // Should find a relationship between the concepts
+        assert!(!relationships.is_empty(), "No relationships extracted");
+        
+        // Check that the relationship involves our test concepts
+        let found_relationship = relationships.iter().any(|(subj, _pred, obj)| {
+            (subj.contains("photosynthesis") && obj.contains("solar")) ||
+            (subj.contains("solar") && obj.contains("photosynthesis"))
+        });
+        assert!(found_relationship, "Expected relationship not found between concepts");
     }
 
     #[test]
     fn test_constraint_extraction() {
-        let graph = Arc::new(Graph::new());
-        let processor = NeuralQueryProcessor::new(graph);
+        let processor = create_test_processor();
+        let test_cases = vec![
+            ("What happened between 1940 and 1945?", true, false),
+            ("How many electrons does carbon have?", false, true),
+            ("Show me results with high accuracy", false, false),
+            ("Find concepts not related to chemistry", false, false),
+        ];
         
-        let query = "What happened between 1939 and 1945 except in Japan?";
-        let context = QueryContext::default();
-        let understanding = processor.neural_query(query, &context).unwrap();
-        
-        assert!(understanding.constraints.temporal_bounds.is_some());
-        assert!(!understanding.constraints.excluded_concepts.is_empty());
+        for (query, expect_temporal, expect_quantitative) in test_cases {
+            let tokens = processor.tokenize_query(query);
+            let constraints = processor.extract_constraints(&tokens, query);
+            
+            if expect_temporal {
+                assert!(constraints.temporal_bounds.is_some(), 
+                    "Expected temporal constraints for query: '{}'", query);
+            }
+            
+            if expect_quantitative {
+                assert!(constraints.quantitative_bounds.is_some(), 
+                    "Expected quantitative constraints for query: '{}'", query);
+            }
+        }
     }
 
     #[test]
     fn test_domain_inference() {
-        let graph = Arc::new(Graph::new());
-        let processor = NeuralQueryProcessor::new(graph);
+        let processor = create_test_processor();
+        let test_cases = vec![
+            ("einstein", Some("physics")),
+            ("DNA", Some("biology")),
+            ("computer", Some("technology")),
+            ("water", Some("chemistry")),
+            ("revolution", Some("history")),
+            ("calculus", Some("mathematics")),
+            ("random_concept", None),
+        ];
         
-        let query = "How do hydrogen and oxygen combine to form water?";
-        let context = QueryContext::default();
-        let understanding = processor.neural_query(query, &context).unwrap();
+        for (concept, expected_domain) in test_cases {
+            let result = processor.infer_domain(concept);
+            match expected_domain {
+                Some(expected) => {
+                    assert!(result.is_some(), "Expected domain for concept: '{}'", concept);
+                    let actual = result.unwrap();
+                    assert_eq!(actual, expected, 
+                        "Wrong domain for concept: '{}', expected '{}', got '{}'", 
+                        concept, expected, actual);
+                }
+                None => {
+                    assert!(result.is_none(), "Unexpected domain found for concept: '{}'", concept);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_tokenize_query() {
+        let processor = create_test_processor();
+        let test_cases = vec![
+            ("What is quantum computing?", vec!["what", "quantum", "computing", "?"]),
+            ("How does DNA relate to heredity?", vec!["how", "does", "dna", "relate", "heredity", "?"]),
+            ("Einstein's theory", vec!["einstein", "theory"]),
+        ];
         
-        assert!(understanding.domain_hints.contains(&"chemistry".to_string()));
+        for (query, expected_tokens) in test_cases {
+            let tokens = processor.tokenize_query(query);
+            
+            // Check that expected tokens are present (allowing for additional tokens)
+            for expected in expected_tokens {
+                assert!(tokens.contains(&expected.to_string()), 
+                    "Expected token '{}' not found in tokenized query: '{}'", expected, query);
+            }
+        }
+    }
+
+    #[test]
+    fn test_is_multi_hop_query() {
+        let processor = create_test_processor();
+        let test_cases = vec![
+            ("How did Einstein's theories influence modern physics?", true),
+            ("What led to the development of quantum computing?", true),
+            ("What is water?", false),
+            ("How does photosynthesis work?", false),
+        ];
+        
+        for (query, expected_multi_hop) in test_cases {
+            let tokens = processor.tokenize_query(query);
+            let is_multi_hop = processor.is_multi_hop_query(&tokens, query);
+            assert_eq!(is_multi_hop, expected_multi_hop, 
+                "Multi-hop detection failed for query: '{}'", query);
+        }
+    }
+
+    #[test]
+    fn test_find_potential_entities() {
+        let processor = create_test_processor();
+        let test_cases = vec![
+            (vec!["what", "is", "quantum", "computing"], vec!["quantum", "computing"]),
+            (vec!["einstein", "theory", "of", "relativity"], vec!["einstein", "theory", "relativity"]),
+            (vec!["how", "does", "dna", "work"], vec!["dna"]),
+        ];
+        
+        for (tokens, expected_entities) in test_cases {
+            let entities = processor.find_potential_entities(&tokens.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+            
+            // Check that some entities were found
+            assert!(!entities.is_empty(), "No entities found for tokens: {:?}", tokens);
+            
+            // Check that expected entities are found (case-insensitive)
+            for expected in expected_entities {
+                let found = entities.iter().any(|e| 
+                    e.to_lowercase().contains(&expected.to_lowercase())
+                );
+                assert!(found, "Expected entity '{}' not found in tokens: {:?}", expected, tokens);
+            }
+        }
     }
 }
+

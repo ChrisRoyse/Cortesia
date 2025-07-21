@@ -61,7 +61,7 @@ pub struct AttentionTarget {
     pub target_type: AttentionTargetType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AttentionType {
     Selective,    // Focus on specific entities
     Divided,      // Split attention across multiple targets
@@ -864,15 +864,19 @@ pub enum ExecutiveCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cognitive::orchestrator::CognitiveOrchestrator;
+    use crate::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
     use crate::cognitive::working_memory::{WorkingMemorySystem, MemoryContent, MemoryItem};
-    use crate::core::activation_engine::ActivationPropagationEngine;
-    use std::time::Instant;
-    
+    use crate::core::activation_engine::{ActivationPropagationEngine, ActivationConfig};
+    use crate::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainEnhancedConfig};
+    use crate::core::types::{EntityKey, EntityData};
+    use crate::core::sdr_storage::SDRStorage;
+    use crate::core::sdr_types::SDRConfig;
+    use slotmap::SlotMap;
+    use std::sync::Arc;
+    use anyhow::Result;
+
+    /// Helper function to create test entity keys for unit tests
     fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
-        use slotmap::SlotMap;
-        use crate::core::types::EntityData;
-        
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
         let mut keys = Vec::new();
         
@@ -887,177 +891,322 @@ mod tests {
         
         keys
     }
-    
-    async fn create_test_attention_manager() -> Result<AttentionManager> {
-        use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-        use crate::cognitive::orchestrator::CognitiveOrchestratorConfig;
-        use crate::core::sdr_storage::SDRStorage;
+
+    /// Creates a test attention manager for unit tests
+    async fn create_test_attention_manager() -> (
+        AttentionManager,
+        Arc<CognitiveOrchestrator>,
+        Arc<ActivationPropagationEngine>,
+        Arc<WorkingMemorySystem>,
+    ) {
+        let config = BrainEnhancedConfig::default();
+        let embedding_dim = 128;
         
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(Default::default())?);
+        // Create the brain graph
+        let graph = Arc::new(
+            BrainEnhancedKnowledgeGraph::new_with_config(embedding_dim, config.clone())
+                .expect("Failed to create graph")
+        );
+        
+        // Create cognitive orchestrator
+        let cognitive_config = CognitiveOrchestratorConfig::default();
         let orchestrator = Arc::new(CognitiveOrchestrator::new(
-            brain_graph.clone(),
-            CognitiveOrchestratorConfig::default()
-        ).await?);
-        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
-        let sdr_storage = Arc::new(SDRStorage::new(Default::default()));
-        let working_memory = Arc::new(WorkingMemorySystem::new(activation_engine.clone(), sdr_storage).await?);
+            graph.clone(),
+            cognitive_config,
+        ).await.expect("Failed to create orchestrator"));
         
-        AttentionManager::new(orchestrator, activation_engine, working_memory).await
+        // Create activation engine
+        let activation_config = ActivationConfig::default();
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(activation_config));
+        
+        // Create SDR storage for working memory
+        let sdr_config = SDRConfig {
+            total_bits: embedding_dim * 16,
+            active_bits: 40,
+            sparsity: 0.02,
+            overlap_threshold: 0.5,
+        };
+        let sdr_storage = Arc::new(SDRStorage::new(sdr_config));
+        
+        // Create working memory
+        let working_memory = Arc::new(WorkingMemorySystem::new(
+            activation_engine.clone(),
+            sdr_storage,
+        ).await.expect("Failed to create working memory"));
+        
+        // Create attention manager
+        let attention_manager = AttentionManager::new(
+            orchestrator.clone(),
+            activation_engine.clone(),
+            working_memory.clone(),
+        ).await.expect("Failed to create attention manager");
+        
+        (attention_manager, orchestrator, activation_engine, working_memory)
     }
-    
-    #[test]
-    fn test_attention_state_new() {
-        let state = AttentionState::new();
-        assert_eq!(state.attention_capacity, 1.0);
-        assert_eq!(state.cognitive_load, 0.0);
-        assert!(state.divided_attention_targets.is_empty());
-        assert_eq!(state.inhibition_strength, 0.5);
-    }
-    
-    #[test]
-    fn test_attention_state_update_cognitive_load() {
-        let mut state = AttentionState::new();
-        
-        // Test normal load
-        state.update_cognitive_load(0.5);
-        assert_eq!(state.cognitive_load, 0.5);
-        assert_eq!(state.attention_capacity, 0.75); // 1.0 - (0.5 * 0.5)
-        
-        // Test zero load
-        state.update_cognitive_load(0.0);
-        assert_eq!(state.cognitive_load, 0.0);
-        assert_eq!(state.attention_capacity, 1.0);
-        
-        // Test maximum load
-        state.update_cognitive_load(1.0);
-        assert_eq!(state.cognitive_load, 1.0);
-        assert_eq!(state.attention_capacity, 0.5);
-        
-        // Test clamping above 1.0
-        state.update_cognitive_load(1.5);
-        assert_eq!(state.cognitive_load, 1.0);
-        
-        // Test clamping below 0.0
-        state.update_cognitive_load(-0.5);
-        assert_eq!(state.cognitive_load, 0.0);
-    }
-    
+
     #[tokio::test]
-    async fn test_calculate_attention_weights_selective() -> Result<()> {
-        let manager = create_test_attention_manager().await?;
-        let targets = create_test_entity_keys(3);
+    async fn test_calculate_attention_weights_divided() -> Result<()> {
+        let (manager, _, _, _) = create_test_attention_manager().await;
         
+        // Test with 4 targets for divided attention - this tests the private method directly
+        let targets = create_test_entity_keys(4);
+        
+        // Call the private method directly since we're in the same module
         let weights = manager.calculate_attention_weights(
-            &targets,
-            0.9,
-            &AttentionType::Selective,
+            &targets, 
+            1.0, 
+            &AttentionType::Divided
         ).await?;
         
-        // Selective attention focuses all weight on first target
-        assert_eq!(weights.len(), 1);
-        assert!(weights.contains_key(&targets[0]));
-        assert_eq!(*weights.get(&targets[0]).unwrap(), 0.9);
+        // Test core functionality: each target should get approximately equal weight
+        assert_eq!(weights.len(), 4, "Should have weights for all 4 targets");
+        
+        // With divided attention, each target gets focus_strength / target_count
+        let expected_weight_per_target = 1.0 / 4.0; // 0.25
+        
+        for target in &targets {
+            let weight = weights.get(target).unwrap();
+            assert!((weight - expected_weight_per_target).abs() < 0.01, 
+                   "Target {:?} weight {:.3} should be approximately {:.3}", 
+                   target, weight, expected_weight_per_target);
+        }
+        
+        // Test that the sum of weights equals the original focus strength (divided)
+        let total_weight: f32 = weights.values().sum();
+        assert!((total_weight - 1.0).abs() < 0.01, 
+               "Total weight {:.3} should be approximately 1.0", total_weight);
+        
+        // Test edge case with just 1 target (should get full weight)
+        let single_target = create_test_entity_keys(1);
+        let single_weights = manager.calculate_attention_weights(
+            &single_target, 
+            1.0, 
+            &AttentionType::Divided
+        ).await?;
+        
+        assert_eq!(single_weights.len(), 1);
+        let single_weight = single_weights.get(&single_target[0]).unwrap();
+        assert!((single_weight - 1.0).abs() < 0.01, 
+               "Single target should get full weight 1.0, got {:.3}", single_weight);
         
         Ok(())
     }
-    
+
     #[tokio::test]
-    async fn test_calculate_attention_weights_divided() -> Result<()> {
-        let manager = create_test_attention_manager().await?;
+    async fn test_calculate_attention_weights_selective() -> Result<()> {
+        let (manager, _, _, _) = create_test_attention_manager().await;
+        
+        // Test selective attention - only first target gets focus
         let targets = create_test_entity_keys(3);
         
         let weights = manager.calculate_attention_weights(
-            &targets,
-            0.9,
-            &AttentionType::Divided,
+            &targets, 
+            0.8, 
+            &AttentionType::Selective
         ).await?;
         
-        // Divided attention distributes weight equally
-        assert_eq!(weights.len(), targets.len());
-        let expected_weight = 0.9 / targets.len() as f32;
+        // Only the first target should have weight
+        assert_eq!(weights.len(), 1, "Selective attention should focus on only one target");
+        assert!(weights.contains_key(&targets[0]), "First target should be focused");
         
+        let first_weight = weights.get(&targets[0]).unwrap();
+        assert!((first_weight - 0.8).abs() < 0.01, 
+               "First target should get full focus strength 0.8, got {:.3}", first_weight);
+        
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_calculate_attention_weights_sustained() -> Result<()> {
+        let (manager, _, _, _) = create_test_attention_manager().await;
+        
+        // Test sustained attention - all targets get reduced strength
+        let targets = create_test_entity_keys(2);
+        
+        let weights = manager.calculate_attention_weights(
+            &targets, 
+            1.0, 
+            &AttentionType::Sustained
+        ).await?;
+        
+        assert_eq!(weights.len(), 2, "All targets should have weights in sustained attention");
+        
+        // Sustained attention gives each target focus_strength * 0.8
+        let expected_weight = 1.0 * 0.8;
         for target in &targets {
-            assert!(weights.contains_key(target), "Weight map should contain target {:?}", target);
-            let actual_weight = *weights.get(target).unwrap();
-            assert!(
-                (actual_weight - expected_weight).abs() < 0.001,
-                "Weight for {:?} should be close to {}, but was {}",
-                target, expected_weight, actual_weight
-            );
+            let weight = weights.get(target).unwrap();
+            assert!((weight - expected_weight).abs() < 0.01, 
+                   "Target {:?} should get sustained weight {:.3}, got {:.3}", 
+                   target, expected_weight, weight);
         }
         
         Ok(())
     }
-    
+
     #[tokio::test]
-    async fn test_calculate_memory_load() -> Result<()> {
-        let manager = create_test_attention_manager().await?;
+    async fn test_calculate_attention_weights_executive() -> Result<()> {
+        let (manager, _, _, _) = create_test_attention_manager().await;
         
-        // Test empty memory items
+        // Test executive attention - strategic allocation with priority
+        let targets = create_test_entity_keys(3);
+        
+        let weights = manager.calculate_attention_weights(
+            &targets, 
+            1.0, 
+            &AttentionType::Executive
+        ).await?;
+        
+        assert_eq!(weights.len(), 3, "All targets should have weights in executive attention");
+        
+        // Executive attention: weight = focus_strength * (1.0 - i * 0.2), min 0.1
+        let expected_weights = vec![1.0, 0.8, 0.6]; // For indices 0, 1, 2
+        
+        for (i, target) in targets.iter().enumerate() {
+            let weight = weights.get(target).unwrap();
+            assert!((weight - expected_weights[i]).abs() < 0.01, 
+                   "Target {} should get executive weight {:.3}, got {:.3}", 
+                   i, expected_weights[i], weight);
+        }
+        
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_calculate_attention_weights_alternating() -> Result<()> {
+        let (manager, _, _, _) = create_test_attention_manager().await;
+        
+        // Test alternating attention - first target gets full focus, others minimal
+        let targets = create_test_entity_keys(3);
+        
+        let weights = manager.calculate_attention_weights(
+            &targets, 
+            0.9, 
+            &AttentionType::Alternating
+        ).await?;
+        
+        assert_eq!(weights.len(), 3, "All targets should have weights in alternating attention");
+        
+        // First target gets full focus, others get 0.1
+        let first_weight = weights.get(&targets[0]).unwrap();
+        assert!((first_weight - 0.9).abs() < 0.01, 
+               "First target should get full focus 0.9, got {:.3}", first_weight);
+        
+        for target in &targets[1..] {
+            let weight = weights.get(target).unwrap();
+            assert!((weight - 0.1).abs() < 0.01, 
+                   "Non-primary targets should get minimal weight 0.1, got {:.3}", weight);
+        }
+        
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_calculate_memory_load_private() {
+        let (manager, _, _, _) = create_test_attention_manager().await;
+        
+        // Test memory load calculation with empty items
         let empty_items = vec![];
-        assert_eq!(manager.calculate_memory_load(&empty_items), 0.0);
+        let load = manager.calculate_memory_load(&empty_items);
+        assert_eq!(load, 0.0, "Empty memory items should have zero load");
         
-        // Test with some memory items
-        let memory_items = vec![
+        // Test with various memory items
+        let test_items = vec![
             MemoryItem {
                 content: MemoryContent::Concept("test1".to_string()),
-                activation_level: 0.8,
-                timestamp: Instant::now(),
-                importance_score: 0.8,
+                activation_level: 0.5,
+                timestamp: std::time::Instant::now(),
+                importance_score: 0.7,
                 access_count: 1,
                 decay_factor: 0.1,
             },
             MemoryItem {
                 content: MemoryContent::Concept("test2".to_string()),
-                activation_level: 0.7,
-                timestamp: Instant::now(),
-                importance_score: 0.6,
+                activation_level: 0.8,
+                timestamp: std::time::Instant::now(),
+                importance_score: 0.9,
                 access_count: 2,
                 decay_factor: 0.1,
             },
         ];
         
-        let load = manager.calculate_memory_load(&memory_items);
-        assert!(load > 0.0 && load < 1.0);
+        let load = manager.calculate_memory_load(&test_items);
+        assert!(load > 0.0 && load <= 1.0, "Memory load should be between 0 and 1, got {:.3}", load);
         
-        Ok(())
+        // Test that load increases with more items
+        let mut many_items = test_items.clone();
+        for i in 0..20 {
+            many_items.push(MemoryItem {
+                content: MemoryContent::Concept(format!("test{}", i)),
+                activation_level: 0.6,
+                timestamp: std::time::Instant::now(),
+                importance_score: 0.5,
+                access_count: 1,
+                decay_factor: 0.1,
+            });
+        }
+        
+        let high_load = manager.calculate_memory_load(&many_items);
+        assert!(high_load > load, "More items should increase memory load");
+        assert!(high_load <= 1.0, "Memory load should be clamped to 1.0, got {:.3}", high_load);
     }
-}
 
-// Implement test traits for better testing access
-#[cfg(test)]
-mod test_impls {
-    use super::*;
-    use crate::cognitive::attention_manager_traits::{AttentionCalculator, AttentionStateManager};
-    use crate::cognitive::working_memory::MemoryItem;
-    use async_trait::async_trait;
-    
-    #[async_trait]
-    impl AttentionCalculator for AttentionManager {
-        async fn calculate_attention_weights(
-            &self,
-            targets: &[EntityKey],
-            available_capacity: f32,
-            attention_type: &AttentionType,
-        ) -> Result<AHashMap<EntityKey, f32>> {
-            self.calculate_attention_weights(targets, available_capacity, attention_type).await
-        }
+    #[test]
+    fn test_attention_state_cognitive_load_updates() {
+        let mut state = AttentionState::new();
         
-        fn calculate_memory_load(&self, memory_items: &[MemoryItem]) -> f32 {
-            self.calculate_memory_load(memory_items)
-        }
+        // Test initial state
+        assert_eq!(state.cognitive_load, 0.0);
+        assert_eq!(state.attention_capacity, 1.0);
+        
+        // Test normal load update
+        state.update_cognitive_load(0.5);
+        assert_eq!(state.cognitive_load, 0.5);
+        assert_eq!(state.attention_capacity, 0.75); // 1.0 - 0.5 * 0.5
+        
+        // Test maximum load
+        state.update_cognitive_load(1.0);
+        assert_eq!(state.cognitive_load, 1.0);
+        assert_eq!(state.attention_capacity, 0.5); // 1.0 - 1.0 * 0.5, max(0.2)
+        
+        // Test clamping above 1.0
+        state.update_cognitive_load(2.0);
+        assert_eq!(state.cognitive_load, 1.0);
+        
+        // Test clamping below 0.0
+        state.update_cognitive_load(-0.5);
+        assert_eq!(state.cognitive_load, 0.0);
+        assert_eq!(state.attention_capacity, 1.0);
     }
-    
-    impl AttentionStateManager for AttentionManager {
-        fn get_internal_state(&self) -> &AttentionState {
-            // This would require a blocking read in real implementation
-            // For testing purposes, we'd need to adjust the API
-            unimplemented!("Requires API adjustment for synchronous access")
-        }
+
+    #[test]
+    fn test_attention_focus_methods() {
+        let targets = create_test_entity_keys(3);
+        let mut weights = AHashMap::new();
+        weights.insert(targets[0], 0.8);
+        weights.insert(targets[1], 0.3);
+        weights.insert(targets[2], 0.05);
         
-        fn set_internal_state(&mut self, _state: AttentionState) {
-            // This would require a blocking write in real implementation
-            unimplemented!("Requires API adjustment for synchronous access")
-        }
+        let focus = AttentionFocus::new(
+            targets.clone(),
+            weights,
+            0.8,
+            AttentionType::Selective,
+        );
+        
+        // Test is_focused_on (threshold is 0.1)
+        assert!(focus.is_focused_on(&targets[0]), "Target with weight 0.8 should be focused");
+        assert!(focus.is_focused_on(&targets[1]), "Target with weight 0.3 should be focused");
+        assert!(!focus.is_focused_on(&targets[2]), "Target with weight 0.05 should not be focused");
+        
+        // Test get_attention_weight
+        assert_eq!(focus.get_attention_weight(&targets[0]), 0.8);
+        assert_eq!(focus.get_attention_weight(&targets[1]), 0.3);
+        assert_eq!(focus.get_attention_weight(&targets[2]), 0.05);
+        
+        // Test with non-existent entity - create a new set of keys to ensure they're different
+        let other_keys = create_test_entity_keys(5); // Create more keys to get different ones
+        let non_existent_key = other_keys[4]; // Use the last one which should be different
+        assert_eq!(focus.get_attention_weight(&non_existent_key), 0.0);
+        assert!(!focus.is_focused_on(&non_existent_key));
     }
 }

@@ -1,13 +1,14 @@
 #[cfg(test)]
 mod orchestrator_tests {
     use tokio;
-    use crate::cognitive::orchestrator::CognitiveOrchestrator;
-    use crate::cognitive::types::{
+    use std::sync::Arc;
+    use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
+    use llmkg::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainEnhancedConfig};
+    use llmkg::cognitive::types::{
         PatternResult, CognitivePatternType, QueryType, ProcessingPipeline,
         AdaptiveThinking, ConvergentThinking, DivergentThinking, CriticalThinking,
         LateralThinking, AbstractThinking
     };
-    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
     #[tokio::test]
     async fn test_detect_query_type_factual() {
@@ -374,28 +375,23 @@ mod orchestrator_tests {
         assert!(!response.patterns_used.is_empty());
     }
 
+    #[tokio::test]
+    async fn test_orchestrator_creation() {
+        let config = BrainEnhancedConfig::default();
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(config));
+        let orchestrator_config = CognitiveOrchestratorConfig::default();
+        let orchestrator = CognitiveOrchestrator::new(graph, orchestrator_config).await;
+        assert!(orchestrator.is_ok());
+    }
+
+
     // Helper functions
 
     async fn create_test_orchestrator() -> CognitiveOrchestrator {
-        let graph = create_test_graph().await;
+        let graph = Arc::new(create_test_graph().await);
+        let config = CognitiveOrchestratorConfig::default();
         
-        // Create individual cognitive patterns
-        let adaptive = AdaptiveThinking::new(graph.clone());
-        let convergent = ConvergentThinking::new(graph.clone());
-        let divergent = DivergentThinking::new(graph.clone(), 0.3, 5, 0.7);
-        let critical = CriticalThinking::new(graph.clone());
-        let lateral = LateralThinking::new(graph.clone(), 0.3, 4);
-        let abstract_thinking = AbstractThinking::new(graph.clone());
-        
-        CognitiveOrchestrator::new(
-            adaptive,
-            convergent,
-            divergent,
-            critical,
-            lateral,
-            abstract_thinking,
-            graph
-        )
+        CognitiveOrchestrator::new(graph, config).await.expect("Failed to create test orchestrator")
     }
 
     async fn create_test_graph() -> BrainEnhancedKnowledgeGraph {

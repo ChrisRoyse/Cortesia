@@ -38,9 +38,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on unit testing the builder patterns and type conversions, with integration tests verifying proper module loading.
+**Overall Approach:** Focus on unit testing the builder patterns and type conversions, with integration tests verifying proper module loading. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/mod.rs`):**
 - **RealtimeQuery Construction:**
   - Happy Path: Create query with valid text and verify default values
   - Edge Cases: Empty query text, extreme depth values (0, u32::MAX)
@@ -51,7 +57,7 @@
   - Edge Cases: Empty partition list, duplicate partitions
   - Error Handling: Test conversion from single graph to partitioned
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_mod.rs`):**
 - Verify all submodules are properly exposed through mod.rs
 - Test that types can be passed between different query subsystems
 
@@ -91,9 +97,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Heavy unit testing required due to complex algorithmic logic. Focus on correctness of community detection and performance at scale.
+**Overall Approach:** Heavy unit testing required due to complex algorithmic logic. Focus on correctness of community detection and performance at scale. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/clustering.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_clustering.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/clustering.rs`):**
 - **Leiden Algorithm:**
   - Happy Path: Small graph with known community structure
   - Edge Cases: Single node graph, disconnected components, complete graph
@@ -104,7 +116,7 @@
   - Edge Cases: Single level only, communities smaller than min_size
   - Error Handling: Conflicting hierarchy relationships
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_clustering.rs`):**
 - Test with real knowledge graph data to verify community quality
 - Performance testing with graphs of various sizes (100 to 1M nodes)
 - Verify integration with two_tier.rs for query optimization
@@ -143,9 +155,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on statistical calculations and suggestion logic. Mock time-based operations for deterministic testing.
+**Overall Approach:** Focus on statistical calculations and suggestion logic. Mock time-based operations for deterministic testing. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/optimizer.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_optimizer.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/optimizer.rs`):**
 - **Statistics Calculation:**
   - Happy Path: Calculate average time, cache hit rate with normal data
   - Edge Cases: Empty history, single query, all cache hits/misses
@@ -156,7 +174,7 @@
   - Edge Cases: Perfect performance (no suggestions needed)
   - Error Handling: Conflicting optimization requirements
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_optimizer.rs`):**
 - Test with actual query execution to verify timing accuracy
 - Validate that parameter adjustments improve performance
 - Long-running test to verify query history retention logic
@@ -196,9 +214,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Combination of unit tests for individual strategies and integration tests for complete retrieval flows. Mock the knowledge graph for controlled testing.
+**Overall Approach:** Combination of unit tests for individual strategies and integration tests for complete retrieval flows. Mock the knowledge graph for controlled testing. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/rag.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_rag.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/rag.rs`):**
 - **Vector Similarity Search:**
   - Happy Path: Find similar entities with known embeddings
   - Edge Cases: All entities equally similar, no similar entities
@@ -209,7 +233,7 @@
   - Edge Cases: Isolated nodes, cyclic references, depth = 0
   - Error Handling: Non-existent entity IDs
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_rag.rs`):**
 - End-to-end retrieval with different query types
 - Cache effectiveness testing with repeated queries
 - Performance benchmarking for various graph sizes and query complexities
@@ -248,9 +272,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on performance testing to ensure sub-millisecond operation. Test summary quality and cache behavior.
+**Overall Approach:** Focus on performance testing to ensure sub-millisecond operation. Test summary quality and cache behavior. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/summarization.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_summarization.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/summarization.rs`):**
 - **Summary Generation:**
   - Happy Path: Summarize typical community with mixed connectivity
   - Edge Cases: Empty community, single entity, fully connected clique
@@ -261,7 +291,7 @@
   - Edge Cases: Large communities (1000+ entities)
   - Error Handling: Cache overflow scenarios
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_summarization.rs`):**
 - Test with real clustering output from clustering.rs
 - Verify summary quality is sufficient for LLM understanding
 - Concurrent access testing for cache thread safety
@@ -305,9 +335,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Integration testing is critical as this module orchestrates multiple subsystems. Mock individual components for unit tests.
+**Overall Approach:** Integration testing is critical as this module orchestrates multiple subsystems. Mock individual components for unit tests. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/query/two_tier.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/query/test_two_tier.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/query/two_tier.rs`):**
 - **Query Routing:**
   - Happy Path: Each query type routes to correct handler
   - Edge Cases: Empty queries, missing cluster hierarchy
@@ -318,7 +354,7 @@
   - Edge Cases: Overlapping entities, conflicting scores
   - Error Handling: Incomplete results from subsystems
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/query/test_two_tier.rs`):**
 - Full pipeline testing with real graph data
 - Performance comparison between query strategies
 - Cache effectiveness across different query patterns
@@ -348,12 +384,18 @@ The query directory implements a sophisticated multi-strategy knowledge graph qu
 
 ### Directory-Wide Testing Strategy
 
+**Test Placement Architecture:**
+- **Unit Tests:** Must be in `#[cfg(test)]` modules within each source file for private method access
+- **Integration Tests:** Must be in `tests/query/` directory and only test public APIs
+- **Test Support Infrastructure:** Common utilities should be in `src/test_support/` for use by both unit and integration tests
+
 **Shared Infrastructure Needs:**
 - Mock `KnowledgeGraph` implementation for consistent test data
 - Shared test utilities for creating sample communities and entities
 - Performance benchmarking harness for sub-millisecond operation verification
+- Common test fixtures in `src/test_support/query_fixtures.rs`
 
-**Integration Test Scenarios:**
+**Integration Test Scenarios (place in `tests/query/`):**
 1. **End-to-End Query Flow**: Create graph → cluster → query (all types) → verify results
 2. **Performance Regression**: Ensure query latency remains under target thresholds
 3. **Concurrent Operations**: Multiple queries accessing shared caches and resources
@@ -364,3 +406,5 @@ The query directory implements a sophisticated multi-strategy knowledge graph qu
 - Property-based testing for clustering algorithm correctness
 - Fuzzing for query parser robustness
 - Load testing for cache effectiveness under pressure
+
+**CRITICAL VIOLATION WARNING:** Any integration tests attempting to access private methods/fields violate Rust testing best practices and must be moved to `#[cfg(test)]` modules within source files.

@@ -52,9 +52,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on unit testing the probabilistic guarantees, parameter calculations, and edge cases. Integration testing should verify performance characteristics.
+**Overall Approach:** Focus on unit testing the probabilistic guarantees, parameter calculations, and edge cases. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/bloom.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_bloom.rs`)
+- **Property Tests:** Tests that verify mathematical properties and invariants
+- **Performance Tests:** Benchmarks for critical operations
+
+**Unit Testing Suggestions (place in `src/storage/bloom.rs`):**
 
 - **optimal_bit_count() and optimal_hash_count():**
   - Happy Path: Test with typical values (1M items, 0.01 FP rate)
@@ -71,9 +77,10 @@
   - Edge Cases: Remove non-existent items, counter overflow scenarios
   - Error Handling: Ensure counters don't underflow below zero
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_bloom.rs`):**
 - Create a test that inserts 100K items and verifies the actual false positive rate matches the configured rate within statistical bounds
 - Test memory usage stays within expected bounds for large filters
+- Integration tests should focus on public API behavior and system performance characteristics
 
 ---
 
@@ -128,9 +135,13 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Heavy unit testing on graph construction and query operations. Integration tests should verify correctness of graph algorithms.
+**Overall Approach:** Heavy unit testing on graph construction and query operations. Unit tests that need private access should be in `#[cfg(test)]` modules within source files.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/csr.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_csr.rs`)
+
+**Unit Testing Suggestions (place in `src/storage/csr.rs`):**
 
 - **from_edges():**
   - Happy Path: Build graph from valid edge list
@@ -147,7 +158,7 @@
   - Edge Cases: No path exists, source equals destination, max depth exceeded
   - Error Handling: Invalid node IDs
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_csr.rs`):**
 - Build large graphs (1M+ nodes) and verify memory efficiency
 - Compare BFS results with a reference implementation
 - Test SIMD operations produce identical results to scalar versions
@@ -199,9 +210,13 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on correctness of similarity calculations and performance characteristics. Test both scalar and SIMD code paths.
+**Overall Approach:** Focus on correctness of similarity calculations and performance characteristics. Test both scalar and SIMD code paths. Unit tests that need private access should be in source files.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/flat_index.rs`)  
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_flat_index.rs`)
+
+**Unit Testing Suggestions (place in `src/storage/flat_index.rs`):**
 
 - **insert() and bulk_build():**
   - Happy Path: Insert valid embeddings, verify retrieval
@@ -218,7 +233,7 @@
   - Edge Cases: Non-aligned data, dimension not multiple of SIMD width
   - Error Handling: Fallback to scalar on unsupported hardware
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_flat_index.rs`):**
 - Benchmark against known datasets (e.g., SIFT1M)
 - Verify exact recall compared to ground truth
 - Test performance scaling with dataset size
@@ -276,9 +291,13 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test both algorithm correctness and approximation quality. Focus on thread safety and performance characteristics.
+**Overall Approach:** Test both algorithm correctness and approximation quality. Focus on thread safety and performance characteristics. Unit tests that need private access should be in source files.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/hnsw.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_hnsw.rs`)
+
+**Unit Testing Suggestions (place in `src/storage/hnsw.rs`):**
 
 - **insert():**
   - Happy Path: Insert multiple vectors, verify graph connectivity
@@ -295,7 +314,7 @@
   - Edge Cases: Statistical tests for level distribution
   - Error Handling: None needed
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_hnsw.rs`):**
 - Test recall vs ground truth on standard benchmarks
 - Verify thread safety with concurrent inserts and searches
 - Benchmark build time and query time vs dataset size
@@ -319,8 +338,21 @@
 - Components can be composed - e.g., using Bloom filter before vector search to avoid unnecessary computations
 
 **Directory-Wide Testing Strategy:**
+
+**Test Support Infrastructure (place in `src/test_support/`):**
 - Create shared test utilities for generating synthetic graph and embedding data
+- Build reusable fixture generators for consistent test data across modules
+- Implement mock builders for complex storage components
+- Provide assertion helpers for probabilistic data structures
+
+**Integration Test Architecture (place in `tests/storage/`):**
 - Implement benchmark suite comparing different indices on same datasets
 - Integration tests should verify correct interaction between components (e.g., Bloom filter reducing unnecessary vector searches)
 - Performance regression tests to ensure optimizations don't degrade over time
 - Thread safety tests for concurrent access patterns typical in production
+
+**Test Placement Compliance:**
+- All private method tests have been moved to source files with `#[cfg(test)]` modules
+- Integration tests only use public APIs and focus on system behavior
+- Clear separation between unit tests (in source files) and integration tests (in tests/ directory)
+- Property tests verify mathematical invariants and probabilistic guarantees

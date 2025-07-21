@@ -32,9 +32,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires focused testing on storage correctness, memory efficiency, and concurrent access patterns. Emphasis should be on data integrity and performance under load.
+**Overall Approach:** This file requires focused testing on storage correctness, memory efficiency, and concurrent access patterns. Emphasis should be on data integrity and performance under load. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/store.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_store.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/store.rs`):**
 - **store_embedding()**: 
   - Happy Path: Store valid embeddings and verify correct offset returns and memory tracking
   - Edge Cases: Store embeddings with different dimensions, maximum/minimum float values
@@ -48,7 +54,7 @@
   - Edge Cases: Distance computation with identical embeddings, orthogonal vectors
   - Error Handling: Test with invalid offsets, dimension mismatches
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_store.rs`):**
 - Test full store-retrieve cycle with various embedding types and verify reconstruction quality
 - Create concurrent access tests with multiple threads storing and retrieving simultaneously
 - Benchmark memory usage vs. traditional storage to validate compression effectiveness
@@ -81,9 +87,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires extensive testing covering compatibility requirements, automatic quantization behavior, and performance characteristics. Focus on maintaining API contracts while validating quantization benefits.
+**Overall Approach:** This file requires extensive testing covering compatibility requirements, automatic quantization behavior, and performance characteristics. Focus on maintaining API contracts while validating quantization benefits. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/embedding/store_compat.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/embedding/test_store_compat.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/embedding/store_compat.rs`):**
 - **add_embedding()**: 
   - Happy Path: Add embeddings with various entity types, verify storage and automatic quantization triggering
   - Edge Cases: Add duplicate entities, embeddings with extreme values, very large batches
@@ -101,7 +113,7 @@
   - Edge Cases: Test stats with empty stores, mixed storage modes, after quantization
   - Error Handling: Test stats calculation with edge cases and ensure no overflows
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/embedding/test_store_compat.rs`):**
 - Create comprehensive performance tests comparing quantized vs. regular storage across various dataset sizes
 - Test API compatibility with existing performance test suites and legacy code
 - Validate end-to-end workflows: add embeddings → auto-quantize → search → verify results
@@ -140,22 +152,34 @@ The embedding module follows a sophisticated layered architecture:
 
 ### Advanced Directory-Wide Testing Strategy
 
+**Overall Test Architecture:** Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+
+**Test Placement Structure:**
+- **Unit Tests:** Place in `#[cfg(test)]` modules within each `src/embedding/*.rs` file for private method/field access
+- **Integration Tests:** Place in `tests/embedding/test_*.rs` files for public API testing only
+- **Test Support Infrastructure:** Common test utilities should be in `tests/embedding/test_utils.rs` and `src/test_support/embedding/` for shared test data and helpers
+
 **Multi-Level Validation:**
-1. **Unit Level:** Individual function correctness with mathematical validation
-2. **Component Level:** Integration between quantizer, search, and storage components
-3. **System Level:** End-to-end workflows with real embedding datasets
-4. **Performance Level:** Benchmarking against target latency and memory usage requirements
+1. **Unit Level:** Individual function correctness with mathematical validation (in source files)
+2. **Component Level:** Integration between quantizer, search, and storage components (in tests/ directory)
+3. **System Level:** End-to-end workflows with real embedding datasets (in tests/ directory)
+4. **Performance Level:** Benchmarking against target latency and memory usage requirements (in benches/ directory)
 
 **Specialized Test Requirements:**
 
-**Hardware Compatibility Matrix:** Test across different CPU architectures (AVX2, SSE4.1, scalar fallbacks) to ensure consistent behavior and optimal performance selection.
+**Hardware Compatibility Matrix:** Test across different CPU architectures (AVX2, SSE4.1, scalar fallbacks) to ensure consistent behavior and optimal performance selection. Place architecture-specific unit tests in source files, integration tests in `tests/embedding/test_hardware_compat.rs`.
 
-**Compression Quality Validation:** Systematic testing of quantization accuracy vs. compression ratio trade-offs using standardized embedding datasets and similarity benchmarks.
+**Compression Quality Validation:** Systematic testing of quantization accuracy vs. compression ratio trade-offs using standardized embedding datasets and similarity benchmarks. Use test support infrastructure for shared test datasets.
 
-**Concurrency Testing:** Multi-threaded stress testing of all RwLock-protected components to validate thread safety and performance under concurrent load.
+**Concurrency Testing:** Multi-threaded stress testing of all RwLock-protected components to validate thread safety and performance under concurrent load. Place in `tests/embedding/test_concurrency.rs`.
 
 **Memory Leak Detection:** Comprehensive memory usage monitoring during long-running operations to ensure proper resource management in quantization and storage operations.
 
 **Performance Regression Testing:** Automated benchmarks tracking search latency, compression ratios, and memory usage to detect performance degradation across code changes.
+
+**Test Support Infrastructure Recommendations:**
+- `tests/embedding/test_utils.rs`: Common test utilities, assertion helpers, data generators
+- `src/test_support/embedding/`: Shared test data structures, mock implementations, test fixtures
+- Standard test datasets for consistent validation across all embedding components
 
 The embedding module represents a sophisticated balance of cutting-edge optimization techniques with practical engineering requirements, providing a robust foundation for high-performance vector operations in the LLMKG system.

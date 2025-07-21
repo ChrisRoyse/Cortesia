@@ -35,17 +35,36 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on LLM interaction patterns, request routing correctness, and response formatting for optimal language model consumption.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: LLM-friendly server requires both unit and integration testing for optimal LLM interaction
+
+**Identified Issues**:
+- Request routing logic needs private access for internal state testing
+- Handler coordination requires private method access
+- End-to-end LLM workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_server.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/mod.rs`)
 - **Happy Path:** Each request type with valid parameters, proper response formatting, statistics updates
 - **Edge Cases:** Unknown methods, malformed requests, handler failures, concurrent access
 - **Error Handling:** Handler exceptions, knowledge engine failures, statistics corruption
+- **Private routing:** Internal request routing logic, handler selection, state management
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_server.rs`)
 - **LLM workflow simulation:** Test complete interaction sequences typical of language model usage
 - **Performance monitoring:** Verify statistics accurately reflect actual usage patterns
 - **Handler integration:** Ensure all handlers work correctly within the server framework
+- **LLM protocol compliance:** Verify responses are optimally formatted for LLM consumption
 
 ---
 
@@ -71,16 +90,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on data structure validation and serialization testing for LLM compatibility.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Type definitions for LLM-friendly operations need comprehensive validation testing
+
+**Identified Issues**:
+- Statistics calculation logic requires private access for internal state
+- Validation result construction needs private method testing
+- Cross-module type compatibility requires integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/types.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_types.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/types.rs`)
 - **Happy Path:** Statistics calculation, validation result construction, serialization/deserialization
 - **Edge Cases:** Large numbers, negative values, empty validation results, concurrent statistics updates
 - **Error Handling:** Serialization failures, invalid data ranges, statistics overflow
+- **Private calculations:** Internal statistics computation, validation logic
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_types.rs`)
 - **Statistics accuracy:** Verify usage statistics match actual operations
 - **Validation workflows:** Test validation results in complete validation scenarios
+- **Type compatibility:** Ensure types work across different LLM-friendly components
 
 ---
 
@@ -113,16 +151,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on tool definition correctness, schema validation, and example accuracy.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Tool definitions require validation for schema correctness and LLM compatibility
+
+**Identified Issues**:
+- Schema validation logic needs private access for internal validation
+- Tool lookup mechanisms require private method testing
+- LLM interaction patterns need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/tools.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_tools.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/tools.rs`)
 - **Happy Path:** Schema validation for each tool, example input/output verification, parameter validation
 - **Edge Cases:** Invalid schemas, malformed examples, missing required fields, parameter limits
 - **Error Handling:** Tool lookup failures, schema parsing errors, validation failures
+- **Private validation:** Internal schema validation, tool construction logic
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_tools.rs`)
 - **LLM interaction simulation:** Test tools with LLM-generated inputs based on examples
 - **Schema compliance:** Verify all tools work correctly with their defined schemas
+- **Tool effectiveness:** Verify tools provide optimal LLM interaction patterns
 
 ---
 
@@ -151,17 +208,36 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Comprehensive validation testing across all validation dimensions with edge case coverage.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Validation system requires comprehensive testing across multiple validation dimensions
+
+**Identified Issues**:
+- Validation algorithms need private access for internal logic testing
+- Validation rule engines require private method access
+- End-to-end validation workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/validation.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_validation.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/validation.rs`)
 - **Happy Path:** Valid triples, consistent relationships, complete entities, proper predicate formats
 - **Edge Cases:** Empty fields, oversized content, special characters, circular references, conflicting facts
 - **Error Handling:** Validation function failures, malformed input data, missing validation rules
+- **Private algorithms:** Internal validation logic, rule evaluation, consistency checking
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_validation.rs`)
 - **Validation workflows:** Test complete validation sequences with real knowledge graph data
 - **Cross-validation consistency:** Ensure different validation methods produce consistent results
 - **Performance validation:** Verify validation performance with large datasets
+- **Quality assurance:** End-to-end validation effectiveness through public API
 
 ---
 

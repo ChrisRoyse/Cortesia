@@ -36,8 +36,13 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** A combination of focused unit tests and broader integration tests is required. Unit tests should validate the internal logic (e.g., calculations, transformations), while integration tests must verify the end-to-end workflow on a sample graph.
-*   **Unit Testing Suggestions:**
+*   **Overall Approach:** A combination of focused unit tests and broader integration tests is required. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
+*   **Test Placement Rules:**
+    *   **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/cognitive/abstract_pattern.rs`)
+    *   **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/cognitive/test_abstract_pattern.rs`)
+    *   **Property Tests:** Tests that verify invariants and mathematical properties
+    *   **Performance Tests:** Benchmarks for critical path operations
+*   **Unit Testing Suggestions (place in `src/cognitive/abstract_pattern.rs`):**
     *   **`estimate_efficiency_gains`:**
         *   **Happy Path:** Test with a list of `RefactoringOpportunity` objects containing various benefit values to ensure the final `EfficiencyAnalysis` is calculated correctly.
         *   **Edge Cases:** Test with an empty list of opportunities (should result in neutral or default gains). Test with opportunities that have zero benefit.
@@ -47,7 +52,7 @@
     *   **`infer_analysis_parameters`:**
         *   **Happy Path:** Provide a series of mock queries with keywords like "structural analysis," "temporal patterns," or "global scope" to ensure the correct `AnalysisScope` and `PatternType` are inferred.
         *   **Edge Cases:** Test a query with no keywords (should trigger default behavior). Test a query with ambiguous or conflicting terms.
-*   **Integration Testing Suggestions:**
+*   **Integration Testing Suggestions (place in `tests/cognitive/test_abstract_pattern.rs`):**
     *   **End-to-End Analysis Workflow:**
         *   **Scenario:** Construct a small, predictable `BrainEnhancedKnowledgeGraph` for testing. This graph should contain a clear, repeating pattern (e.g., multiple "employee" nodes connected to a "company" node via a "works_for" relationship).
         *   **Test:** Call the main `execute` method with a query like "analyze the graph structure for patterns."
@@ -89,8 +94,11 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must focus on the decision-making and orchestration logic. The key is to verify that, given a certain input query, the *correct* strategy is chosen and the results are merged logically. This requires a mix of unit tests for the selection logic and integration tests with mocked cognitive patterns.
-*   **Unit Testing Suggestions:**
+*   **Overall Approach:** Testing for this module must focus on the decision-making and orchestration logic. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs.
+*   **Test Placement Rules:**
+    *   **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/cognitive/adaptive.rs`)
+    *   **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/cognitive/test_adaptive.rs`)
+*   **Unit Testing Suggestions (place in `src/cognitive/adaptive.rs`):**
     *   **`analyze_query_characteristics`:**
         *   **Happy Path:** Test with queries containing clear keywords (e.g., "what is," "creative," "when") to ensure the `QueryCharacteristics` struct is populated with the expected values.
         *   **Edge Cases:** Test with an empty query, a very long query, and a query with no recognizable keywords.
@@ -100,7 +108,7 @@
     *   **`merge_pattern_results`:**
         *   **Happy Path:** Provide a list of two `PatternContribution`s with different weights and confidences. Verify that the `merged_answer` prioritizes the stronger result and that the `ensemble_confidence` is calculated correctly.
         *   **Edge Cases:** Test with an empty list of results. Test with a list containing only one result.
-*   **Integration Testing Suggestions:**
+*   **Integration Testing Suggestions (place in `tests/cognitive/test_adaptive.rs`):**
     *   **End-to-End Strategy Selection and Execution:**
         *   **Scenario:** This is the most critical test. It involves mocking the entire cognitive pattern execution layer.
         *   **Test:**
@@ -150,15 +158,18 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** This module is highly stateful and deeply integrated with other core systems. Testing must prioritize integration scenarios with mocked dependencies to validate the manager's control over its collaborators. State changes must be meticulously tracked and asserted.
-*   **Unit Testing Suggestions:**
+*   **Overall Approach:** This module is highly stateful and deeply integrated with other core systems. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files. CRITICAL: Private methods like `calculate_attention_weights` and `calculate_memory_load` must be tested as unit tests in the source file, not from integration tests.
+*   **Test Placement Rules:**
+    *   **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/cognitive/attention_manager.rs`)
+    *   **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/cognitive/test_attention_manager.rs`)
+*   **Unit Testing Suggestions (place in `src/cognitive/attention_manager.rs`):**
     *   **`calculate_attention_weights`:**
         *   **Happy Path:** For each variant of the `AttentionType` enum, provide a list of targets and verify that the weights are distributed as expected (e.g., `Selective` focuses on one, `Divided` splits them evenly).
         *   **Edge Cases:** Test with an empty list of targets.
     *   **`AttentionState::update_cognitive_load`:**
         *   **Happy Path:** Set a cognitive load and assert that the `attention_capacity` is reduced according to the formula.
         *   **Edge Cases:** Test with a load of 0.0 and 1.0 to check the clamping logic.
-*   **Integration Testing Suggestions:**
+*   **Integration Testing Suggestions (place in `tests/cognitive/test_attention_manager.rs`):**
     *   **Focus and Activation Boost:**
         *   **Scenario:** Create a mock `ActivationPropagationEngine` and a mock `WorkingMemorySystem`.
         *   **Test:** Instantiate the `AttentionManager` with the mocks. Call `focus_attention` with a specific target entity.
@@ -264,15 +275,25 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing should focus on the correctness of the graph traversal and the concept extraction logic. Since this version does not have a direct dependency on a neural server for its core logic, it can be tested more thoroughly with a predictable, hand-crafted graph.
-*   **Unit Testing Suggestions:**
+*   **Overall Approach:** Testing should focus on the correctness of the graph traversal and the concept extraction logic. CRITICAL: The current implementation has violations where private helper functions (`levenshtein_distance`, `calculate_concept_relevance`, `is_stop_word`) are being accessed from integration tests. These MUST be moved to unit tests in the source file.
+*   **Test Placement Rules:**
+    *   **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/cognitive/convergent.rs`)
+    *   **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/cognitive/test_convergent.rs`)
+    *   **VIOLATION FOUND:** `tests/cognitive/test_convergent.rs` is currently importing and testing private functions - these tests MUST be moved to the source file
+*   **Unit Testing Suggestions (place in `src/cognitive/convergent.rs`):**
     *   **`calculate_concept_relevance`:**
         *   **Happy Path:** Test with concepts that are clearly related hierarchically (e.g., entity: "golden retriever", query: "dog") and semantically (e.g., entity: "canine", query: "pet"). Assert that the relevance scores are high and logical.
         *   **Edge Cases:** Test with unrelated concepts (e.g., "dog", "computer") to ensure the score is zero or near-zero. Test with identical concepts to ensure the score is 1.0.
     *   **`extract_target_concept`:**
         *   **Happy Path:** Test with various query formats like "what are the properties of a dog" or "how many legs does a cat have" to ensure the correct target ("dog", "cat") is extracted.
         *   **Edge Cases:** Test with a query containing only stop words or no recognizable concepts. This should gracefully return an error.
-*   **Integration Testing Suggestions:**
+    *   **`levenshtein_distance`:**
+        *   **Happy Path:** Test with known string pairs and verify correct edit distance calculations
+        *   **Edge Cases:** Test with empty strings, identical strings, completely different strings
+    *   **`is_stop_word`:**
+        *   **Happy Path:** Test with common stop words ("the", "is", "and") and content words ("dog", "computer")
+        *   **Edge Cases:** Test with empty strings and case variations
+*   **Integration Testing Suggestions (place in `tests/cognitive/test_convergent.rs`):**
     *   **End-to-End Query and Answer:**
         *   **Scenario:** This is the primary integration test. It verifies the entire workflow from query to answer.
         *   **Test:**

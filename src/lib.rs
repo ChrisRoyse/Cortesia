@@ -26,6 +26,9 @@ pub mod learning;
 pub mod graph;
 // pub mod agents; // Removed as requested
 
+#[cfg(test)]
+pub mod test_support;
+
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
 

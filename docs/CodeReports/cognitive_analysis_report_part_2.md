@@ -36,28 +36,45 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module is a classic NLP testing problem. It should be based on a "test suite" of diverse query strings, with each test asserting that the processor correctly deconstructs the query into the expected `QueryUnderstanding` structure.
-*   **Unit Testing Suggestions:**
-    *   **`identify_intent`:**
-        *   **Happy Path:** Create a comprehensive list of test queries, one for each variant of the `QueryIntent` enum (e.g., "What is water?", "What if X?", "Generate ideas for Y"). Assert that each query is classified with the correct intent.
-    *   **`extract_concepts`:**
-        *   **Happy Path:** Test with a query containing multiple known entities, like "How does Einstein's General Relativity explain gravity?". Assert that "Einstein," "General Relativity," and "gravity" are all present in the returned list of concepts.
-        *   **Edge Cases:** Test with a query that has no clear entities. Test with multi-word entities.
-    *   **`extract_relationships`:**
-        *   **Happy Path:** Test with a query containing a clear relational structure, such as "Einstein developed General Relativity." Assert that the returned relationships vector contains the tuple `("Einstein", "developed", "General Relativity")`.
-    *   **`extract_constraints`:**
-        *   **Happy Path:** Test with a query like "What happened between 1939 and 1945 except in Japan?". Assert that the `temporal_bounds` are correctly set to `("1939", "1945")` and that the `excluded_concepts` list contains "Japan".
-*   **Integration Testing Suggestions:**
-    *   **End-to-End Query Deconstruction:**
-        *   **Scenario:** This test verifies that all the pieces work together correctly for a complex query.
-        *   **Test:**
-            1.  Instantiate the `NeuralQueryProcessor` with a mock `Graph` that contains a few known entities.
-            2.  Execute the main `neural_query` method with a complex query, e.g., "What was the primary cause of the Industrial Revolution in Britain after 1800, excluding social factors?"
-        *   **Verification:**
-            1.  Assert that the `QueryIntent` is `Causal`.
-            2.  Assert that the extracted concepts include "Industrial Revolution" and "Britain".
-            3.  Assert that the `temporal_bounds` reflect the "after 1800" constraint.
-            4.  Assert that the `excluded_concepts` list includes "social factors".
+### Current Test Organization
+**Status**: Tests need proper placement analysis - module contains both private method access and public API functionality.
+
+**Identified Issues**:
+- Tests requiring private method access need to be moved to unit tests in source file
+- Public API tests should be placed in separate integration test files
+- No clear separation between unit and integration test concerns
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/neural_query.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_neural_query.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/neural_query.rs`)
+*   **`identify_intent`:**
+    *   **Happy Path:** Create a comprehensive list of test queries, one for each variant of the `QueryIntent` enum (e.g., "What is water?", "What if X?", "Generate ideas for Y"). Assert that each query is classified with the correct intent.
+*   **`extract_concepts`:**
+    *   **Happy Path:** Test with a query containing multiple known entities, like "How does Einstein's General Relativity explain gravity?". Assert that "Einstein," "General Relativity," and "gravity" are all present in the returned list of concepts.
+    *   **Edge Cases:** Test with a query that has no clear entities. Test with multi-word entities.
+*   **`extract_relationships`:**
+    *   **Happy Path:** Test with a query containing a clear relational structure, such as "Einstein developed General Relativity." Assert that the returned relationships vector contains the tuple `("Einstein", "developed", "General Relativity")`.
+*   **`extract_constraints`:**
+    *   **Happy Path:** Test with a query like "What happened between 1939 and 1945 except in Japan?". Assert that the `temporal_bounds` are correctly set to `("1939", "1945")` and that the `excluded_concepts` list contains "Japan".
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_neural_query.rs`)
+*   **End-to-End Query Deconstruction:**
+    *   **Scenario:** This test verifies that all the pieces work together correctly for a complex query.
+    *   **Test:**
+        1.  Instantiate the `NeuralQueryProcessor` with a mock `Graph` that contains a few known entities.
+        2.  Execute the main `neural_query` method with a complex query, e.g., "What was the primary cause of the Industrial Revolution in Britain after 1800, excluding social factors?"
+    *   **Verification:**
+        1.  Assert that the `QueryIntent` is `Causal`.
+        2.  Assert that the extracted concepts include "Industrial Revolution" and "Britain".
+        3.  Assert that the `temporal_bounds` reflect the "after 1800" constraint.
+        4.  Assert that the `excluded_concepts` list includes "social factors".
 ### File Analysis: `src/cognitive/orchestrator.rs`
 
 **1. Purpose and Functionality**
@@ -86,35 +103,52 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing the orchestrator requires extensive use of mocks and dependency injection. The goal is not to test the individual patterns (which have their own tests), but to verify that the orchestrator correctly selects, executes, and merges the results from the patterns based on the chosen strategy.
-*   **Unit Testing Suggestions:**
-    *   **`get_pattern_weight`:**
-        *   **Happy Path:** Call the function for each `CognitivePatternType` and assert that it returns the expected hardcoded weight.
-*   **Integration Testing Suggestions:**
-    *   **Strategy Dispatching:**
-        *   **Scenario:** This is the most important test. It verifies that the `reason` method correctly dispatches to the right execution logic based on the `ReasoningStrategy`.
-        *   **Test:**
-            1.  Create mock implementations for all the cognitive patterns (`MockConvergent`, `MockAdaptive`, etc.). Each mock's `execute` method should simply return a unique, identifiable result.
-            2.  Instantiate the `CognitiveOrchestrator` with the collection of *mock* patterns.
-            3.  Call `reason` with `ReasoningStrategy::Specific(CognitivePatternType::Convergent)`. Assert that the result is the one from `MockConvergent`.
-            4.  Call `reason` with `ReasoningStrategy::Automatic`. Assert that the result is the one from `MockAdaptive`.
-            5.  Call `reason` with `ReasoningStrategy::Ensemble(...)`. Assert that the `execute` methods of all the specified mock patterns were called.
-    *   **Ensemble Merging and Error Handling:**
-        *   **Scenario:** Test the ensemble execution logic, including its ability to handle failures.
-        *   **Test:**
-            1.  Use the same mock setup as above.
-            2.  Configure one of the mock patterns in the ensemble to return an `Err`.
-            3.  Execute `reason` with `ReasoningStrategy::Ensemble(...)`.
-        *   **Verification:**
-            1.  Assert that the final result is still `Ok` and is a merged result of the successful patterns. This proves the orchestrator is resilient to partial failures.
-            2.  Assert that a warning was logged for the failed pattern.
-    *   **Performance Monitoring Integration:**
-        *   **Scenario:** Verify that performance metrics are being recorded.
-        *   **Test:**
-            1.  Create a mock `PerformanceMonitor`.
-            2.  Instantiate the `CognitiveOrchestrator` with the mock monitor.
-            3.  Execute any `reason` call.
-        *   **Verification:** Assert that the `end_operation_tracking` method on the mock `PerformanceMonitor` was called exactly once with the correct operation name and metrics.
+### Current Test Organization
+**Status**: Orchestrator testing requires careful analysis - contains both internal helper functions and complex integration workflows.
+
+**Identified Issues**:
+- Helper methods like `get_pattern_weight` need unit tests in source file
+- Complex orchestration logic requires integration tests with mocks
+- Performance monitoring integration spans multiple architectural layers
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/orchestrator.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_orchestrator.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/orchestrator.rs`)
+*   **`get_pattern_weight`:**
+    *   **Happy Path:** Call the function for each `CognitivePatternType` and assert that it returns the expected hardcoded weight.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_orchestrator.rs`)
+*   **Strategy Dispatching:**
+    *   **Scenario:** This is the most important test. It verifies that the `reason` method correctly dispatches to the right execution logic based on the `ReasoningStrategy`.
+    *   **Test:**
+        1.  Create mock implementations for all the cognitive patterns (`MockConvergent`, `MockAdaptive`, etc.). Each mock's `execute` method should simply return a unique, identifiable result.
+        2.  Instantiate the `CognitiveOrchestrator` with the collection of *mock* patterns.
+        3.  Call `reason` with `ReasoningStrategy::Specific(CognitivePatternType::Convergent)`. Assert that the result is the one from `MockConvergent`.
+        4.  Call `reason` with `ReasoningStrategy::Automatic`. Assert that the result is the one from `MockAdaptive`.
+        5.  Call `reason` with `ReasoningStrategy::Ensemble(...)`. Assert that the `execute` methods of all the specified mock patterns were called.
+*   **Ensemble Merging and Error Handling:**
+    *   **Scenario:** Test the ensemble execution logic, including its ability to handle failures.
+    *   **Test:**
+        1.  Use the same mock setup as above.
+        2.  Configure one of the mock patterns in the ensemble to return an `Err`.
+        3.  Execute `reason` with `ReasoningStrategy::Ensemble(...)`.
+    *   **Verification:**
+        1.  Assert that the final result is still `Ok` and is a merged result of the successful patterns. This proves the orchestrator is resilient to partial failures.
+        2.  Assert that a warning was logged for the failed pattern.
+*   **Performance Monitoring Integration:**
+    *   **Scenario:** Verify that performance metrics are being recorded.
+    *   **Test:**
+        1.  Create a mock `PerformanceMonitor`.
+        2.  Instantiate the `CognitiveOrchestrator` with the mock monitor.
+        3.  Execute any `reason` call.
+    *   **Verification:** Assert that the `end_operation_tracking` method on the mock `PerformanceMonitor` was called exactly once with the correct operation name and metrics.
 ### File Analysis: `src/cognitive/pattern_detector.rs`
 
 **1. Purpose and Functionality**
@@ -144,34 +178,51 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must be based on constructing specific graph topologies and verifying that the correct patterns are detected. Each type of structural pattern (hub, chain, cluster, hierarchy) requires a dedicated integration test with a purpose-built graph.
-*   **Unit Testing Suggestions:**
-    *   **`extract_semantic_category`:**
-        *   **Happy Path:** Test with a variety of concept strings (e.g., "animal_dog", "color_red", "food_apple") and assert that the correct category ("animals", "colors", "food") is returned.
-        *   **Edge Cases:** Test with a concept that doesn't match any heuristic to ensure it correctly falls back to the "general" category.
-*   **Integration Testing Suggestions:**
-    *   **Hub Detection:**
-        *   **Scenario:** Test the `detect_hub_pattern` logic.
-        *   **Test:**
-            1.  Construct a `BrainEnhancedKnowledgeGraph` with several nodes. Designate one node to be a "hub" by connecting it to a significantly larger number of other nodes than the average.
-            2.  Instantiate the `NeuralPatternDetector`.
-            3.  Call `detect_structural_patterns`.
-        *   **Verification:** Assert that the returned `Vec<DetectedPattern>` contains exactly one pattern of the "hub_pattern" type and that the `entities_involved` list for that pattern correctly identifies the hub node.
-    *   **Chain and Hierarchy Detection:**
-        *   **Scenario:** Test the detection of linear chains and branching hierarchies.
-        *   **Test:**
-            1.  Construct a graph containing both a simple chain (`A -> B -> C -> D`) and a simple hierarchy (`X -> Y`, `X -> Z`). Use the appropriate `RelationType` for the hierarchy.
-            2.  Call `detect_structural_patterns`.
-        *   **Verification:**
-            1.  Assert that the results contain a "chain" pattern involving entities A, B, C, and D.
-            2.  Assert that the results contain a "is_a_hierarchy" pattern involving entities X, Y, and Z.
-    *   **Scope-Based Analysis:**
-        *   **Scenario:** Verify that the `AnalysisScope` parameter is respected.
-        *   **Test:**
-            1.  Create a graph with a clear cluster of nodes.
-            2.  Call `detect_structural_patterns` with `AnalysisScope::Global`. Assert that the cluster is found.
-            3.  Call `detect_structural_patterns` again, but with `AnalysisScope::Regional` containing only nodes from *outside* the cluster.
-        *   **Verification:** Assert that the second call returns an empty vector (or at least does not contain the cluster pattern), proving that the analysis was correctly limited to the specified scope.
+### Current Test Organization
+**Status**: Pattern detection testing requires graph topology validation - mix of utility functions and complex graph analysis.
+
+**Identified Issues**:
+- Helper functions like `extract_semantic_category` need unit tests in source file
+- Graph topology construction and pattern verification requires integration tests
+- Pattern detection algorithms may need access to internal detection logic
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/pattern_detector.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_pattern_detector.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/pattern_detector.rs`)
+*   **`extract_semantic_category`:**
+    *   **Happy Path:** Test with a variety of concept strings (e.g., "animal_dog", "color_red", "food_apple") and assert that the correct category ("animals", "colors", "food") is returned.
+    *   **Edge Cases:** Test with a concept that doesn't match any heuristic to ensure it correctly falls back to the "general" category.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_pattern_detector.rs`)
+*   **Hub Detection:**
+    *   **Scenario:** Test the `detect_hub_pattern` logic.
+    *   **Test:**
+        1.  Construct a `BrainEnhancedKnowledgeGraph` with several nodes. Designate one node to be a "hub" by connecting it to a significantly larger number of other nodes than the average.
+        2.  Instantiate the `NeuralPatternDetector`.
+        3.  Call `detect_structural_patterns`.
+    *   **Verification:** Assert that the returned `Vec<DetectedPattern>` contains exactly one pattern of the "hub_pattern" type and that the `entities_involved` list for that pattern correctly identifies the hub node.
+*   **Chain and Hierarchy Detection:**
+    *   **Scenario:** Test the detection of linear chains and branching hierarchies.
+    *   **Test:**
+        1.  Construct a graph containing both a simple chain (`A -> B -> C -> D`) and a simple hierarchy (`X -> Y`, `X -> Z`). Use the appropriate `RelationType` for the hierarchy.
+        2.  Call `detect_structural_patterns`.
+    *   **Verification:**
+        1.  Assert that the results contain a "chain" pattern involving entities A, B, C, and D.
+        2.  Assert that the results contain a "is_a_hierarchy" pattern involving entities X, Y, and Z.
+*   **Scope-Based Analysis:**
+    *   **Scenario:** Verify that the `AnalysisScope` parameter is respected.
+    *   **Test:**
+        1.  Create a graph with a clear cluster of nodes.
+        2.  Call `detect_structural_patterns` with `AnalysisScope::Global`. Assert that the cluster is found.
+        3.  Call `detect_structural_patterns` again, but with `AnalysisScope::Regional` containing only nodes from *outside* the cluster.
+    *   **Verification:** Assert that the second call returns an empty vector (or at least does not contain the cluster pattern), proving that the analysis was correctly limited to the specified scope.
 ### File Analysis: `src/cognitive/phase3_integration.rs`
 
 **1. Purpose and Functionality**
@@ -206,30 +257,47 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** This is the highest level of integration testing within the `cognitive` module. Tests for this file should treat the entire system as a "black box" as much as possible, providing a query and asserting the final output. This requires a fully constructed, albeit small, test graph and mock implementations for any external dependencies that are not being tested directly.
-*   **Unit Testing Suggestions:**
-    *   **`SystemPerformanceMetrics::update_query_stats`:**
-        *   **Happy Path:** Call the function multiple times with different `response_time` values and assert that the `average_response_time` is calculated correctly as a running average.
-*   **Integration Testing Suggestions:**
-    *   **End-to-End Integrated Query:**
-        *   **Scenario:** This is the ultimate test of the entire cognitive system's functionality.
-        *   **Test:**
-            1.  Construct a small but feature-rich `BrainEnhancedKnowledgeGraph`.
-            2.  Instantiate all the necessary components (`ActivationEngine`, `SDRStorage`, etc.).
-            3.  Assemble the full `Phase3IntegratedCognitiveSystem`.
-            4.  Execute a query that is known to require a specific cognitive pattern (e.g., a simple factual query like "What is a dog?").
-        *   **Verification:**
-            1.  Assert that the final `Phase3QueryResult` contains the correct answer.
-            2.  Inspect the `reasoning_trace` field of the result. Assert that it contains entries for `WorkingMemoryOperation`, `AttentionShift`, and `InhibitionEvent`, proving that the pre-processing steps were executed.
-            3.  Assert that the `activated_patterns` list in the trace correctly identifies that the `Convergent` pattern was used.
-            4.  Assert that the trace contains a `MemoryConsolidation` event, proving the post-processing step was executed.
-    *   **System Self-Optimization:**
-        *   **Scenario:** Test the system's ability to trigger its self-optimization logic.
-        *   **Test:**
-            1.  Set up the full integrated system.
-            2.  Manually write to the `SystemState` to set the `system_performance` to a very low value (e.g., 0.5), which is below the optimization threshold.
-            3.  Execute any query.
-        *   **Verification:** Assert that the `system_state_changes` in the result contains the message "Applied automatic system optimization." Also, check the `SystemState` again and assert that the `system_performance` value has increased and the `last_optimization` timestamp has been updated.
+### Current Test Organization
+**Status**: Highest-level integration testing requiring full system assembly - complex black-box testing scenarios.
+
+**Identified Issues**:
+- System-level integration requires careful orchestration of multiple components
+- Performance metrics functions need unit testing in source file
+- End-to-end testing spans multiple architectural boundaries
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/phase3_integration.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_phase3_integration.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/phase3_integration.rs`)
+*   **`SystemPerformanceMetrics::update_query_stats`:**
+    *   **Happy Path:** Call the function multiple times with different `response_time` values and assert that the `average_response_time` is calculated correctly as a running average.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_phase3_integration.rs`)
+*   **End-to-End Integrated Query:**
+    *   **Scenario:** This is the ultimate test of the entire cognitive system's functionality.
+    *   **Test:**
+        1.  Construct a small but feature-rich `BrainEnhancedKnowledgeGraph`.
+        2.  Instantiate all the necessary components (`ActivationEngine`, `SDRStorage`, etc.).
+        3.  Assemble the full `Phase3IntegratedCognitiveSystem`.
+        4.  Execute a query that is known to require a specific cognitive pattern (e.g., a simple factual query like "What is a dog?").
+    *   **Verification:**
+        1.  Assert that the final `Phase3QueryResult` contains the correct answer.
+        2.  Inspect the `reasoning_trace` field of the result. Assert that it contains entries for `WorkingMemoryOperation`, `AttentionShift`, and `InhibitionEvent`, proving that the pre-processing steps were executed.
+        3.  Assert that the `activated_patterns` list in the trace correctly identifies that the `Convergent` pattern was used.
+        4.  Assert that the trace contains a `MemoryConsolidation` event, proving the post-processing step was executed.
+*   **System Self-Optimization:**
+    *   **Scenario:** Test the system's ability to trigger its self-optimization logic.
+    *   **Test:**
+        1.  Set up the full integrated system.
+        2.  Manually write to the `SystemState` to set the `system_performance` to a very low value (e.g., 0.5), which is below the optimization threshold.
+        3.  Execute any query.
+    *   **Verification:** Assert that the `system_state_changes` in the result contains the message "Applied automatic system optimization." Also, check the `SystemState` again and assert that the `system_performance` value has increased and the `last_optimization` timestamp has been updated.
 ### File Analysis: `src/cognitive/systems.rs`
 
 **1. Purpose and Functionality**
@@ -256,29 +324,46 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must focus on its ability to correctly traverse a predefined hierarchy and apply inheritance rules. This requires a test graph with a clear and non-trivial "IsA" structure.
-*   **Unit Testing Suggestions:**
-    *   **`infer_reasoning_type`:**
-        *   **Happy Path:** Test with a variety of queries containing keywords like "properties," "classify," and "system" to ensure the correct `SystemsReasoningType` enum variant is returned.
-*   **Integration Testing Suggestions:**
-    *   **Attribute Inheritance Workflow:**
-        *   **Scenario:** This is the core test for the module. It verifies the end-to-end inheritance process.
-        *   **Test:**
-            1.  Construct a `BrainEnhancedKnowledgeGraph` with a three-level hierarchy, e.g., `(GoldenRetriever) -[is_a]-> (Dog) -[is_a]-> (Mammal)`.
-            2.  Attach specific attributes to each level: `(GoldenRetriever) -[has_property]-> (Friendly)`, `(Dog) -[has_property]-> (Barks)`, `(Mammal) -[has_property]-> (WarmBlooded)`.
-            3.  Instantiate `SystemsThinking` with this graph.
-            4.  Execute a query for the properties of a "Golden Retriever" using `SystemsReasoningType::AttributeInheritance`.
-        *   **Verification:**
-            1.  Assert that the `traverse_hierarchy` function correctly identifies the path `[GoldenRetriever, Dog, Mammal]`.
-            2.  Assert that the final list of `inherited_attributes` in the `SystemsResult` contains all three properties: `Friendly`, `Barks`, and `WarmBlooded`.
-    *   **Exception Handling (Future Test):**
-        *   **Scenario:** Once exception handling is implemented, a test should be added to verify it.
-        *   **Test:**
-            1.  Create a hierarchy: `(Penguin) -[is_a]-> (Bird)`.
-            2.  Add the property `(CanFly)` to `Bird`.
-            3.  Add an exception property `(CannotFly)` to `Penguin`.
-            4.  Query for the properties of a "Penguin".
-        *   **Verification:** Assert that the final attribute list for "Penguin" correctly shows `(CannotFly)`, proving that the local override correctly superseded the inherited attribute.
+### Current Test Organization
+**Status**: Hierarchical reasoning testing requires graph traversal validation - mix of query inference and complex graph processing.
+
+**Identified Issues**:
+- Query inference functions like `infer_reasoning_type` need unit tests in source file
+- Hierarchy traversal verification indicates possible private method access requirements
+- Attribute inheritance testing requires complex graph construction and validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/systems.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_systems.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/systems.rs`)
+*   **`infer_reasoning_type`:**
+    *   **Happy Path:** Test with a variety of queries containing keywords like "properties," "classify," and "system" to ensure the correct `SystemsReasoningType` enum variant is returned.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_systems.rs`)
+*   **Attribute Inheritance Workflow:**
+    *   **Scenario:** This is the core test for the module. It verifies the end-to-end inheritance process.
+    *   **Test:**
+        1.  Construct a `BrainEnhancedKnowledgeGraph` with a three-level hierarchy, e.g., `(GoldenRetriever) -[is_a]-> (Dog) -[is_a]-> (Mammal)`.
+        2.  Attach specific attributes to each level: `(GoldenRetriever) -[has_property]-> (Friendly)`, `(Dog) -[has_property]-> (Barks)`, `(Mammal) -[has_property]-> (WarmBlooded)`.
+        3.  Instantiate `SystemsThinking` with this graph.
+        4.  Execute a query for the properties of a "Golden Retriever" using `SystemsReasoningType::AttributeInheritance`.
+    *   **Verification:**
+        1.  Assert that the `traverse_hierarchy` function correctly identifies the path `[GoldenRetriever, Dog, Mammal]`.
+        2.  Assert that the final list of `inherited_attributes` in the `SystemsResult` contains all three properties: `Friendly`, `Barks`, and `WarmBlooded`.
+*   **Exception Handling (Future Test):**
+    *   **Scenario:** Once exception handling is implemented, a test should be added to verify it.
+    *   **Test:**
+        1.  Create a hierarchy: `(Penguin) -[is_a]-> (Bird)`.
+        2.  Add the property `(CanFly)` to `Bird`.
+        3.  Add an exception property `(CannotFly)` to `Penguin`.
+        4.  Query for the properties of a "Penguin".
+    *   **Verification:** Assert that the final attribute list for "Penguin" correctly shows `(CannotFly)`, proving that the local override correctly superseded the inherited attribute.
 ### File Analysis: `src/cognitive/tuned_parameters.rs`
 
 **1. Purpose and Functionality**
@@ -304,24 +389,41 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** As a configuration file, it has no complex logic to test. The primary testing concern is ensuring that the parameters are consumed correctly by the other modules.
-*   **Unit Testing Suggestions:**
-    *   **Parameter Initialization:**
-        *   **Happy Path:** For each parameter struct, call the `optimized()` function and assert that the fields are initialized with the expected values. This acts as a regression test to prevent accidental changes to the tuned defaults.
-*   **Integration Testing Suggestions:**
-    *   **Parameter Consumption:**
-        *   **Scenario:** The most important test is to verify that a cognitive pattern actually *uses* the parameters from this file.
-        *   **Test:**
-            1.  Create a custom `TunedCognitiveParameters` object with a non-default value, for example, setting the `max_depth` in `ConvergentParameters` to a very low value like `1`.
-            2.  Instantiate the `CognitiveOrchestrator` or the specific cognitive pattern, ensuring it is configured with these custom parameters.
-            3.  Execute a query that is known to require a search depth greater than `1`.
-        *   **Verification:** Assert that the query fails or returns a partial result, proving that the `max_depth` parameter from the configuration was correctly applied and constrained the search as expected.
-    *   **`QueryComplexityAnalyzer` Logic:**
-        *   **Scenario:** Test the query analyzer's recommendations.
-        *   **Test:**
-            1.  Instantiate the `QueryComplexityAnalyzer`.
-            2.  Call `analyze_query` with a series of test queries (e.g., "what is water?", "brainstorm ideas for AI").
-        *   **Verification:** For each query, assert that the `recommended_pattern` in the `QueryAnalysis` result matches the expected pattern (`Convergent` for the first query, `Divergent` for the second).
+### Current Test Organization
+**Status**: Configuration module testing requires parameter validation - minimal logic but critical integration testing.
+
+**Identified Issues**:
+- Parameter initialization functions need validation in source file
+- Parameter consumption testing requires cross-module integration validation
+- Query complexity analyzer logic needs dedicated testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/tuned_parameters.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_tuned_parameters.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/tuned_parameters.rs`)
+*   **Parameter Initialization:**
+    *   **Happy Path:** For each parameter struct, call the `optimized()` function and assert that the fields are initialized with the expected values. This acts as a regression test to prevent accidental changes to the tuned defaults.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_tuned_parameters.rs`)
+*   **Parameter Consumption:**
+    *   **Scenario:** The most important test is to verify that a cognitive pattern actually *uses* the parameters from this file.
+    *   **Test:**
+        1.  Create a custom `TunedCognitiveParameters` object with a non-default value, for example, setting the `max_depth` in `ConvergentParameters` to a very low value like `1`.
+        2.  Instantiate the `CognitiveOrchestrator` or the specific cognitive pattern, ensuring it is configured with these custom parameters.
+        3.  Execute a query that is known to require a search depth greater than `1`.
+    *   **Verification:** Assert that the query fails or returns a partial result, proving that the `max_depth` parameter from the configuration was correctly applied and constrained the search as expected.
+*   **`QueryComplexityAnalyzer` Logic:**
+    *   **Scenario:** Test the query analyzer's recommendations.
+    *   **Test:**
+        1.  Instantiate the `QueryComplexityAnalyzer`.
+        2.  Call `analyze_query` with a series of test queries (e.g., "what is water?", "brainstorm ideas for AI").
+    *   **Verification:** For each query, assert that the `recommended_pattern` in the `QueryAnalysis` result matches the expected pattern (`Convergent` for the first query, `Divergent` for the second).
 ### File Analysis: `src/cognitive/types.rs`
 
 **1. Purpose and Functionality**
@@ -344,27 +446,46 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** This file contains only type definitions (structs, enums, and a trait). There is no executable logic to test directly. The correctness of these types is validated implicitly through the compilation process and, more importantly, through the unit and integration tests of all the other modules that use them.
-*   **Testing Suggestions:**
-    *   **Compilation Checks:** The primary "test" is ensuring that the project compiles. If a cognitive pattern attempts to return a data structure that doesn't match the definition in this file, the compiler will fail, which is the desired behavior.
-    *   **Serialization/Deserialization (if applicable):** The `serde` attributes (`Serialize`, `Deserialize`) are present on many of the structs. A good testing practice would be to have a dedicated test module (perhaps at the `cognitive` module level) that takes examples of each major result struct, serializes it to a format like JSON, and then deserializes it back. This verifies that the `serde` implementation is correct and that the data structures can be successfully transmitted or saved if needed. For example:
-        ```rust
-        #[test]
-        fn test_serialization_of_pattern_result() {
-            // Create a sample PatternResult
-            let result = PatternResult { /* ... */ };
-            
-            // Serialize it
-            let json_string = serde_json::to_string(&result).unwrap();
-            
-            // Deserialize it back
-            let deserialized_result: PatternResult = serde_json::from_str(&json_string).unwrap();
-            
-            // Assert that the original and deserialized versions are equal
-            assert_eq!(result, deserialized_result); 
-        }
-        ```
-        *(Note: This would require adding `PartialEq` to the structs being tested).*
+### Current Test Organization
+**Status**: Type definitions require minimal direct testing - primarily compilation and serialization validation.
+
+**Identified Issues**:
+- Type definition correctness validated through compilation
+- Serialization/deserialization testing may be needed for data structures
+- No functional logic requiring traditional unit tests
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/types.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_types.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/types.rs`)
+*   **Compilation Checks:** The primary "test" is ensuring that the project compiles. If a cognitive pattern attempts to return a data structure that doesn't match the definition in this file, the compiler will fail, which is the desired behavior.
+*   **Serialization/Deserialization (if applicable):** The `serde` attributes (`Serialize`, `Deserialize`) are present on many of the structs. A good testing practice would be to have a dedicated test module that takes examples of each major result struct, serializes it to a format like JSON, and then deserializes it back. This verifies that the `serde` implementation is correct and that the data structures can be successfully transmitted or saved if needed. For example:
+    ```rust
+    #[test]
+    fn test_serialization_of_pattern_result() {
+        // Create a sample PatternResult
+        let result = PatternResult { /* ... */ };
+        
+        // Serialize it
+        let json_string = serde_json::to_string(&result).unwrap();
+        
+        // Deserialize it back
+        let deserialized_result: PatternResult = serde_json::from_str(&json_string).unwrap();
+        
+        // Assert that the original and deserialized versions are equal
+        assert_eq!(result, deserialized_result); 
+    }
+    ```
+    *(Note: This would require adding `PartialEq` to the structs being tested).*
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_types.rs`)
+*   No integration testing required for pure type definitions.
 ### File Analysis: `src/cognitive/working_memory.rs`
 
 **1. Purpose and Functionality**
@@ -393,31 +514,48 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must be heavily state-based. The core logic revolves around adding, removing, and modifying items in the internal buffers. Tests should set up a specific buffer state, perform an operation, and then assert that the new state of the buffers is correct.
-*   **Unit Testing Suggestions:**
-    *   **`apply_decay_to_buffers`:**
-        *   **Happy Path:** Add several `MemoryItem`s with different timestamps to a buffer. Manually advance the clock (using a time-mocking library if possible) and call the decay function. Assert that the `activation_level` of older items has decreased more than newer items.
-        *   **Edge Cases:** Call decay on an item that is already below the removal threshold to ensure it is correctly removed from the buffer.
-    *   **`apply_forgetting_strategy`:**
-        *   **Happy Path:** Fill a buffer to capacity with items of varying importance and access counts. Attempt to add a new, high-importance item. Assert that the least important, least accessed, and oldest item is the one that gets evicted.
-*   **Integration Testing Suggestions:**
-    *   **Store and Retrieve Workflow:**
-        *   **Scenario:** Test the fundamental store-then-retrieve cycle.
-        *   **Test:**
-            1.  Instantiate the `WorkingMemorySystem`.
-            2.  Call `store_in_working_memory` to add a specific `MemoryContent` (e.g., a concept string) to the phonological buffer.
-            3.  Create a `MemoryQuery` that should match the stored content.
-            4.  Call `retrieve_from_working_memory` with that query.
-        *   **Verification:**
-            1.  Assert that the `MemoryRetrievalResult` is not empty.
-            2.  Assert that the content of the retrieved `MemoryItem` matches the content that was originally stored.
-            3.  Assert that the `retrieval_confidence` is high.
-    *   **Capacity and Eviction:**
-        *   **Scenario:** Verify that the buffer capacity limits are enforced correctly.
-        *   **Test:**
-            1.  Get the capacity of the phonological buffer (e.g., 7).
-            2.  Call `store_in_working_memory` 8 times with items of increasing importance.
-        *   **Verification:**
-            1.  After the 8th call, assert that the `evicted_items` list in the `MemoryStorageResult` contains exactly one item.
-            2.  Assert that the evicted item is the one that had the lowest importance score from the initial set of 7.
-            3.  Assert that the final size of the phonological buffer is still 7.
+### Current Test Organization
+**Status**: Working memory testing requires state-based validation - complex internal buffer management with private method access needs.
+
+**Identified Issues**:
+- Internal buffer manipulation functions like `apply_decay_to_buffers` and `apply_forgetting_strategy` require unit tests in source file
+- Public API testing for store/retrieve workflows appropriate for integration tests
+- Buffer state validation may require access to private buffer structures
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/working_memory.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_working_memory.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/working_memory.rs`)
+*   **`apply_decay_to_buffers`:**
+    *   **Happy Path:** Add several `MemoryItem`s with different timestamps to a buffer. Manually advance the clock (using a time-mocking library if possible) and call the decay function. Assert that the `activation_level` of older items has decreased more than newer items.
+    *   **Edge Cases:** Call decay on an item that is already below the removal threshold to ensure it is correctly removed from the buffer.
+*   **`apply_forgetting_strategy`:**
+    *   **Happy Path:** Fill a buffer to capacity with items of varying importance and access counts. Attempt to add a new, high-importance item. Assert that the least important, least accessed, and oldest item is the one that gets evicted.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_working_memory.rs`)
+*   **Store and Retrieve Workflow:**
+    *   **Scenario:** Test the fundamental store-then-retrieve cycle.
+    *   **Test:**
+        1.  Instantiate the `WorkingMemorySystem`.
+        2.  Call `store_in_working_memory` to add a specific `MemoryContent` (e.g., a concept string) to the phonological buffer.
+        3.  Create a `MemoryQuery` that should match the stored content.
+        4.  Call `retrieve_from_working_memory` with that query.
+    *   **Verification:**
+        1.  Assert that the `MemoryRetrievalResult` is not empty.
+        2.  Assert that the content of the retrieved `MemoryItem` matches the content that was originally stored.
+        3.  Assert that the `retrieval_confidence` is high.
+*   **Capacity and Eviction:**
+    *   **Scenario:** Verify that the buffer capacity limits are enforced correctly.
+    *   **Test:**
+        1.  Get the capacity of the phonological buffer (e.g., 7).
+        2.  Call `store_in_working_memory` 8 times with items of increasing importance.
+    *   **Verification:**
+        1.  After the 8th call, assert that the `evicted_items` list in the `MemoryStorageResult` contains exactly one item.
+        2.  Assert that the evicted item is the one that had the lowest importance score from the initial set of 7.
+        3.  Assert that the final size of the phonological buffer is still 7.

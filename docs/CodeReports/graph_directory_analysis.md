@@ -52,9 +52,15 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** This file requires comprehensive unit testing due to its fundamental role as the core data structure. Focus on testing graph construction, node/edge management, and data integrity. Integration testing should verify compatibility with error handling and type systems.
+**Overall Approach:** This file requires comprehensive unit testing due to its fundamental role as the core data structure. Focus on testing graph construction, node/edge management, and data integrity. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/graph/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/graph/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/graph/mod.rs`):**
 
 - **Graph::new()**: 
   - Happy Path: Verify new graph has zero nodes/edges and proper counter initialization
@@ -80,7 +86,7 @@
   - Edge Cases: Test iteration over empty graphs, single-node graphs
   - Error Handling: Ensure iterators handle concurrent modifications gracefully
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/graph/test_mod.rs`):**
 
 - **Error System Integration**: Create tests that verify Graph errors properly propagate through the crate::error::Result system and produce meaningful error messages for debugging cognitive algorithms.
 
@@ -123,9 +129,15 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Focus on unit testing each trait method with various graph configurations. Test the trait implementation against the concrete Graph type and verify performance characteristics for large graphs.
+**Overall Approach:** Focus on unit testing each trait method with various graph configurations. Test the trait implementation against the concrete Graph type and verify performance characteristics for large graphs. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/graph/operations.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/graph/test_operations.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/graph/operations.rs`):**
 
 - **node_count()/edge_count()**: 
   - Happy Path: Test counting on graphs with known numbers of nodes/edges
@@ -142,7 +154,7 @@
   - Edge Cases: Test isolated nodes (no outgoing edges), nodes with self-loops
   - Error Handling: Test behavior with non-existent node IDs
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/graph/test_operations.rs`):**
 
 - **Graph Operations Integration**: Create tests that combine multiple operations to perform realistic graph analysis tasks, such as finding all neighbors of nodes matching certain criteria or calculating graph statistics for cognitive pattern validation.
 
@@ -185,9 +197,15 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Focus on testing enum serialization/deserialization, type safety enforcement, and edge cases for variant construction. Verify that the type system supports the full range of cognitive pattern representation needed by LLMKG.
+**Overall Approach:** Focus on testing enum serialization/deserialization, type safety enforcement, and edge cases for variant construction. Verify that the type system supports the full range of cognitive pattern representation needed by LLMKG. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/graph/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/graph/test_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/graph/types.rs`):**
 
 - **Type Alias Behavior**: 
   - Happy Path: Test NodeId/EdgeId assignment and comparison operations
@@ -209,7 +227,7 @@
   - Edge Cases: Test deeply nested List structures, very large numbers, empty collections
   - Error Handling: Verify type matching and conversion behaviors
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/graph/test_types.rs`):**
 
 - **Graph Type Integration**: Create tests that verify these types work correctly with the Graph structure, ensuring NodeType/EdgeType combinations produce semantically meaningful graph patterns for cognitive analysis.
 
@@ -253,7 +271,7 @@ External modules in the LLMKG system likely interact with this directory by:
 
 **High-Level Quality Assurance Approach:**
 
-1. **Shared Test Infrastructure**: Create a common test utilities module with graph builders for standard cognitive patterns (hierarchical knowledge structures, associative networks, property graphs with confidence scores). This will enable consistent testing across all graph operations.
+1. **Test Support Infrastructure**: Create a common test utilities module (`src/test_support/graph_builders.rs`) with graph builders for standard cognitive patterns (hierarchical knowledge structures, associative networks, property graphs with confidence scores). This will enable consistent testing across all graph operations and should be placed in the `src/test_support/` directory for access by both unit and integration tests.
 
 2. **Property-Based Testing**: Implement property-based tests using frameworks like `quickcheck` to verify graph invariants hold across random node/edge combinations, ensuring the type system maintains consistency under all valid input combinations.
 
@@ -268,5 +286,10 @@ External modules in the LLMKG system likely interact with this directory by:
 5. **Error Handling Validation**: Create comprehensive tests ensuring the error handling system properly propagates through all graph operations and provides meaningful debugging information for cognitive algorithm development.
 
 6. **Type Safety Verification**: Implement compile-time and runtime tests that verify the type system prevents semantic errors (e.g., inappropriate property types, invalid relationship combinations) that could compromise cognitive reasoning accuracy.
+
+**CRITICAL: Test Placement Compliance**
+- Unit tests requiring private access must be in `#[cfg(test)]` modules within source files
+- Integration tests must only use public APIs and be placed in `tests/graph/` directory
+- Any tests accessing private methods from integration test files violates Rust testing best practices and must be moved to appropriate source file `#[cfg(test)]` modules
 
 This testing strategy ensures the graph directory provides a robust, performant, and type-safe foundation for the cognitive pattern analysis capabilities that define the LLMKG system's core value proposition.

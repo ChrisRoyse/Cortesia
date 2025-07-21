@@ -48,9 +48,24 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires comprehensive unit testing for the CPU implementation and interface compliance testing. Integration testing should verify proper fallback behavior and performance characteristics.
+### Current Test Organization
+**Status**: No existing tests found for GPU module - requires complete test implementation.
 
-**Unit Testing Suggestions:**
+**Identified Issues**:
+- No test coverage for GPU acceleration interface and implementations
+- Missing validation of trait compliance across different backends
+- No performance baseline measurements for CPU fallback implementation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/gpu/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/gpu/test_mod.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/gpu/mod.rs`)
 
 *CpuGraphProcessor::parallel_traversal:*
 - **Happy Path:** Test with valid start nodes array and reasonable max_depth values
@@ -67,7 +82,7 @@
 - **Edge Cases:** Test with zero vectors, unit vectors, identical vectors, orthogonal vectors
 - **Error Handling:** Verify proper handling of empty vectors and numerical edge cases
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/gpu/test_mod.rs`)
 - Create tests that verify the trait abstraction works correctly across different implementations
 - Test the conditional compilation and feature gating behavior
 - Verify that the CPU fallback produces consistent results across different hardware configurations
@@ -105,9 +120,24 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on testing feature flag behavior, error handling, and documentation accuracy. No complex algorithmic testing is needed since the implementation is placeholder-only.
+### Current Test Organization
+**Status**: No existing tests found for CUDA module - requires complete test implementation.
 
-**Unit Testing Suggestions:**
+**Identified Issues**:
+- No test coverage for CUDA feature flag management
+- Missing validation of conditional compilation behavior
+- No testing of error handling for different feature states
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/gpu/cuda.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/gpu/test_cuda.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/gpu/cuda.rs`)
 
 *CudaGraphProcessor::new (CUDA enabled):*
 - **Happy Path:** N/A (always returns error by design)
@@ -119,7 +149,7 @@
 - **Edge Cases:** N/A
 - **Error Handling:** Verify that FeatureNotEnabled error is returned with "cuda" feature name
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/gpu/test_cuda.rs`)
 - Test compilation with and without the cuda feature flag
 - Verify that the conditional compilation directives work correctly
 - Ensure error messages provide helpful guidance for users attempting to use GPU acceleration
@@ -152,17 +182,34 @@ The conditional compilation system ensures that CUDA dependencies are only inclu
 
 ### Directory-Wide Testing Strategy
 
-**Comprehensive Approach:**
+### Current Test Organization
+**Status**: No existing tests found for GPU directory - requires complete test implementation across all modules.
+
+**Identified Issues**:
+- No test coverage for GPU acceleration interface and implementations
+- Missing validation of trait compliance across different backends
+- No performance baseline measurements for current implementations
+- Missing feature flag testing for conditional compilation scenarios
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source files (`src/gpu/*.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/gpu/test_*.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in respective `src/gpu/*.rs` files)
 - **Feature Flag Testing:** Ensure all conditional compilation scenarios work correctly
 - **Interface Compliance:** Verify that all implementations properly satisfy the GpuAccelerator trait
-- **Performance Benchmarking:** Establish baseline performance metrics for CPU implementations to measure future GPU acceleration gains
 - **Error Handling:** Test graceful degradation and informative error messages across all scenarios
 
-**Recommended Test Structure:**
+### Integration Testing Suggestions (place in `tests/gpu/` directory)
 - Create integration tests that verify the entire acceleration pipeline
-- Implement benchmarks that can compare CPU vs future GPU performance
 - Add compilation tests for different feature flag combinations
 - Include documentation tests to ensure code examples remain current
+- **Performance Benchmarking:** Establish baseline performance metrics for CPU implementations to measure future GPU acceleration gains
 
 **Future Testing Considerations:**
 When CUDA implementation is added, the testing strategy should expand to include:

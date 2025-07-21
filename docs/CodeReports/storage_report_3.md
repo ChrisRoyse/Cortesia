@@ -59,9 +59,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test performance characteristics, memory efficiency, and safety of unsafe operations. Focus on cache behavior and concurrent access patterns.
+**Overall Approach:** Test performance characteristics, memory efficiency, and safety of unsafe operations. Focus on cache behavior and concurrent access patterns. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/mmap_storage.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_mmap_storage.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/mmap_storage.rs`):**
 
 - **Zero-copy operations:**
   - Happy Path: Verify get_neighbors_unchecked returns correct data
@@ -78,7 +84,7 @@
   - Edge Cases: Maximum capacity, fragmentation scenarios
   - Error Handling: Out-of-memory conditions
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_mmap_storage.rs`):**
 - Benchmark throughput vs traditional storage approaches
 - Test cache efficiency with various access patterns
 - Verify thread safety under high concurrency
@@ -112,11 +118,17 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** No direct testing needed for module declarations. Integration tests should verify all modules are accessible.
+**Overall Approach:** No direct testing needed for module declarations. Integration tests should verify all modules are accessible. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:** N/A
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
 
-**Integration Testing Suggestions:**
+**Unit Testing Suggestions (place in `src/storage/mod.rs`):** N/A
+
+**Integration Testing Suggestions (place in `tests/storage/test_mod.rs`):**
 - Verify all declared modules compile correctly
 - Check that public APIs are accessible from other modules
 - Ensure no circular dependencies
@@ -181,9 +193,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test persistence, compression quality, and crash recovery. Focus on file format compatibility and quantization effectiveness.
+**Overall Approach:** Test persistence, compression quality, and crash recovery. Focus on file format compatibility and quantization effectiveness. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/persistent_mmap.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_persistent_mmap.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/persistent_mmap.rs`):**
 
 - **File persistence:**
   - Happy Path: Save and reload data, verify integrity
@@ -200,7 +218,7 @@
   - Edge Cases: Sync during concurrent operations
   - Error Handling: Sync failures
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_persistent_mmap.rs`):**
 - Test with datasets larger than RAM
 - Verify search quality vs compression trade-offs
 - Benchmark I/O patterns and sync overhead
@@ -263,9 +281,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test compression effectiveness, search quality, and training robustness. Focus on the accuracy vs memory trade-off.
+**Overall Approach:** Test compression effectiveness, search quality, and training robustness. Focus on the accuracy vs memory trade-off. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/quantized_index.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_quantized_index.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/quantized_index.rs`):**
 
 - **Quantizer training:**
   - Happy Path: Train with diverse data, verify compression
@@ -282,7 +306,7 @@
   - Edge Cases: High-dimensional sparse vectors
   - Error Handling: Memory allocation failures
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_quantized_index.rs`):**
 - Benchmark vs uncompressed indices on standard datasets
 - Test with various dimension/subvector configurations
 - Verify thread safety with concurrent operations
@@ -306,6 +330,18 @@
 - All implementations support concurrent read access for scalability
 
 **Directory-Wide Testing Strategy:**
+
+**Testing Architecture Compliance:**
+- All tests accessing private methods/fields MUST be in `#[cfg(test)]` modules within source files
+- Integration tests MUST only use public APIs and be placed in `tests/storage/` directory
+- Any violations of these rules should be flagged and corrected
+
+**Test Support Infrastructure:**
+- Create shared test utilities in `src/test_support/storage/` for common test data generation
+- Implement mock storage backends for testing higher-level components
+- Provide benchmark harnesses for consistent performance testing
+
+**Comprehensive Testing Strategy:**
 - Create benchmark suite comparing latency and throughput across all storage backends
 - Test memory efficiency with datasets of varying sizes (1M, 10M, 100M entities)
 - Verify persistence and recovery scenarios for disk-backed storage

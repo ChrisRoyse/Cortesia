@@ -31,15 +31,33 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Module organization testing and import verification.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Module aggregator primarily needs compilation and re-export verification
+
+**Identified Issues**:
+- Module re-export logic is straightforward but critical for access patterns
+- Handler accessibility needs integration testing
+- Module organization requires structural validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/mod.rs`)
 - **Happy Path:** Verify all handlers are accessible through re-exports
 - **Edge Cases:** Missing module declarations, circular dependencies
 - **Error Handling:** Module loading failures, re-export conflicts
 
-**Integration Testing Suggestions:**
-- **Handler accessibility**: Ensure all handlers work correctly when accessed through re-exports
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_handlers.rs`)
+- **Handler accessibility:** Ensure all handlers work correctly when accessed through re-exports
+- **Module integration:** Verify handler modules integrate properly with main server
 
 ---
 
@@ -68,16 +86,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on storage correctness, entity extraction accuracy, and validation effectiveness.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Storage handlers require both unit testing for algorithms and integration testing for workflows
+
+**Identified Issues**:
+- Entity extraction algorithms need private access for internal logic testing
+- Storage validation requires private method access
+- End-to-end storage workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/storage.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_storage_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/storage.rs`)
 - **Happy Path:** Valid fact storage, successful knowledge chunk processing, correct entity extraction
 - **Edge Cases:** Empty content, oversized inputs, malformed entities, extraction failures
 - **Error Handling:** Storage failures, validation rejections, statistics update failures
+- **Private algorithms:** Internal entity extraction, relationship detection, validation logic
 
-**Integration Testing Suggestions:**
-- **End-to-end storage**: Test complete storage workflows from input validation to knowledge engine storage
-- **Entity extraction accuracy**: Validate extracted entities and relationships match expectations
+### Integration Testing Suggestions (place in `tests/mcp/test_storage_handlers.rs`)
+- **End-to-end storage:** Test complete storage workflows from input validation to knowledge engine storage
+- **Entity extraction accuracy:** Validate extracted entities and relationships match expectations
+- **Storage effectiveness:** Verify storage operations through public handler API
 
 ---
 
@@ -106,16 +143,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on query accuracy, natural language processing effectiveness, and result quality.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Query handlers require both unit testing for algorithms and integration testing for workflows
+
+**Identified Issues**:
+- NLP processing algorithms need private access for internal logic testing
+- Query optimization requires private method access
+- End-to-end query workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/query.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_query_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/query.rs`)
 - **Happy Path:** Successful fact retrieval, accurate question answering, proper result formatting
 - **Edge Cases:** Empty queries, no results found, malformed questions, relevance edge cases
 - **Error Handling:** Query failures, NLP processing errors, answer generation failures
+- **Private algorithms:** Internal NLP processing, relevance scoring, answer generation logic
 
-**Integration Testing Suggestions:**
-- **Question-answer accuracy**: Test natural language processing with diverse question types
-- **Search result quality**: Verify relevance scoring and result ranking accuracy
+### Integration Testing Suggestions (place in `tests/mcp/test_query_handlers.rs`)
+- **Question-answer accuracy:** Test natural language processing with diverse question types
+- **Search result quality:** Verify relevance scoring and result ranking accuracy
+- **Query effectiveness:** Verify query operations through public handler API
 
 ---
 
@@ -145,16 +201,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on graph algorithm correctness, suggestion quality, and exploration completeness.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Exploration handlers require both unit testing for algorithms and integration testing for workflows
+
+**Identified Issues**:
+- Graph traversal algorithms need private access for internal logic testing
+- Suggestion generation requires private method access
+- End-to-end exploration workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/exploration.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_exploration_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/exploration.rs`)
 - **Happy Path:** Successful path finding, accurate connection exploration, relevant suggestions
 - **Edge Cases:** Disconnected entities, very deep paths, circular relationships, empty suggestion sets
 - **Error Handling:** Graph traversal failures, algorithm timeouts, suggestion generation errors
+- **Private algorithms:** Internal graph traversal, BFS implementation, suggestion generation logic
 
-**Integration Testing Suggestions:**
-- **Graph algorithm validation**: Test path finding algorithms with complex graph structures
-- **Suggestion relevance**: Verify suggestion quality and usefulness across different knowledge domains
+### Integration Testing Suggestions (place in `tests/mcp/test_exploration_handlers.rs`)
+- **Graph algorithm validation:** Test path finding algorithms with complex graph structures
+- **Suggestion relevance:** Verify suggestion quality and usefulness across different knowledge domains
+- **Exploration effectiveness:** Verify exploration operations through public handler API
 
 ---
 
@@ -183,16 +258,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on advanced algorithm correctness, search quality, and validation comprehensiveness.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Advanced handlers require both unit testing for algorithms and integration testing for workflows
+
+**Identified Issues**:
+- Query generation algorithms need private access for internal logic testing
+- Search fusion requires private method access
+- End-to-end advanced workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/advanced.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_advanced_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/advanced.rs`)
 - **Happy Path:** Query generation accuracy, search result quality, validation completeness
 - **Edge Cases:** Complex query patterns, search fusion edge cases, validation conflicts
 - **Error Handling:** Query generation failures, search timeouts, validation errors
+- **Private algorithms:** Internal query generation, search fusion, validation logic
 
-**Integration Testing Suggestions:**
-- **End-to-end advanced workflows**: Test complete advanced operation sequences
-- **Cross-system integration**: Verify generated queries work with target graph databases
+### Integration Testing Suggestions (place in `tests/mcp/test_advanced_handlers.rs`)
+- **End-to-end advanced workflows:** Test complete advanced operation sequences
+- **Cross-system integration:** Verify generated queries work with target graph databases
+- **Advanced effectiveness:** Verify advanced operations through public handler API
 
 ---
 
@@ -221,16 +315,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on statistical accuracy, performance metric correctness, and monitoring completeness.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Statistics handlers require both unit testing for calculations and integration testing for accuracy
+
+**Identified Issues**:
+- Statistics calculation algorithms need private access for internal logic testing
+- Performance metric computation requires private method access
+- End-to-end statistics workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/handlers/stats.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_stats_handlers.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/handlers/stats.rs`)
 - **Happy Path:** Accurate statistics calculation, correct performance metrics, proper health scoring
 - **Edge Cases:** Empty knowledge graphs, very large datasets, performance edge cases
 - **Error Handling:** Statistics collection failures, calculation errors, memory analysis issues
+- **Private algorithms:** Internal statistics computation, performance calculation, health scoring logic
 
-**Integration Testing Suggestions:**
-- **Statistics accuracy**: Verify calculated statistics match actual system state
-- **Performance correlation**: Ensure performance metrics correlate with actual system behavior
+### Integration Testing Suggestions (place in `tests/mcp/test_stats_handlers.rs`)
+- **Statistics accuracy:** Verify calculated statistics match actual system state
+- **Performance correlation:** Ensure performance metrics correlate with actual system behavior
+- **Statistics effectiveness:** Verify statistics operations through public handler API
 
 ---
 
@@ -259,16 +372,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on utility function correctness and guidance quality.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Utility functions require both unit testing for algorithms and integration testing for effectiveness
+
+**Identified Issues**:
+- Utility calculation algorithms need private access for internal logic testing
+- Guidance generation requires private method access
+- End-to-end utility workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/utils.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_llm_friendly_utils.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/utils.rs`)
 - **Happy Path:** Correct statistics updates, accurate efficiency calculations, relevant suggestions
 - **Edge Cases:** Statistics overflow, efficiency calculation edge cases, missing guidance scenarios
 - **Error Handling:** Update failures, calculation errors, suggestion generation issues
+- **Private algorithms:** Internal calculation logic, guidance generation, error processing
 
-**Integration Testing Suggestions:**
-- **Statistics integration**: Verify utilities work correctly with actual server operations
-- **Guidance effectiveness**: Test that generated guidance helps improve LLM interactions
+### Integration Testing Suggestions (place in `tests/mcp/test_llm_friendly_utils.rs`)
+- **Statistics integration:** Verify utilities work correctly with actual server operations
+- **Guidance effectiveness:** Test that generated guidance helps improve LLM interactions
+- **Utility effectiveness:** Verify utility functions through actual server usage
 
 ---
 
@@ -297,16 +429,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on query generation accuracy and intent recognition effectiveness.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Query generation requires both unit testing for algorithms and integration testing for effectiveness
+
+**Identified Issues**:
+- Query generation algorithms need private access for internal logic testing
+- Intent recognition requires private method access
+- End-to-end query generation workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/query_generation.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_query_generation.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/query_generation.rs`)
 - **Happy Path:** Correct query generation for each language, accurate intent recognition, proper entity extraction
 - **Edge Cases:** Complex queries, ambiguous intent, malformed natural language, query language edge cases
 - **Error Handling:** Generation failures, intent recognition errors, complexity calculation issues
+- **Private algorithms:** Internal query construction, intent classification, entity extraction logic
 
-**Integration Testing Suggestions:**
-- **Generated query validation**: Test generated queries against actual graph database systems
-- **Intent accuracy**: Verify intent recognition with diverse natural language inputs
+### Integration Testing Suggestions (place in `tests/mcp/test_query_generation.rs`)
+- **Generated query validation:** Test generated queries against actual graph database systems
+- **Intent accuracy:** Verify intent recognition with diverse natural language inputs
+- **Query generation effectiveness:** Verify query generation through public API
 
 ---
 
@@ -335,16 +486,35 @@
 
 **3. Testing Strategy**
 
-**Overall Approach:** Focus on fusion algorithm correctness and result quality optimization.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Search fusion requires both unit testing for algorithms and integration testing for effectiveness
+
+**Identified Issues**:
+- Fusion algorithms need private access for internal logic testing
+- Scoring calculations require private method access
+- End-to-end fusion workflows need integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/mcp/llm_friendly_server/search_fusion.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/mcp/test_search_fusion.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/mcp/llm_friendly_server/search_fusion.rs`)
 - **Happy Path:** Correct result fusion, appropriate scoring, proper deduplication
 - **Edge Cases:** Empty result sets, identical results across strategies, extreme weight configurations
 - **Error Handling:** Fusion failures, scoring calculation errors, result identification issues
+- **Private algorithms:** Internal fusion logic, scoring calculation, deduplication algorithms
 
-**Integration Testing Suggestions:**
-- **Search quality validation**: Verify fused results improve upon individual search strategies
-- **Performance impact**: Ensure fusion algorithms perform efficiently with large result sets
+### Integration Testing Suggestions (place in `tests/mcp/test_search_fusion.rs`)
+- **Search quality validation:** Verify fused results improve upon individual search strategies
+- **Performance impact:** Ensure fusion algorithms perform efficiently with large result sets
+- **Fusion effectiveness:** Verify search fusion through public API
 
 ---
 

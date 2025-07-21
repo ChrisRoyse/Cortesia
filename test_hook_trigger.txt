@@ -1,1 +1,0 @@
-Use the Read tool to read the CLAUDE.md file in the current directory. Just show the first 5 lines.

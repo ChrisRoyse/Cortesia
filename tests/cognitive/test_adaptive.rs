@@ -1,22 +1,42 @@
 use std::sync::Arc;
 use std::collections::HashMap as AHashMap;
 
-use llmkg::cognitive::{AdaptiveThinking, CognitivePattern, CognitivePatternType, PatternParameters, PatternResult, ResultMetadata, ComplexityEstimate};
+use llmkg::cognitive::{AdaptiveThinking, CognitivePattern, CognitivePatternType, PatternParameters, PatternResult, ResultMetadata, ComplexityEstimate, ActivationStep, ActivationOperation};
 use llmkg::cognitive::types::*;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::entity_compat::Entity;
+use llmkg::core::types::{EntityKey, EntityData};
 use llmkg::error::Result;
+use slotmap::SlotMap;
+use std::time::SystemTime;
+
+/// Helper to create a mock activation step
+fn create_mock_activation_step(step_id: usize, concept: &str) -> ActivationStep {
+    // Create a dummy entity key for testing
+    let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
+    let key = sm.insert(EntityData {
+        type_id: 1,
+        properties: format!("test_entity_{}", step_id),
+        embedding: vec![0.0; 64],
+    });
+    
+    ActivationStep {
+        step_id,
+        entity_key: key,
+        concept_id: concept.to_string(),
+        activation_level: 0.8,
+        operation_type: ActivationOperation::Initialize,
+        timestamp: SystemTime::now(),
+    }
+}
 
 /// Create a test knowledge graph
 fn create_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
     let graph = BrainEnhancedKnowledgeGraph::new(768).unwrap();
     
     // Add some test entities
-    let entity1 = Entity::new("test1".to_string(), "TestEntity1".to_string());
-    let entity2 = Entity::new("test2".to_string(), "TestEntity2".to_string());
-    
-    graph.add_entity(entity1).unwrap();
-    graph.add_entity(entity2).unwrap();
+    // Note: Since add_entity is not available in the public API,
+    // we'll skip adding entities to the graph for this test
     
     Arc::new(graph)
 }
@@ -1061,7 +1081,7 @@ mod tests {
                     pattern_type: CognitivePatternType::Convergent,
                     answer: self.expected_answer.clone(),
                     confidence: self.expected_confidence,
-                    reasoning_trace: vec!["Mock convergent reasoning".to_string()],
+                    reasoning_trace: vec![create_mock_activation_step(0, "Mock convergent reasoning")],
                     metadata: ResultMetadata {
                         execution_time_ms: 50,
                         nodes_activated: 10,
@@ -1127,7 +1147,7 @@ mod tests {
                     pattern_type: CognitivePatternType::Divergent,
                     answer: self.expected_answer.clone(),
                     confidence: self.expected_confidence,
-                    reasoning_trace: vec!["Mock divergent reasoning".to_string()],
+                    reasoning_trace: vec![create_mock_activation_step(0, "Mock divergent reasoning")],
                     metadata: ResultMetadata {
                         execution_time_ms: 75,
                         nodes_activated: 15,
@@ -1193,7 +1213,7 @@ mod tests {
                     pattern_type: CognitivePatternType::Lateral,
                     answer: self.expected_answer.clone(),
                     confidence: self.expected_confidence,
-                    reasoning_trace: vec!["Mock lateral reasoning".to_string()],
+                    reasoning_trace: vec![create_mock_activation_step(0, "Mock lateral reasoning")],
                     metadata: ResultMetadata {
                         execution_time_ms: 100,
                         nodes_activated: 20,

@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod lateral_tests {
     use tokio;
-    use crate::cognitive::lateral::LateralThinking;
-    use crate::cognitive::types::{
+    use llmkg::cognitive::lateral::LateralThinking;
+    use llmkg::cognitive::types::{
         PatternResult, LateralResult, BridgePath, CognitivePatternType
     };
-    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+
 
     #[tokio::test]
     async fn test_parse_lateral_query_basic() {
@@ -276,6 +277,7 @@ mod lateral_tests {
             _ => panic!("Expected LateralResult from lateral thinking")
         }
     }
+
 
     // Helper functions
 

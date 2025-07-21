@@ -26,13 +26,29 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires minimal testing as it only declares modules and re-exports. Focus should be on integration testing to ensure all re-exported types are accessible.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Module re-exports require minimal testing - primarily integration tests for API verification
+
+**Identified Issues**:
+- No current violations - module declarations are appropriate for integration testing only
+- Re-export verification does not require private access
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/mod.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_mod.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/mod.rs`)
 - **Module Loading**: Test that all declared modules compile and load correctly
 - **Re-export Verification**: Ensure all re-exported types are accessible through this module
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_mod.rs`)
 - Verify that importing types through this module works identically to importing directly from submodules
 - Test that the module structure doesn't introduce any circular dependencies
 
@@ -61,9 +77,26 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Heavy unit testing required due to complex business logic involving text normalization, similarity calculations, and caching mechanisms.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Complex business logic requires both unit tests for private methods and integration tests for public API
+
+**Identified Issues**:
+- Private similarity calculation methods need unit testing within source file
+- Caching mechanisms require unit testing for proper validation
+- Public canonicalization API appropriate for integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/canonicalization.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_canonicalization.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/canonicalization.rs`)
 - **normalize_entity_name**: Test removal of titles (Dr., Prof.), suffixes (Jr., Sr.), and proper title casing
   - Happy Path: "Dr. John Smith Jr." → "John Smith"
   - Edge Cases: Empty strings, single words, all caps input
@@ -80,7 +113,7 @@
   - Edge Cases: Triples with empty components
   - Error Handling: Cache failures
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_canonicalization.rs`)
 - Test cache coherency when multiple threads canonicalize the same entity
 - Verify deduplication results when processing large entity sets
 - Test integration with NeuralProcessingServer for enhanced canonicalization
@@ -109,9 +142,26 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on integration testing with mock server implementation, ensuring proper request handling and response parsing.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Network service layer requires both unit tests for request handling logic and integration tests for server communication
+
+**Identified Issues**:
+- Request serialization and response parsing logic may require private method access
+- Model registry operations need unit testing for proper validation
+- Connection pooling and server communication appropriate for integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/neural_server.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_neural_server.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/neural_server.rs`)
 - **send_request**: Test request serialization and response handling
   - Happy Path: Valid prediction request returns expected format
   - Edge Cases: Empty input vectors, oversized inputs
@@ -124,7 +174,7 @@
   - Happy Path: Register and retrieve model metadata
   - Edge Cases: Duplicate model IDs, non-existent models
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_neural_server.rs`)
 - Test concurrent model predictions with connection pooling
 - Verify request queue behavior under load
 - Test failover scenarios with connection failures
@@ -152,9 +202,26 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Extensive unit testing needed for scoring algorithms and pattern matching, with particular focus on edge cases in text analysis.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Content filtering requires extensive unit testing for scoring algorithms and pattern matching logic
+
+**Identified Issues**:
+- Scoring calculation methods likely require private access for comprehensive testing
+- Pattern matching and regex operations need unit testing within source file
+- Public filtering API appropriate for integration testing with real content
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/salience.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_salience.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/salience.rs`)
 - **calculate_salience**: Test combined scoring algorithm
   - Happy Path: Scientific paper excerpt gets high score
   - Edge Cases: Empty text, single word, extremely long text
@@ -169,7 +236,7 @@
   - Happy Path: "Founded in 1995" returns true
   - Edge Cases: False positives with similar patterns
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_salience.rs`)
 - Test filtering large document sets to verify performance
 - Validate adaptive threshold behavior across diverse content types
 - Test batch filtering performance with concurrent requests
@@ -197,9 +264,26 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Complex testing required due to ML components; focus on deterministic parts and integration with mock neural server.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: ML-based structure prediction requires unit tests for deterministic text processing and integration tests for full pipeline
+
+**Identified Issues**:
+- Text processing methods (tokenization, encoding) likely require private access
+- Operation decoding logic needs unit testing for proper validation
+- Full prediction pipeline appropriate for integration testing with mock server
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/structure_predictor.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_structure_predictor.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/structure_predictor.rs`)
 - **tokenize**: Test text tokenization
   - Happy Path: "Hello World" → ["hello", "world"]
   - Edge Cases: Punctuation, numbers, special characters
@@ -213,7 +297,7 @@
   - Happy Path: "X is Y" creates nodes and relationship
   - Edge Cases: Single word input, no verb
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_structure_predictor.rs`)
 - Test full prediction pipeline with mock neural server
 - Verify vocabulary building from training examples
 - Test model training with synthetic examples
@@ -240,9 +324,26 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Performance-focused testing ensuring sub-millisecond operation and proper cache behavior.
+## Testing Strategy
 
-**Unit Testing Suggestions:**
+### Current Test Organization
+**Status**: Performance-critical summarization requires unit tests for caching logic and integration tests for real-world performance
+
+**Identified Issues**:
+- Cache implementation details likely require private access for comprehensive testing
+- Text compression logic may need unit testing within source file
+- Public summarization API appropriate for integration testing with performance validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/neural/summarization.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/neural/test_summarization.rs`)
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/neural/summarization.rs`)
 - **summarize_chunk**: Test basic summarization
   - Happy Path: Long text returns shorter summary
   - Edge Cases: Empty text, single character, Unicode text
@@ -254,7 +355,7 @@
   - Happy Path: Second request hits cache
   - Edge Cases: Cache expiration, concurrent access
 
-**Integration Testing Suggestions:**
+### Integration Testing Suggestions (place in `tests/neural/test_summarization.rs`)
 - Test summarization of various real-world text samples
 - Verify cache performance under concurrent load
 - Test memory usage with large cache sizes

@@ -2,9 +2,9 @@
 mod convergent_tests {
     use std::collections::HashMap;
     use tokio;
-    use crate::cognitive::convergent::ConvergentThinking;
-    use crate::cognitive::types::{PatternResult, ConvergentResult, CognitivePatternType};
-    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::cognitive::convergent::ConvergentThinking;
+    use llmkg::cognitive::types::{PatternResult, ConvergentResult, CognitivePatternType};
+    use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
     #[tokio::test]
     async fn test_calculate_concept_relevance_hierarchical() {
@@ -200,6 +200,7 @@ mod convergent_tests {
         assert!(!activations.contains_key("level3"), "Should not exceed max depth");
     }
 
+
     async fn create_deep_test_graph() -> BrainEnhancedKnowledgeGraph {
         let mut graph = BrainEnhancedKnowledgeGraph::new().await;
         
@@ -215,4 +216,6 @@ mod convergent_tests {
         
         graph
     }
+
+
 }

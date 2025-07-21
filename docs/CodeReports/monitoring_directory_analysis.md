@@ -36,13 +36,19 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Since this is a module organization file with no logic, testing focuses on ensuring proper exports and module visibility.
+**Overall Approach:** Since this is a module organization file with no logic, testing focuses on ensuring proper exports and module visibility. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/mod.rs`):**
 - **Compilation tests:** Ensure all re-exported types are accessible from outside the module
 - **Import path tests:** Verify that `use crate::monitoring::*` provides access to all expected types
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_mod.rs`):**
 - Test that other modules can successfully import and use monitoring components through this interface
 - Verify that internal module reorganization doesn't break external consumers
 
@@ -92,9 +98,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Heavy unit testing for metrics calculation and integration testing for the full monitoring flow.
+**Overall Approach:** Heavy unit testing for metrics calculation and integration testing for the full monitoring flow. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/performance.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_performance.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/performance.rs`):**
 - **track_operation:**
   - Happy Path: Track a successful async operation and verify metrics are recorded
   - Edge Cases: Track operations that fail, timeout, or panic
@@ -109,7 +121,7 @@
   - Test threshold detection for various metric types
   - Verify alert cooldown periods work correctly
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_performance.rs`):**
 - Full monitoring flow: Start tracking → collect metrics → trigger alerts → export data
 - Concurrent operation tracking to verify thread safety
 - Long-running test to verify history retention and cleanup
@@ -158,9 +170,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on thread safety, data integrity, and performance under high-volume scenarios.
+**Overall Approach:** Focus on thread safety, data integrity, and performance under high-volume scenarios. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/observability.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_observability.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/observability.rs`):**
 - **MetricsCollector:**
   - Happy Path: Collect various metric types and verify storage
   - Edge Cases: Concurrent metric updates, metric name collisions
@@ -176,7 +194,7 @@
   - Filtering: Test log retrieval by severity level
   - Thread safety: Concurrent logging from multiple threads
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_observability.rs`):**
 - Full telemetry flow: Emit metrics, traces, and logs simultaneously
 - Memory usage under sustained high-volume telemetry
 - Data consistency when multiple components emit telemetry
@@ -221,9 +239,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Comprehensive testing of alert lifecycle, rule evaluation, and notification delivery.
+**Overall Approach:** Comprehensive testing of alert lifecycle, rule evaluation, and notification delivery. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/alerts.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_alerts.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/alerts.rs`):**
 - **Alert Rules:**
   - Happy Path: Create rules with various conditions and verify correct evaluation
   - Edge Cases: Multiple conditions, edge values (0, negative, infinity)
@@ -239,7 +263,7 @@
   - Test multiple channel dispatch
   - Handle notification failures gracefully
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_alerts.rs`):**
 - End-to-end: Metric threshold breach → alert trigger → notification
 - Load testing: Many concurrent alerts
 - Notification channel failures shouldn't affect alert recording
@@ -282,9 +306,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on server stability, WebSocket communication, and data accuracy.
+**Overall Approach:** Focus on server stability, WebSocket communication, and data accuracy. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/dashboard.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_dashboard.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/dashboard.rs`):**
 - **Metric Collection:**
   - Verify correct metric extraction from registry
   - Test metric history management and rotation
@@ -295,7 +325,7 @@
   - Client connection/disconnection handling
   - Message broadcast to multiple clients
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_dashboard.rs`):**
 - Full dashboard flow: Start servers → connect client → stream metrics
 - Multiple concurrent WebSocket clients
 - Server resilience to client disconnections
@@ -347,9 +377,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Extensive unit testing of each metric type and thread safety verification.
+**Overall Approach:** Extensive unit testing of each metric type and thread safety verification. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/metrics.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_metrics.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/metrics.rs`):**
 - **Each Metric Type:**
   - Happy Path: Basic operations (increment, set, observe)
   - Edge Cases: Concurrent updates, extreme values
@@ -361,7 +397,7 @@
   - Concurrent access patterns
   - Memory efficiency with many metrics
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_metrics.rs`):**
 - High-volume metric updates across multiple threads
 - Registry performance with thousands of unique metrics
 - Metric export under various load conditions
@@ -407,9 +443,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Platform-specific testing with mocked system interfaces where possible.
+**Overall Approach:** Platform-specific testing with mocked system interfaces where possible. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/collectors.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_collectors.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/collectors.rs`):**
 - **System metrics parsing:**
   - Test `/proc/stat` CPU parsing with various formats
   - Memory info parsing edge cases
@@ -423,7 +465,7 @@
   - Verify fallback implementations work correctly
   - Test behavior when system files are missing
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_collectors.rs`):**
 - Continuous collection over time to verify stability
 - Resource usage of the collectors themselves
 - Accuracy validation against system tools (top, iostat)
@@ -475,9 +517,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on format correctness, error handling, and performance under load.
+**Overall Approach:** Focus on format correctness, error handling, and performance under load. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/monitoring/exporters.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/monitoring/test_exporters.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/monitoring/exporters.rs`):**
 - **Format Testing (each exporter):**
   - Verify correct formatting for each metric type
   - Label and tag escaping edge cases
@@ -493,7 +541,7 @@
   - Concurrent write safety
   - Disk space handling
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/monitoring/test_exporters.rs`):**
 - Mock backend servers to verify protocol compliance
 - Export performance with large metric batches
 - MultiExporter resilience when one exporter fails
@@ -534,12 +582,18 @@ Components interact through well-defined interfaces, with the MetricRegistry ser
 
 ### Directory-Wide Testing Strategy
 
+**Test Placement Architecture:**
+- **Unit Tests:** All unit tests requiring private method access should be in `#[cfg(test)]` modules within each source file (`src/monitoring/`)
+- **Integration Tests:** Cross-component tests using only public APIs should be in `tests/monitoring/`
+- **Test Support Infrastructure:** Common testing utilities should be in `src/test_support/monitoring/` to support both unit and integration tests
+
 **Shared Testing Infrastructure:**
 - Mock implementations of system interfaces (`/proc` filesystem, network interfaces)
 - Time manipulation utilities for testing time-based features
 - Metric generation utilities for load testing
+- Common test fixtures and builders for monitoring components
 
-**Integration Test Scenarios:**
+**Integration Test Scenarios (place in `tests/monitoring/`):**
 1. **Full Monitoring Flow:** 
    - Start all components → generate load → verify metrics appear in dashboard and exports
    - Simulate performance degradation → verify alerts trigger → check notifications
@@ -559,5 +613,8 @@ Components interact through well-defined interfaces, with the MetricRegistry ser
 - Dashboard latency (metric emission to UI update)
 - Export efficiency (bandwidth usage, compression)
 - Memory overhead per metric
+
+**Testing Architecture Compliance:**
+⚠️ **CRITICAL:** Integration tests must NOT access private methods or fields. Any test that requires private access must be moved to `#[cfg(test)]` modules within the source files. This ensures proper encapsulation and prevents testing architecture violations.
 
 This monitoring subsystem demonstrates excellent separation of concerns, extensibility through traits, and production-ready features like alerting and multiple export formats. The architecture supports both real-time operational monitoring and historical analysis, making it a critical component of LLMKG's production deployment capabilities.

@@ -58,9 +58,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test summarization quality, storage efficiency, and LLM comprehension scores. Focus on the balance between compression and semantic preservation.
+**Overall Approach:** Test summarization quality, storage efficiency, and LLM comprehension scores. Focus on the balance between compression and semantic preservation. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/semantic_store.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_semantic_store.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/semantic_store.rs`):**
 
 - **Semantic summarization:**
   - Happy Path: Store entity, verify summary created
@@ -77,7 +83,7 @@
   - Edge Cases: Highly repetitive content
   - Error Handling: Memory limits
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_semantic_store.rs`):**
 - Test with real LLMs to verify comprehension quality
 - Benchmark storage vs traditional approaches
 - Measure search relevance with standard datasets
@@ -134,9 +140,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test tree balance, search correctness, and performance characteristics. Focus on edge cases in tree construction and traversal.
+**Overall Approach:** Test tree balance, search correctness, and performance characteristics. Focus on edge cases in tree construction and traversal. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/spatial_index.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_spatial_index.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/spatial_index.rs`):**
 
 - **Tree construction:**
   - Happy Path: Build balanced tree from points
@@ -153,7 +165,7 @@
   - Edge Cases: Remove root node, single node tree
   - Error Handling: Remove non-existent nodes
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_spatial_index.rs`):**
 - Compare results with brute-force search
 - Test with various data distributions
 - Benchmark vs other spatial indices
@@ -214,9 +226,15 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test deduplication effectiveness, thread safety, and memory savings. Focus on concurrent access patterns and edge cases.
+**Overall Approach:** Test deduplication effectiveness, thread safety, and memory savings. Focus on concurrent access patterns and edge cases. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/string_interner.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_string_interner.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/storage/string_interner.rs`):**
 
 - **String interning:**
   - Happy Path: Intern strings, verify deduplication
@@ -233,7 +251,7 @@
   - Edge Cases: No duplicates (worst case)
   - Error Handling: Out of ID space
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_string_interner.rs`):**
 - Test with real knowledge graph property data
 - Benchmark memory usage vs string storage
 - Stress test concurrent interning
@@ -294,9 +312,17 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Test memory safety, serialization correctness, and performance characteristics. Critical to verify unsafe code is sound.
+**Overall Approach:** Test memory safety, serialization correctness, and performance characteristics. Critical to verify unsafe code is sound. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/storage/zero_copy.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/storage/test_zero_copy.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**CRITICAL WARNING:** If integration tests are accessing private methods/fields in zero_copy.rs, this violates Rust testing best practices and creates brittle tests.
+
+**Unit Testing Suggestions (place in `src/storage/zero_copy.rs`):**
 
 - **Serialization/deserialization:**
   - Happy Path: Round-trip entities and relationships
@@ -313,7 +339,7 @@
   - Edge Cases: Concurrent access, lifetime bounds
   - Error Handling: Invalid pointers
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/storage/test_zero_copy.rs`):**
 - Benchmark vs traditional serialization (10-100x faster expected)
 - Test with memory-mapped files for huge datasets
 - Verify data integrity with checksums
@@ -338,6 +364,19 @@
 - Spatial index provides a simpler alternative to HNSW for smaller datasets
 
 **Directory-Wide Testing Strategy:**
+
+**Testing Architecture Compliance:**
+- All tests accessing private methods/fields MUST be in `#[cfg(test)]` modules within source files
+- Integration tests MUST only use public APIs and be placed in `tests/storage/` directory
+- Any violations of these rules should be flagged and corrected immediately
+- Pay special attention to zero_copy.rs tests as unsafe code requires careful validation
+
+**Test Support Infrastructure:**
+- Create shared test utilities in `src/test_support/storage/` for common test data generation
+- Implement mock storage backends for testing higher-level components
+- Provide benchmark harnesses for consistent performance testing across all storage types
+
+**Comprehensive Testing Strategy:**
 - Create end-to-end benchmarks showing complete storage pipeline performance
 - Test integration between all storage layers (e.g., semantic store + string interning + zero-copy)
 - Verify memory efficiency targets are met (< 200 bytes per entity with full features)

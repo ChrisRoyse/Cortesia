@@ -160,7 +160,7 @@ pub enum PatternType {
 }
 
 /// Types of exploration for divergent thinking
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ExplorationType {
     Instances,
     Categories,

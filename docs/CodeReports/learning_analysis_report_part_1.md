@@ -31,15 +31,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** This file requires integration testing to ensure proper module exposure and conflict resolution.
+**Overall Approach:** This file requires integration testing to ensure proper module exposure and conflict resolution. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/mod.rs`):**
 - **Module Accessibility:** Test that all re-exported types are accessible and properly aliased
 - **Happy Path:** Verify that importing any re-exported type works without compilation errors
 - **Edge Cases:** Test that conflicting type names are properly disambiguated
 - **Error Handling:** Verify that attempting to import non-existent types fails appropriately
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_mod.rs`):**
 - **Cross-Module Integration:** Create tests that use multiple re-exported types together to ensure they work harmoniously
 - **Type Alias Verification:** Test that aliased types maintain their original functionality
 
@@ -73,15 +79,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on data structure integrity, serialization/deserialization, and type safety.
+**Overall Approach:** Focus on data structure integrity, serialization/deserialization, and type safety. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/types.rs`):**
 - **Data Structure Creation:** Test default constructors and field initialization for all major types
 - **Happy Path:** Verify that all types can be created with valid data and serialize/deserialize correctly
 - **Edge Cases:** Test with extreme values (very high/low weights, empty collections, maximum duration values)
 - **Error Handling:** Test invalid data scenarios (negative weights where inappropriate, invalid timestamps)
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_types.rs`):**
 - **Cross-System Communication:** Test that types can be passed between different learning algorithms without data loss
 - **Serialization Round-trip:** Verify that complex nested structures maintain integrity through serialization cycles
 
@@ -114,15 +126,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Requires extensive testing of learning algorithms, temporal dynamics, and integration with other cognitive systems.
+**Overall Approach:** Requires extensive testing of learning algorithms, temporal dynamics, and integration with other cognitive systems. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/hebbian.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_hebbian.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/hebbian.rs`):**
 - **Learning Rule Implementation:** Test that weight changes follow Hebbian principles (positive correlation increases weights)
 - **Happy Path:** Test learning with simple activation patterns and verify expected weight changes
 - **Edge Cases:** Test with simultaneous activations, very rapid sequences, and boundary weight values
 - **Error Handling:** Test with invalid activation events, missing entities, and system failures
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_hebbian.rs`):**
 - **Brain Graph Integration:** Test that weight changes are properly applied to the brain graph and persist correctly
 - **STDP Timing Windows:** Create tests with precise timing sequences to verify STDP implementation
 - **Competition System Integration:** Test that competitive inhibition updates work correctly with learning
@@ -156,15 +174,21 @@
 
 ### 3. Testing Strategy
 
-**Overall Approach:** Focus on stability maintenance, activity balancing, and integration with cognitive systems.
+**Overall Approach:** Focus on stability maintenance, activity balancing, and integration with cognitive systems. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/learning/homeostasis.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/learning/test_homeostasis.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/learning/homeostasis.rs`):**
 - **Activity Level Calculation:** Test that activity levels are correctly computed from various sources
 - **Happy Path:** Test homeostatic scaling with moderate activity imbalances
 - **Edge Cases:** Test with extreme activity imbalances, empty activity history, and boundary scaling factors
 - **Error Handling:** Test emergency stabilization triggers and recovery mechanisms
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/learning/test_homeostasis.rs`):**
 - **Multi-System Integration:** Test coordination with attention manager and working memory during homeostasis
 - **Long-term Stability:** Create tests that run learning cycles over extended periods to verify stability maintenance
 - **Metaplasticity Verification:** Test that learning rate adjustments appropriately respond to plasticity history
@@ -195,10 +219,25 @@ The files in this directory work together to create a multi-layered learning sys
 
 The learning directory requires a comprehensive testing approach that addresses both individual algorithm correctness and system-wide stability:
 
+**Test Placement Architecture:**
+- **Unit Tests:** Must be placed in `#[cfg(test)]` modules within each source file (`src/learning/`) when testing private methods or internal state
+- **Integration Tests:** Should be in separate test files (`tests/learning/`) and only test public APIs
+- **Shared Test Infrastructure:** Common fixtures and utilities should be in `src/test_support/` for reuse across both unit and integration tests
+
+**Testing Approach:**
 1. **Algorithm Verification:** Each learning algorithm should be tested independently with controlled inputs
 2. **Integration Testing:** Multi-algorithm scenarios should verify that learning systems work harmoniously
 3. **Long-term Stability:** Extended learning cycles should demonstrate convergence and stability
 4. **Performance Monitoring:** Tests should verify that learning improves system performance over time
 5. **Biological Plausibility:** Learning behaviors should align with known neuroscientific principles
 
-The testing strategy should include shared fixtures for generating realistic activation patterns and performance data, as well as integration tests that demonstrate the learning system's ability to improve query performance and user satisfaction over time.
+**Test Support Infrastructure Recommendations:**
+- **Shared Fixtures:** Create reusable fixtures in `src/test_support/fixtures.rs` for generating realistic activation patterns and performance data
+- **Test Builders:** Implement builder patterns in `src/test_support/builders.rs` for complex learning scenarios
+- **Assertions:** Develop specialized assertion helpers in `src/test_support/assertions.rs` for learning-specific validations
+- **Scenarios:** Define common test scenarios in `src/test_support/scenarios.rs` for consistent testing across algorithms
+
+**Integration Test Guidelines:**
+- Integration tests should demonstrate the learning system's ability to improve query performance and user satisfaction over time
+- Tests must only use public APIs and avoid accessing private methods (this violates Rust testing best practices)
+- Cross-system integration tests should verify that learning algorithms work harmoniously with attention and memory systems

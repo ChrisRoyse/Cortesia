@@ -30,13 +30,32 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** This file contains no complex logic to test. The primary goal of testing is to ensure the data structures are created correctly and contain the expected values.
-*   **Unit Testing Suggestions:**
-    *   **Constant Value Checks:**
-        *   **Happy Path:** A simple test can assert that the constants have their expected values (e.g., `assert_eq!(DEFAULT_EXPLORATION_BREADTH, 20);`). This acts as a regression test to prevent accidental changes.
-    *   **Data Structure Integrity:**
-        *   **Happy Path:** For each `get_...()` function, write a test that calls the function and asserts that the returned `HashMap` is not empty.
-        *   **Content Verification:** For a few key examples, assert that the data is structured as expected. For instance, for `get_domain_hierarchy()`, assert that `hierarchy.get("animal")` contains the string `"mammal"`. For `get_semantic_fields()`, assert that `fields.get("color")` contains `"red"`. This verifies that the data has not been corrupted.
+### Current Test Organization
+**Status**: Constants and static data module requires validation testing - minimal logic but critical data integrity.
+
+**Identified Issues**:
+- Constant value validation needs regression testing in source file
+- Static data structure integrity requires validation functions
+- No complex logic requiring integration testing
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/divergent/constants.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_divergent_constants.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/divergent/constants.rs`)
+*   **Constant Value Checks:**
+    *   **Happy Path:** A simple test can assert that the constants have their expected values (e.g., `assert_eq!(DEFAULT_EXPLORATION_BREADTH, 20);`). This acts as a regression test to prevent accidental changes.
+*   **Data Structure Integrity:**
+    *   **Happy Path:** For each `get_...()` function, write a test that calls the function and asserts that the returned `HashMap` is not empty.
+    *   **Content Verification:** For a few key examples, assert that the data is structured as expected. For instance, for `get_domain_hierarchy()`, assert that `hierarchy.get("animal")` contains the string `"mammal"`. For `get_semantic_fields()`, assert that `fields.get("color")` contains `"red"`. This verifies that the data has not been corrupted.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_divergent_constants.rs`)
+*   No integration testing required for pure constants and static data.
 ### File Analysis: `src/cognitive/divergent/core_engine.rs`
 
 **1. Purpose and Functionality**
@@ -63,29 +82,46 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must focus on the `spread_activation` algorithm and the subsequent scoring and ranking of the discovered paths. Tests should be designed to verify that the exploration is sufficiently broad and that the scoring functions correctly identify valuable paths.
-*   **Unit Testing Suggestions:**
-    *   **`infer_exploration_type` & `extract_seed_concept`:**
-        *   **Happy Path:** Provide a suite of test queries (e.g., "types of dogs," "explore technology") and assert that the correct exploration type and seed concept are extracted from each.
-    *   **Scoring Functions:**
-        *   **Happy Path:** Create mock `ExplorationPath` objects with different properties (e.g., long vs. short, high vs. low activation) and pass them to the `calculate_..._score` functions. Assert that the returned scores are logical (e.g., a longer path should have a higher novelty score).
-*   **Integration Testing Suggestions:**
-    *   **Activation Spread and Path Generation:**
-        *   **Scenario:** This is the primary integration test. It verifies that the exploration correctly traverses the graph.
-        *   **Test:**
-            1.  Construct a `BrainEnhancedKnowledgeGraph` with a seed node connected to several distinct branches of other nodes.
-            2.  Instantiate the `DivergentThinking` engine.
-            3.  Execute `execute_divergent_exploration` with a query that targets the seed node.
-        *   **Verification:**
-            1.  Inspect the returned `ExplorationMap`. Assert that the `paths` field contains multiple `ExplorationPath`s, with at least one path going down each of the major branches from the seed node.
-            2.  Check the `activation_levels` in the internal `ExplorationState`. Assert that nodes closer to the seed have higher activation than nodes further away, demonstrating correct activation decay.
-    *   **Ranking and Filtering:**
-        *   **Scenario:** Verify that the creativity threshold and final ranking work as expected.
-        *   **Test:**
-            1.  Create a graph where some paths from the seed are "boring" (short, strong connections) and others are "creative" (longer, weaker connections).
-            2.  Set the `creativity_threshold` to a value that should exclude the boring paths.
-            3.  Execute the exploration.
-        *   **Verification:** Assert that the final list of paths in the `ExplorationMap` does *not* include the boring paths. Then, check the order of the returned paths and assert that they are sorted correctly based on the combined novelty and relevance scores.
+### Current Test Organization
+**Status**: Divergent exploration testing requires complex algorithm validation - mix of helper functions and graph traversal logic.
+
+**Identified Issues**:
+- Helper functions like `infer_exploration_type` and scoring functions need unit tests in source file
+- Activation spread algorithm verification may require access to internal state
+- Graph traversal testing requires complex graph construction and path validation
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/divergent/core_engine.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_divergent_core_engine.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/divergent/core_engine.rs`)
+*   **`infer_exploration_type` & `extract_seed_concept`:**
+    *   **Happy Path:** Provide a suite of test queries (e.g., "types of dogs," "explore technology") and assert that the correct exploration type and seed concept are extracted from each.
+*   **Scoring Functions:**
+    *   **Happy Path:** Create mock `ExplorationPath` objects with different properties (e.g., long vs. short, high vs. low activation) and pass them to the `calculate_..._score` functions. Assert that the returned scores are logical (e.g., a longer path should have a higher novelty score).
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_divergent_core_engine.rs`)
+*   **Activation Spread and Path Generation:**
+    *   **Scenario:** This is the primary integration test. It verifies that the exploration correctly traverses the graph.
+    *   **Test:**
+        1.  Construct a `BrainEnhancedKnowledgeGraph` with a seed node connected to several distinct branches of other nodes.
+        2.  Instantiate the `DivergentThinking` engine.
+        3.  Execute `execute_divergent_exploration` with a query that targets the seed node.
+    *   **Verification:**
+        1.  Inspect the returned `ExplorationMap`. Assert that the `paths` field contains multiple `ExplorationPath`s, with at least one path going down each of the major branches from the seed node.
+        2.  Check the `activation_levels` in the internal `ExplorationState`. Assert that nodes closer to the seed have higher activation than nodes further away, demonstrating correct activation decay.
+*   **Ranking and Filtering:**
+    *   **Scenario:** Verify that the creativity threshold and final ranking work as expected.
+    *   **Test:**
+        1.  Create a graph where some paths from the seed are "boring" (short, strong connections) and others are "creative" (longer, weaker connections).
+        2.  Set the `creativity_threshold` to a value that should exclude the boring paths.
+        3.  Execute the exploration.
+    *   **Verification:** Assert that the final list of paths in the `ExplorationMap` does *not* include the boring paths. Then, check the order of the returned paths and assert that they are sorted correctly based on the combined novelty and relevance scores.
 ### File Analysis: `src/cognitive/divergent/core_engine.rs`
 
 **1. Purpose and Functionality**
@@ -157,12 +193,31 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Each function in this file should have its own dedicated set of unit tests to verify its correctness in isolation.
-*   **Unit Testing Suggestions:**
-    *   **`generate_concept_embedding`:**
-        *   **Happy Path:** Call the function with a known string and assert that the returned vector has the correct dimensions and is properly normalized.
-    *   **Scoring Functions:**
-        *   **Happy Path:** Create mock `ExplorationPath` objects with different properties and assert that the scoring functions return logical values.
+### Current Test Organization
+**Status**: Utility functions module requires isolated function testing - pure functions well-suited for unit testing.
+
+**Identified Issues**:
+- Individual utility functions need dedicated unit tests in source file
+- Pure functions with deterministic outputs ideal for unit testing
+- No complex integration scenarios required
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/divergent/utils.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_divergent_utils.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/divergent/utils.rs`)
+*   **`generate_concept_embedding`:**
+    *   **Happy Path:** Call the function with a known string and assert that the returned vector has the correct dimensions and is properly normalized.
+*   **Scoring Functions:**
+    *   **Happy Path:** Create mock `ExplorationPath` objects with different properties and assert that the scoring functions return logical values.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_divergent_utils.rs`)
+*   No integration testing required for pure utility functions.
 ### File Analysis: `src/cognitive/inhibitory/competition.rs`
 
 **1. Purpose and Functionality**
@@ -190,22 +245,39 @@
 
 **3. Testing Strategy**
 
-*   **Overall Approach:** Testing for this module must be focused on the state changes to the `ActivationPattern`. Each test should create an `ActivationPattern` with a known set of activations, define a `CompetitionGroup`, run the competition function, and then assert that the final activation values in the pattern are correct.
-*   **Unit Testing Suggestions:**
-    *   **`apply_semantic_competition` (Winner-Takes-All):**
-        *   **Happy Path:** Create a group of 3 entities where one has an activation well above the `winner_takes_all_threshold`. Run the function and assert that the winner's activation is unchanged, while the other two have been suppressed to 0.0.
-    *   **`apply_semantic_competition` (Soft Competition):**
-        *   **Happy Path:** Create a group of 3 entities where none are above the winner-takes-all threshold. Run the function and assert that the winner's activation is unchanged, while the other two have been reduced by the correct, calculated inhibition factor.
-    *   **`apply_hierarchical_competition`:**
-        *   **Happy Path:** Create a group of entities representing a hierarchy (e.g., `[Animal, Mammal, Dog]`). Give `Animal` a high activation. Run the function and assert that the activations for `Mammal` and `Dog` have been significantly reduced.
-*   **Integration Testing Suggestions:**
-    *   **Integration with `CompetitiveInhibitionSystem`:**
-        *   **Scenario:** Verify that the main system correctly dispatches to the functions in this module.
-        *   **Test:**
-            1.  Instantiate the main `CompetitiveInhibitionSystem`.
-            2.  Create a `CompetitionGroup` with `CompetitionType::Semantic`.
-            3.  Call the main `apply_competitive_inhibition` method on the system.
-        *   **Verification:** This is more of a code review/static analysis check, but the goal is to ensure that the `match` statement in the main system correctly calls the `apply_semantic_competition` function from this file when the appropriate group type is provided. This confirms the link between the orchestrator and the specific algorithm.
+### Current Test Organization
+**Status**: Competition algorithms testing requires state validation - complex activation pattern manipulation with algorithm isolation needs.
+
+**Identified Issues**:
+- Competition algorithm functions need isolated testing with controlled activation patterns
+- State change validation requires access to internal activation pattern modifications
+- Integration testing requires coordination with main CompetitiveInhibitionSystem
+
+### Test Placement Rules
+- **Unit Tests**: Tests requiring private access → `#[cfg(test)]` modules within source file (`src/cognitive/inhibitory/competition.rs`)
+- **Integration Tests**: Public API only → separate files (`tests/cognitive/test_inhibitory_competition.rs`)  
+- **Property Tests**: Mathematical invariants and behavioral verification
+- **Performance Tests**: Benchmarks for critical operations
+
+### Test Placement Violations
+**CRITICAL**: Integration tests must NEVER access private methods or fields. Tests violating this rule must be moved to unit tests in source files.
+
+### Unit Testing Suggestions (place in `src/cognitive/inhibitory/competition.rs`)
+*   **`apply_semantic_competition` (Winner-Takes-All):**
+    *   **Happy Path:** Create a group of 3 entities where one has an activation well above the `winner_takes_all_threshold`. Run the function and assert that the winner's activation is unchanged, while the other two have been suppressed to 0.0.
+*   **`apply_semantic_competition` (Soft Competition):**
+    *   **Happy Path:** Create a group of 3 entities where none are above the winner-takes-all threshold. Run the function and assert that the winner's activation is unchanged, while the other two have been reduced by the correct, calculated inhibition factor.
+*   **`apply_hierarchical_competition`:**
+    *   **Happy Path:** Create a group of entities representing a hierarchy (e.g., `[Animal, Mammal, Dog]`). Give `Animal` a high activation. Run the function and assert that the activations for `Mammal` and `Dog` have been significantly reduced.
+
+### Integration Testing Suggestions (place in `tests/cognitive/test_inhibitory_competition.rs`)
+*   **Integration with `CompetitiveInhibitionSystem`:**
+    *   **Scenario:** Verify that the main system correctly dispatches to the functions in this module.
+    *   **Test:**
+        1.  Instantiate the main `CompetitiveInhibitionSystem`.
+        2.  Create a `CompetitionGroup` with `CompetitionType::Semantic`.
+        3.  Call the main `apply_competitive_inhibition` method on the system.
+    *   **Verification:** This is more of a code review/static analysis check, but the goal is to ensure that the `match` statement in the main system correctly calls the `apply_semantic_competition` function from this file when the appropriate group type is provided. This confirms the link between the orchestrator and the specific algorithm.
 ### File Analysis: `src/cognitive/inhibitory/dynamics.rs`
 
 **1. Purpose and Functionality**

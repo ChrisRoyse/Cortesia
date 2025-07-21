@@ -34,14 +34,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** This file requires integration testing to ensure proper coordination between engines, plus unit testing for the convenience methods.
+**Overall Approach:** This file requires integration testing to ensure proper coordination between engines, plus unit testing for the convenience methods. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/math/mod.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/math/test_mod.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/math/mod.rs`):**
 - **Happy Path:** Test `MathEngine::new()` successfully creates all three engines. Test convenience methods like `cosine_similarity()` properly delegate to the similarity engine with correct parameters.
 - **Edge Cases:** Test behavior when engines fail to initialize. Test vector operations with empty vectors, mismatched dimensions, and boundary values.
 - **Error Handling:** Verify that errors from underlying engines are properly propagated through the convenience methods.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/math/test_mod.rs`):**
 - Create tests that verify `MathEngine` properly coordinates between multiple engines for complex operations.
 - Test that the public API maintains backward compatibility when underlying engine implementations change.
 
@@ -74,14 +80,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Focus on serialization/deserialization testing, type safety validation, and comprehensive coverage of enum variants.
+**Overall Approach:** Focus on serialization/deserialization testing, type safety validation, and comprehensive coverage of enum variants. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/math/types.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/math/test_types.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/math/types.rs`):**
 - **Happy Path:** Test successful serialization/deserialization of all result types. Verify `MathOperationResult::success()` and `MathOperationResult::failure()` create properly structured results.
 - **Edge Cases:** Test serialization with extremely large datasets, empty collections, and boundary values. Test enum exhaustiveness for all `MathResultData` variants.
 - **Error Handling:** Verify all `MathError` variants serialize correctly and maintain error context across network boundaries.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/math/test_types.rs`):**
 - Test that all mathematical operation results can be properly serialized and sent across federation boundaries.
 - Verify metadata tracking accurately reflects actual operation characteristics in real distributed scenarios.
 
@@ -114,14 +126,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Requires extensive unit testing for mathematical correctness, edge case handling, and performance testing for large-scale operations.
+**Overall Approach:** Requires extensive unit testing for mathematical correctness, edge case handling, and performance testing for large-scale operations. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/math/similarity.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/math/test_similarity.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/math/similarity.rs`):**
 - **Happy Path:** Test each similarity method with known input/output pairs. Verify `cosine_similarity([1,0,0], [0,1,0])` returns 0.0, and `cosine_similarity([1,1], [1,1])` returns 1.0.
 - **Edge Cases:** Test with zero vectors, identical vectors, vectors with NaN/infinity values, empty strings, very long texts, and mismatched dimensions.
 - **Error Handling:** Verify `GraphError::InvalidEmbeddingDimension` is thrown for mismatched vector lengths. Test graceful handling of degenerate inputs.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/math/test_similarity.rs`):**
 - Test similarity engine integration with graph algorithms for structural similarity calculations.
 - Verify caching system works correctly under concurrent access patterns typical in distributed operations.
 - Test semantic similarity with real knowledge graph entities to validate practical utility.
@@ -155,14 +173,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Requires algorithmic correctness testing with known graph structures, performance testing for large graphs, and validation of mathematical properties.
+**Overall Approach:** Requires algorithmic correctness testing with known graph structures, performance testing for large graphs, and validation of mathematical properties. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/math/graph_algorithms.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/math/test_graph_algorithms.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/math/graph_algorithms.rs`):**
 - **Happy Path:** Test BFS on simple graphs with known traversal orders. Verify Dijkstra finds correct shortest paths in weighted graphs. Test PageRank converges to expected values for standard graph structures.
 - **Edge Cases:** Test algorithms on empty graphs, single-node graphs, disconnected graphs, and graphs with self-loops. Test Dijkstra with negative weights and A* with inconsistent heuristics.
 - **Error Handling:** Verify graceful handling of invalid graph representations and unreachable target nodes.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/math/test_graph_algorithms.rs`):**
 - Test algorithm chaining (e.g., using BFS results to initialize other algorithms).
 - Verify algorithm results are consistent across different graph representations of the same logical structure.
 - Test performance and memory usage with graphs representative of real knowledge graph sizes.
@@ -196,14 +220,20 @@
 
 #### 3. Testing Strategy
 
-**Overall Approach:** Requires complex integration testing with mock databases, concurrency testing, and distributed system failure scenarios.
+**Overall Approach:** Requires complex integration testing with mock databases, concurrency testing, and distributed system failure scenarios. Unit tests that need private access should be placed in `#[cfg(test)]` modules within source files, while integration tests should only test public APIs and remain in the `tests/` directory.
 
-**Unit Testing Suggestions:**
+**Test Placement Rules:**
+- **Unit Tests:** Tests that need access to private methods/fields must be in `#[cfg(test)]` modules within the source file (`src/math/distributed_math.rs`)
+- **Integration Tests:** Tests that only use public APIs should be in separate test files (`tests/math/test_distributed_math.rs`)
+- **Property Tests:** Tests that verify invariants and mathematical properties
+- **Performance Tests:** Benchmarks for critical path operations
+
+**Unit Testing Suggestions (place in `src/math/distributed_math.rs`):**
 - **Happy Path:** Test successful coordination of simple distributed operations. Verify load balancer correctly distributes tasks based on database capabilities and current load.
 - **Edge Cases:** Test behavior when databases become unavailable during operations. Test coordination with heterogeneous database capabilities. Test timeout handling and partial result scenarios.
 - **Error Handling:** Verify proper error propagation from individual databases to global operation results. Test graceful degradation when some databases fail.
 
-**Integration Testing Suggestions:**
+**Integration Testing Suggestions (place in `tests/math/test_distributed_math.rs`):**
 - Test full distributed operations with multiple mock databases to verify correct result aggregation.
 - Test concurrent distributed operations to verify thread safety and resource management.
 - Verify distributed algorithms produce mathematically equivalent results to centralized versions.
@@ -246,6 +276,12 @@ The mathematical operations in this directory are used through several key patte
 - **Mathematical correctness validators** to verify algorithm outputs against known mathematical properties and reference implementations.
 - **Performance benchmarking suite** to ensure mathematical operations can scale to real knowledge graph sizes.
 - **Distributed system test harness** to simulate network failures, partial connectivity, and concurrent operation scenarios.
+- **Test support utilities** in `src/test_support/` for common mathematical test data generation and validation helpers.
+
+**Testing Architecture Compliance:**
+- **CRITICAL:** All tests accessing private methods must be placed in `#[cfg(test)]` modules within source files
+- **VIOLATION WARNING:** Integration tests in `tests/` directory should NEVER access private methods or fields
+- **BEST PRACTICE:** Use `pub(crate)` visibility for methods that need to be tested from integration tests
 
 **Integration Testing Focus:**
 - Verify mathematical consistency between local and distributed versions of the same algorithms.
