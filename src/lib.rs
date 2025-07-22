@@ -73,6 +73,14 @@ pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent}
 // Text processing exports
 pub use crate::text::{TextCompressor, utils as text_utils, TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker};
 
+// Brain-Enhanced Knowledge Graph Exports
+pub use crate::core::brain_enhanced_graph::{
+    BrainEnhancedKnowledgeGraph, BrainMemoryUsage, BrainQueryResult, ConceptStructure,
+    BrainStatistics, BrainEnhancedConfig, ActivationPropagationResult,
+    EntityStatistics, QueryStatistics, RelationshipStatistics, RelationshipPattern,
+    EntityRole, SplitCriteria, OptimizationResult, ConceptUsageStats, GraphPatternAnalysis
+};
+
 // Phase 2 Cognitive Pattern Engine Exports
 pub use crate::cognitive::{
     CognitiveOrchestrator, CognitiveOrchestratorConfig, OrchestratorStatistics,

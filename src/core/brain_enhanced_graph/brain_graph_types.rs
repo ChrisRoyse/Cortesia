@@ -5,6 +5,14 @@ use std::collections::HashMap;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
+/// Result of activation propagation from a specific entity
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActivationPropagationResult {
+    pub affected_entities: usize,
+    pub total_activation_spread: f32,
+    pub propagation_time: Duration,
+}
+
 /// Query result structure for brain-enhanced graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BrainQueryResult {
