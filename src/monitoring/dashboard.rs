@@ -437,7 +437,7 @@ impl PerformanceDashboard {
         }
     }
     
-    fn extract_performance_metrics(metrics: &HashMap<String, MetricSample>) -> PerformanceMetricsSnapshot {
+    fn extract_performance_metrics(_metrics: &HashMap<String, MetricSample>) -> PerformanceMetricsSnapshot {
         PerformanceMetricsSnapshot {
             query_latency_ms: HistogramSnapshot {
                 count: 0,

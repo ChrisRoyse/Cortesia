@@ -318,7 +318,7 @@ pub struct MockNeuralServer {
 }
 
 #[derive(Clone)]
-struct MockModel {
+pub struct MockModel {
     pub weights: Vec<f32>,
     pub bias: Vec<f32>,
 }

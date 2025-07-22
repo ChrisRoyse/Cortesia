@@ -67,7 +67,7 @@ impl NeuralCanonicalizer {
         }
     }
 
-    pub fn new_with_neural_server(neural_server: Arc<NeuralProcessingServer>) -> Self {
+    pub fn new_with_neural_server(_neural_server: Arc<NeuralProcessingServer>) -> Self {
         Self {
             entity_canonicalizer: EntityCanonicalizer::new(),
             deduplicator: EntityDeduplicator::new(),

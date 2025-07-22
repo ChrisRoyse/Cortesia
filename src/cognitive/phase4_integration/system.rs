@@ -358,7 +358,7 @@ impl Phase4CognitiveSystem {
         system.refresh_all();
         
         // Check various health indicators
-        let cpu_count = system.cpus().len() as f32;
+        let _cpu_count = system.cpus().len() as f32;
         
         // Simplified load calculation using CPU usage instead of load average
         let cpu_usage = system.global_cpu_info().cpu_usage() / 100.0;

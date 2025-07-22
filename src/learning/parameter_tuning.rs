@@ -1,4 +1,4 @@
-use crate::learning::types::{PerformanceData, ThroughputMetrics};
+use crate::learning::types::PerformanceData;
 use crate::error::Result;
 
 use std::collections::HashMap;

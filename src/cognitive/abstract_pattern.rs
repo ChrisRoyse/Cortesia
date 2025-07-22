@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::cognitive::pattern_detector::NeuralPatternDetector;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::types::{EntityKey, EntityData};
+use crate::core::types::EntityKey;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
 // Neural server dependency removed - using pure graph operations
 use crate::error::Result;
@@ -295,7 +295,7 @@ impl AbstractThinking {
             return 0.0;
         }
         
-        let total = stats.entity_count as f32;
+        let _total = stats.entity_count as f32;
         // Approximate distribution based on clustering coefficient
         let input_p = 0.3f32; // Approximate 30% input nodes
         let output_p = 0.3f32; // Approximate 30% output nodes
@@ -1254,6 +1254,8 @@ mod tests {
             learning_efficiency: 0.9,
             max_degree: 10,
             average_degree: 4.0,
+            total_propagations: 0,
+            total_affected_entities: 0,
         };
         
         let complexity = abstract_thinking.calculate_structural_complexity(&stats);
@@ -1280,6 +1282,8 @@ mod tests {
             learning_efficiency: 0.9,
             max_degree: 10,
             average_degree: 4.0,
+            total_propagations: 0,
+            total_affected_entities: 0,
         };
         
         let result = abstract_thinking.analyze_entity_distribution(&stats).await;

@@ -1,5 +1,4 @@
 // Phase 5 System Architecture Types
-import { Observable } from 'rxjs';
 
 export type ComponentStatus = 'healthy' | 'warning' | 'critical' | 'offline' | 'processing';
 export type NodeType = 'subcortical' | 'cortical' | 'thalamic' | 'mcp' | 'storage' | 'network' | 'mcp-tool';
@@ -322,7 +321,9 @@ export interface SystemArchitectureDiagramProps {
   
   // Integration props
   mcpClient?: MCPClient;
-  telemetryStream?: Observable<TelemetryData>;
+  telemetryStream?: {
+    subscribe: (handler: (data: TelemetryData) => void) => () => void;
+  };
   websocketConnection?: WebSocketConnection;
   
   // Performance

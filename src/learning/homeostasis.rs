@@ -2,9 +2,6 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::core::types::EntityKey;
-use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
-use crate::core::activation_engine::ActivationPropagationEngine;
-use crate::cognitive::orchestrator::CognitiveOrchestrator;
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};

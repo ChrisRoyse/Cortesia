@@ -148,7 +148,7 @@ impl ActivationPropagationEngine {
             ).await?;
             
             // Validate all activations are still finite after processing
-            for (key, activation) in &mut current_activations {
+            for (_key, activation) in &mut current_activations {
                 if !activation.is_finite() {
                     // Clamp to valid range if NaN or Infinity
                     *activation = activation.clamp(0.0, 1.0);

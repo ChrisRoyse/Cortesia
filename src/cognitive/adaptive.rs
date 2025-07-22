@@ -232,7 +232,7 @@ impl CognitivePattern for AdaptiveThinking {
     }
 }
 
-struct StrategySelector {
+pub struct StrategySelector {
     // Implementation would use ML models to select optimal strategies
 }
 
@@ -242,7 +242,7 @@ impl StrategySelector {
     }
 }
 
-struct EnsembleCoordinator {
+pub struct EnsembleCoordinator {
     // Implementation would coordinate multiple patterns
 }
 

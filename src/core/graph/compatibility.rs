@@ -438,7 +438,7 @@ impl KnowledgeGraph {
         }
         
         // Check relationship consistency
-        let relationship_count = self.relationship_count();
+        let _relationship_count = self.relationship_count();
         let buffer_size = self.edge_buffer_size();
         
         if buffer_size > 1000 {

@@ -461,12 +461,14 @@ impl BrainEnhancedKnowledgeGraph {
         let result = self.neural_query(query_embedding, k).await?;
         
         // Enhance with activation context
-        let activated_entities = self.get_entities_above_threshold(0.1).await;
+        let activated_entities_vec = self.get_entities_above_threshold(0.1).await;
+        let activated_entities: HashMap<EntityKey, f32> = activated_entities_vec.into_iter().collect();
         
         // Combine results with activation-weighted scoring
         let mut enhanced_entities = Vec::new();
-        for (entity_key, similarity) in &result.entities {
+        for entity_key in &result.entities {
             let activation = self.get_entity_activation(*entity_key).await;
+            let similarity = result.activations.get(entity_key).unwrap_or(&0.0);
             let cognitive_score = similarity * 0.7 + activation * 0.3;
             enhanced_entities.push((*entity_key, cognitive_score));
         }
@@ -475,9 +477,14 @@ impl BrainEnhancedKnowledgeGraph {
         enhanced_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         enhanced_entities.truncate(k);
 
+        let final_entities: Vec<EntityKey> = enhanced_entities.iter().map(|(key, _score)| *key).collect();
+        let final_activations: HashMap<EntityKey, f32> = enhanced_entities.iter().map(|(key, score)| (*key, *score)).collect();
+        
         Ok(BrainQueryResult {
-            entities: enhanced_entities,
+            entities: final_entities,
+            activations: final_activations,
             query_time: start_time.elapsed(),
+            total_activation: enhanced_entities.iter().map(|(_, score)| score).sum(),
             activation_context: activated_entities,
             confidence: result.confidence,
         })

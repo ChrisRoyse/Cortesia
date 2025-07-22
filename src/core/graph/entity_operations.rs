@@ -249,7 +249,7 @@ impl KnowledgeGraph {
         
         if removed.is_some() {
             // Remove from entity store
-            entity_store.remove(key);
+            let _ = entity_store.remove(key);
             
             // Remove from ID mapping (need to find the ID first)
             let mut id_to_remove = None;
@@ -265,20 +265,20 @@ impl KnowledgeGraph {
                 
                 // Remove from bloom filter
                 let mut bloom = self.bloom_filter.write();
-                bloom.remove(id);
+                let _ = bloom.remove(id);
                 
                 // Remove from spatial indices
                 let mut spatial_index = self.spatial_index.write();
-                spatial_index.remove(id);
+                let _ = spatial_index.remove(id);
                 
                 let mut flat_index = self.flat_index.write();
-                flat_index.remove(id);
+                let _ = flat_index.remove(id);
                 
                 let hnsw_index = self.hnsw_index.write();
-                hnsw_index.remove(id);
+                let _ = hnsw_index.remove(id);
                 
                 let lsh_index = self.lsh_index.write();
-                lsh_index.remove(id);
+                let _ = lsh_index.remove(id);
             }
         }
         

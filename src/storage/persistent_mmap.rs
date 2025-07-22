@@ -234,7 +234,7 @@ impl PersistentMMapStorage {
     }
     
     /// Add entity with automatic quantization
-    pub fn add_entity(&mut self, entity_key: EntityKey, data: &EntityData, embedding: &[f32]) -> Result<()> {
+    pub fn add_entity(&mut self, entity_key: EntityKey, _data: &EntityData, embedding: &[f32]) -> Result<()> {
         // Quantize embedding
         let quantized = {
             let quantizer = self.quantizer.read();
@@ -326,7 +326,7 @@ impl PersistentMMapStorage {
         let mut index = self.entity_index.write();
         let mut total_memory_added = 0;
         
-        for ((entity_key, data, _embedding), quantized) in entities_data.iter().zip(quantized_batch.iter()) {
+        for ((entity_key, _data, _embedding), quantized) in entities_data.iter().zip(quantized_batch.iter()) {
             let embedding_offset = self.quantized_embeddings.len() as u32;
             self.quantized_embeddings.extend_from_slice(quantized);
             
@@ -533,7 +533,7 @@ impl std::fmt::Display for StorageStats {
 }
 
 impl From<io::Error> for GraphError {
-    fn from(err: io::Error) -> Self {
+    fn from(_err: io::Error) -> Self {
         GraphError::IndexCorruption // Simplified error mapping
     }
 }

@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
-use crate::core::types::{EntityKey, EntityData};
+use crate::core::types::EntityKey;
 // Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
 
@@ -323,8 +323,8 @@ impl SystemsThinking {
     /// Resolve conflicts between multiple attribute values
     async fn resolve_attribute_conflict(
         &self,
-        attr_name: String,
-        mut attr_list: Vec<InheritedAttribute>,
+        _attr_name: String,
+        attr_list: Vec<InheritedAttribute>,
     ) -> Result<InheritedAttribute> {
         // Resolution strategy:
         // 1. Prefer more specific (lower inheritance depth)
@@ -368,7 +368,7 @@ impl CognitivePattern for SystemsThinking {
         &self,
         query: &str,
         context: Option<&str>,
-        parameters: PatternParameters,
+        _parameters: PatternParameters,
     ) -> Result<PatternResult> {
         let start_time = Instant::now();
         

@@ -520,7 +520,7 @@ impl NeuralQueryProcessor {
 
     fn extract_temporal_bounds(&self, tokens: &[String], query: &str) -> Option<(String, String)> {
         // Look for temporal indicators
-        let temporal_patterns = vec![
+        let _temporal_patterns = vec![
             (r"between (\d{4}) and (\d{4})", "year_range"),
             (r"after (\d{4})", "after_year"),
             (r"before (\d{4})", "before_year"),

@@ -169,7 +169,7 @@ impl GraphRAGEngine {
         Ok(())
     }
     
-    fn find_bridge_entities(&self, similar_entities: &[(EntityKey, f32)], max_depth: u8) -> Result<Vec<EntityKey>> {
+    fn find_bridge_entities(&self, similar_entities: &[(EntityKey, f32)], _max_depth: u8) -> Result<Vec<EntityKey>> {
         let mut bridge_scores: HashMap<EntityKey, u32> = HashMap::new();
         let entity_ids: Vec<EntityKey> = similar_entities.iter().map(|(id, _)| *id).collect();
         

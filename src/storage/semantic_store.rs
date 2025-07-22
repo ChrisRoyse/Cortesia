@@ -146,7 +146,7 @@ impl SemanticStore {
         // Simple text-based search - would be more sophisticated in practice
         let query_lower = query_text.to_lowercase();
         
-        for (&entity_key, summary) in summaries.iter() {
+        for (&entity_key, _summary) in summaries.iter() {
             // Find the entity ID for this key
             let entity_id = entity_id_map.iter()
                 .find(|(_, &key)| key == entity_key)

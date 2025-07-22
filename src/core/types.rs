@@ -805,7 +805,8 @@ mod tests {
             };
 
             assert_eq!(data.embedding.len(), 1000);
-            assert_eq!(data.embedding[999], 0.999);
+            // 999 * 0.001 = 0.999, accounting for floating point precision
+            assert!((data.embedding[999] - 0.999).abs() < f32::EPSILON);
         }
     }
 

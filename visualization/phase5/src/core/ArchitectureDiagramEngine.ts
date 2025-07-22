@@ -1,717 +1,693 @@
 import * as d3 from 'd3';
-import cytoscape, { Core, NodeSingular, EdgeSingular } from 'cytoscape';
-import dagre from 'cytoscape-dagre';
-import fcose from 'cytoscape-fcose';
+import { gsap } from 'gsap';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { throttleTime, debounceTime } from 'rxjs/operators';
 
-// Register layout extensions
-cytoscape.use(dagre);
-cytoscape.use(fcose);
+import {
+  ArchitectureData,
+  ArchitectureNode,
+  ConnectionEdge,
+  LayoutType,
+  ViewMode,
+  ThemeConfiguration,
+  DiagramState,
+  ComponentUpdate,
+  LayoutResult,
+  Animation,
+  NodeAnimation,
+  FlowAnimation,
+  LayoutAnimation,
+  ExportFormat,
+  InteractionType,
+  PerformanceMetrics
+} from '../types';
 
-export interface ComponentNode {
-  id: string;
-  label: string;
-  type: 'phase' | 'engine' | 'module' | 'layer';
-  phase: number;
-  status: 'healthy' | 'warning' | 'error' | 'inactive';
-  position?: { x: number; y: number; z?: number };
-  metrics?: {
-    performance: number;
-    memory: number;
-    connections: number;
-    load: number;
-  };
-  metadata?: Record<string, any>;
-}
-
-export interface ComponentEdge {
-  id: string;
-  source: string;
-  target: string;
-  type: 'data_flow' | 'control' | 'feedback' | 'inhibition';
-  weight?: number;
-  status: 'active' | 'inactive' | 'congested';
-  latency?: number;
-  throughput?: number;
-}
-
-export interface ArchitectureData {
-  nodes: ComponentNode[];
-  edges: ComponentEdge[];
-  metadata: {
-    timestamp: number;
-    totalComponents: number;
-    activeConnections: number;
-    systemHealth: number;
-  };
-}
-
-export interface VisualizationConfig {
-  layout: 'hierarchical' | 'brain_inspired' | 'force_directed' | 'circular';
-  dimensions: '2d' | '3d';
-  showLabels: boolean;
-  showMetrics: boolean;
+export interface ArchitectureEngineConfig {
+  container: HTMLElement;
+  svg: SVGSVGElement;
+  width: number;
+  height: number;
+  theme: ThemeConfiguration;
+  layout: LayoutType;
   enableAnimations: boolean;
-  colorScheme: 'default' | 'accessibility' | 'dark' | 'light';
-  performanceMode: 'high_quality' | 'balanced' | 'performance';
+  enableWebGL: boolean;
+  maxNodes: number;
+  optimizeForMobile: boolean;
 }
 
 export class ArchitectureDiagramEngine {
-  private container: HTMLElement;
+  private config: ArchitectureEngineConfig;
   private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  private cy: Core;
-  private data: ArchitectureData;
-  private config: VisualizationConfig;
-  private animationFrame: number | null = null;
-  private renderCache: Map<string, any> = new Map();
-  private lastRenderTime = 0;
-  private readonly targetFPS = 60;
-  private readonly minFrameTime = 1000 / this.targetFPS;
-
-  constructor(container: HTMLElement, config: Partial<VisualizationConfig> = {}) {
-    this.container = container;
-    this.config = {
-      layout: 'brain_inspired',
-      dimensions: '2d',
-      showLabels: true,
+  private container: d3.Selection<HTMLElement, unknown, null, undefined>;
+  private data: ArchitectureData | null = null;
+  
+  // Core components
+  private layoutEngine: LayoutEngine;
+  private animationEngine: AnimationEngine;
+  private interactionEngine: InteractionEngine;
+  private renderingEngine: RenderingEngine;
+  
+  // State management
+  private currentState: DiagramState;
+  private stateSubject = new BehaviorSubject<DiagramState>({
+    layout: 'neural-layers',
+    viewMode: 'overview',
+    selectedNodes: new Set(),
+    highlightedConnections: new Set(),
+    zoom: { scale: 1, translate: { x: 0, y: 0 } },
+    filters: {
+      showLayers: [],
+      showNodeTypes: ['subcortical', 'cortical', 'thalamic', 'mcp', 'storage', 'network'],
+      showConnections: true,
       showMetrics: true,
-      enableAnimations: true,
-      colorScheme: 'default',
-      performanceMode: 'balanced',
-      ...config
-    };
+    },
+  });
 
-    this.initializeVisualization();
-    this.data = {
-      nodes: [],
-      edges: [],
-      metadata: {
-        timestamp: Date.now(),
-        totalComponents: 0,
-        activeConnections: 0,
-        systemHealth: 1.0
-      }
-    };
+  // Event subjects
+  private nodeInteractionSubject = new Subject<{
+    node: ArchitectureNode;
+    interaction: InteractionType;
+    event: Event;
+  }>();
+  
+  private connectionInteractionSubject = new Subject<{
+    connection: ConnectionEdge;
+    interaction: InteractionType;
+    event: Event;
+  }>();
+  
+  private selectionChangeSubject = new Subject<string[]>();
+  private zoomChangeSubject = new Subject<{ scale: number; translate: { x: number; y: number } }>();
+  
+  // Performance monitoring
+  private performanceMetrics: PerformanceMetrics = {
+    renderTime: 0,
+    animationFPS: 60,
+    memoryUsage: 0,
+    nodeCount: 0,
+    connectionCount: 0,
+    lastMeasurement: Date.now()
+  };
+
+  private isInitialized = false;
+  private animationTimeline: gsap.core.Timeline;
+
+  constructor() {
+    this.animationTimeline = gsap.timeline();
   }
 
-  private initializeVisualization(): void {
-    // Clear container
-    d3.select(this.container).selectAll('*').remove();
+  // Initialization
+  async initialize(config: ArchitectureEngineConfig): Promise<void> {
+    this.config = config;
+    this.currentState = this.stateSubject.value;
 
-    if (this.config.dimensions === '2d') {
-      this.initializeD3Visualization();
+    // Initialize D3 selections
+    this.container = d3.select(config.container);
+    this.svg = d3.select(config.svg);
+
+    // Initialize core engines
+    this.layoutEngine = new LayoutEngine();
+    this.animationEngine = new AnimationEngine(this.animationTimeline, config.enableAnimations);
+    this.interactionEngine = new InteractionEngine(this.svg, config);
+    this.renderingEngine = new RenderingEngine(this.svg, config.theme);
+
+    // Set up zoom behavior
+    this.setupZoomBehavior();
+
+    // Set up interaction handlers
+    this.setupInteractionHandlers();
+
+    // Set up performance monitoring
+    this.setupPerformanceMonitoring();
+
+    // Initialize viewport
+    this.setupViewport();
+
+    this.isInitialized = true;
+  }
+
+  // Data management
+  async render(data: ArchitectureData): Promise<void> {
+    if (!this.isInitialized) {
+      throw new Error('Engine must be initialized before rendering');
     }
-    this.initializeCytoscapeGraph();
+
+    const startTime = performance.now();
+
+    this.data = data;
+    this.updatePerformanceMetrics(data);
+
+    // Calculate layout
+    const layout = await this.layoutEngine.calculateLayout(
+      data.nodes,
+      data.connections,
+      this.currentState.layout,
+      {
+        width: this.config.width,
+        height: this.config.height,
+        theme: this.config.theme
+      }
+    );
+
+    // Render elements
+    await this.renderingEngine.render(data, layout);
+
+    // Apply initial animations
+    if (this.config.enableAnimations) {
+      this.animationEngine.playInitialAnimations(data.nodes);
+    }
+
+    const renderTime = performance.now() - startTime;
+    this.performanceMetrics.renderTime = renderTime;
   }
 
-  private initializeD3Visualization(): void {
-    const rect = this.container.getBoundingClientRect();
-    
-    this.svg = d3.select(this.container)
-      .append('svg')
-      .attr('width', rect.width)
-      .attr('height', rect.height)
-      .style('position', 'absolute')
-      .style('top', 0)
-      .style('left', 0);
+  async updateData(data: ArchitectureData): Promise<void> {
+    if (!this.data) {
+      return this.render(data);
+    }
 
-    // Add zoom behavior
+    const startTime = performance.now();
+
+    // Calculate differences
+    const changes = this.calculateDataChanges(this.data, data);
+    
+    // Update data
+    this.data = data;
+    this.updatePerformanceMetrics(data);
+
+    // Apply incremental updates
+    if (changes.nodes.length > 0 || changes.connections.length > 0) {
+      await this.applyIncrementalChanges(changes);
+    }
+
+    const renderTime = performance.now() - startTime;
+    this.performanceMetrics.renderTime = renderTime;
+  }
+
+  async updateComponent(componentId: string, update: ComponentUpdate['changes']): Promise<void> {
+    if (!this.data) return;
+
+    // Find and update the node
+    const nodeIndex = this.data.nodes.findIndex(n => n.id === componentId);
+    if (nodeIndex === -1) return;
+
+    const node = { ...this.data.nodes[nodeIndex] };
+    
+    // Apply updates
+    if (update.status) node.status = update.status;
+    if (update.metrics) node.metrics = { ...node.metrics, ...update.metrics };
+    if (update.position) node.position = update.position;
+    if (update.connections) node.connections = update.connections;
+
+    // Update data
+    this.data.nodes[nodeIndex] = node;
+
+    // Animate the update
+    if (this.config.enableAnimations) {
+      await this.animationEngine.animateNodeUpdate(componentId, node);
+    } else {
+      // Direct update without animation
+      await this.renderingEngine.updateNode(node);
+    }
+  }
+
+  // Layout management
+  async applyLayout(layoutType: LayoutType): Promise<void> {
+    if (!this.data) return;
+
+    this.currentState = { ...this.currentState, layout: layoutType };
+    this.stateSubject.next(this.currentState);
+
+    const newLayout = await this.layoutEngine.calculateLayout(
+      this.data.nodes,
+      this.data.connections,
+      layoutType,
+      {
+        width: this.config.width,
+        height: this.config.height,
+        theme: this.config.theme
+      }
+    );
+
+    if (this.config.enableAnimations) {
+      await this.animationEngine.animateLayoutTransition(newLayout);
+    }
+
+    await this.renderingEngine.updateLayout(newLayout);
+  }
+
+  setViewMode(viewMode: ViewMode): void {
+    this.currentState = { ...this.currentState, viewMode };
+    this.stateSubject.next(this.currentState);
+    
+    this.renderingEngine.setViewMode(viewMode);
+  }
+
+  // Selection and interaction
+  selectNodes(nodeIds: string[], mode: 'replace' | 'add' | 'toggle' = 'replace'): void {
+    const selectedNodes = new Set(this.currentState.selectedNodes);
+
+    switch (mode) {
+      case 'replace':
+        selectedNodes.clear();
+        nodeIds.forEach(id => selectedNodes.add(id));
+        break;
+      case 'add':
+        nodeIds.forEach(id => selectedNodes.add(id));
+        break;
+      case 'toggle':
+        nodeIds.forEach(id => {
+          if (selectedNodes.has(id)) {
+            selectedNodes.delete(id);
+          } else {
+            selectedNodes.add(id);
+          }
+        });
+        break;
+    }
+
+    this.currentState = { ...this.currentState, selectedNodes };
+    this.stateSubject.next(this.currentState);
+    
+    this.renderingEngine.updateSelection(Array.from(selectedNodes));
+    this.selectionChangeSubject.next(Array.from(selectedNodes));
+  }
+
+  focusOnNode(nodeId: string): void {
+    if (!this.data) return;
+
+    const node = this.data.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Animate to center the node
+    const targetTransform = {
+      x: this.config.width / 2 - node.position.x,
+      y: this.config.height / 2 - node.position.y,
+      k: 1.5
+    };
+
+    this.animateToTransform(targetTransform);
+  }
+
+  // Zoom and pan controls
+  zoomIn(): void {
+    this.zoomBy(1.5);
+  }
+
+  zoomOut(): void {
+    this.zoomBy(1 / 1.5);
+  }
+
+  zoomToFit(): void {
+    if (!this.data || this.data.nodes.length === 0) return;
+
+    // Calculate bounds
+    const bounds = this.calculateNodeBounds(this.data.nodes);
+    const padding = 50;
+
+    const width = bounds.maxX - bounds.minX + padding * 2;
+    const height = bounds.maxY - bounds.minY + padding * 2;
+
+    const scale = Math.min(
+      this.config.width / width,
+      this.config.height / height,
+      2 // Maximum zoom
+    );
+
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+
+    const targetTransform = {
+      x: this.config.width / 2 - centerX * scale,
+      y: this.config.height / 2 - centerY * scale,
+      k: scale
+    };
+
+    this.animateToTransform(targetTransform);
+  }
+
+  resetView(): void {
+    const targetTransform = { x: 0, y: 0, k: 1 };
+    this.animateToTransform(targetTransform);
+  }
+
+  private zoomBy(factor: number): void {
+    const currentTransform = this.currentState.zoom;
+    const newScale = Math.max(0.1, Math.min(5, currentTransform.scale * factor));
+    
+    const targetTransform = {
+      x: currentTransform.translate.x,
+      y: currentTransform.translate.y,
+      k: newScale
+    };
+
+    this.animateToTransform(targetTransform);
+  }
+
+  // Export functionality
+  async exportDiagram(format: ExportFormat): Promise<Blob> {
+    if (!this.svg) {
+      throw new Error('SVG not available for export');
+    }
+
+    switch (format) {
+      case 'svg':
+        return this.exportSVG();
+      case 'png':
+        return this.exportPNG();
+      case 'json':
+        return this.exportJSON();
+      default:
+        throw new Error(`Unsupported export format: ${format}`);
+    }
+  }
+
+  // Event handlers
+  onNodeInteraction(handler: (node: ArchitectureNode, interaction: InteractionType, event: Event) => void): void {
+    this.nodeInteractionSubject.subscribe(({ node, interaction, event }) => {
+      handler(node, interaction, event);
+    });
+  }
+
+  onConnectionInteraction(handler: (connection: ConnectionEdge, interaction: InteractionType, event: Event) => void): void {
+    this.connectionInteractionSubject.subscribe(({ connection, interaction, event }) => {
+      handler(connection, interaction, event);
+    });
+  }
+
+  onSelectionChange(handler: (selectedIds: string[]) => void): void {
+    this.selectionChangeSubject.subscribe(handler);
+  }
+
+  onZoomChange(handler: (zoom: { scale: number; translate: { x: number; y: number } }) => void): void {
+    this.zoomChangeSubject.subscribe(handler);
+  }
+
+  // Performance monitoring
+  getPerformanceMetrics(): PerformanceMetrics {
+    return { ...this.performanceMetrics };
+  }
+
+  // Cleanup
+  dispose(): void {
+    this.animationTimeline.kill();
+    this.interactionEngine?.dispose();
+    this.nodeInteractionSubject.complete();
+    this.connectionInteractionSubject.complete();
+    this.selectionChangeSubject.complete();
+    this.zoomChangeSubject.complete();
+    this.stateSubject.complete();
+  }
+
+  // Private methods
+  private setupZoomBehavior(): void {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 5])
       .on('zoom', (event) => {
-        this.svg.select('.main-group').attr('transform', event.transform);
+        const { transform } = event;
+        
+        this.currentState = {
+          ...this.currentState,
+          zoom: {
+            scale: transform.k,
+            translate: { x: transform.x, y: transform.y }
+          }
+        };
+
+        this.stateSubject.next(this.currentState);
+        this.zoomChangeSubject.next({
+          scale: transform.k,
+          translate: { x: transform.x, y: transform.y }
+        });
+
+        this.renderingEngine.applyTransform(transform);
       });
 
     this.svg.call(zoom);
-
-    // Create main group for transformations
-    this.svg.append('g').attr('class', 'main-group');
-
-    // Add gradient definitions for brain-inspired styling
-    this.addGradientDefinitions();
   }
 
-  private initializeCytoscapeGraph(): void {
-    const cytoscapeContainer = document.createElement('div');
-    cytoscapeContainer.style.position = 'absolute';
-    cytoscapeContainer.style.top = '0';
-    cytoscapeContainer.style.left = '0';
-    cytoscapeContainer.style.width = '100%';
-    cytoscapeContainer.style.height = '100%';
-    cytoscapeContainer.style.pointerEvents = this.config.dimensions === '2d' ? 'none' : 'all';
-    
-    this.container.appendChild(cytoscapeContainer);
-
-    this.cy = cytoscape({
-      container: cytoscapeContainer,
-      style: this.getCytoscapeStyles(),
-      layout: {
-        name: 'preset'
-      },
-      wheelSensitivity: 0.2,
-      maxZoom: 5,
-      minZoom: 0.1
-    });
-
-    this.setupCytoscapeEventHandlers();
+  private setupInteractionHandlers(): void {
+    // Node interactions will be handled by the InteractionEngine
+    // and forwarded through the subjects
   }
 
-  private addGradientDefinitions(): void {
-    const defs = this.svg.append('defs');
-
-    // Neural gradient for phase indicators
-    const neuralGradient = defs.append('radialGradient')
-      .attr('id', 'neural-gradient')
-      .attr('cx', '50%')
-      .attr('cy', '50%')
-      .attr('r', '50%');
-
-    neuralGradient.append('stop')
-      .attr('offset', '0%')
-      .attr('stop-color', '#4fc3f7')
-      .attr('stop-opacity', 0.8);
-
-    neuralGradient.append('stop')
-      .attr('offset', '100%')
-      .attr('stop-color', '#1976d2')
-      .attr('stop-opacity', 0.3);
-
-    // Status gradients
-    const statusColors = {
-      healthy: ['#4caf50', '#2e7d32'],
-      warning: ['#ff9800', '#f57c00'],
-      error: ['#f44336', '#d32f2f'],
-      inactive: ['#757575', '#424242']
+  private setupPerformanceMonitoring(): void {
+    const updatePerformance = () => {
+      const now = performance.now();
+      const memory = (performance as any).memory;
+      
+      if (memory) {
+        this.performanceMetrics.memoryUsage = memory.usedJSHeapSize;
+      }
+      
+      this.performanceMetrics.lastMeasurement = now;
+      
+      // Schedule next update
+      requestAnimationFrame(updatePerformance);
     };
 
-    Object.entries(statusColors).forEach(([status, colors]) => {
-      const gradient = defs.append('radialGradient')
-        .attr('id', `status-${status}`)
-        .attr('cx', '50%')
-        .attr('cy', '50%')
-        .attr('r', '50%');
-
-      gradient.append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', colors[0])
-        .attr('stop-opacity', 0.9);
-
-      gradient.append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', colors[1])
-        .attr('stop-opacity', 0.6);
-    });
+    requestAnimationFrame(updatePerformance);
   }
 
-  private getCytoscapeStyles(): any[] {
-    return [
-      {
-        selector: 'node',
-        style: {
-          'width': 'data(size)',
-          'height': 'data(size)',
-          'background-color': 'data(color)',
-          'border-width': 2,
-          'border-color': '#ffffff',
-          'label': 'data(label)',
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'font-size': '12px',
-          'font-weight': 'bold',
-          'color': '#ffffff',
-          'text-outline-width': 2,
-          'text-outline-color': '#000000',
-          'opacity': 0.9
-        }
-      },
-      {
-        selector: 'node[type = "phase"]',
-        style: {
-          'shape': 'ellipse',
-          'width': 80,
-          'height': 80,
-          'background-color': '#1976d2',
-          'border-width': 3
-        }
-      },
-      {
-        selector: 'node[type = "engine"]',
-        style: {
-          'shape': 'rectangle',
-          'width': 60,
-          'height': 40,
-          'background-color': '#388e3c'
-        }
-      },
-      {
-        selector: 'node[type = "module"]',
-        style: {
-          'shape': 'diamond',
-          'width': 50,
-          'height': 50,
-          'background-color': '#f57c00'
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 'data(weight)',
-          'line-color': 'data(color)',
-          'target-arrow-color': 'data(color)',
-          'target-arrow-shape': 'triangle',
-          'curve-style': 'bezier',
-          'opacity': 0.8
-        }
-      },
-      {
-        selector: 'edge[type = "data_flow"]',
-        style: {
-          'line-color': '#2196f3',
-          'target-arrow-color': '#2196f3'
-        }
-      },
-      {
-        selector: 'edge[type = "control"]',
-        style: {
-          'line-color': '#4caf50',
-          'target-arrow-color': '#4caf50'
-        }
-      },
-      {
-        selector: 'edge[type = "feedback"]',
-        style: {
-          'line-color': '#ff9800',
-          'target-arrow-color': '#ff9800',
-          'line-style': 'dashed'
-        }
-      },
-      {
-        selector: 'edge[type = "inhibition"]',
-        style: {
-          'line-color': '#f44336',
-          'target-arrow-color': '#f44336',
-          'target-arrow-shape': 'tee'
-        }
-      },
-      {
-        selector: '.highlighted',
-        style: {
-          'border-width': 4,
-          'border-color': '#ffeb3b',
-          'z-index': 10
-        }
-      },
-      {
-        selector: '.selected',
-        style: {
-          'border-width': 5,
-          'border-color': '#e91e63',
-          'z-index': 15
-        }
+  private setupViewport(): void {
+    this.svg
+      .attr('width', this.config.width)
+      .attr('height', this.config.height)
+      .attr('viewBox', `0 0 ${this.config.width} ${this.config.height}`);
+  }
+
+  private async animateToTransform(transform: { x: number; y: number; k: number }): Promise<void> {
+    return new Promise((resolve) => {
+      const svg = this.svg.node();
+      if (!svg) {
+        resolve();
+        return;
       }
-    ];
-  }
 
-  private setupCytoscapeEventHandlers(): void {
-    // Node hover effects
-    this.cy.on('mouseover', 'node', (event) => {
-      const node = event.target;
-      node.addClass('highlighted');
-      this.showNodeTooltip(node);
-    });
+      const zoom = d3.zoom<SVGSVGElement, unknown>();
+      const currentTransform = d3.zoomTransform(svg);
 
-    this.cy.on('mouseout', 'node', (event) => {
-      const node = event.target;
-      node.removeClass('highlighted');
-      this.hideTooltip();
-    });
-
-    // Node selection
-    this.cy.on('tap', 'node', (event) => {
-      const node = event.target;
-      this.cy.elements().removeClass('selected');
-      node.addClass('selected');
-      this.highlightConnectedComponents(node);
-      this.emitNodeSelectedEvent(node.data());
-    });
-
-    // Edge selection
-    this.cy.on('tap', 'edge', (event) => {
-      const edge = event.target;
-      this.emitEdgeSelectedEvent(edge.data());
-    });
-
-    // Background tap to clear selection
-    this.cy.on('tap', (event) => {
-      if (event.target === this.cy) {
-        this.clearSelection();
-      }
+      this.svg
+        .transition()
+        .duration(750)
+        .call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(transform.x, transform.y)
+            .scale(transform.k)
+        )
+        .on('end', resolve);
     });
   }
 
-  private showNodeTooltip(node: NodeSingular): void {
-    const nodeData = node.data();
-    const position = node.renderedPosition();
-    
-    // Create or update tooltip
-    let tooltip = document.querySelector('.architecture-tooltip') as HTMLElement;
-    if (!tooltip) {
-      tooltip = document.createElement('div');
-      tooltip.className = 'architecture-tooltip';
-      tooltip.style.cssText = `
-        position: absolute;
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 12px;
-        pointer-events: none;
-        z-index: 1000;
-        max-width: 200px;
-      `;
-      this.container.appendChild(tooltip);
-    }
-
-    let content = `<strong>${nodeData.label}</strong><br>`;
-    content += `Type: ${nodeData.type}<br>`;
-    content += `Status: ${nodeData.status}<br>`;
-    
-    if (nodeData.metrics) {
-      content += `Performance: ${(nodeData.metrics.performance * 100).toFixed(1)}%<br>`;
-      content += `Memory: ${nodeData.metrics.memory.toFixed(1)}MB<br>`;
-      content += `Connections: ${nodeData.metrics.connections}`;
-    }
-
-    tooltip.innerHTML = content;
-    tooltip.style.left = `${position.x + 10}px`;
-    tooltip.style.top = `${position.y - 10}px`;
-    tooltip.style.display = 'block';
-  }
-
-  private hideTooltip(): void {
-    const tooltip = document.querySelector('.architecture-tooltip') as HTMLElement;
-    if (tooltip) {
-      tooltip.style.display = 'none';
-    }
-  }
-
-  private highlightConnectedComponents(node: NodeSingular): void {
-    // Highlight connected edges and nodes
-    const connectedEdges = node.connectedEdges();
-    const connectedNodes = connectedEdges.connectedNodes().difference(node);
-    
-    connectedEdges.addClass('highlighted');
-    connectedNodes.addClass('highlighted');
-    
-    // Remove highlights after 3 seconds
-    setTimeout(() => {
-      connectedEdges.removeClass('highlighted');
-      connectedNodes.removeClass('highlighted');
-    }, 3000);
-  }
-
-  private clearSelection(): void {
-    this.cy.elements().removeClass('selected highlighted');
-    this.emitSelectionClearedEvent();
-  }
-
-  public updateData(newData: ArchitectureData): void {
-    this.data = newData;
-    this.updateVisualization();
-  }
-
-  private updateVisualization(): void {
-    const now = performance.now();
-    if (now - this.lastRenderTime < this.minFrameTime) {
-      if (this.animationFrame) {
-        cancelAnimationFrame(this.animationFrame);
-      }
-      this.animationFrame = requestAnimationFrame(() => this.performUpdate());
-      return;
-    }
-    
-    this.performUpdate();
-  }
-
-  private performUpdate(): void {
-    this.lastRenderTime = performance.now();
-    
-    // Update Cytoscape graph
-    this.updateCytoscapeGraph();
-    
-    // Update D3 visualization if in 2D mode
-    if (this.config.dimensions === '2d') {
-      this.updateD3Visualization();
-    }
-  }
-
-  private updateCytoscapeGraph(): void {
-    const elements = this.prepareCytoscapeElements();
-    
-    // Batch update for performance
-    this.cy.batch(() => {
-      this.cy.elements().remove();
-      this.cy.add(elements);
-      this.cy.layout(this.getLayoutConfig()).run();
+  private calculateDataChanges(oldData: ArchitectureData, newData: ArchitectureData) {
+    const nodeChanges = newData.nodes.filter(newNode => {
+      const oldNode = oldData.nodes.find(n => n.id === newNode.id);
+      return !oldNode || JSON.stringify(oldNode) !== JSON.stringify(newNode);
     });
-  }
 
-  private prepareCytoscapeElements(): any[] {
-    const elements: any[] = [];
-    
-    // Add nodes
-    this.data.nodes.forEach(node => {
-      elements.push({
-        data: {
-          id: node.id,
-          label: node.label,
-          type: node.type,
-          phase: node.phase,
-          status: node.status,
-          size: this.getNodeSize(node),
-          color: this.getNodeColor(node),
-          ...node.metrics
-        },
-        position: node.position
-      });
+    const connectionChanges = newData.connections.filter(newConn => {
+      const oldConn = oldData.connections.find(c => c.id === newConn.id);
+      return !oldConn || JSON.stringify(oldConn) !== JSON.stringify(newConn);
     });
-    
-    // Add edges
-    this.data.edges.forEach(edge => {
-      elements.push({
-        data: {
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: edge.type,
-          weight: Math.max(1, (edge.weight || 1) * 3),
-          color: this.getEdgeColor(edge),
-          status: edge.status
-        }
-      });
-    });
-    
-    return elements;
-  }
 
-  private getNodeSize(node: ComponentNode): number {
-    const baseSize = {
-      phase: 80,
-      engine: 60,
-      module: 50,
-      layer: 40
-    }[node.type] || 50;
-    
-    // Scale based on metrics
-    const performanceMultiplier = node.metrics ? (0.8 + node.metrics.performance * 0.4) : 1;
-    return Math.round(baseSize * performanceMultiplier);
-  }
-
-  private getNodeColor(node: ComponentNode): string {
-    const statusColors = {
-      healthy: '#4caf50',
-      warning: '#ff9800',
-      error: '#f44336',
-      inactive: '#757575'
-    };
-    
-    return statusColors[node.status] || '#757575';
-  }
-
-  private getEdgeColor(edge: ComponentEdge): string {
-    const typeColors = {
-      data_flow: '#2196f3',
-      control: '#4caf50',
-      feedback: '#ff9800',
-      inhibition: '#f44336'
-    };
-    
-    const baseColor = typeColors[edge.type] || '#757575';
-    
-    // Adjust opacity based on status
-    const opacity = {
-      active: 1.0,
-      inactive: 0.3,
-      congested: 0.8
-    }[edge.status] || 0.8;
-    
-    return baseColor; // Color opacity handled in CSS
-  }
-
-  private updateD3Visualization(): void {
-    if (!this.svg) return;
-    
-    const mainGroup = this.svg.select('.main-group');
-    
-    // Update nodes with D3 for additional visual effects
-    const nodeSelection = mainGroup.selectAll('.d3-node')
-      .data(this.data.nodes, (d: any) => d.id);
-    
-    // Enter new nodes
-    const nodeEnter = nodeSelection.enter()
-      .append('g')
-      .attr('class', 'd3-node')
-      .attr('transform', d => `translate(${d.position?.x || 0}, ${d.position?.y || 0})`);
-    
-    // Add visual enhancements for brain-inspired layout
-    nodeEnter.append('circle')
-      .attr('class', 'neural-glow')
-      .attr('r', d => this.getNodeSize(d) / 2 + 10)
-      .attr('fill', 'url(#neural-gradient)')
-      .attr('opacity', 0.3);
-    
-    // Update existing nodes
-    nodeSelection.merge(nodeEnter)
-      .transition()
-      .duration(this.config.enableAnimations ? 300 : 0)
-      .attr('transform', d => `translate(${d.position?.x || 0}, ${d.position?.y || 0})`);
-    
-    // Remove old nodes
-    nodeSelection.exit().remove();
-  }
-
-  private getLayoutConfig(): any {
-    switch (this.config.layout) {
-      case 'hierarchical':
-        return {
-          name: 'dagre',
-          rankDir: 'TB',
-          nodeSep: 50,
-          rankSep: 100,
-          animate: this.config.enableAnimations,
-          animationDuration: 500
-        };
-      
-      case 'brain_inspired':
-        return {
-          name: 'fcose',
-          quality: 'default',
-          randomize: false,
-          animate: this.config.enableAnimations,
-          animationDuration: 500,
-          nodeDimensionsIncludeLabels: true,
-          uniformNodeDimensions: false,
-          packComponents: true,
-          nodeRepulsion: 4500,
-          idealEdgeLength: 150,
-          edgeElasticity: 0.45,
-          nestingFactor: 0.1,
-          gravity: 0.25,
-          numIter: 2500,
-          tile: true,
-          tilingPaddingVertical: 10,
-          tilingPaddingHorizontal: 10
-        };
-      
-      case 'force_directed':
-        return {
-          name: 'cose',
-          animate: this.config.enableAnimations,
-          animationDuration: 500,
-          nodeRepulsion: 400000,
-          nodeOverlap: 10,
-          idealEdgeLength: 100,
-          edgeElasticity: 100,
-          nestingFactor: 5,
-          gravity: 80,
-          numIter: 1000
-        };
-      
-      case 'circular':
-        return {
-          name: 'circle',
-          animate: this.config.enableAnimations,
-          animationDuration: 500,
-          radius: 200
-        };
-      
-      default:
-        return { name: 'preset' };
-    }
-  }
-
-  // Event emission methods
-  private emitNodeSelectedEvent(nodeData: any): void {
-    this.container.dispatchEvent(new CustomEvent('nodeSelected', {
-      detail: nodeData
-    }));
-  }
-
-  private emitEdgeSelectedEvent(edgeData: any): void {
-    this.container.dispatchEvent(new CustomEvent('edgeSelected', {
-      detail: edgeData
-    }));
-  }
-
-  private emitSelectionClearedEvent(): void {
-    this.container.dispatchEvent(new CustomEvent('selectionCleared'));
-  }
-
-  // Public API methods
-  public setLayout(layout: VisualizationConfig['layout']): void {
-    this.config.layout = layout;
-    this.cy.layout(this.getLayoutConfig()).run();
-  }
-
-  public setDimensions(dimensions: VisualizationConfig['dimensions']): void {
-    this.config.dimensions = dimensions;
-    this.initializeVisualization();
-    this.updateVisualization();
-  }
-
-  public zoomToFit(padding = 50): void {
-    this.cy.fit(this.cy.elements(), padding);
-  }
-
-  public zoomToNode(nodeId: string, zoom = 2): void {
-    const node = this.cy.getElementById(nodeId);
-    if (node.length > 0) {
-      this.cy.animate({
-        zoom: zoom,
-        center: { eles: node }
-      }, {
-        duration: 500
-      });
-    }
-  }
-
-  public exportImage(format: 'png' | 'jpg' = 'png'): string {
-    return this.cy.png({
-      output: 'base64',
-      bg: 'white',
-      full: true,
-      scale: 2
-    });
-  }
-
-  public getPerformanceMetrics(): {
-    nodeCount: number;
-    edgeCount: number;
-    renderTime: number;
-    memoryUsage: number;
-  } {
     return {
-      nodeCount: this.data.nodes.length,
-      edgeCount: this.data.edges.length,
-      renderTime: this.lastRenderTime,
-      memoryUsage: this.renderCache.size
+      nodes: nodeChanges,
+      connections: connectionChanges
     };
   }
 
-  public dispose(): void {
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
+  private async applyIncrementalChanges(changes: {
+    nodes: ArchitectureNode[];
+    connections: ConnectionEdge[];
+  }): Promise<void> {
+    if (this.config.enableAnimations) {
+      const animations = changes.nodes.map(node => 
+        this.animationEngine.animateNodeUpdate(node.id, node)
+      );
+      await Promise.all(animations);
+    } else {
+      // Apply changes directly
+      for (const node of changes.nodes) {
+        await this.renderingEngine.updateNode(node);
+      }
+      for (const connection of changes.connections) {
+        await this.renderingEngine.updateConnection(connection);
+      }
     }
+  }
+
+  private updatePerformanceMetrics(data: ArchitectureData): void {
+    this.performanceMetrics.nodeCount = data.nodes.length;
+    this.performanceMetrics.connectionCount = data.connections.length;
+  }
+
+  private calculateNodeBounds(nodes: ArchitectureNode[]) {
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    nodes.forEach(node => {
+      const radius = node.size || 30;
+      minX = Math.min(minX, node.position.x - radius);
+      maxX = Math.max(maxX, node.position.x + radius);
+      minY = Math.min(minY, node.position.y - radius);
+      maxY = Math.max(maxY, node.position.y + radius);
+    });
+
+    return { minX, maxX, minY, maxY };
+  }
+
+  private async exportSVG(): Promise<Blob> {
+    const svgElement = this.svg.node();
+    if (!svgElement) throw new Error('SVG element not found');
+
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
     
-    if (this.cy) {
-      this.cy.destroy();
-    }
+    return new Blob([svgString], { type: 'image/svg+xml' });
+  }
+
+  private async exportPNG(): Promise<Blob> {
+    const svgBlob = await this.exportSVG();
+    const svgUrl = URL.createObjectURL(svgBlob);
     
-    this.renderCache.clear();
-    
-    // Remove tooltip if exists
-    const tooltip = document.querySelector('.architecture-tooltip');
-    if (tooltip) {
-      tooltip.remove();
-    }
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        canvas.width = this.config.width * 2; // 2x resolution
+        canvas.height = this.config.height * 2;
+        ctx.scale(2, 2);
+        
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(svgUrl);
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create PNG blob'));
+          }
+        }, 'image/png');
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error('Failed to load SVG for PNG conversion'));
+      };
+      
+      img.src = svgUrl;
+    });
+  }
+
+  private async exportJSON(): Promise<Blob> {
+    const exportData = {
+      ...this.data,
+      state: this.currentState,
+      metadata: {
+        exported: Date.now(),
+        version: '1.0.0',
+        engine: 'ArchitectureDiagramEngine'
+      }
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    return new Blob([jsonString], { type: 'application/json' });
+  }
+}
+
+// Placeholder classes that would be implemented separately
+class LayoutEngine {
+  async calculateLayout(
+    nodes: ArchitectureNode[],
+    connections: ConnectionEdge[],
+    layoutType: LayoutType,
+    constraints: { width: number; height: number; theme: ThemeConfiguration }
+  ): Promise<LayoutResult> {
+    // This would contain the actual layout algorithm implementations
+    return {
+      nodes: nodes.map(node => ({ id: node.id, position: node.position })),
+      connections: connections.map(conn => ({
+        id: conn.id,
+        path: `M0,0 L100,100`, // Placeholder
+        midpoint: { x: 50, y: 50 },
+        angle: 0
+      })),
+      metadata: {
+        algorithm: layoutType,
+        quality: 1.0,
+        executionTime: performance.now()
+      }
+    };
+  }
+}
+
+class AnimationEngine {
+  constructor(
+    private timeline: gsap.core.Timeline,
+    private enabled: boolean
+  ) {}
+
+  playInitialAnimations(nodes: ArchitectureNode[]): void {
+    if (!this.enabled) return;
+    // Implementation would go here
+  }
+
+  async animateNodeUpdate(nodeId: string, node: ArchitectureNode): Promise<void> {
+    if (!this.enabled) return;
+    // Implementation would go here
+  }
+
+  async animateLayoutTransition(layout: LayoutResult): Promise<void> {
+    if (!this.enabled) return;
+    // Implementation would go here
+  }
+}
+
+class InteractionEngine {
+  constructor(
+    private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+    private config: ArchitectureEngineConfig
+  ) {}
+
+  dispose(): void {
+    // Cleanup event listeners
+  }
+}
+
+class RenderingEngine {
+  constructor(
+    private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+    private theme: ThemeConfiguration
+  ) {}
+
+  async render(data: ArchitectureData, layout: LayoutResult): Promise<void> {
+    // Implementation would go here
+  }
+
+  async updateNode(node: ArchitectureNode): Promise<void> {
+    // Implementation would go here
+  }
+
+  async updateConnection(connection: ConnectionEdge): Promise<void> {
+    // Implementation would go here
+  }
+
+  async updateLayout(layout: LayoutResult): Promise<void> {
+    // Implementation would go here
+  }
+
+  setViewMode(viewMode: ViewMode): void {
+    // Implementation would go here
+  }
+
+  updateSelection(selectedNodeIds: string[]): void {
+    // Implementation would go here
+  }
+
+  applyTransform(transform: d3.ZoomTransform): void {
+    // Apply zoom/pan transform to the rendering
   }
 }

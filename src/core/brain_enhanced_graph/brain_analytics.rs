@@ -75,6 +75,8 @@ impl BrainEnhancedKnowledgeGraph {
             learning_efficiency,
             max_degree,
             average_degree,
+            total_propagations: 0,
+            total_affected_entities: 0,
         })
     }
 

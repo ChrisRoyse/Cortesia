@@ -10,7 +10,7 @@ use crate::core::brain_types::{ActivationStep, ActivationOperation};
 
 // Local types for enhanced convergent thinking
 #[derive(Debug, Clone)]
-struct ReasoningStep {
+pub struct ReasoningStep {
     pub step_number: usize,
     pub concept: String,
     pub operation: String,

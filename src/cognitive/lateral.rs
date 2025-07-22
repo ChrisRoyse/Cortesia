@@ -647,7 +647,7 @@ impl CognitivePattern for LateralThinking {
     async fn execute(
         &self,
         query: &str,
-        context: Option<&str>,
+        _context: Option<&str>,
         parameters: PatternParameters,
     ) -> Result<PatternResult> {
         let start_time = Instant::now();

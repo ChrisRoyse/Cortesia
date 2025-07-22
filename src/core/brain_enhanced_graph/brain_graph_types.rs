@@ -20,6 +20,8 @@ pub struct BrainQueryResult {
     pub activations: HashMap<EntityKey, f32>,
     pub query_time: Duration,
     pub total_activation: f32,
+    pub activation_context: HashMap<EntityKey, f32>,
+    pub confidence: f32,
 }
 
 impl BrainQueryResult {
@@ -30,6 +32,8 @@ impl BrainQueryResult {
             activations: HashMap::new(),
             query_time: Duration::from_millis(0),
             total_activation: 0.0,
+            activation_context: HashMap::new(),
+            confidence: 0.0,
         }
     }
 
@@ -191,6 +195,8 @@ pub struct BrainStatistics {
     pub learning_efficiency: f32,
     pub max_degree: usize,
     pub average_degree: f32,
+    pub total_propagations: usize,
+    pub total_affected_entities: usize,
 }
 
 impl BrainStatistics {
@@ -211,6 +217,8 @@ impl BrainStatistics {
             learning_efficiency: 0.0,
             max_degree: 0,
             average_degree: 0.0,
+            total_propagations: 0,
+            total_affected_entities: 0,
         }
     }
 

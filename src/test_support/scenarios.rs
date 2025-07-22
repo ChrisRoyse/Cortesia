@@ -5,7 +5,6 @@ use crate::cognitive::neural_query::QueryIntent;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::types::EntityKey;
 // Import the entity_compat module to access EntityKey::from_hash method
-use crate::core::entity_compat;
 use std::time::Duration;
 
 /// A predefined test scenario with expected outcomes
@@ -603,7 +602,7 @@ pub fn create_scenario_entities(count: usize, prefix: &str) -> Vec<EntityKey> {
 
 /// Async helper to create and populate entities in a graph for test scenarios
 pub async fn create_scenario_entities_in_graph(
-    graph: &BrainEnhancedKnowledgeGraph,
+    _graph: &BrainEnhancedKnowledgeGraph,
     scenario_name: &str,
 ) -> crate::error::Result<Vec<EntityKey>> {
     match scenario_name {

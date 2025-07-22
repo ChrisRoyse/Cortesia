@@ -100,7 +100,7 @@ impl BiTemporalIndex {
         let mut results = Vec::new();
         
         // Find all entities with valid_time.start <= time
-        for (start_time, entities) in self.valid_time_index.range(..=time).rev() {
+        for (_start_time, entities) in self.valid_time_index.range(..=time).rev() {
             results.extend(entities.iter().cloned());
         }
         

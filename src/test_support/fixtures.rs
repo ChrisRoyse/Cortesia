@@ -2,7 +2,6 @@
 
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::types::{EntityKey, EntityData};
-use crate::core::graph::graph_core::KnowledgeGraph;
 use crate::error::Result;
 use std::sync::Arc;
 use slotmap::SlotMap;
@@ -83,7 +82,7 @@ pub fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
 /// Creates a test graph populated with standard test entities
 pub async fn create_populated_test_graph() -> Result<Arc<BrainEnhancedKnowledgeGraph>> {
     let graph = create_test_graph();
-    let entities = create_standard_test_entities();
+    let _entities = create_standard_test_entities();
     
     // TODO: Add entities to graph when API is available
     // For now, just return the empty graph
@@ -93,7 +92,7 @@ pub async fn create_populated_test_graph() -> Result<Arc<BrainEnhancedKnowledgeG
 /// Creates a test graph with specific configuration for cognitive testing
 pub async fn create_cognitive_test_graph() -> Result<Arc<BrainEnhancedKnowledgeGraph>> {
     let graph = create_test_graph();
-    let entities = create_cognitive_test_entities();
+    let _entities = create_cognitive_test_entities();
     
     // TODO: Add cognitive entities to graph when API is available
     Ok(graph)

@@ -44,7 +44,7 @@ pub async fn handle_store_fact(
         object.to_string(),
     ).map_err(|e| format!("Failed to create triple: {}", e))?;
     
-    let mut engine = knowledge_engine.write().await;
+    let engine = knowledge_engine.write().await;
     match engine.store_triple(triple, None) {
         Ok(_) => {
             // Update stats
@@ -103,7 +103,7 @@ pub async fn handle_store_knowledge(
     let extracted_entities = extract_entities_from_text(content);
     let extracted_relationships = extract_relationships_from_text(content, &extracted_entities);
     
-    let mut engine = knowledge_engine.write().await;
+    let engine = knowledge_engine.write().await;
     
     // Store as knowledge chunk
     let chunk_id = format!("chunk_{}", uuid::Uuid::new_v4());

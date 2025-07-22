@@ -145,7 +145,7 @@ impl BrainInspiredMCPServer {
             ).await?;
             
             // 5. Store with bi-temporal tracking
-            let mut graph = self.knowledge_graph.write().await;
+            let graph = self.knowledge_graph.write().await;
             let current_time = std::time::SystemTime::now();
             
             for entity in &created_entities {
@@ -633,7 +633,7 @@ impl BrainInspiredMCPServer {
         context: Option<String>,
     ) -> Result<MCPResponse> {
         // Simple traditional storage without neural processing
-        let mut graph = self.knowledge_graph.write().await;
+        let graph = self.knowledge_graph.write().await;
         let mut metadata = AHashMap::new();
         metadata.insert("text".to_string(), AttributeValue::String(text.to_string()));
         if let Some(ctx) = context {

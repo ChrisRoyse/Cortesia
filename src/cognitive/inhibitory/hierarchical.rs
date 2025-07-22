@@ -10,7 +10,6 @@ use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
-use std::time::SystemTime;
 
 /// Apply hierarchical inhibition based on abstraction levels
 pub async fn apply_hierarchical_inhibition(

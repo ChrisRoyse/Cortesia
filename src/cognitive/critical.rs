@@ -448,7 +448,7 @@ impl CognitivePattern for CriticalThinking {
         ]
     }
     
-    fn estimate_complexity(&self, query: &str) -> ComplexityEstimate {
+    fn estimate_complexity(&self, _query: &str) -> ComplexityEstimate {
         ComplexityEstimate {
             computational_complexity: 40,
             estimated_time_ms: 1500,
@@ -459,7 +459,7 @@ impl CognitivePattern for CriticalThinking {
     }
 }
 
-struct ExceptionResolver {
+pub struct ExceptionResolver {
     // Implementation would handle different types of exceptions
 }
 

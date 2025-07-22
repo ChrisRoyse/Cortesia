@@ -479,10 +479,6 @@ impl KnowledgeGraph {
         })
     }
 
-    /// Get entity degree (number of connections)
-    pub fn get_entity_degree(&self, entity: EntityKey) -> usize {
-        self.get_neighbors(entity).len()
-    }
 
     /// Get query statistics for the graph
     pub fn get_query_statistics(&self) -> QueryStats {

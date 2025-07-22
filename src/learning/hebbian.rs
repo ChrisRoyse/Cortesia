@@ -4,7 +4,6 @@ use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
 use crate::core::brain_types::BrainInspiredRelationship;
 use crate::core::types::EntityKey;
 use crate::learning::types::*;
-use crate::cognitive::types::CognitivePatternType;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

@@ -214,7 +214,7 @@ impl CSRGraph {
     }
     
     /// Add an edge to the graph
-    pub fn add_edge(&mut self, from: u32, to: u32, weight: f32) -> Result<()> {
+    pub fn add_edge(&mut self, _from: u32, _to: u32, _weight: f32) -> Result<()> {
         // Note: CSR format is typically immutable after construction
         // For dynamic updates, we would need to rebuild or use a different structure
         // This is a placeholder that returns an error
