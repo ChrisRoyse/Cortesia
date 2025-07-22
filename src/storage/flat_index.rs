@@ -439,4 +439,505 @@ mod tests {
             assert!((full.1 - fast.1).abs() < 1e-6);
         }
     }
+
+    #[test]
+    fn test_heap_implementation() {
+        let mut index = FlatVectorIndex::new(3);
+        
+        // Create test data with known distances
+        let entities = vec![
+            (1, EntityKey::default(), vec![1.0, 0.0, 0.0]), // Distance 0 from [1,0,0]
+            (2, EntityKey::default(), vec![0.0, 1.0, 0.0]), // Distance ~1.41 from [1,0,0]
+            (3, EntityKey::default(), vec![0.0, 0.0, 1.0]), // Distance ~1.41 from [1,0,0]
+            (4, EntityKey::default(), vec![0.5, 0.5, 0.0]), // Distance ~0.29 from [1,0,0]
+        ];
+        
+        index.bulk_build(entities).unwrap();
+        
+        let query = vec![1.0, 0.0, 0.0];
+        let results = index.k_nearest_neighbors_heap(&query, 2);
+        
+        assert_eq!(results.len(), 2);
+        // Should return the 2 closest: entity 1 (distance 0) and entity 4 (distance ~0.29)
+        assert_eq!(results[0].0, 1); // Closest
+        assert_eq!(results[1].0, 4); // Second closest
+        assert!(results[0].1 < results[1].1); // Distances should be sorted
+    }
+
+    #[test]
+    fn test_bulk_build_efficiency() {
+        let mut index = FlatVectorIndex::new(128);
+        
+        // Test bulk build with large dataset
+        let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..10000)
+            .map(|i| {
+                let embedding: Vec<f32> = (0..128).map(|j| (i * j) as f32 / 10000.0).collect();
+                (i as u32, EntityKey::default(), embedding)
+            })
+            .collect();
+        
+        let start = std::time::Instant::now();
+        index.bulk_build(entities).unwrap();
+        let duration = start.elapsed();
+        
+        assert_eq!(index.len(), 10000);
+        assert!(duration.as_millis() < 1000); // Should be reasonably fast
+        
+        // Test that capacity was properly pre-allocated
+        assert!(index.entity_ids.capacity() >= 10000);
+        assert!(index.embeddings.capacity() >= 10000 * 128);
+    }
+
+    #[test]
+    fn test_memory_efficiency() {
+        let mut index = FlatVectorIndex::new(64);
+        
+        let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..1000)
+            .map(|i| {
+                let embedding: Vec<f32> = (0..64).map(|j| (i + j) as f32).collect();
+                (i as u32, EntityKey::default(), embedding)
+            })
+            .collect();
+        
+        index.bulk_build(entities).unwrap();
+        
+        let memory_usage = index.memory_usage();
+        
+        // Calculate expected minimum memory usage
+        let expected_min = 
+            1000 * std::mem::size_of::<u32>() +  // entity_ids
+            1000 * std::mem::size_of::<EntityKey>() +  // entity_keys
+            1000 * 64 * std::mem::size_of::<f32>();  // embeddings
+        
+        assert!(memory_usage >= expected_min);
+    }
+
+    #[test]
+    fn test_dimension_validation() {
+        let mut index = FlatVectorIndex::new(3);
+        
+        // Test correct dimension
+        let result = index.insert(1, EntityKey::default(), vec![1.0, 2.0, 3.0]);
+        assert!(result.is_ok());
+        
+        // Test incorrect dimension
+        let result = index.insert(2, EntityKey::default(), vec![1.0, 2.0]); // Wrong dimension
+        assert!(result.is_err());
+        
+        let result = index.insert(3, EntityKey::default(), vec![1.0, 2.0, 3.0, 4.0]); // Wrong dimension
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_empty_index_behavior() {
+        let index = FlatVectorIndex::new(128);
+        
+        assert!(index.is_empty());
+        assert_eq!(index.len(), 0);
+        
+        let query = vec![1.0; 128];
+        let results = index.k_nearest_neighbors(&query, 10);
+        assert!(results.is_empty());
+        
+        let results = index.k_nearest_neighbors_fast(&query, 10);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_distance_calculations() {
+        let mut index = FlatVectorIndex::new(2);
+        
+        // Test vectors with known cosine similarities
+        let entities = vec![
+            (1, EntityKey::default(), vec![1.0, 0.0]), // [1, 0]
+            (2, EntityKey::default(), vec![0.0, 1.0]), // [0, 1] - orthogonal
+            (3, EntityKey::default(), vec![1.0, 1.0]), // [1, 1] - 45 degrees
+        ];
+        
+        index.bulk_build(entities).unwrap();
+        
+        let query = vec![1.0, 0.0];
+        let results = index.k_nearest_neighbors(&query, 3);
+        
+        assert_eq!(results.len(), 3);
+        
+        // Entity 1 should be closest (distance 0)
+        assert_eq!(results[0].0, 1);
+        assert!((results[0].1 - 0.0).abs() < 1e-6);
+        
+        // Entity 3 should be next (cosine distance = 1 - cos(45°) ≈ 0.293)
+        assert_eq!(results[1].0, 3);
+        assert!((results[1].1 - (1.0 - std::f32::consts::FRAC_1_SQRT_2)).abs() < 1e-6);
+        
+        // Entity 2 should be farthest (cosine distance = 1 - cos(90°) = 1.0)
+        assert_eq!(results[2].0, 2);
+        assert!((results[2].1 - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_update_entity() {
+        let mut index = FlatVectorIndex::new(3);
+        
+        // Insert initial entity
+        index.insert(1, EntityKey::default(), vec![1.0, 0.0, 0.0]).unwrap();
+        index.insert(2, EntityKey::default(), vec![0.0, 1.0, 0.0]).unwrap();
+        
+        // Update entity 1
+        let result = index.update_entity(1, EntityKey::default(), vec![0.0, 0.0, 1.0]);
+        assert!(result.is_ok());
+        
+        // Verify update
+        let query = vec![0.0, 0.0, 1.0];
+        let results = index.k_nearest_neighbors(&query, 1);
+        assert_eq!(results[0].0, 1); // Entity 1 should now be closest
+        
+        // Test updating non-existent entity
+        let result = index.update_entity(99, EntityKey::default(), vec![1.0, 1.0, 1.0]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_remove_entity() {
+        let mut index = FlatVectorIndex::new(3);
+        
+        // Insert entities
+        index.insert(1, EntityKey::default(), vec![1.0, 0.0, 0.0]).unwrap();
+        index.insert(2, EntityKey::default(), vec![0.0, 1.0, 0.0]).unwrap();
+        index.insert(3, EntityKey::default(), vec![0.0, 0.0, 1.0]).unwrap();
+        
+        assert_eq!(index.len(), 3);
+        assert!(index.contains_entity(2));
+        
+        // Remove entity
+        let result = index.remove(2);
+        assert!(result.is_ok());
+        
+        assert_eq!(index.len(), 2);
+        assert!(!index.contains_entity(2));
+        assert!(index.contains_entity(1));
+        assert!(index.contains_entity(3));
+        
+        // Test removing non-existent entity
+        let result = index.remove(99);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_unsupported_operations() {
+        let mut index = FlatVectorIndex::new(3);
+        
+        // Test that graph operations are not supported
+        assert!(index.add_edge(1, 2, 1.0).is_err());
+    }
+
+    #[test]
+    fn test_encoded_size() {
+        let mut index = FlatVectorIndex::new(4);
+        
+        let entities = vec![
+            (1, EntityKey::default(), vec![1.0, 2.0, 3.0, 4.0]),
+            (2, EntityKey::default(), vec![5.0, 6.0, 7.0, 8.0]),
+        ];
+        
+        index.bulk_build(entities).unwrap();
+        
+        let encoded_size = index.encoded_size();
+        
+        let expected_size = 
+            std::mem::size_of::<usize>() * 2 +  // dimension + count
+            2 * std::mem::size_of::<u32>() +    // entity_ids
+            2 * std::mem::size_of::<EntityKey>() + // entity_keys
+            2 * 4 * std::mem::size_of::<f32>();    // embeddings
+        
+        assert_eq!(encoded_size, expected_size);
+    }
+
+    #[cfg(test)]
+    mod simd_tests {
+        use super::*;
+        
+        #[test]
+        #[cfg(target_arch = "x86_64")]
+        fn test_simd_vs_scalar_consistency() {
+            let mut index = FlatVectorIndex::new(16);
+            
+            // Create data that benefits from SIMD
+            let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..200)
+                .map(|i| {
+                    let embedding: Vec<f32> = (0..16).map(|j| (i * j) as f32 / 100.0).collect();
+                    (i as u32, EntityKey::default(), embedding)
+                })
+                .collect();
+            
+            index.bulk_build(entities).unwrap();
+            
+            let query: Vec<f32> = (0..16).map(|i| i as f32 / 10.0).collect();
+            
+            // Get results using different code paths
+            let results_normal = index.k_nearest_neighbors(&query, 10);
+            
+            // Force SIMD path if available
+            #[cfg(target_arch = "x86_64")]
+            {
+                if std::is_x86_feature_detected!("avx2") {
+                    let results_simd = index.k_nearest_neighbors_simd_avx2(&query, 10);
+                    
+                    // Results should be very similar (allowing for small numerical differences)
+                    assert_eq!(results_normal.len(), results_simd.len());
+                    for (normal, simd) in results_normal.iter().zip(results_simd.iter()) {
+                        assert_eq!(normal.0, simd.0); // Same entity ID
+                        assert!((normal.1 - simd.1).abs() < 1e-5); // Very close distances
+                    }
+                }
+            }
+        }
+        
+        #[test]
+        #[cfg(target_arch = "x86_64")]
+        fn test_similarity_search_simd() {
+            let mut index = FlatVectorIndex::new(32);
+            
+            // Create test data with known similarity patterns
+            let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..100)
+                .map(|i| {
+                    let mut embedding = vec![0.0; 32];
+                    embedding[0] = i as f32 / 100.0; // Primary component
+                    embedding[1] = (100 - i) as f32 / 100.0; // Secondary component
+                    (i as u32, EntityKey::default(), embedding)
+                })
+                .collect();
+            
+            index.bulk_build(entities).unwrap();
+            
+            let query = vec![0.5; 32]; // Query that should match middle entities better
+            
+            if std::is_x86_feature_detected!("avx2") {
+                let results = index.similarity_search_simd(&query, 0.8);
+                
+                // Should find entities with high similarity
+                assert!(!results.is_empty());
+                for (_, similarity) in &results {
+                    assert!(*similarity >= 0.8);
+                }
+                
+                // Results should be sorted by similarity (descending)
+                for i in 1..results.len() {
+                    assert!(results[i-1].1 >= results[i].1);
+                }
+            }
+        }
+    }
+
+    #[cfg(test)]
+    mod performance_tests {
+        use super::*;
+        use std::time::Instant;
+        
+        #[test]
+        fn test_search_performance_scaling() {
+            let dimensions = vec![64, 128, 256];
+            let dataset_sizes = vec![1000, 5000, 10000];
+            
+            for &dim in &dimensions {
+                for &size in &dataset_sizes {
+                    let mut index = FlatVectorIndex::new(dim);
+                    
+                    // Build test dataset
+                    let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..size)
+                        .map(|i| {
+                            let embedding: Vec<f32> = (0..dim).map(|j| 
+                                ((i * j) as f32 / (size * dim) as f32).sin()
+                            ).collect();
+                            (i as u32, EntityKey::default(), embedding)
+                        })
+                        .collect();
+                    
+                    index.bulk_build(entities).unwrap();
+                    
+                    let query: Vec<f32> = (0..dim).map(|i| (i as f32 / dim as f32).cos()).collect();
+                    
+                    // Measure search time
+                    let start = Instant::now();
+                    let results = index.k_nearest_neighbors(&query, 10);
+                    let duration = start.elapsed();
+                    
+                    assert_eq!(results.len(), 10);
+                    
+                    // Performance expectations (these are loose bounds)
+                    match size {
+                        1000 => assert!(duration.as_millis() < 50),
+                        5000 => assert!(duration.as_millis() < 200), 
+                        10000 => assert!(duration.as_millis() < 500),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        
+        #[test]
+        fn test_heap_vs_full_performance() {
+            let mut index = FlatVectorIndex::new(128);
+            
+            // Large dataset
+            let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..5000)
+                .map(|i| {
+                    let embedding: Vec<f32> = (0..128).map(|j| (i * j) as f32 / 5000.0).collect();
+                    (i as u32, EntityKey::default(), embedding)
+                })
+                .collect();
+            
+            index.bulk_build(entities).unwrap();
+            
+            let query: Vec<f32> = (0..128).map(|i| i as f32 / 128.0).collect();
+            
+            // Test with small k (should use heap)
+            let start = Instant::now();
+            let results_heap = index.k_nearest_neighbors_fast(&query, 5);
+            let heap_duration = start.elapsed();
+            
+            // Test with larger k (should use full sort)
+            let start = Instant::now();
+            let results_full = index.k_nearest_neighbors(&query, 5);
+            let full_duration = start.elapsed();
+            
+            // Results should be identical
+            assert_eq!(results_heap.len(), results_full.len());
+            for (heap, full) in results_heap.iter().zip(results_full.iter()) {
+                assert_eq!(heap.0, full.0);
+                assert!((heap.1 - full.1).abs() < 1e-6);
+            }
+            
+            // For small k, heap should be faster or comparable
+            // (This is a weak assertion since performance can vary)
+            assert!(heap_duration.as_nanos() > 0);
+            assert!(full_duration.as_nanos() > 0);
+        }
+        
+        #[test]
+        fn test_memory_usage_accuracy() {
+            let mut index = FlatVectorIndex::new(64);
+            
+            let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..1000)
+                .map(|i| {
+                    let embedding: Vec<f32> = vec![i as f32; 64];
+                    (i as u32, EntityKey::default(), embedding)
+                })
+                .collect();
+            
+            index.bulk_build(entities).unwrap();
+            
+            let reported_usage = index.memory_usage();
+            
+            // Calculate actual memory usage
+            let actual_usage = 
+                index.entity_ids.capacity() * std::mem::size_of::<u32>() +
+                index.entity_keys.capacity() * std::mem::size_of::<EntityKey>() +
+                index.embeddings.capacity() * std::mem::size_of::<f32>();
+            
+            assert_eq!(reported_usage, actual_usage);
+        }
+    }
+
+    #[cfg(test)]
+    mod property_tests {
+        use super::*;
+        
+        #[test]
+        fn test_search_correctness_properties() {
+            let mut index = FlatVectorIndex::new(4);
+            
+            let entities = vec![
+                (1, EntityKey::default(), vec![1.0, 0.0, 0.0, 0.0]),
+                (2, EntityKey::default(), vec![0.0, 1.0, 0.0, 0.0]),
+                (3, EntityKey::default(), vec![0.0, 0.0, 1.0, 0.0]),
+                (4, EntityKey::default(), vec![0.0, 0.0, 0.0, 1.0]),
+            ];
+            
+            index.bulk_build(entities).unwrap();
+            
+            // Property: Query identical to an embedding should return that entity first
+            let query = vec![1.0, 0.0, 0.0, 0.0];
+            let results = index.k_nearest_neighbors(&query, 4);
+            assert_eq!(results[0].0, 1);
+            assert!((results[0].1 - 0.0).abs() < 1e-6);
+            
+            // Property: Results should be sorted by distance
+            for i in 1..results.len() {
+                assert!(results[i-1].1 <= results[i].1);
+            }
+            
+            // Property: All distances should be non-negative
+            for (_, distance) in &results {
+                assert!(*distance >= 0.0);
+            }
+            
+            // Property: All distances should be <= 2.0 (max cosine distance)
+            for (_, distance) in &results {
+                assert!(*distance <= 2.0);
+            }
+        }
+        
+        #[test]
+        fn test_consistency_across_methods() {
+            let mut index = FlatVectorIndex::new(8);
+            
+            let entities: Vec<(u32, EntityKey, Vec<f32>)> = (0..100)
+                .map(|i| {
+                    let embedding: Vec<f32> = (0..8).map(|j| (i + j) as f32 / 100.0).collect();
+                    (i as u32, EntityKey::default(), embedding)
+                })
+                .collect();
+            
+            index.bulk_build(entities).unwrap();
+            
+            let query: Vec<f32> = (0..8).map(|i| i as f32 / 8.0).collect();
+            
+            // Test different search methods return consistent results
+            let results_normal = index.k_nearest_neighbors(&query, 10);
+            let results_fast = index.k_nearest_neighbors_fast(&query, 10);
+            let results_heap = index.k_nearest_neighbors_heap(&query, 10);
+            
+            // All methods should return same entities (possibly in same order)
+            assert_eq!(results_normal.len(), results_fast.len());
+            assert_eq!(results_normal.len(), results_heap.len());
+            
+            for i in 0..results_normal.len() {
+                assert_eq!(results_normal[i].0, results_fast[i].0);
+                assert_eq!(results_normal[i].0, results_heap[i].0);
+                assert!((results_normal[i].1 - results_fast[i].1).abs() < 1e-6);
+                assert!((results_normal[i].1 - results_heap[i].1).abs() < 1e-6);
+            }
+        }
+        
+        #[test]
+        fn test_bulk_vs_incremental_consistency() {
+            let dimension = 8;
+            let entities = vec![
+                (1, EntityKey::default(), vec![1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+                (2, EntityKey::default(), vec![0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+                (3, EntityKey::default(), vec![0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            ];
+            
+            // Build using bulk_build
+            let mut index_bulk = FlatVectorIndex::new(dimension);
+            index_bulk.bulk_build(entities.clone()).unwrap();
+            
+            // Build using incremental inserts
+            let mut index_incremental = FlatVectorIndex::new(dimension);
+            for (id, key, embedding) in entities {
+                index_incremental.insert(id, key, embedding).unwrap();
+            }
+            
+            // Both should produce identical results
+            let query = vec![0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0];
+            let results_bulk = index_bulk.k_nearest_neighbors(&query, 3);
+            let results_incremental = index_incremental.k_nearest_neighbors(&query, 3);
+            
+            assert_eq!(results_bulk.len(), results_incremental.len());
+            for (bulk, incremental) in results_bulk.iter().zip(results_incremental.iter()) {
+                assert_eq!(bulk.0, incremental.0);
+                assert!((bulk.1 - incremental.1).abs() < 1e-6);
+            }
+        }
+    }
 }

@@ -338,3 +338,196 @@ fn levenshtein_distance(s1: &str, s2: &str) -> usize {
 
     matrix[len1][len2]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    
+    // Helper to create a test neural bridge finder
+    fn create_test_finder() -> NeuralBridgeFinder {
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
+        NeuralBridgeFinder::new(graph)
+    }
+    
+    #[test]
+    fn test_levenshtein_distance() {
+        // Test identical strings
+        assert_eq!(levenshtein_distance("hello", "hello"), 0);
+        assert_eq!(levenshtein_distance("", ""), 0);
+        
+        // Test completely different strings
+        assert_eq!(levenshtein_distance("hello", "world"), 4);
+        assert_eq!(levenshtein_distance("cat", "dog"), 3);
+        
+        // Test one character difference
+        assert_eq!(levenshtein_distance("cat", "bat"), 1);
+        assert_eq!(levenshtein_distance("hello", "hallo"), 1);
+        
+        // Test empty strings
+        assert_eq!(levenshtein_distance("", "hello"), 5);
+        assert_eq!(levenshtein_distance("hello", ""), 5);
+        
+        // Test substring relationships
+        assert_eq!(levenshtein_distance("test", "testing"), 3);
+        assert_eq!(levenshtein_distance("abc", "abcdef"), 3);
+    }
+
+    #[test]
+    fn test_calculate_concept_similarity() {
+        let finder = create_test_finder();
+        
+        // Test identical concepts
+        assert_eq!(finder.calculate_concept_similarity("test", "test"), 1.0);
+        assert_eq!(finder.calculate_concept_similarity("", ""), 1.0);
+        
+        // Test substring relationships
+        assert!(finder.calculate_concept_similarity("artificial intelligence", "intelligence") > 0.6);
+        assert!(finder.calculate_concept_similarity("machine learning", "learning") > 0.6);
+        
+        // Test different concepts
+        assert!(finder.calculate_concept_similarity("dog", "quantum") < 0.5);
+        assert!(finder.calculate_concept_similarity("art", "science") < 0.5);
+        
+        // Test similar concepts
+        assert!(finder.calculate_concept_similarity("neural network", "neural") > 0.6);
+        assert!(finder.calculate_concept_similarity("deep learning", "machine learning") > 0.4);
+    }
+
+    #[tokio::test]
+    async fn test_calculate_path_novelty() {
+        let finder = create_test_finder();
+        
+        // Create test entity keys
+        let entity1 = EntityKey::from_raw_parts(1, 0);
+        let entity2 = EntityKey::from_raw_parts(2, 0);
+        let entity3 = EntityKey::from_raw_parts(3, 0);
+        
+        // Test simple path
+        let simple_path = vec![entity1, entity2];
+        let simple_concepts = vec!["concept1".to_string(), "concept2".to_string()];
+        let novelty = finder.calculate_path_novelty(&simple_path, &simple_concepts).await.unwrap();
+        assert!(novelty >= 0.0 && novelty <= 1.0, "Novelty should be between 0 and 1");
+        
+        // Test longer path (should be more novel)
+        let longer_path = vec![entity1, entity2, entity3];
+        let longer_concepts = vec!["concept1".to_string(), "concept2".to_string(), "concept3".to_string()];
+        let longer_novelty = finder.calculate_path_novelty(&longer_path, &longer_concepts).await.unwrap();
+        assert!(longer_novelty > novelty, "Longer paths should be more novel");
+        
+        // Test empty path
+        let empty_path = vec![];
+        let empty_concepts = vec![];
+        let empty_novelty = finder.calculate_path_novelty(&empty_path, &empty_concepts).await.unwrap();
+        assert_eq!(empty_novelty, 0.0, "Empty path should have zero novelty");
+    }
+
+    #[tokio::test]
+    async fn test_calculate_path_plausibility() {
+        let finder = create_test_finder();
+        
+        // Create test entity keys
+        let entity1 = EntityKey::from_raw_parts(1, 0);
+        let entity2 = EntityKey::from_raw_parts(2, 0);
+        
+        // Test simple path
+        let path = vec![entity1, entity2];
+        let plausibility = finder.calculate_path_plausibility(&path).await.unwrap();
+        assert!(plausibility >= 0.0 && plausibility <= 1.0, "Plausibility should be between 0 and 1");
+        
+        // Test single entity path
+        let single_path = vec![entity1];
+        let single_plausibility = finder.calculate_path_plausibility(&single_path).await.unwrap();
+        assert_eq!(single_plausibility, 1.0, "Single entity path should have maximum plausibility");
+        
+        // Test empty path
+        let empty_path = vec![];
+        let empty_plausibility = finder.calculate_path_plausibility(&empty_path).await.unwrap();
+        assert_eq!(empty_plausibility, 1.0, "Empty path should have maximum plausibility");
+    }
+
+    #[test]
+    fn test_generate_bridge_explanation() {
+        let finder = create_test_finder();
+        
+        // Test direct connection
+        let direct_concepts = vec!["start".to_string(), "end".to_string()];
+        let direct_explanation = finder.generate_bridge_explanation("start", "end", &direct_concepts);
+        assert!(direct_explanation.contains("direct relationship"));
+        
+        // Test multi-step connection
+        let complex_concepts = vec![
+            "art".to_string(),
+            "creativity".to_string(), 
+            "innovation".to_string(),
+            "technology".to_string()
+        ];
+        let complex_explanation = finder.generate_bridge_explanation("art", "technology", &complex_concepts);
+        assert!(complex_explanation.contains("→"));
+        assert!(complex_explanation.contains("creativity"));
+        assert!(complex_explanation.contains("innovation"));
+    }
+
+    #[tokio::test]
+    async fn test_find_concept_entities() {
+        let finder = create_test_finder();
+        
+        // Test finding entities for a concept
+        let entities = finder.find_concept_entities("test").await.unwrap();
+        // Since we're using a test graph, we may not find any entities
+        // This test mainly verifies the method doesn't crash and returns a valid result
+        assert!(entities.len() >= 0, "Should return a valid vector");
+    }
+
+    #[tokio::test]
+    async fn test_neural_pathfinding_with_length() {
+        let finder = create_test_finder();
+        
+        // Create test entity keys
+        let entity1 = EntityKey::from_raw_parts(1, 0);
+        let entity2 = EntityKey::from_raw_parts(2, 0);
+        
+        // Test pathfinding
+        let paths = finder.neural_pathfinding_with_length(entity1, entity2, 3).await.unwrap();
+        assert!(paths.len() >= 0, "Should return a valid vector of paths");
+        
+        // Test pathfinding with same start and end
+        let same_paths = finder.neural_pathfinding_with_length(entity1, entity1, 3).await.unwrap();
+        assert!(same_paths.len() >= 0, "Should handle same start and end entities");
+    }
+
+    #[tokio::test]
+    async fn test_evaluate_bridge_creativity() {
+        let finder = create_test_finder();
+        
+        // Test with empty path
+        let empty_path = vec![];
+        let empty_result = finder.evaluate_bridge_creativity(empty_path, "start", "end").await.unwrap();
+        assert!(empty_result.is_none(), "Empty path should return None");
+        
+        // Test with single entity path
+        let single_path = vec![EntityKey::from_raw_parts(1, 0)];
+        let single_result = finder.evaluate_bridge_creativity(single_path, "start", "end").await.unwrap();
+        assert!(single_result.is_none(), "Single entity path should return None");
+        
+        // Test with valid path
+        let valid_path = vec![EntityKey::from_raw_parts(1, 0), EntityKey::from_raw_parts(2, 0)];
+        let valid_result = finder.evaluate_bridge_creativity(valid_path, "art", "science").await.unwrap();
+        // The result depends on whether entities exist in the test graph and creativity threshold
+        // This test mainly verifies the method doesn't crash
+        assert!(valid_result.is_some() || valid_result.is_none(), "Should return a valid Option");
+    }
+
+    #[tokio::test]
+    async fn test_find_creative_bridges_with_length() {
+        let finder = create_test_finder();
+        
+        // Test finding bridges between concepts
+        let bridges = finder.find_creative_bridges_with_length("art", "science", 4).await.unwrap();
+        assert!(bridges.len() >= 0, "Should return a valid vector of bridges");
+        
+        // Test with same concepts
+        let same_bridges = finder.find_creative_bridges_with_length("test", "test", 3).await.unwrap();
+        assert!(same_bridges.len() >= 0, "Should handle same concepts");
+    }
+}

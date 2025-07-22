@@ -7,7 +7,7 @@ use rand::prelude::*;
 use crate::core::types::EntityKey;
 use crate::core::sdr_types::{SDRConfig, SDR, SDRPattern, SDRStatistics, SimilaritySearchResult};
 use crate::core::sdr_index::SimilarityIndex;
-use crate::error::{Result, GraphError};
+use crate::error::Result;
 
 
 /// SDR storage and retrieval system

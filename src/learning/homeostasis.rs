@@ -2,6 +2,9 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::core::types::EntityKey;
+use crate::core::activation_engine::ActivationPropagationEngine;
+use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
+use crate::cognitive::orchestrator::CognitiveOrchestrator;
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
@@ -616,8 +619,571 @@ impl HomeostasisConfig {
     }
 }
 
-// Extension methods removed - using actual AttentionManager API instead
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::cognitive::attention_manager::AttentionManager;
+    use crate::cognitive::working_memory::WorkingMemorySystem;
+    use std::time::Duration;
+    use uuid::Uuid;
 
-// Extension methods removed - using actual WorkingMemorySystem API instead
+    // Test helper to create mock homeostasis system
+    async fn create_test_homeostasis() -> Result<SynapticHomeostasis> {
+        let embedding_dim = 512;
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(embedding_dim)?);
+        
+        // Create activation config and engine
+        let activation_config = crate::core::activation_config::ActivationConfig {
+            max_iterations: 100,
+            convergence_threshold: 0.01,
+            decay_rate: 0.1,
+            inhibition_strength: 0.3,
+            default_threshold: 0.5,
+        };
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(activation_config));
+        
+        // Create SDR storage
+        let sdr_config = crate::core::sdr_types::SDRConfig {
+            total_bits: embedding_dim * 4,
+            active_bits: (embedding_dim * 4) / 50,
+            sparsity: 0.02,
+            overlap_threshold: 0.5,
+        };
+        let sdr_storage = Arc::new(crate::core::sdr_storage::SDRStorage::new(sdr_config));
+        
+        // Create working memory
+        let working_memory = Arc::new(WorkingMemorySystem::new(
+            activation_engine.clone(),
+            sdr_storage.clone(),
+        ).await?);
+        
+        // Create cognitive orchestrator
+        let critical_thinking = Arc::new(crate::cognitive::critical::CriticalThinking::new(
+            brain_graph.clone()
+        ));
+        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::new(
+            activation_engine.clone(),
+            critical_thinking.clone()
+        ));
+        
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            crate::cognitive::orchestrator::CognitiveOrchestratorConfig::default(),
+        ).await?);
+        
+        // Create attention manager
+        let attention_manager = Arc::new(AttentionManager::new(
+            orchestrator,
+            activation_engine.clone(),
+            working_memory.clone(),
+        ).await?);
+        
+        SynapticHomeostasis::new(brain_graph, attention_manager, working_memory).await
+    }
 
-// Extension methods removed - using actual BrainEnhancedKnowledgeGraph API instead
+    fn create_test_activity_levels() -> HashMap<EntityKey, f32> {
+        let mut activities = HashMap::new();
+        activities.insert(EntityKey::default(), 0.9); // High activity
+        activities.insert(EntityKey::default(), 0.2); // Low activity
+        activities.insert(EntityKey::default(), 0.5); // Target activity
+        activities
+    }
+
+    #[tokio::test]
+    async fn test_homeostatic_scaling_basic_functionality() {
+        let mut homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let time_window = Duration::from_secs(60);
+        
+        let result = homeostasis.apply_homeostatic_scaling(time_window).await
+            .expect("Failed to apply homeostatic scaling");
+        
+        assert!(result.stability_improvement >= 0.0, 
+               "Stability improvement should be non-negative");
+        assert!(result.global_activity_change.abs() <= 1.0, 
+               "Global activity change should be bounded");
+    }
+
+    #[test]
+    fn test_activity_imbalance_identification() {
+        let homeostasis_future = create_test_homeostasis();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let homeostasis = rt.block_on(homeostasis_future).expect("Failed to create homeostasis");
+        
+        let current_activity = create_test_activity_levels();
+        
+        let imbalances = homeostasis.identify_activity_imbalance(&current_activity)
+            .expect("Failed to identify activity imbalances");
+        
+        // Should identify entities that deviate significantly from target
+        assert!(!imbalances.is_empty(), "Should identify activity imbalances");
+        
+        // Check that imbalances are prioritized by severity
+        for i in 1..imbalances.len() {
+            assert!(imbalances[i-1].imbalance_severity >= imbalances[i].imbalance_severity,
+                   "Imbalances should be sorted by severity");
+        }
+    }
+
+    #[test]
+    fn test_imbalance_duration_calculation() {
+        let homeostasis_future = create_test_homeostasis();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let homeostasis = rt.block_on(homeostasis_future).expect("Failed to create homeostasis");
+        
+        let entity_key = EntityKey::default();
+        let mut activity_history = VecDeque::new();
+        
+        let now = SystemTime::now();
+        
+        // Create history with persistent imbalance
+        for i in 0..5 {
+            let mut entity_activities = HashMap::new();
+            entity_activities.insert(entity_key, 0.9); // Consistently high
+            
+            activity_history.push_back(ActivitySnapshot {
+                timestamp: now - Duration::from_secs(60 * i),
+                entity_activities,
+                global_activity: 0.7,
+                attention_focus: vec![entity_key],
+                memory_load: 0.5,
+            });
+        }
+        
+        let duration = homeostasis.calculate_imbalance_duration(entity_key, &activity_history);
+        
+        assert!(duration > Duration::from_secs(0), 
+               "Should detect persistent imbalance duration");
+    }
+
+    #[tokio::test]
+    async fn test_activity_scaling_application() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let imbalanced_entities = vec![
+            ActivityImbalance {
+                entity_key: EntityKey::default(),
+                current_activity: 0.9, // Too high
+                target_activity: 0.5,
+                imbalance_severity: 0.8,
+                imbalance_duration: Duration::from_secs(300),
+            },
+            ActivityImbalance {
+                entity_key: EntityKey::default(),
+                current_activity: 0.1, // Too low
+                target_activity: 0.5,
+                imbalance_severity: 0.8,
+                imbalance_duration: Duration::from_secs(120),
+            }
+        ];
+        
+        let scalings = homeostasis.apply_activity_scaling(&imbalanced_entities).await
+            .expect("Failed to apply activity scaling");
+        
+        assert_eq!(scalings.len(), imbalanced_entities.len(), 
+                  "Should create scaling for each imbalanced entity");
+        
+        // Check scaling factors
+        for scaling in &scalings {
+            if scaling.previous_activity > scaling.target_activity {
+                assert!(scaling.scaling_factor < 1.0, 
+                       "Should scale down overactive entities");
+            } else if scaling.previous_activity < scaling.target_activity {
+                assert!(scaling.scaling_factor > 1.0, 
+                       "Should scale up underactive entities");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_metaplasticity_implementation() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let entity_key = EntityKey::default();
+        
+        // Create learning history with excessive plasticity
+        let excessive_learning_history = vec![
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.8,
+                timestamp: SystemTime::now(),
+                context: "High plasticity event".to_string(),
+            },
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.9,
+                timestamp: SystemTime::now(),
+                context: "Another high plasticity event".to_string(),
+            }
+        ];
+        
+        let metaplasticity_state = homeostasis.implement_metaplasticity(
+            entity_key,
+            &excessive_learning_history,
+        ).await.expect("Failed to implement metaplasticity");
+        
+        // With excessive plasticity, learning rate should be reduced
+        assert!(metaplasticity_state.adjusted_learning_rate < 0.01, 
+               "Should reduce learning rate for excessive plasticity");
+        
+        // Insufficient plasticity case
+        let minimal_learning_history = vec![
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.05,
+                timestamp: SystemTime::now(),
+                context: "Minimal plasticity event".to_string(),
+            }
+        ];
+        
+        let metaplasticity_state_min = homeostasis.implement_metaplasticity(
+            entity_key,
+            &minimal_learning_history,
+        ).await.expect("Failed to implement metaplasticity");
+        
+        // With insufficient plasticity, learning rate should be increased
+        assert!(metaplasticity_state_min.adjusted_learning_rate > 0.01, 
+               "Should increase learning rate for insufficient plasticity");
+    }
+
+    #[test]
+    fn test_recent_plasticity_analysis() {
+        let homeostasis_future = create_test_homeostasis();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let homeostasis = rt.block_on(homeostasis_future).expect("Failed to create homeostasis");
+        
+        let entity_key = EntityKey::default();
+        
+        // Test excessive plasticity detection
+        let excessive_events = vec![
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.8,
+                timestamp: SystemTime::now(),
+                context: "High magnitude event".to_string(),
+            }
+        ];
+        for _ in 0..15 { // Many events
+            excessive_events.clone();
+        }
+        
+        let analysis = homeostasis.analyze_recent_learning(entity_key, &excessive_events)
+            .expect("Failed to analyze recent learning");
+        
+        assert!(analysis.excessive_plasticity, 
+               "Should detect excessive plasticity with many high-magnitude events");
+        assert!(analysis.average_change_magnitude > 0.5, 
+               "Should track high average change magnitude");
+        
+        // Test insufficient plasticity detection
+        let minimal_events = vec![
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.05,
+                timestamp: SystemTime::now(),
+                context: "Low magnitude event".to_string(),
+            }
+        ];
+        
+        let analysis_min = homeostasis.analyze_recent_learning(entity_key, &minimal_events)
+            .expect("Failed to analyze recent learning");
+        
+        assert!(analysis_min.insufficient_plasticity, 
+               "Should detect insufficient plasticity with few low-magnitude events");
+    }
+
+    #[tokio::test]
+    async fn test_integrated_activity_tracking() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let current_activity = create_test_activity_levels();
+        
+        homeostasis.update_integrated_activity_tracking(current_activity.clone()).await
+            .expect("Failed to update integrated activity tracking");
+        
+        let tracker = homeostasis.activity_tracker.read().unwrap();
+        
+        assert_eq!(tracker.entity_activity_levels.len(), current_activity.len(),
+                  "Should track all entity activities");
+        assert!(tracker.global_activity_level >= 0.0, 
+               "Should calculate global activity level");
+        assert!(!tracker.activity_history.is_empty(), 
+               "Should maintain activity history");
+    }
+
+    #[test]
+    fn test_stability_improvement_calculation() {
+        let homeostasis_future = create_test_homeostasis();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let homeostasis = rt.block_on(homeostasis_future).expect("Failed to create homeostasis");
+        
+        let scaling_updates = vec![
+            ActivityScaling {
+                entity_key: EntityKey::default(),
+                scaling_factor: 0.8,
+                relationships_affected: 5,
+                previous_activity: 0.9,
+                target_activity: 0.5,
+            },
+            ActivityScaling {
+                entity_key: EntityKey::default(),
+                scaling_factor: 1.5,
+                relationships_affected: 3,
+                previous_activity: 0.2,
+                target_activity: 0.5,
+            }
+        ];
+        
+        let improvement = homeostasis.calculate_stability_improvement(&scaling_updates)
+            .expect("Failed to calculate stability improvement");
+        
+        assert!(improvement >= 0.0, "Stability improvement should be non-negative");
+        assert!(improvement <= 1.0, "Stability improvement should not exceed 1.0");
+    }
+
+    #[test]
+    fn test_global_activity_change_calculation() {
+        let homeostasis_future = create_test_homeostasis();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let homeostasis = rt.block_on(homeostasis_future).expect("Failed to create homeostasis");
+        
+        // Initialize with some activity history
+        let mut tracker = homeostasis.activity_tracker.write().unwrap();
+        
+        let now = SystemTime::now();
+        tracker.activity_history.push_back(ActivitySnapshot {
+            timestamp: now - Duration::from_secs(60),
+            entity_activities: HashMap::new(),
+            global_activity: 0.6,
+            attention_focus: vec![],
+            memory_load: 0.5,
+        });
+        
+        tracker.activity_history.push_back(ActivitySnapshot {
+            timestamp: now,
+            entity_activities: HashMap::new(),
+            global_activity: 0.8,
+            attention_focus: vec![],
+            memory_load: 0.5,
+        });
+        
+        drop(tracker); // Release lock
+        
+        let change = homeostasis.calculate_global_activity_change();
+        
+        assert!((change - 0.2).abs() < 0.001, 
+               "Should calculate correct global activity change: expected 0.2, got {}", change);
+    }
+
+    #[tokio::test]
+    async fn test_emergency_stabilization() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let result = homeostasis.emergency_stabilization().await
+            .expect("Failed to perform emergency stabilization");
+        
+        // Emergency stabilization should be aggressive
+        assert!(result.stability_improvement > 0.5, 
+               "Emergency stabilization should provide significant improvement");
+        
+        // Should apply emergency scaling
+        if !result.scaled_entities.is_empty() {
+            for scaling in &result.scaled_entities {
+                // Emergency scaling should be more aggressive than normal
+                let scaling_magnitude = (1.0 - scaling.scaling_factor).abs();
+                assert!(scaling_magnitude > 0.0, 
+                       "Emergency scaling should apply significant changes");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_homeostatic_biological_constraints() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        // Test biological plausibility of parameters
+        assert!(homeostasis.target_activity_level > 0.0 && homeostasis.target_activity_level < 1.0,
+               "Target activity level should be biologically plausible");
+        assert!(homeostasis.homeostatic_scaling_rate > 0.0 && homeostasis.homeostatic_scaling_rate < 1.0,
+               "Homeostatic scaling rate should be moderate");
+        assert!(homeostasis.metaplasticity_threshold > 0.0 && homeostasis.metaplasticity_threshold < 1.0,
+               "Metaplasticity threshold should be normalized");
+    }
+
+    #[tokio::test]
+    async fn test_homeostatic_scaling_prevents_runaway() {
+        let mut homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        // Apply multiple rounds of homeostatic scaling
+        for _ in 0..10 {
+            let time_window = Duration::from_secs(60);
+            let result = homeostasis.apply_homeostatic_scaling(time_window).await
+                .expect("Failed to apply homeostatic scaling");
+            
+            // Each scaling should be bounded
+            assert!(result.global_activity_change.abs() < 1.0, 
+                   "Global activity changes should be bounded");
+            
+            // Stability should not decrease dramatically
+            assert!(result.stability_improvement >= -0.5, 
+                   "Homeostatic scaling should not drastically reduce stability");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_metaplasticity_threshold_adaptation() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let current_activity = create_test_activity_levels();
+        
+        let updates = homeostasis.update_metaplasticity_thresholds(&current_activity).await
+            .expect("Failed to update metaplasticity thresholds");
+        
+        // Should generate metaplasticity updates for entities with significant learning history
+        for update in &updates {
+            assert!(update.learning_rate_adjustment.abs() <= 0.1, 
+                   "Learning rate adjustments should be moderate");
+            assert!(update.threshold_adjustment.abs() <= 0.2, 
+                   "Threshold adjustments should be bounded");
+            
+            // Verify plasticity state is reasonable
+            assert!(update.plasticity_state.adjusted_learning_rate > 0.0, 
+                   "Adjusted learning rate should be positive");
+            assert!(update.plasticity_state.adjusted_threshold >= 0.0, 
+                   "Adjusted threshold should be non-negative");
+        }
+    }
+
+    #[test]
+    fn test_activity_tracker_initialization() {
+        let tracker = ActivityTracker::new();
+        
+        assert!(tracker.entity_activity_levels.is_empty(), 
+               "New tracker should have empty activity levels");
+        assert_eq!(tracker.global_activity_level, 0.5, 
+                  "Should initialize with neutral global activity");
+        assert!(tracker.activity_history.is_empty(), 
+               "New tracker should have empty history");
+        assert_eq!(tracker.tracking_window, Duration::from_secs(3600), 
+                  "Should have appropriate tracking window");
+    }
+
+    #[test]
+    fn test_homeostasis_config_defaults() {
+        let config = HomeostasisConfig::default();
+        
+        assert_eq!(config.scaling_frequency, Duration::from_secs(300), 
+                  "Should have reasonable scaling frequency");
+        assert_eq!(config.activity_window, Duration::from_secs(900), 
+                  "Should have appropriate activity window");
+        assert!(config.stability_threshold > 0.0 && config.stability_threshold < 1.0, 
+               "Stability threshold should be normalized");
+        assert!(config.emergency_scaling_threshold > config.stability_threshold, 
+               "Emergency threshold should be higher than normal threshold");
+        assert_eq!(config.metaplasticity_window, Duration::from_secs(1800), 
+                  "Should have appropriate metaplasticity window");
+    }
+
+    #[tokio::test]
+    async fn test_homeostatic_scaling_convergence() {
+        let mut homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        // Apply homeostatic scaling multiple times and check for convergence
+        let mut previous_stability = 0.0;
+        let mut stability_changes = Vec::new();
+        
+        for i in 0..5 {
+            let time_window = Duration::from_secs(60);
+            let result = homeostasis.apply_homeostatic_scaling(time_window).await
+                .expect("Failed to apply homeostatic scaling");
+            
+            if i > 0 {
+                let stability_change = (result.stability_improvement - previous_stability).abs();
+                stability_changes.push(stability_change);
+            }
+            previous_stability = result.stability_improvement;
+        }
+        
+        // Later iterations should show smaller changes (convergence)
+        if stability_changes.len() > 2 {
+            let early_changes: f32 = stability_changes[0..2].iter().sum();
+            let late_changes: f32 = stability_changes[stability_changes.len()-2..].iter().sum();
+            
+            assert!(late_changes <= early_changes, 
+                   "System should converge over time with smaller later changes");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_learning_event_types_handling() {
+        let homeostasis = create_test_homeostasis().await
+            .expect("Failed to create homeostasis system");
+        
+        let entity_key = EntityKey::default();
+        
+        // Test different learning event types
+        let diverse_learning_history = vec![
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightIncrease,
+                magnitude: 0.3,
+                timestamp: SystemTime::now(),
+                context: "Weight increase".to_string(),
+            },
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::WeightDecrease,
+                magnitude: 0.2,
+                timestamp: SystemTime::now(),
+                context: "Weight decrease".to_string(),
+            },
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::NewConnection,
+                magnitude: 0.4,
+                timestamp: SystemTime::now(),
+                context: "New connection formed".to_string(),
+            },
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::ConnectionPruned,
+                magnitude: 0.1,
+                timestamp: SystemTime::now(),
+                context: "Connection pruned".to_string(),
+            },
+            LearningEvent {
+                entity_key,
+                event_type: LearningEventType::ThresholdChange,
+                magnitude: 0.15,
+                timestamp: SystemTime::now(),
+                context: "Threshold adjusted".to_string(),
+            }
+        ];
+        
+        let metaplasticity_state = homeostasis.implement_metaplasticity(
+            entity_key,
+            &diverse_learning_history,
+        ).await.expect("Failed to implement metaplasticity");
+        
+        // Should handle diverse learning events appropriately
+        assert!(metaplasticity_state.adjusted_learning_rate > 0.0, 
+               "Should maintain positive learning rate with diverse events");
+        assert!(metaplasticity_state.plasticity_history.plasticity_events > 0, 
+               "Should count all learning events");
+    }
+}

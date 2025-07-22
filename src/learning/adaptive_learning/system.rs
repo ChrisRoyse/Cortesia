@@ -516,3 +516,400 @@ impl Default for AdaptiveLearningSystem {
         panic!("AdaptiveLearningSystem cannot be default-constructed. Use new_with_components() with proper initialization.")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use std::time::Duration;
+    use uuid::Uuid;
+
+    // Test helper to create mock components
+    fn create_test_adaptive_learning_system() -> AdaptiveLearningSystem {
+        use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
+        use crate::cognitive::working_memory::WorkingMemorySystem;
+        use crate::cognitive::attention_manager::AttentionManager;
+        use crate::cognitive::orchestrator::CognitiveOrchestrator;
+        use crate::learning::hebbian::HebbianLearningEngine;
+        use crate::learning::adaptive_learning::monitoring::PerformanceMonitor;
+        use crate::learning::adaptive_learning::feedback::FeedbackAggregator;
+        use crate::learning::adaptive_learning::scheduler::LearningScheduler;
+
+        // These would be properly initialized in real tests
+        // For now, we'll create mock implementations where needed
+        
+        AdaptiveLearningSystem {
+            integrated_cognitive_system: Arc::new(Phase3IntegratedCognitiveSystem::default()),
+            working_memory: Arc::new(WorkingMemorySystem::new().expect("Failed to create working memory")),
+            attention_manager: Arc::new(AttentionManager::new().expect("Failed to create attention manager")),
+            orchestrator: Arc::new(CognitiveOrchestrator::new().expect("Failed to create orchestrator")),
+            hebbian_engine: Arc::new(Mutex::new(HebbianLearningEngine::default())),
+            performance_monitor: Arc::new(PerformanceMonitor::new()),
+            feedback_aggregator: Arc::new(FeedbackAggregator::new()),
+            learning_scheduler: Arc::new(LearningScheduler::new()),
+            adaptation_history: Arc::new(RwLock::new(Vec::new())),
+            learning_config: AdaptiveLearningConfig::default(),
+        }
+    }
+
+    #[test]
+    fn test_identify_learning_targets_from_bottlenecks() {
+        let system = create_test_adaptive_learning_system();
+        
+        let bottlenecks = vec![
+            AdaptivePerformanceBottleneck {
+                bottleneck_type: BottleneckType::Memory,
+                severity: 0.8,
+                description: "High memory usage".to_string(),
+                affected_components: vec!["working_memory".to_string()],
+                suggested_actions: vec!["Optimize memory allocation".to_string()],
+            }
+        ];
+        
+        let satisfaction_analysis = SatisfactionAnalysis {
+            overall_satisfaction: 0.6,
+            problem_areas: vec!["response_time".to_string()],
+            improvement_opportunities: vec!["faster_processing".to_string()],
+            user_feedback_trends: HashMap::new(),
+        };
+        
+        let correlation_analysis = CorrelationAnalysis {
+            significant_correlations: vec![
+                ("memory_usage".to_string(), "response_time".to_string(), -0.7)
+            ],
+            correlation_strength_threshold: 0.6,
+            temporal_correlations: HashMap::new(),
+        };
+        
+        let targets = system.identify_learning_targets(
+            &bottlenecks,
+            &satisfaction_analysis,
+            &correlation_analysis,
+        ).expect("Failed to identify learning targets");
+        
+        assert!(!targets.is_empty(), "Should identify learning targets from bottlenecks");
+        assert!(targets[0].importance > 0.0, "Targets should have importance scores");
+        assert!(targets[0].feasibility > 0.0, "Targets should have feasibility scores");
+    }
+
+    #[test]
+    fn test_calculate_performance_improvement() {
+        let system = create_test_adaptive_learning_system();
+        
+        let results = vec![
+            AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::ParameterAdjustment,
+                performance_before: 0.6,
+                performance_after: 0.8,
+                success: true,
+                impact_assessment: "Test improvement".to_string(),
+            },
+            AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::BehaviorChange,
+                performance_before: 0.7,
+                performance_after: 0.75,
+                success: true,
+                impact_assessment: "Minor improvement".to_string(),
+            }
+        ];
+        
+        let improvement = system.calculate_performance_improvement(&results);
+        
+        // Average improvement should be (0.2 + 0.05) / 2 = 0.125
+        assert!((improvement - 0.125).abs() < 0.001, 
+               "Performance improvement calculation incorrect: expected ~0.125, got {}", improvement);
+    }
+
+    #[test]
+    fn test_check_convergence() {
+        let system = create_test_adaptive_learning_system();
+        
+        // Test successful convergence
+        let successful_results = vec![
+            AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::ParameterAdjustment,
+                performance_before: 0.8,
+                performance_after: 0.82, // Small stable change
+                success: true,
+                impact_assessment: "Stable improvement".to_string(),
+            }
+        ];
+        
+        assert!(system.check_convergence(&successful_results), 
+               "Should detect convergence for successful stable adaptations");
+        
+        // Test failed convergence
+        let failed_results = vec![
+            AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::ParameterAdjustment,
+                performance_before: 0.8,
+                performance_after: 0.6, // Large negative change
+                success: false,
+                impact_assessment: "Failed adaptation".to_string(),
+            }
+        ];
+        
+        assert!(!system.check_convergence(&failed_results), 
+               "Should not detect convergence for failed adaptations");
+    }
+
+    #[test]
+    fn test_record_adaptation_results() {
+        let system = create_test_adaptive_learning_system();
+        
+        let results = vec![
+            AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::ParameterAdjustment,
+                performance_before: 0.6,
+                performance_after: 0.8,
+                success: true,
+                impact_assessment: "Test adaptation".to_string(),
+            }
+        ];
+        
+        system.record_adaptation_results(&results)
+            .expect("Failed to record adaptation results");
+        
+        let history = system.adaptation_history.read().unwrap();
+        assert_eq!(history.len(), 1, "Should record one adaptation result");
+        assert_eq!(history[0].record_id, results[0].record_id, 
+                  "Recorded result should match input");
+    }
+
+    #[test]
+    fn test_record_adaptation_results_history_limit() {
+        let system = create_test_adaptive_learning_system();
+        
+        // Add more than 1000 results to test history limiting
+        let mut results = Vec::new();
+        for i in 0..1005 {
+            results.push(AdaptationRecord {
+                record_id: Uuid::new_v4(),
+                timestamp: SystemTime::now(),
+                adaptation_type: AdaptationType::ParameterAdjustment,
+                performance_before: 0.6,
+                performance_after: 0.8,
+                success: true,
+                impact_assessment: format!("Test adaptation {}", i),
+            });
+        }
+        
+        system.record_adaptation_results(&results)
+            .expect("Failed to record large number of adaptation results");
+        
+        let history = system.adaptation_history.read().unwrap();
+        assert_eq!(history.len(), 1000, "Should limit history to 1000 records");
+    }
+
+    #[tokio::test]
+    async fn test_emergency_adaptation_system_failure() {
+        let system = create_test_adaptive_learning_system();
+        
+        let emergency_context = EmergencyContext {
+            trigger_type: EmergencyTrigger::SystemFailure,
+            severity: 0.9,
+            affected_components: vec!["core_system".to_string()],
+            performance_before: 0.3,
+            emergency_description: "Critical system failure detected".to_string(),
+            immediate_actions_required: vec!["restart_components".to_string()],
+        };
+        
+        let result = system.handle_emergency(emergency_context)
+            .await
+            .expect("Failed to handle emergency");
+        
+        assert!(result.emergency_resolved, "Emergency should be resolved");
+        assert!(result.adaptation_record.success, "Emergency adaptation should succeed");
+        assert!(result.response_time < Duration::from_secs(10), 
+               "Emergency response should be fast");
+    }
+
+    #[tokio::test]
+    async fn test_emergency_adaptation_performance_collapse() {
+        let system = create_test_adaptive_learning_system();
+        
+        let emergency_context = EmergencyContext {
+            trigger_type: EmergencyTrigger::PerformanceCollapse,
+            severity: 0.8,
+            affected_components: vec!["cognitive_system".to_string()],
+            performance_before: 0.2,
+            emergency_description: "Performance collapsed below threshold".to_string(),
+            immediate_actions_required: vec!["optimize_parameters".to_string()],
+        };
+        
+        let result = system.handle_emergency(emergency_context)
+            .await
+            .expect("Failed to handle performance collapse emergency");
+        
+        assert!(result.emergency_resolved, "Performance collapse should be resolved");
+        assert!(result.adaptation_record.performance_after > result.adaptation_record.performance_before,
+               "Performance should improve after emergency adaptation");
+    }
+
+    #[test]
+    fn test_system_status_generation() {
+        let system = create_test_adaptive_learning_system();
+        
+        let status = system.get_system_status();
+        
+        assert!(status.overall_performance >= 0.0 && status.overall_performance <= 1.0,
+               "Overall performance should be normalized");
+        assert!(status.system_health >= 0.0 && status.system_health <= 1.0,
+               "System health should be normalized");
+        assert!(status.adaptation_success_rate >= 0.0 && status.adaptation_success_rate <= 1.0,
+               "Success rate should be normalized");
+        assert!(status.user_satisfaction >= 0.0 && status.user_satisfaction <= 1.0,
+               "User satisfaction should be normalized");
+    }
+
+    #[test]
+    fn test_system_report_generation() {
+        let system = create_test_adaptive_learning_system();
+        
+        let report = system.generate_report()
+            .expect("Failed to generate system report");
+        
+        assert!(report.contains("Adaptive Learning System Report"), 
+               "Report should contain title");
+        assert!(report.contains("Overall Performance"), 
+               "Report should contain performance metrics");
+        assert!(report.contains("System Health"), 
+               "Report should contain health metrics");
+        assert!(report.contains("Learning Active"), 
+               "Report should contain learning status");
+    }
+
+    #[test]
+    fn test_learning_target_prioritization() {
+        let system = create_test_adaptive_learning_system();
+        
+        let bottlenecks = vec![
+            AdaptivePerformanceBottleneck {
+                bottleneck_type: BottleneckType::Memory,
+                severity: 0.9, // High severity
+                description: "Critical memory bottleneck".to_string(),
+                affected_components: vec!["working_memory".to_string()],
+                suggested_actions: vec!["Urgent optimization".to_string()],
+            },
+            AdaptivePerformanceBottleneck {
+                bottleneck_type: BottleneckType::Computation,
+                severity: 0.3, // Low severity
+                description: "Minor computational bottleneck".to_string(),
+                affected_components: vec!["attention_system".to_string()],
+                suggested_actions: vec!["Minor optimization".to_string()],
+            }
+        ];
+        
+        let satisfaction_analysis = SatisfactionAnalysis {
+            overall_satisfaction: 0.8,
+            problem_areas: vec![],
+            improvement_opportunities: vec![],
+            user_feedback_trends: HashMap::new(),
+        };
+        
+        let correlation_analysis = CorrelationAnalysis {
+            significant_correlations: vec![],
+            correlation_strength_threshold: 0.6,
+            temporal_correlations: HashMap::new(),
+        };
+        
+        let targets = system.identify_learning_targets(
+            &bottlenecks,
+            &satisfaction_analysis,
+            &correlation_analysis,
+        ).expect("Failed to identify learning targets");
+        
+        // Targets should be sorted by importance * feasibility (descending)
+        assert!(targets.len() >= 2, "Should identify targets from both bottlenecks");
+        
+        // First target should have higher priority (higher severity bottleneck)
+        let first_priority = targets[0].importance * targets[0].feasibility;
+        let second_priority = targets[1].importance * targets[1].feasibility;
+        assert!(first_priority >= second_priority, 
+               "Targets should be prioritized correctly");
+    }
+
+    #[test]
+    fn test_learning_target_types() {
+        let system = create_test_adaptive_learning_system();
+        
+        let bottlenecks = vec![
+            AdaptivePerformanceBottleneck {
+                bottleneck_type: BottleneckType::Memory,
+                severity: 0.8,
+                description: "Memory bottleneck".to_string(),
+                affected_components: vec!["memory".to_string()],
+                suggested_actions: vec!["Optimize memory".to_string()],
+            },
+            AdaptivePerformanceBottleneck {
+                bottleneck_type: BottleneckType::Computation,
+                severity: 0.7,
+                description: "Computation bottleneck".to_string(),
+                affected_components: vec!["cpu".to_string()],
+                suggested_actions: vec!["Optimize computation".to_string()],
+            }
+        ];
+        
+        let satisfaction_analysis = SatisfactionAnalysis {
+            overall_satisfaction: 0.7,
+            problem_areas: vec!["response_speed".to_string()],
+            improvement_opportunities: vec![],
+            user_feedback_trends: HashMap::new(),
+        };
+        
+        let correlation_analysis = CorrelationAnalysis {
+            significant_correlations: vec![
+                ("feature_a".to_string(), "feature_b".to_string(), 0.8)
+            ],
+            correlation_strength_threshold: 0.6,
+            temporal_correlations: HashMap::new(),
+        };
+        
+        let targets = system.identify_learning_targets(
+            &bottlenecks,
+            &satisfaction_analysis,
+            &correlation_analysis,
+        ).expect("Failed to identify learning targets");
+        
+        // Should have different target types based on bottleneck types
+        let memory_targets: Vec<_> = targets.iter()
+            .filter(|t| matches!(t.target_type, LearningTargetType::StructureOptimization))
+            .collect();
+        let computation_targets: Vec<_> = targets.iter()
+            .filter(|t| matches!(t.target_type, LearningTargetType::ParameterTuning))
+            .collect();
+        let behavior_targets: Vec<_> = targets.iter()
+            .filter(|t| matches!(t.target_type, LearningTargetType::BehaviorModification))
+            .collect();
+        let pattern_targets: Vec<_> = targets.iter()
+            .filter(|t| matches!(t.target_type, LearningTargetType::PatternImprovement))
+            .collect();
+        
+        assert!(!memory_targets.is_empty(), "Should identify structure optimization targets");
+        assert!(!computation_targets.is_empty(), "Should identify parameter tuning targets");
+        assert!(!behavior_targets.is_empty(), "Should identify behavior modification targets");
+        assert!(!pattern_targets.is_empty(), "Should identify pattern improvement targets");
+    }
+
+    #[test]
+    fn test_learning_config_validation() {
+        let config = AdaptiveLearningConfig::default();
+        
+        assert!(config.max_concurrent_adaptations > 0, 
+               "Should allow at least one concurrent adaptation");
+        assert!(config.learning_rate > 0.0 && config.learning_rate <= 1.0,
+               "Learning rate should be normalized");
+        assert!(config.adaptation_threshold > 0.0 && config.adaptation_threshold <= 1.0,
+               "Adaptation threshold should be normalized");
+    }
+}

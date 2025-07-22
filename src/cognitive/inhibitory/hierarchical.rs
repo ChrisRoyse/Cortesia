@@ -8,9 +8,9 @@ use crate::core::brain_types::ActivationPattern;
 use crate::core::types::EntityKey;
 use crate::error::Result;
 use std::sync::Arc;
-use std::time::SystemTime;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
+use std::time::SystemTime;
 
 /// Apply hierarchical inhibition based on abstraction levels
 pub async fn apply_hierarchical_inhibition(

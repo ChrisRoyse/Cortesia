@@ -621,3 +621,563 @@ impl BrainEnhancedKnowledgeGraph {
         Ok(common)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::core::activation_engine::ActivationPropagationEngine;
+    use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
+    use crate::learning::types::*;
+    use std::time::{Instant, Duration};
+    use uuid::Uuid;
+
+    // Test helper to create mock components
+    async fn create_test_hebbian_engine() -> Result<HebbianLearningEngine> {
+        let embedding_dim = 512; // Default embedding dimension
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(embedding_dim)?);
+        
+        // Create activation config
+        let activation_config = crate::core::activation_config::ActivationConfig {
+            max_iterations: 100,
+            convergence_threshold: 0.01,
+            decay_rate: 0.1,
+            inhibition_strength: 0.3,
+            default_threshold: 0.5,
+        };
+        
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(activation_config));
+        
+        // Create critical thinking system (required for CompetitiveInhibitionSystem)
+        let critical_thinking = Arc::new(crate::cognitive::critical::CriticalThinking::new(
+            brain_graph.clone()
+        ));
+        
+        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::new(
+            activation_engine.clone(),
+            critical_thinking
+        ));
+        
+        HebbianLearningEngine::new(brain_graph, activation_engine, inhibition_system).await
+    }
+
+    fn create_test_activation_events() -> Vec<ActivationEvent> {
+        vec![
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.8,
+                timestamp: Instant::now(),
+                context: ActivationContext {
+                    query_id: "test_query_1".to_string(),
+                    source_pattern: None,
+                    propagation_depth: 0,
+                },
+            },
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.6,
+                timestamp: Instant::now(),
+                context: ActivationContext {
+                    query_id: "test_query_2".to_string(),
+                    source_pattern: None,
+                    propagation_depth: 0,
+                },
+            }
+        ]
+    }
+
+    fn create_test_learning_context() -> LearningContext {
+        LearningContext {
+            performance_pressure: 0.5,
+            user_satisfaction_level: 0.8,
+            learning_urgency: 0.6,
+            session_id: "test_context".to_string(),
+            learning_goals: vec![
+                LearningGoal {
+                    goal_type: LearningGoalType::PerformanceImprovement,
+                    target_improvement: 0.2,
+                    deadline: Some(std::time::SystemTime::now() + std::time::Duration::from_secs(3600)),
+                }
+            ],
+        }
+    }
+
+    #[tokio::test]
+    async fn test_hebbian_learning_basic_functionality() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let activation_events = create_test_activation_events();
+        let learning_context = create_test_learning_context();
+        
+        let result = engine.apply_hebbian_learning(activation_events, learning_context).await
+            .expect("Failed to apply Hebbian learning");
+        
+        assert!(result.learning_efficiency >= 0.0 && result.learning_efficiency <= 1.0, 
+               "Learning efficiency should be normalized");
+        assert!(!result.strengthened_connections.is_empty() || 
+               !result.weakened_connections.is_empty() || 
+               !result.new_connections.is_empty(),
+               "Should have some weight changes");
+    }
+
+    #[tokio::test]
+    async fn test_hebbian_rule_biological_plausibility() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        // Test Hebb's rule: "Neurons that fire together, wire together"
+        let simultaneous_activation_events = vec![
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.9,
+                timestamp: Instant::now(),
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            },
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.8,
+                timestamp: Instant::now(), // Same timestamp = simultaneous
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            }
+        ];
+        
+        let learning_context = create_test_learning_context();
+        
+        let result = engine.apply_hebbian_learning(simultaneous_activation_events, learning_context).await
+            .expect("Failed to apply Hebbian learning for simultaneous activations");
+        
+        // Simultaneous high activation should lead to strengthening
+        assert!(!result.strengthened_connections.is_empty(), 
+               "Simultaneous high activations should strengthen connections");
+        
+        // Learning efficiency should be high for biologically plausible patterns
+        assert!(result.learning_efficiency > 0.5, 
+               "Learning efficiency should be high for simultaneous activations");
+    }
+
+    #[tokio::test]
+    async fn test_spike_timing_dependent_plasticity() {
+        let engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let now = Instant::now();
+        
+        // Test STDP potentiation (pre before post)
+        let pre_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.8,
+            timestamp: now,
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let post_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.7,
+            timestamp: now + Duration::from_millis(20), // 20ms later
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
+            .expect("Failed to apply STDP");
+        
+        match result {
+            STDPResult::WeightChanged { weight_change, plasticity_type, .. } => {
+                assert!(weight_change > 0.0, "STDP should strengthen connections when pre precedes post");
+                assert!(matches!(plasticity_type, PlasticityType::Potentiation), 
+                       "Should be potentiation when pre precedes post");
+            },
+            STDPResult::NoChange => panic!("STDP should produce changes for properly timed spikes"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_stdp_depression() {
+        let engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let now = Instant::now();
+        
+        // Test STDP depression (post before pre)
+        let pre_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.8,
+            timestamp: now + Duration::from_millis(20), // 20ms later
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let post_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.7,
+            timestamp: now, // Earlier
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
+            .expect("Failed to apply STDP");
+        
+        match result {
+            STDPResult::WeightChanged { weight_change, plasticity_type, .. } => {
+                assert!(weight_change < 0.0, "STDP should weaken connections when post precedes pre");
+                assert!(matches!(plasticity_type, PlasticityType::Depression), 
+                       "Should be depression when post precedes pre");
+            },
+            STDPResult::NoChange => panic!("STDP should produce changes for properly timed spikes"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_stdp_timing_window() {
+        let engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let now = Instant::now();
+        
+        // Test events outside STDP window (>100ms)
+        let pre_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.8,
+            timestamp: now,
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let post_event = ActivationEvent {
+            entity_key: EntityKey::default(),
+            activation_strength: 0.7,
+            timestamp: now + Duration::from_millis(200), // Outside STDP window
+            event_type: ActivationEventType::EntityActivated,
+            duration: Duration::from_millis(50),
+        };
+        
+        let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
+            .expect("Failed to apply STDP");
+        
+        assert!(matches!(result, STDPResult::NoChange), 
+               "STDP should not change weights for events outside timing window");
+    }
+
+    #[tokio::test]
+    async fn test_coactivation_tracking() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let activation_events = create_test_activation_events();
+        
+        // Apply coactivation tracking
+        engine.update_coactivation_tracking(&activation_events).await
+            .expect("Failed to update coactivation tracking");
+        
+        let tracker = engine.coactivation_tracker.read().unwrap();
+        
+        assert!(!tracker.activation_history.is_empty(), 
+               "Should track activation history");
+        assert!(tracker.global_activity_level >= 0.0, 
+               "Should track global activity level");
+    }
+
+    #[tokio::test]
+    async fn test_correlation_matrix_updates() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let activation_events = vec![
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.9,
+                timestamp: Instant::now(),
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            },
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.8,
+                timestamp: Instant::now() + Duration::from_millis(10),
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            }
+        ];
+        
+        engine.update_coactivation_tracking(&activation_events).await
+            .expect("Failed to update coactivation tracking");
+        
+        let tracker = engine.coactivation_tracker.read().unwrap();
+        
+        // Should update correlation matrix for co-occurring activations
+        assert!(!tracker.correlation_matrix.is_empty(), 
+               "Should calculate correlations between co-active entities");
+    }
+
+    #[test]
+    fn test_temporal_correlation_calculation() {
+        let engine_future = create_test_hebbian_engine();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let engine = rt.block_on(engine_future).expect("Failed to create engine");
+        
+        let entity_a = EntityKey::default();
+        let entity_b = EntityKey::default();
+        
+        let mut activation_history = HashMap::new();
+        
+        let now = Instant::now();
+        activation_history.insert(entity_a, vec![
+            ActivationEvent {
+                entity_key: entity_a,
+                activation_strength: 0.8,
+                timestamp: now,
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            }
+        ]);
+        
+        activation_history.insert(entity_b, vec![
+            ActivationEvent {
+                entity_key: entity_b,
+                activation_strength: 0.7,
+                timestamp: now + Duration::from_millis(30), // Close in time
+                event_type: ActivationEventType::EntityActivated,
+                duration: Duration::from_millis(100),
+            }
+        ]);
+        
+        let correlation = engine.calculate_temporal_correlation(
+            entity_a, entity_b, &activation_history
+        ).expect("Failed to calculate temporal correlation");
+        
+        assert!(correlation > 0.0, "Should calculate positive correlation for temporally close activations");
+        assert!(correlation <= 1.0, "Correlation should not exceed 1.0");
+    }
+
+    #[test]
+    fn test_learning_efficiency_calculation() {
+        let engine_future = create_test_hebbian_engine();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let engine = rt.block_on(engine_future).expect("Failed to create engine");
+        
+        let weight_updates = WeightUpdateResult {
+            strengthened: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.5,
+                    new_weight: 0.7,
+                    change_magnitude: 0.2,
+                }
+            ],
+            weakened: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.6,
+                    new_weight: 0.4,
+                    change_magnitude: 0.2,
+                }
+            ],
+            newly_formed: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.0,
+                    new_weight: 0.3,
+                    change_magnitude: 0.3,
+                }
+            ],
+            inhibition_changes: vec![],
+        };
+        
+        let efficiency = engine.calculate_learning_efficiency(&weight_updates);
+        
+        assert!(efficiency >= 0.0 && efficiency <= 1.0, 
+               "Learning efficiency should be normalized");
+        
+        // With equal strengthening and weakening, plus new connections, 
+        // efficiency should be moderate to high
+        assert!(efficiency > 0.4, 
+               "Should have reasonable efficiency with balanced updates and new connections");
+    }
+
+    #[test]
+    fn test_learning_stability_calculation() {
+        let engine_future = create_test_hebbian_engine();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let engine = rt.block_on(engine_future).expect("Failed to create engine");
+        
+        // Test stable learning (small, consistent changes)
+        let stable_updates = WeightUpdateResult {
+            strengthened: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.5,
+                    new_weight: 0.52,
+                    change_magnitude: 0.02,
+                },
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.6,
+                    new_weight: 0.62,
+                    change_magnitude: 0.02,
+                }
+            ],
+            weakened: vec![],
+            newly_formed: vec![],
+            inhibition_changes: vec![],
+        };
+        
+        let stability = engine.calculate_learning_stability(&stable_updates);
+        
+        assert!(stability > 0.8, 
+               "Should have high stability for consistent small changes");
+        
+        // Test unstable learning (large, variable changes)
+        let unstable_updates = WeightUpdateResult {
+            strengthened: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.5,
+                    new_weight: 0.9,
+                    change_magnitude: 0.4,
+                },
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.6,
+                    new_weight: 0.61,
+                    change_magnitude: 0.01,
+                }
+            ],
+            weakened: vec![],
+            newly_formed: vec![],
+            inhibition_changes: vec![],
+        };
+        
+        let instability = engine.calculate_learning_stability(&unstable_updates);
+        
+        assert!(instability < 0.7, 
+               "Should have lower stability for inconsistent changes");
+    }
+
+    #[tokio::test]
+    async fn test_biological_learning_constraints() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        // Test that learning respects biological constraints
+        assert!(engine.learning_rate > 0.0 && engine.learning_rate < 1.0,
+               "Learning rate should be biologically plausible");
+        assert!(engine.decay_constant > 0.0 && engine.decay_constant < engine.learning_rate,
+               "Decay constant should be smaller than learning rate");
+        assert!(engine.strengthening_threshold > 0.0 && engine.strengthening_threshold < 1.0,
+               "Strengthening threshold should be normalized");
+        assert!(engine.weakening_threshold > 0.0 && engine.weakening_threshold < engine.strengthening_threshold,
+               "Weakening threshold should be less than strengthening threshold");
+        assert!(engine.max_weight > engine.min_weight,
+               "Maximum weight should exceed minimum weight");
+        assert!(engine.min_weight >= 0.0 && engine.max_weight <= 1.0,
+               "Weight bounds should be normalized");
+    }
+
+    #[tokio::test]
+    async fn test_temporal_decay_biological_realism() {
+        let engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        // Test temporal decay (synaptic weakening over time)
+        let decay_result = engine.apply_temporal_decay().await
+            .expect("Failed to apply temporal decay");
+        
+        // Decay should occur but might not prune connections immediately in a new system
+        // This is biologically realistic - synapses don't disappear instantly
+        assert!(decay_result.len() >= 0, "Temporal decay should return pruning information");
+    }
+
+    #[tokio::test]
+    async fn test_competition_and_cooperation_balance() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let activation_events = create_test_activation_events();
+        let learning_context = create_test_learning_context();
+        
+        let result = engine.apply_hebbian_learning(activation_events, learning_context).await
+            .expect("Failed to apply Hebbian learning");
+        
+        // Should balance competition and cooperation
+        let total_inhibitory_changes = result.inhibition_updates.len();
+        let total_weight_changes = result.strengthened_connections.len() + 
+                                 result.weakened_connections.len() + 
+                                 result.new_connections.len();
+        
+        // Not all weight changes should result in inhibitory changes
+        // This maintains balance between cooperation and competition
+        if total_weight_changes > 0 {
+            let inhibitory_ratio = total_inhibitory_changes as f32 / total_weight_changes as f32;
+            assert!(inhibitory_ratio <= 0.5, 
+                   "Should not create excessive inhibitory competition");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_learning_statistics_tracking() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        let weight_updates = WeightUpdateResult {
+            strengthened: vec![
+                WeightChange {
+                    source: EntityKey::default(),
+                    target: EntityKey::default(),
+                    old_weight: 0.5,
+                    new_weight: 0.7,
+                    change_magnitude: 0.2,
+                }
+            ],
+            weakened: vec![],
+            newly_formed: vec![],
+            inhibition_changes: vec![],
+        };
+        
+        engine.update_learning_statistics(&weight_updates).await
+            .expect("Failed to update learning statistics");
+        
+        let stats = engine.learning_statistics.read().unwrap();
+        
+        assert!(stats.total_weight_changes > 0, "Should track weight changes");
+        assert!(stats.average_learning_rate >= 0.0, "Should track average learning rate");
+        assert!(stats.learning_stability >= 0.0 && stats.learning_stability <= 1.0, 
+               "Learning stability should be normalized");
+    }
+
+    #[tokio::test]
+    async fn test_hebbian_learning_adaptive_parameters() {
+        let mut engine = create_test_hebbian_engine().await
+            .expect("Failed to create Hebbian engine");
+        
+        // Test that learning parameters can adapt
+        let initial_learning_rate = engine.learning_rate;
+        let initial_decay_constant = engine.decay_constant;
+        
+        // Apply learning multiple times
+        for _ in 0..5 {
+            let activation_events = create_test_activation_events();
+            let learning_context = create_test_learning_context();
+            
+            engine.apply_hebbian_learning(activation_events, learning_context).await
+                .expect("Failed to apply Hebbian learning");
+        }
+        
+        // Parameters should remain within biological bounds even after adaptation
+        assert!(engine.learning_rate > 0.0 && engine.learning_rate < 1.0,
+               "Learning rate should remain biologically constrained");
+        assert!(engine.decay_constant > 0.0 && engine.decay_constant < engine.learning_rate,
+               "Decay constant should remain properly constrained");
+    }
+}

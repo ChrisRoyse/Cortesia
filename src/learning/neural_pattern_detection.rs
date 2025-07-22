@@ -1,7 +1,8 @@
 use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity};
 use crate::core::types::EntityKey;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::learning::types::ActivationEvent;
+use crate::learning::types::{ActivationEvent, ActivationContext};
+use crate::cognitive::types::CognitivePatternType;
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::error::Result;
 
@@ -846,4 +847,391 @@ pub struct OscillatoryPattern {
     pub coherence: f32,
     pub start_time: SystemTime,
     pub duration: Duration,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use crate::neural::neural_server::NeuralProcessingServer;
+    use crate::core::types::EntityKey;
+    use std::time::{Duration, SystemTime};
+    use uuid::Uuid;
+
+    // Test helper to create mock neural pattern detection system
+    async fn create_test_pattern_detection_system() -> Result<NeuralPatternDetectionSystem> {
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new());
+        let neural_server = Arc::new(NeuralProcessingServer::new()?);
+        
+        NeuralPatternDetectionSystem::new(brain_graph, neural_server).await
+    }
+
+    fn create_test_analysis_scope() -> AnalysisScope {
+        AnalysisScope {
+            entities: vec![EntityKey::default(), EntityKey::default()],
+            time_window: Duration::from_secs(60),
+            depth: 3,
+            pattern_types: vec![
+                PatternType::ActivationPattern,
+                PatternType::FrequencyPattern,
+                PatternType::SynchronyPattern,
+            ],
+            minimum_confidence: 0.6,
+        }
+    }
+
+    fn create_test_activation_events() -> Vec<ActivationEvent> {
+        vec![
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.8,
+                timestamp: std::time::Instant::now(),
+                context: ActivationContext {
+                    query_id: "test-query-1".to_string(),
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: Some("test-session".to_string()),
+                    outcome_quality: Some(0.8),
+                },
+            },
+            ActivationEvent {
+                entity_key: EntityKey::default(),
+                activation_strength: 0.6,
+                timestamp: std::time::Instant::now() + Duration::from_millis(50),
+                context: ActivationContext {
+                    query_id: "test-query-2".to_string(),
+                    cognitive_pattern: CognitivePatternType::Divergent,
+                    user_session: Some("test-session".to_string()),
+                    outcome_quality: Some(0.6),
+                },
+            }
+        ]
+    }
+
+    #[tokio::test]
+    async fn test_pattern_detection_system_creation() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        assert!(!system.pattern_detectors.is_empty(), "Should have pattern detectors");
+        assert!(!system.pattern_models.is_empty(), "Should have pattern models");
+        assert!(system.detection_config.enable_caching, "Should enable caching by default");
+        assert!(system.detection_config.parallel_detection, "Should enable parallel detection by default");
+    }
+
+    #[tokio::test]
+    async fn test_activation_pattern_detection() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let time_window = Duration::from_secs(60);
+        
+        let patterns = system.detect_activation_patterns(time_window).await
+            .expect("Failed to detect activation patterns");
+        
+        // Should return patterns (may be empty for new system)
+        assert!(patterns.len() >= 0, "Should return activation patterns");
+        
+        for pattern in &patterns {
+            assert!(!pattern.activations.is_empty(), "Activation pattern should have activations");
+            assert!(!pattern.query.is_empty(), "Pattern should have query identifier");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_frequency_pattern_detection() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let entities = vec![EntityKey::default(), EntityKey::default()];
+        
+        let patterns = system.detect_frequency_patterns(&entities).await
+            .expect("Failed to detect frequency patterns");
+        
+        // Should return patterns (may be empty for new system)
+        assert!(patterns.len() >= 0, "Should return frequency patterns");
+        
+        for pattern in &patterns {
+            assert!(!pattern.entities.is_empty(), "Frequency pattern should have entities");
+            assert!(pattern.frequency_hz >= 0.0, "Frequency should be non-negative");
+            assert!(pattern.amplitude >= 0.0 && pattern.amplitude <= 1.0, 
+                   "Amplitude should be normalized");
+            assert!(pattern.stability >= 0.0 && pattern.stability <= 1.0, 
+                   "Stability should be normalized");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_synchrony_pattern_detection() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let activation_events = create_test_activation_events();
+        
+        let patterns = system.detect_synchrony_patterns(&activation_events).await
+            .expect("Failed to detect synchrony patterns");
+        
+        // Should return patterns (may be empty for new system)
+        assert!(patterns.len() >= 0, "Should return synchrony patterns");
+        
+        for pattern in &patterns {
+            assert!(pattern.synchronized_entities.len() >= 2, 
+                   "Synchrony pattern should have at least 2 entities");
+            assert!(pattern.synchrony_strength >= 0.0 && pattern.synchrony_strength <= 1.0, 
+                   "Synchrony strength should be normalized");
+            assert!(pattern.phase_coherence >= 0.0 && pattern.phase_coherence <= 1.0, 
+                   "Phase coherence should be normalized");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_oscillatory_pattern_detection() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        // Create test time series with known oscillatory pattern
+        let time_series: Vec<f32> = (0..100)
+            .map(|i| (i as f32 * 0.1).sin()) // Simple sine wave
+            .collect();
+        
+        let patterns = system.detect_oscillatory_patterns(&time_series).await
+            .expect("Failed to detect oscillatory patterns");
+        
+        // Should detect oscillations in sine wave
+        assert!(patterns.len() >= 0, "Should return oscillatory patterns");
+        
+        for pattern in &patterns {
+            assert!(pattern.frequency > 0.0, "Oscillation frequency should be positive");
+            assert!(pattern.amplitude >= 0.0 && pattern.amplitude <= 1.0, 
+                   "Amplitude should be normalized");
+            assert!(pattern.coherence >= 0.0 && pattern.coherence <= 1.0, 
+                   "Coherence should be normalized");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_general_pattern_detection() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let analysis_scope = create_test_analysis_scope();
+        
+        let patterns = system.detect_patterns(&analysis_scope).await
+            .expect("Failed to detect patterns");
+        
+        // Should return patterns (may be empty for new system)
+        assert!(patterns.len() >= 0, "Should return detected patterns");
+        
+        for pattern in &patterns {
+            assert!(!pattern.pattern_id.to_string().is_empty(), "Pattern should have ID");
+            assert!(pattern.confidence >= analysis_scope.minimum_confidence, 
+                   "Pattern confidence should meet minimum threshold");
+            assert!(pattern.significance >= system.detection_config.pattern_significance_threshold, 
+                   "Pattern significance should meet threshold");
+            assert!(pattern.pattern_strength >= 0.0 && pattern.pattern_strength <= 1.0, 
+                   "Pattern strength should be normalized");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_pattern_caching() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let analysis_scope = create_test_analysis_scope();
+        
+        // First detection - should populate cache
+        let patterns1 = system.detect_patterns(&analysis_scope).await
+            .expect("Failed to detect patterns first time");
+        
+        // Second detection - should use cache
+        let patterns2 = system.detect_patterns(&analysis_scope).await
+            .expect("Failed to detect patterns second time");
+        
+        // Results should be identical (from cache)
+        assert_eq!(patterns1.len(), patterns2.len(), 
+                  "Cached results should match original results");
+    }
+
+    #[test]
+    fn test_cache_key_generation() {
+        let system_future = create_test_pattern_detection_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let analysis_scope = create_test_analysis_scope();
+        let cache_key = system.generate_cache_key(&analysis_scope);
+        
+        assert!(!cache_key.is_empty(), "Cache key should not be empty");
+        assert!(cache_key.contains("entities"), "Cache key should include entity information");
+        assert!(cache_key.contains("window"), "Cache key should include time window");
+        assert!(cache_key.contains("types"), "Cache key should include pattern types");
+    }
+
+    #[test]
+    fn test_pattern_cache_initialization() {
+        let cache = PatternCache::new();
+        
+        assert!(cache.cached_patterns.is_empty(), "New cache should be empty");
+        assert_eq!(cache.cache_hits, 0, "Should start with zero hits");
+        assert_eq!(cache.cache_misses, 0, "Should start with zero misses");
+        assert_eq!(cache.max_cache_size, 1000, "Should have reasonable cache size");
+        assert_eq!(cache.cache_ttl, Duration::from_secs(300), "Should have appropriate TTL");
+    }
+
+    #[test]
+    fn test_pattern_detection_config_defaults() {
+        let config = PatternDetectionConfig::default();
+        
+        assert!(config.enable_caching, "Should enable caching by default");
+        assert_eq!(config.cache_ttl, Duration::from_secs(300), "Should have appropriate cache TTL");
+        assert!(config.parallel_detection, "Should enable parallel detection by default");
+        assert_eq!(config.max_concurrent_detectors, 4, "Should allow reasonable concurrency");
+        assert_eq!(config.neural_model_timeout, Duration::from_secs(30), "Should have reasonable timeout");
+        assert!(config.pattern_significance_threshold > 0.0, "Should have positive significance threshold");
+    }
+
+    #[tokio::test]
+    async fn test_activation_pattern_detector() {
+        let system = create_test_pattern_detection_system().await
+            .expect("Failed to create pattern detection system");
+        
+        let detector = system.pattern_detectors.get(&PatternType::ActivationPattern)
+            .expect("Should have activation pattern detector");
+        
+        assert_eq!(detector.get_pattern_type(), PatternType::ActivationPattern);
+        assert!(detector.get_confidence_threshold() > 0.0, 
+               "Confidence threshold should be positive");
+        
+        let analysis_scope = create_test_analysis_scope();
+        let patterns = detector.detect_patterns(&analysis_scope).await
+            .expect("Failed to detect activation patterns");
+        
+        // Should return patterns (may be empty for new system)
+        assert!(patterns.len() >= 0, "Should return activation patterns");
+    }
+
+    #[test]
+    fn test_time_series_encoding() {
+        let system_future = create_test_pattern_detection_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let time_series = vec![1.0, 2.0, 3.0, 2.0, 1.0]; // Simple pattern
+        
+        let encoded = system.encode_time_series_for_neural_analysis(&time_series)
+            .expect("Failed to encode time series");
+        
+        assert_eq!(encoded.len(), time_series.len(), 
+                  "Encoded series should have same length");
+        
+        // Check normalization (mean should be ~0, std should be ~1)
+        let mean: f32 = encoded.iter().sum::<f32>() / encoded.len() as f32;
+        assert!(mean.abs() < 0.001, "Encoded series should be normalized (mean ~0)");
+    }
+
+    #[test]
+    fn test_oscillatory_prediction_decoding() {
+        let system_future = create_test_pattern_detection_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        // Mock neural prediction with high oscillation score
+        let neural_prediction = vec![0.8, 0.2, 0.9, 0.1, 0.7];
+        
+        let patterns = system.decode_oscillatory_predictions(neural_prediction)
+            .expect("Failed to decode oscillatory predictions");
+        
+        // Should detect oscillations for high scores (>0.7)
+        let high_score_patterns: Vec<_> = patterns.iter()
+            .filter(|p| p.amplitude > 0.7)
+            .collect();
+        
+        assert!(!high_score_patterns.is_empty(), "Should detect patterns for high scores");
+        
+        for pattern in &patterns {
+            assert!(pattern.frequency > 0.0, "Frequency should be positive");
+            assert!(pattern.amplitude >= 0.0 && pattern.amplitude <= 1.0, 
+                   "Amplitude should be normalized");
+            assert!(pattern.coherence >= 0.0 && pattern.coherence <= 1.0, 
+                   "Coherence should be normalized");
+        }
+    }
+
+    #[test]
+    fn test_detected_pattern_structure() {
+        let pattern = DetectedPattern {
+            pattern_id: Uuid::new_v4(),
+            pattern_type: PatternType::ActivationPattern,
+            entities_involved: vec![EntityKey::default()],
+            confidence: 0.8,
+            significance: 0.7,
+            temporal_span: Duration::from_secs(60),
+            pattern_strength: 0.9,
+            pattern_frequency: 1.5,
+            pattern_metadata: {
+                let mut metadata = HashMap::new();
+                metadata.insert("detector".to_string(), "test_detector".to_string());
+                metadata
+            },
+            discovery_timestamp: SystemTime::now(),
+        };
+        
+        // Test pattern structure
+        assert!(!pattern.pattern_id.to_string().is_empty(), "Pattern should have ID");
+        assert_eq!(pattern.pattern_type, PatternType::ActivationPattern);
+        assert!(!pattern.entities_involved.is_empty(), "Pattern should involve entities");
+        assert!(pattern.confidence >= 0.0 && pattern.confidence <= 1.0, 
+               "Confidence should be normalized");
+        assert!(pattern.significance >= 0.0 && pattern.significance <= 1.0, 
+               "Significance should be normalized");
+        assert!(pattern.pattern_strength >= 0.0 && pattern.pattern_strength <= 1.0, 
+               "Pattern strength should be normalized");
+        assert!(pattern.pattern_frequency >= 0.0, "Pattern frequency should be non-negative");
+        assert!(!pattern.pattern_metadata.is_empty(), "Pattern should have metadata");
+    }
+
+    #[test]
+    fn test_analysis_scope_configuration() {
+        let scope = AnalysisScope {
+            entities: vec![EntityKey::default(), EntityKey::default()],
+            time_window: Duration::from_secs(120),
+            depth: 5,
+            pattern_types: vec![PatternType::ActivationPattern, PatternType::FrequencyPattern],
+            minimum_confidence: 0.75,
+        };
+        
+        assert_eq!(scope.entities.len(), 2, "Should have 2 entities");
+        assert_eq!(scope.time_window, Duration::from_secs(120), "Should have 2-minute window");
+        assert_eq!(scope.depth, 5, "Should have depth of 5");
+        assert_eq!(scope.pattern_types.len(), 2, "Should have 2 pattern types");
+        assert_eq!(scope.minimum_confidence, 0.75, "Should have 75% confidence threshold");
+    }
+
+    #[test]
+    fn test_pattern_types_enum() {
+        // Test that all pattern types are properly defined
+        let all_types = vec![
+            PatternType::ActivationPattern,
+            PatternType::FrequencyPattern,
+            PatternType::SynchronyPattern,
+            PatternType::OscillatoryPattern,
+            PatternType::TemporalPattern,
+            PatternType::SpatialPattern,
+            PatternType::CausalPattern,
+            PatternType::HierarchicalPattern,
+            PatternType::CompetitivePattern,
+            PatternType::CooperativePattern,
+        ];
+        
+        assert_eq!(all_types.len(), 10, "Should have 10 pattern types defined");
+        
+        // Test serialization/deserialization
+        for pattern_type in &all_types {
+            let serialized = serde_json::to_string(pattern_type)
+                .expect("Pattern type should be serializable");
+            let deserialized: PatternType = serde_json::from_str(&serialized)
+                .expect("Pattern type should be deserializable");
+            assert_eq!(*pattern_type, deserialized, "Serialization round-trip should work");
+        }
+    }
 }

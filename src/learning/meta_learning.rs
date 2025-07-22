@@ -796,3 +796,581 @@ impl MetaLearner for MetaLearningSystem {
         self.transfer_knowledge(source_domain, target_domain).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use std::time::{Duration, SystemTime};
+    use uuid::Uuid;
+
+    // Test helper to create mock meta-learning system
+    async fn create_test_meta_learning_system() -> Result<MetaLearningSystem> {
+        MetaLearningSystem::new().await
+    }
+
+    fn create_test_learning_tasks() -> Vec<LearningTask> {
+        vec![
+            LearningTask {
+                task_id: "task_1".to_string(),
+                task_type: LearningTaskType::PatternRecognition,
+                domain: "vision".to_string(),
+                complexity: 0.7,
+                data_characteristics: DataCharacteristics {
+                    size: 10000,
+                    dimensionality: 128,
+                    noise_level: 0.1,
+                    distribution_type: "normal".to_string(),
+                    temporal_dependencies: false,
+                    sparsity: 0.2,
+                },
+                performance_requirements: PerformanceRequirements {
+                    accuracy_threshold: 0.9,
+                    speed_requirement: Duration::from_millis(100),
+                    memory_limit: 0.8,
+                    stability_requirement: 0.95,
+                },
+                resource_constraints: ResourceConstraints {
+                    max_computation_time: Duration::from_secs(3600),
+                    max_memory_usage: 0.7,
+                    available_cpu_cores: 4,
+                    priority_level: 0.8,
+                },
+            },
+            LearningTask {
+                task_id: "task_2".to_string(),
+                task_type: LearningTaskType::ParameterOptimization,
+                domain: "optimization".to_string(),
+                complexity: 0.5,
+                data_characteristics: DataCharacteristics {
+                    size: 5000,
+                    dimensionality: 64,
+                    noise_level: 0.05,
+                    distribution_type: "uniform".to_string(),
+                    temporal_dependencies: true,
+                    sparsity: 0.1,
+                },
+                performance_requirements: PerformanceRequirements {
+                    accuracy_threshold: 0.85,
+                    speed_requirement: Duration::from_millis(50),
+                    memory_limit: 0.6,
+                    stability_requirement: 0.9,
+                },
+                resource_constraints: ResourceConstraints {
+                    max_computation_time: Duration::from_secs(1800),
+                    max_memory_usage: 0.5,
+                    available_cpu_cores: 2,
+                    priority_level: 0.6,
+                },
+            }
+        ]
+    }
+
+    fn create_test_task_context() -> TaskContext {
+        let mut domain_knowledge = HashMap::new();
+        domain_knowledge.insert("expertise_level".to_string(), 0.7);
+        domain_knowledge.insert("prior_experience".to_string(), 0.8);
+        
+        let mut user_preferences = HashMap::new();
+        user_preferences.insert("speed_preference".to_string(), 0.9);
+        user_preferences.insert("accuracy_preference".to_string(), 0.8);
+        
+        let mut environmental_factors = HashMap::new();
+        environmental_factors.insert("resource_availability".to_string(), 0.6);
+        environmental_factors.insert("time_pressure".to_string(), 0.4);
+        
+        TaskContext {
+            domain_knowledge,
+            user_preferences,
+            environmental_factors,
+            temporal_context: TemporalContext {
+                time_of_day: 14, // 2 PM
+                day_of_week: 3,  // Wednesday
+                seasonal_factor: 0.5,
+                trend_direction: TrendDirection::Improving,
+            },
+        }
+    }
+
+    fn create_test_domains() -> (Domain, Domain) {
+        let source_domain = Domain {
+            domain_id: "computer_vision".to_string(),
+            feature_vector: vec![0.8, 0.6, 0.9, 0.7, 0.5],
+            vocabulary: vec!["image".to_string(), "pixel".to_string(), "feature".to_string(), "convolution".to_string()],
+            structure: DomainStructure {
+                hierarchy_depth: 4,
+                complexity_score: 0.8,
+                connectivity_pattern: "dense".to_string(),
+            },
+        };
+        
+        let target_domain = Domain {
+            domain_id: "natural_language".to_string(),
+            feature_vector: vec![0.7, 0.8, 0.6, 0.9, 0.4],
+            vocabulary: vec!["word".to_string(), "sentence".to_string(), "grammar".to_string(), "semantic".to_string()],
+            structure: DomainStructure {
+                hierarchy_depth: 5,
+                complexity_score: 0.9,
+                connectivity_pattern: "hierarchical".to_string(),
+            },
+        };
+        
+        (source_domain, target_domain)
+    }
+
+    #[tokio::test]
+    async fn test_meta_learning_basic_functionality() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        
+        let meta_model = system.learn_to_learn(&learning_tasks).await
+            .expect("Failed to learn to learn");
+        
+        assert!(!meta_model.model_id.is_empty(), "Meta-model should have an ID");
+        assert_eq!(meta_model.training_tasks.len(), learning_tasks.len(), 
+                  "Should track all training tasks");
+        assert!(meta_model.generalization_ability >= 0.0 && meta_model.generalization_ability <= 1.0,
+               "Generalization ability should be normalized");
+        assert!(!meta_model.performance_metrics.is_empty(), 
+               "Should have performance metrics");
+    }
+
+    #[test]
+    fn test_learning_pattern_analysis() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        
+        let patterns = system.analyze_learning_patterns(&learning_tasks)
+            .expect("Failed to analyze learning patterns");
+        
+        assert!(!patterns.is_empty(), "Should identify learning patterns");
+        
+        for pattern in &patterns {
+            assert!(!pattern.pattern_id.is_empty(), "Pattern should have ID");
+            assert!(!pattern.pattern_characteristics.is_empty(), "Should have characteristics");
+            assert!(!pattern.success_factors.is_empty(), "Should identify success factors");
+            assert!(!pattern.failure_modes.is_empty(), "Should identify failure modes");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_transferable_strategy_identification() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        let patterns = system.analyze_learning_patterns(&learning_tasks)
+            .expect("Failed to analyze patterns");
+        
+        let strategies = system.identify_transferable_strategies(&patterns).await
+            .expect("Failed to identify transferable strategies");
+        
+        assert!(!strategies.is_empty(), "Should identify transferable strategies");
+        
+        for strategy in &strategies {
+            assert!(!strategy.strategy_id.is_empty(), "Strategy should have ID");
+            assert!(!strategy.applicable_task_types.is_empty(), "Should specify applicable task types");
+            assert!(strategy.effectiveness_score >= 0.0 && strategy.effectiveness_score <= 1.0,
+                   "Effectiveness score should be normalized");
+            assert!(strategy.transfer_cost >= 0.0, "Transfer cost should be non-negative");
+            assert!(strategy.generalization_potential >= 0.0 && strategy.generalization_potential <= 1.0,
+                   "Generalization potential should be normalized");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_meta_parameter_updates() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let strategies = vec![
+            TransferableStrategy {
+                strategy_id: "strategy_1".to_string(),
+                applicable_task_types: vec![LearningTaskType::PatternRecognition],
+                effectiveness_score: 0.8,
+                transfer_cost: 0.2,
+                generalization_potential: 0.7,
+                required_adaptations: vec!["parameter_scaling".to_string()],
+            },
+            TransferableStrategy {
+                strategy_id: "strategy_2".to_string(),
+                applicable_task_types: vec![LearningTaskType::ParameterOptimization],
+                effectiveness_score: 0.9,
+                transfer_cost: 0.1,
+                generalization_potential: 0.8,
+                required_adaptations: vec!["threshold_adjustment".to_string()],
+            }
+        ];
+        
+        let meta_parameters = system.update_meta_parameters(&strategies).await
+            .expect("Failed to update meta parameters");
+        
+        assert!(!meta_parameters.is_empty(), "Should generate meta parameters");
+        assert!(meta_parameters.contains_key("meta_learning_rate"), "Should include learning rate");
+        assert!(meta_parameters.contains_key("transfer_threshold"), "Should include transfer threshold");
+        assert!(meta_parameters.contains_key("adaptation_aggressiveness"), "Should include adaptation aggressiveness");
+        
+        // Check parameter values are reasonable
+        for (_, &value) in &meta_parameters {
+            assert!(value >= 0.0 && value <= 1.0, "Meta parameters should be normalized");
+        }
+    }
+
+    #[test]
+    fn test_generalization_ability_calculation() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let high_potential_strategies = vec![
+            TransferableStrategy {
+                strategy_id: "high_potential".to_string(),
+                applicable_task_types: vec![LearningTaskType::PatternRecognition],
+                effectiveness_score: 0.9,
+                transfer_cost: 0.1,
+                generalization_potential: 0.9,
+                required_adaptations: vec![],
+            }
+        ];
+        
+        let generalization = system.calculate_generalization_ability(&high_potential_strategies);
+        assert_eq!(generalization, 0.9, "Should calculate correct generalization ability");
+        
+        let mixed_strategies = vec![
+            TransferableStrategy {
+                strategy_id: "high".to_string(),
+                applicable_task_types: vec![LearningTaskType::PatternRecognition],
+                effectiveness_score: 0.8,
+                transfer_cost: 0.2,
+                generalization_potential: 0.8,
+                required_adaptations: vec![],
+            },
+            TransferableStrategy {
+                strategy_id: "low".to_string(),
+                applicable_task_types: vec![LearningTaskType::ParameterOptimization],
+                effectiveness_score: 0.6,
+                transfer_cost: 0.4,
+                generalization_potential: 0.4,
+                required_adaptations: vec![],
+            }
+        ];
+        
+        let mixed_generalization = system.calculate_generalization_ability(&mixed_strategies);
+        assert_eq!(mixed_generalization, 0.6, "Should average generalization abilities");
+    }
+
+    #[tokio::test]
+    async fn test_learning_strategy_adaptation() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let task_context = create_test_task_context();
+        
+        let strategy = system.adapt_learning_strategy(&task_context).await
+            .expect("Failed to adapt learning strategy");
+        
+        assert!(!strategy.priority_areas.is_empty(), "Strategy should have priority areas");
+        assert!(strategy.safety_level >= 0.0 && strategy.safety_level <= 1.0,
+               "Safety level should be normalized");
+        assert!(strategy.expected_duration > Duration::from_secs(0),
+               "Should have positive expected duration");
+    }
+
+    #[test]
+    fn test_context_feature_extraction() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let task_context = create_test_task_context();
+        
+        let features = system.extract_context_features(&task_context)
+            .expect("Failed to extract context features");
+        
+        assert!(!features.is_empty(), "Should extract context features");
+        
+        // Check that all features are normalized
+        for &feature in &features {
+            assert!(feature >= 0.0 && feature <= 1.0, 
+                   "Context features should be normalized: got {}", feature);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_similar_context_finding() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let task_context = create_test_task_context();
+        let context_features = system.extract_context_features(&task_context)
+            .expect("Failed to extract features");
+        
+        let similar_contexts = system.find_similar_contexts(&context_features).await
+            .expect("Failed to find similar contexts");
+        
+        // Initially should be empty as there's no history
+        assert!(similar_contexts.is_empty(), "Should have no similar contexts initially");
+    }
+
+    #[test]
+    fn test_cosine_similarity_calculation() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        // Test identical vectors
+        let vec_a = vec![1.0, 0.0, 0.0];
+        let vec_b = vec![1.0, 0.0, 0.0];
+        let similarity = system.calculate_cosine_similarity(&vec_a, &vec_b);
+        assert!((similarity - 1.0).abs() < 0.001, "Identical vectors should have similarity 1.0");
+        
+        // Test orthogonal vectors
+        let vec_a = vec![1.0, 0.0];
+        let vec_b = vec![0.0, 1.0];
+        let similarity = system.calculate_cosine_similarity(&vec_a, &vec_b);
+        assert!((similarity - 0.0).abs() < 0.001, "Orthogonal vectors should have similarity 0.0");
+        
+        // Test opposite vectors
+        let vec_a = vec![1.0, 0.0];
+        let vec_b = vec![-1.0, 0.0];
+        let similarity = system.calculate_cosine_similarity(&vec_a, &vec_b);
+        assert!((similarity - (-1.0)).abs() < 0.001, "Opposite vectors should have similarity -1.0");
+        
+        // Test different length vectors
+        let vec_a = vec![1.0, 0.0];
+        let vec_b = vec![1.0, 0.0, 0.0];
+        let similarity = system.calculate_cosine_similarity(&vec_a, &vec_b);
+        assert_eq!(similarity, 0.0, "Different length vectors should have similarity 0.0");
+    }
+
+    #[tokio::test]
+    async fn test_knowledge_transfer() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let (source_domain, target_domain) = create_test_domains();
+        
+        let transfer_result = system.transfer_knowledge(&source_domain, &target_domain).await
+            .expect("Failed to transfer knowledge");
+        
+        assert!(transfer_result.transfer_confidence >= 0.0 && transfer_result.transfer_confidence <= 1.0,
+               "Transfer confidence should be normalized");
+        assert!(transfer_result.performance_improvement >= 0.0,
+               "Performance improvement should be non-negative");
+        assert!(!transfer_result.transfer_insights.is_empty(),
+               "Should provide transfer insights");
+        
+        if transfer_result.success {
+            assert!(!transfer_result.adapted_components.is_empty(),
+                   "Successful transfer should have adapted components");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_domain_similarity_calculation() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let (source_domain, target_domain) = create_test_domains();
+        
+        let similarity = system.calculate_domain_similarity(&source_domain, &target_domain).await
+            .expect("Failed to calculate domain similarity");
+        
+        assert!(similarity >= 0.0 && similarity <= 1.0, 
+               "Domain similarity should be normalized");
+    }
+
+    #[test]
+    fn test_vocabulary_overlap_calculation() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let vocab_a = vec!["word".to_string(), "text".to_string(), "language".to_string()];
+        let vocab_b = vec!["word".to_string(), "sentence".to_string(), "language".to_string()];
+        
+        let overlap = system.calculate_vocabulary_overlap(&vocab_a, &vocab_b);
+        
+        // Should have 2 words in common: "word" and "language"
+        // Union size is 4: "word", "text", "language", "sentence"
+        // Overlap = 2/4 = 0.5
+        assert!((overlap - 0.5).abs() < 0.001, 
+               "Should calculate correct vocabulary overlap: expected 0.5, got {}", overlap);
+        
+        // Test no overlap
+        let vocab_a = vec!["a".to_string(), "b".to_string()];
+        let vocab_b = vec!["c".to_string(), "d".to_string()];
+        let no_overlap = system.calculate_vocabulary_overlap(&vocab_a, &vocab_b);
+        assert_eq!(no_overlap, 0.0, "Should have no overlap");
+        
+        // Test complete overlap
+        let vocab_a = vec!["a".to_string(), "b".to_string()];
+        let vocab_b = vec!["a".to_string(), "b".to_string()];
+        let complete_overlap = system.calculate_vocabulary_overlap(&vocab_a, &vocab_b);
+        assert_eq!(complete_overlap, 1.0, "Should have complete overlap");
+    }
+
+    #[test]
+    fn test_structure_similarity_calculation() {
+        let system_future = create_test_meta_learning_system();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let system = rt.block_on(system_future).expect("Failed to create system");
+        
+        let struct_a = DomainStructure {
+            hierarchy_depth: 4,
+            complexity_score: 0.8,
+            connectivity_pattern: "dense".to_string(),
+        };
+        
+        let struct_b = DomainStructure {
+            hierarchy_depth: 5,
+            complexity_score: 0.9,
+            connectivity_pattern: "hierarchical".to_string(),
+        };
+        
+        let similarity = system.calculate_structure_similarity(&struct_a, &struct_b);
+        
+        assert!(similarity >= 0.0 && similarity <= 1.0, 
+               "Structure similarity should be normalized");
+        
+        // Test identical structures
+        let identical_similarity = system.calculate_structure_similarity(&struct_a, &struct_a);
+        assert_eq!(identical_similarity, 1.0, "Identical structures should have similarity 1.0");
+    }
+
+    #[tokio::test]
+    async fn test_algorithm_effectiveness_tracking() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        // Test algorithm selection based on task type
+        for algorithm in &system.learning_algorithms {
+            let effectiveness = algorithm.get_effectiveness();
+            assert!(effectiveness >= 0.0 && effectiveness <= 1.0,
+                   "Algorithm effectiveness should be normalized");
+            
+            let algorithm_type = algorithm.get_algorithm_type();
+            assert!(!algorithm.get_algorithm_id().is_empty(),
+                   "Algorithm should have an ID");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_learning_algorithm_task_compatibility() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        
+        for task in &learning_tasks {
+            let compatible_algorithms: Vec<_> = system.learning_algorithms.iter()
+                .filter(|alg| alg.can_handle_task(task))
+                .collect();
+            
+            assert!(!compatible_algorithms.is_empty(), 
+                   "Should have at least one compatible algorithm for task type: {:?}", task.task_type);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_learning_algorithm_execution() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        
+        for algorithm in &system.learning_algorithms {
+            for task in &learning_tasks {
+                if algorithm.can_handle_task(task) {
+                    let result = algorithm.execute_learning(task).await
+                        .expect("Failed to execute learning");
+                    
+                    assert!(result.performance_achieved >= 0.0 && result.performance_achieved <= 1.0,
+                           "Performance should be normalized");
+                    assert!(result.learning_efficiency >= 0.0 && result.learning_efficiency <= 1.0,
+                           "Learning efficiency should be normalized");
+                    assert!(result.generalization_score >= 0.0 && result.generalization_score <= 1.0,
+                           "Generalization score should be normalized");
+                    assert!(result.resource_efficiency >= 0.0 && result.resource_efficiency <= 1.0,
+                           "Resource efficiency should be normalized");
+                    assert!(!result.insights_gained.is_empty(),
+                           "Should gain insights from learning");
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_meta_optimization_strategies() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        // Test meta-optimizer functionality
+        assert!(!system.meta_optimizer.optimization_strategies.is_empty() || 
+                system.meta_optimizer.strategy_effectiveness.is_empty(),
+               "Meta-optimizer should be properly initialized");
+    }
+
+    #[tokio::test]
+    async fn test_transfer_learning_engine() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        // Test transfer learning engine functionality
+        let transfer_history = system.transfer_learning.transfer_history.read().unwrap();
+        assert!(transfer_history.is_empty(), "Transfer history should start empty");
+    }
+
+    #[tokio::test]
+    async fn test_meta_learning_config() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let config = &system.meta_config;
+        
+        assert!(config.enable_algorithm_selection, "Should enable algorithm selection by default");
+        assert!(config.enable_transfer_learning, "Should enable transfer learning by default");
+        assert!(config.enable_meta_optimization, "Should enable meta-optimization by default");
+        assert!(config.meta_learning_frequency > Duration::from_secs(0),
+               "Meta-learning frequency should be positive");
+        assert!(config.task_similarity_threshold >= 0.0 && config.task_similarity_threshold <= 1.0,
+               "Task similarity threshold should be normalized");
+        assert!(config.transfer_confidence_threshold >= 0.0 && config.transfer_confidence_threshold <= 1.0,
+               "Transfer confidence threshold should be normalized");
+    }
+
+    #[tokio::test]
+    async fn test_meta_learning_model_storage() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        let learning_tasks = create_test_learning_tasks();
+        
+        let meta_model = system.learn_to_learn(&learning_tasks).await
+            .expect("Failed to learn to learn");
+        
+        // Check that model is stored
+        let models = system.meta_models.read().unwrap();
+        assert!(models.contains_key(&meta_model.model_id),
+               "Meta-learning model should be stored");
+        
+        let stored_model = models.get(&meta_model.model_id).unwrap();
+        assert_eq!(stored_model.model_id, meta_model.model_id,
+                  "Stored model should match created model");
+    }
+
+    #[tokio::test]
+    async fn test_learning_task_execution_tracking() {
+        let system = create_test_meta_learning_system().await
+            .expect("Failed to create meta-learning system");
+        
+        // Initially should have empty history
+        let history = system.learning_task_history.read().unwrap();
+        assert!(history.is_empty(), "Learning task history should start empty");
+    }
+}
