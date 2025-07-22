@@ -1,0 +1,305 @@
+import React, { Suspense, ErrorBoundary } from 'react';
+import { Provider } from 'react-redux';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { store } from './stores';
+import { WebSocketProvider } from './providers/WebSocketProvider';
+import { MCPProvider, MCPProviderDev } from './providers/MCPProvider';
+import { DashboardLayout } from './components/Layout/DashboardLayout';
+
+// Lazy load pages for code splitting
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const CognitivePage = React.lazy(() => import('./pages/CognitivePage'));
+const NeuralPage = React.lazy(() => import('./pages/NeuralPage'));
+const KnowledgeGraphPage = React.lazy(() => import('./pages/KnowledgeGraphPage'));
+const MemoryPage = React.lazy(() => import('./pages/MemoryPage'));
+const ToolsPage = React.lazy(() => import('./pages/ToolsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+
+// Configuration
+const isDevelopment = process.env.NODE_ENV === 'development';
+const WEBSOCKET_URL = process.env.REACT_APP_WEBSOCKET_URL || 'ws://localhost:8080';
+const MCP_SERVER_URL = process.env.REACT_APP_MCP_SERVER_URL || 'http://localhost:3000';
+
+// Loading component
+const LoadingSpinner: React.FC = () => (
+  <div className="loading-container">
+    <div className="loading-spinner" />
+    <div className="loading-text">Loading...</div>
+    <style jsx>{`
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        gap: 1rem;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #007acc;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      .loading-text {
+        color: #666;
+        font-size: 0.875rem;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
+
+// Error fallback component
+interface ErrorFallbackProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+}
+
+const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary }) => (
+  <div className="error-container">
+    <div className="error-content">
+      <h2 className="error-title">Something went wrong</h2>
+      <details className="error-details">
+        <summary>Error details</summary>
+        <pre className="error-message">{error.message}</pre>
+        <pre className="error-stack">{error.stack}</pre>
+      </details>
+      <button className="error-button" onClick={resetErrorBoundary}>
+        Try again
+      </button>
+    </div>
+    <style jsx>{`
+      .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 2rem;
+        background: #fef2f2;
+        color: #991b1b;
+      }
+      
+      .error-content {
+        max-width: 500px;
+        text-align: center;
+      }
+      
+      .error-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #dc2626;
+      }
+      
+      .error-details {
+        margin: 1rem 0;
+        text-align: left;
+        background: white;
+        border: 1px solid #fecaca;
+        border-radius: 4px;
+        padding: 1rem;
+      }
+      
+      .error-details summary {
+        cursor: pointer;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      
+      .error-message,
+      .error-stack {
+        font-size: 0.875rem;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      
+      .error-stack {
+        margin-top: 0.5rem;
+        opacity: 0.7;
+      }
+      
+      .error-button {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      
+      .error-button:hover {
+        background: #b91c1c;
+      }
+    `}</style>
+  </div>
+);
+
+// Custom error boundary component
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App Error Boundary caught an error:', error, errorInfo);
+    
+    // In production, you might want to send this to an error reporting service
+    if (!isDevelopment) {
+      // Example: Sentry.captureException(error);
+    }
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return (
+        <ErrorFallback
+          error={this.state.error}
+          resetErrorBoundary={() => this.setState({ hasError: false, error: null })}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Route error boundary for individual pages
+const RouteErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AppErrorBoundary>
+    <Suspense fallback={<LoadingSpinner />}>
+      {children}
+    </Suspense>
+  </AppErrorBoundary>
+);
+
+// Main App Routes
+const AppRoutes: React.FC = () => (
+  <Routes>
+    <Route 
+      path="/" 
+      element={
+        <RouteErrorBoundary>
+          <Dashboard />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/cognitive" 
+      element={
+        <RouteErrorBoundary>
+          <CognitivePage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/neural" 
+      element={
+        <RouteErrorBoundary>
+          <NeuralPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/knowledge" 
+      element={
+        <RouteErrorBoundary>
+          <KnowledgeGraphPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/memory" 
+      element={
+        <RouteErrorBoundary>
+          <MemoryPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/tools" 
+      element={
+        <RouteErrorBoundary>
+          <ToolsPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/settings" 
+      element={
+        <RouteErrorBoundary>
+          <SettingsPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    {/* Catch all route - redirect to home */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+);
+
+// Main App Component
+const App: React.FC = () => {
+  const MCPComponent = isDevelopment ? MCPProviderDev : MCPProvider;
+  
+  return (
+    <AppErrorBoundary>
+      <Provider store={store}>
+        <WebSocketProvider 
+          url={WEBSOCKET_URL}
+          reconnectDelay={3000}
+          heartbeatInterval={30000}
+        >
+          <MCPComponent serverUrl={MCP_SERVER_URL}>
+            <Router>
+              <DashboardLayout>
+                <AppRoutes />
+              </DashboardLayout>
+            </Router>
+          </MCPComponent>
+        </WebSocketProvider>
+      </Provider>
+    </AppErrorBoundary>
+  );
+};
+
+export default App;
+
+// Performance monitoring (development only)
+if (isDevelopment && typeof window !== 'undefined') {
+  // Monitor performance metrics
+  const observer = new PerformanceObserver((list) => {
+    list.getEntries().forEach((entry) => {
+      console.log(`Performance: ${entry.name} - ${entry.duration}ms`);
+    });
+  });
+  
+  observer.observe({ entryTypes: ['navigation', 'measure'] });
+  
+  // Monitor WebSocket connection performance
+  window.addEventListener('llmkg:websocket:connected', () => {
+    performance.mark('websocket-connected');
+  });
+  
+  window.addEventListener('llmkg:data:received', () => {
+    performance.mark('data-received');
+  });
+}

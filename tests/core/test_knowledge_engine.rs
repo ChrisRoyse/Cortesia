@@ -1,5 +1,5 @@
 use llmkg::core::knowledge_engine::KnowledgeEngine;
-use llmkg::core::knowledge_types::{TripleQuery, KnowledgeResult, MemoryStats, EntityContext};
+use llmkg::core::knowledge_types::TripleQuery;
 use llmkg::core::triple::Triple;
 use std::collections::HashMap;
 use std::sync::Arc;

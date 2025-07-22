@@ -1,7 +1,7 @@
 //! Test data fixtures for consistent testing across all test types
 
 use crate::core::types::EntityKey;
-use crate::cognitive::{neural_query::QueryIntent, types::CognitivePatternType};
+use crate::cognitive::types::CognitivePatternType;
 use std::collections::HashMap;
 
 /// Standard test queries for different cognitive patterns

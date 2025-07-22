@@ -219,16 +219,39 @@ impl SystemsThinking {
         attributes: Vec<InheritedAttribute>,
     ) -> Result<Vec<InheritedAttribute>> {
         let mut resolved = Vec::new();
+        let mut attribute_map: std::collections::HashMap<String, Vec<InheritedAttribute>> = std::collections::HashMap::new();
         
+        // Group attributes by name to detect conflicts
         for attribute in attributes {
-            // Check if this attribute has any exceptions
-            // For now, assume no exceptions since has_exceptions field doesn't exist
-            if false {
-                // Apply exception handling logic
-                let resolved_attr = self.apply_exception_rules(attribute).await?;
-                resolved.push(resolved_attr);
+            attribute_map.entry(attribute.attribute_name.clone())
+                .or_insert_with(Vec::new)
+                .push(attribute);
+        }
+        
+        // Resolve conflicts for each attribute type
+        for (attr_name, mut attr_list) in attribute_map {
+            if attr_list.len() == 1 {
+                // No conflict, use as is
+                resolved.push(attr_list.pop().unwrap());
             } else {
-                resolved.push(attribute);
+                // Multiple values for same attribute - resolve conflict
+                // Sort by inheritance depth (lower depth = more specific = higher priority)
+                attr_list.sort_by_key(|a| a.inheritance_depth);
+                
+                // Check if all values are the same
+                let all_same = attr_list.windows(2).all(|w| w[0].value == w[1].value);
+                
+                if all_same {
+                    // All values agree, take the most confident one
+                    let best_attr = attr_list.into_iter()
+                        .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
+                        .unwrap();
+                    resolved.push(best_attr);
+                } else {
+                    // Values conflict - apply resolution rules
+                    let resolved_attr = self.resolve_attribute_conflict(attr_name, attr_list).await?;
+                    resolved.push(resolved_attr);
+                }
             }
         }
         
@@ -295,6 +318,47 @@ impl SystemsThinking {
         // For now, just return the attribute with exceptions resolved
         // Just return the attribute as-is for now
         Ok(attribute)
+    }
+    
+    /// Resolve conflicts between multiple attribute values
+    async fn resolve_attribute_conflict(
+        &self,
+        attr_name: String,
+        mut attr_list: Vec<InheritedAttribute>,
+    ) -> Result<InheritedAttribute> {
+        // Resolution strategy:
+        // 1. Prefer more specific (lower inheritance depth)
+        // 2. If same depth, prefer higher confidence
+        // 3. For boolean conflicts, prefer "true" (more specific property)
+        
+        // Already sorted by inheritance depth in resolve_exceptions
+        let best_depth = attr_list[0].inheritance_depth;
+        
+        // Filter to only attributes at the best (lowest) depth
+        let best_depth_attrs: Vec<InheritedAttribute> = attr_list.into_iter()
+            .filter(|a| a.inheritance_depth == best_depth)
+            .collect();
+        
+        if best_depth_attrs.len() == 1 {
+            return Ok(best_depth_attrs.into_iter().next().unwrap());
+        }
+        
+        // Multiple at same depth - check if boolean conflict
+        let is_boolean = best_depth_attrs.iter().all(|a| 
+            a.value == "true" || a.value == "false"
+        );
+        
+        if is_boolean {
+            // For boolean conflicts, prefer "true" (more specific property)
+            if let Some(true_attr) = best_depth_attrs.iter().find(|a| a.value == "true") {
+                return Ok(true_attr.clone());
+            }
+        }
+        
+        // Otherwise, use highest confidence
+        Ok(best_depth_attrs.into_iter()
+            .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
+            .unwrap())
     }
 }
 

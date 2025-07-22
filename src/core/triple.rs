@@ -78,6 +78,9 @@ pub enum NodeType {
     
     /// Relationship definition
     Relationship,
+    
+    /// Conceptual node for abstract ideas
+    Concept,
 }
 
 /// Content variants optimized for different knowledge types

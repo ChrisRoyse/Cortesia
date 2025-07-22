@@ -186,6 +186,15 @@ impl EntityData {
     }
 }
 
+/// Entity type that combines EntityKey, EntityData, and additional metadata
+#[derive(Clone, Debug)]
+pub struct Entity {
+    pub id: u32,
+    pub key: EntityKey,
+    pub data: EntityData,
+    pub activation: f32,
+}
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[repr(C)]
 pub struct Relationship {

@@ -6,7 +6,6 @@ use tokio::time::{sleep, Duration};
 use llmkg::core::phase1_integration::Phase1IntegrationLayer;
 use llmkg::core::phase1_types::{Phase1Config, QueryResult, CognitiveQueryResult};
 use llmkg::cognitive::CognitivePatternType;
-use llmkg::error::Result;
 
 /// Helper function to create a test configuration
 fn create_test_config() -> Phase1Config {

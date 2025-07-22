@@ -6,7 +6,6 @@ use llmkg::core::brain_types::{
 };
 use llmkg::core::types::EntityKey;
 use std::collections::HashMap;
-use slotmap::Key;
 
 /// Helper function to create test configuration
 fn create_test_config() -> ActivationConfig {

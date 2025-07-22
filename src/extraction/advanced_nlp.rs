@@ -423,7 +423,7 @@ pub struct CoreferenceResolver {
 }
 
 impl CoreferenceResolver {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let pronoun_patterns = vec![
             Regex::new(r"\bhe\b").unwrap(),
             Regex::new(r"\bshe\b").unwrap(),
@@ -437,13 +437,86 @@ impl CoreferenceResolver {
     }
 
     pub async fn resolve(&self, text: &str) -> Result<String> {
-        // Simple coreference resolution
-        // In a real implementation, this would use sophisticated NLP models
+        // Simple coreference resolution using basic rules
+        let mut resolved = text.to_string();
+        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
         
-        let resolved = text.to_string();
+        // Track entities mentioned in previous sentences
+        let mut recent_entities: Vec<(String, String)> = Vec::new(); // (entity, gender/type)
         
-        // For now, just return the original text
-        // A real implementation would resolve pronouns to their antecedents
+        for (i, sentence) in sentences.iter().enumerate() {
+            let sentence = sentence.trim();
+            if sentence.is_empty() {
+                continue;
+            }
+            
+            // Extract potential entity mentions (simple heuristic: capitalized words)
+            let words: Vec<&str> = sentence.split_whitespace().collect();
+            for word in &words {
+                if word.chars().next().map_or(false, |c| c.is_uppercase()) && word.len() > 2 {
+                    // Simple gender/type detection
+                    let entity_type = if sentence.contains("she") || sentence.contains("her") {
+                        "female"
+                    } else if sentence.contains("he") || sentence.contains("his") {
+                        "male"
+                    } else if sentence.contains("it") || sentence.contains("its") {
+                        "thing"
+                    } else {
+                        "unknown"
+                    };
+                    
+                    recent_entities.push((word.trim_end_matches(|c: char| !c.is_alphanumeric()).to_string(), entity_type.to_string()));
+                    
+                    // Keep only the most recent 3 entities
+                    if recent_entities.len() > 3 {
+                        recent_entities.remove(0);
+                    }
+                }
+            }
+            
+            // Resolve pronouns in the current sentence
+            if i > 0 && !recent_entities.is_empty() {
+                let mut sentence_resolved = sentence.to_string();
+                
+                // Simple pronoun resolution based on gender/type matching
+                for (entity, entity_type) in recent_entities.iter().rev() {
+                    match entity_type.as_str() {
+                        "male" => {
+                            sentence_resolved = sentence_resolved
+                                .replace(" he ", &format!(" {} ", entity))
+                                .replace(" He ", &format!(" {} ", entity))
+                                .replace(" his ", &format!(" {}'s ", entity))
+                                .replace(" His ", &format!(" {}'s ", entity));
+                        }
+                        "female" => {
+                            sentence_resolved = sentence_resolved
+                                .replace(" she ", &format!(" {} ", entity))
+                                .replace(" She ", &format!(" {} ", entity))
+                                .replace(" her ", &format!(" {}'s ", entity))
+                                .replace(" Her ", &format!(" {}'s ", entity));
+                        }
+                        "thing" => {
+                            sentence_resolved = sentence_resolved
+                                .replace(" it ", &format!(" {} ", entity))
+                                .replace(" It ", &format!(" {} ", entity))
+                                .replace(" its ", &format!(" {}'s ", entity))
+                                .replace(" Its ", &format!(" {}'s ", entity));
+                        }
+                        _ => {}
+                    }
+                    
+                    // Break after first successful resolution to avoid over-replacement
+                    if sentence_resolved != sentence {
+                        break;
+                    }
+                }
+                
+                // Replace the sentence in the resolved text
+                if sentence_resolved != sentence {
+                    resolved = resolved.replace(sentence, &sentence_resolved);
+                }
+            }
+        }
         
         Ok(resolved)
     }

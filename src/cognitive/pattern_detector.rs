@@ -101,20 +101,83 @@ impl NeuralPatternDetector {
     }
     
     /// Detect temporal patterns in knowledge evolution
-    async fn detect_temporal_patterns(&self, _scope: AnalysisScope) -> Result<Vec<DetectedPattern>> {
+    async fn detect_temporal_patterns(&self, scope: AnalysisScope) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
         
-        // For now, create a simple temporal pattern
-        patterns.push(DetectedPattern {
-            pattern_id: "temporal_growth".to_string(),
-            id: "temporal_growth".to_string(),
-            pattern_type: PatternType::Temporal,
-            confidence: 0.8,
-            entities_involved: Vec::new(),
-            affected_entities: Vec::new(),
-            description: "Knowledge graph showing temporal growth patterns".to_string(),
-            frequency: 0.7,
-        });
+        // Get entities to analyze
+        let entity_keys = self.get_entities_for_scope(scope).await?;
+        let all_entities = self.graph.get_all_entities().await;
+        
+        // Analyze creation time patterns
+        let mut creation_times = Vec::new();
+        for (key, entity_data, _) in &all_entities {
+            if entity_keys.contains(key) {
+                // Use entity type_id as a proxy for creation order (entities with same type created together)
+                creation_times.push((entity_data.type_id, *key));
+            }
+        }
+        
+        // Sort by type_id (creation order proxy)
+        creation_times.sort_by_key(|&(type_id, _)| type_id);
+        
+        // Detect burst patterns (many entities created close together)
+        let mut burst_count = 0;
+        let mut current_burst = Vec::new();
+        let mut last_version = 0;
+        
+        for (version, key) in creation_times {
+            if version - last_version <= 2 {
+                // Close together in version numbers
+                current_burst.push(key);
+            } else if !current_burst.is_empty() {
+                // End of burst
+                if current_burst.len() >= 3 {
+                    burst_count += 1;
+                    patterns.push(DetectedPattern {
+                        pattern_id: format!("temporal_burst_{}", burst_count),
+                        id: format!("temporal_burst_{}", burst_count),
+                        pattern_type: PatternType::Temporal,
+                        confidence: 0.7 + (current_burst.len() as f32 * 0.05).min(0.2),
+                        entities_involved: current_burst.clone(),
+                        affected_entities: current_burst.clone(),
+                        description: format!("Temporal burst pattern with {} entities", current_burst.len()),
+                        frequency: current_burst.len() as f32,
+                    });
+                }
+                current_burst.clear();
+                current_burst.push(key);
+            }
+            last_version = version;
+        }
+        
+        // Check final burst
+        if current_burst.len() >= 3 {
+            burst_count += 1;
+            patterns.push(DetectedPattern {
+                pattern_id: format!("temporal_burst_{}", burst_count),
+                id: format!("temporal_burst_{}", burst_count),
+                pattern_type: PatternType::Temporal,
+                confidence: 0.7 + (current_burst.len() as f32 * 0.05).min(0.2),
+                entities_involved: current_burst.clone(),
+                affected_entities: current_burst.clone(),
+                description: format!("Temporal burst pattern with {} entities", current_burst.len()),
+                frequency: current_burst.len() as f32,
+            });
+        }
+        
+        // Detect growth pattern
+        if entity_keys.len() > 10 {
+            patterns.push(DetectedPattern {
+                pattern_id: "temporal_growth".to_string(),
+                id: "temporal_growth".to_string(),
+                pattern_type: PatternType::Temporal,
+                confidence: 0.8,
+                entities_involved: entity_keys.clone(),
+                affected_entities: entity_keys,
+                description: "Knowledge graph showing temporal growth patterns".to_string(),
+                frequency: 0.7,
+            });
+        }
         
         Ok(patterns)
     }
@@ -147,20 +210,93 @@ impl NeuralPatternDetector {
     }
     
     /// Detect usage patterns in entity access
-    async fn detect_usage_patterns(&self, _scope: AnalysisScope) -> Result<Vec<DetectedPattern>> {
+    async fn detect_usage_patterns(&self, scope: AnalysisScope) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
         
-        // Simple usage pattern based on activation frequency
-        patterns.push(DetectedPattern {
-            pattern_id: "high_usage_entities".to_string(),
-            id: "high_usage_entities".to_string(),
-            pattern_type: PatternType::Usage,
-            confidence: 0.7,
-            entities_involved: Vec::new(),
-            affected_entities: Vec::new(),
-            description: "Entities with high usage frequency".to_string(),
-            frequency: 0.6,
-        });
+        // Get entities to analyze
+        let entity_keys = self.get_entities_for_scope(scope).await?;
+        let all_entities = self.graph.get_all_entities().await;
+        
+        // Analyze activation levels as proxy for usage
+        let mut high_usage_entities = Vec::new();
+        let mut low_usage_entities = Vec::new();
+        let mut activation_sum = 0.0;
+        let mut count = 0;
+        
+        for (key, _, activation) in &all_entities {
+            if entity_keys.contains(key) {
+                activation_sum += activation;
+                count += 1;
+            }
+        }
+        
+        let avg_activation = if count > 0 { activation_sum / count as f32 } else { 0.0 };
+        
+        // Categorize entities by usage (activation level)
+        for (key, _, activation) in &all_entities {
+            if entity_keys.contains(key) {
+                if *activation > avg_activation * 1.5 {
+                    high_usage_entities.push(*key);
+                } else if *activation < avg_activation * 0.5 {
+                    low_usage_entities.push(*key);
+                }
+            }
+        }
+        
+        // High usage pattern
+        if !high_usage_entities.is_empty() {
+            patterns.push(DetectedPattern {
+                pattern_id: "high_usage_entities".to_string(),
+                id: "high_usage_entities".to_string(),
+                pattern_type: PatternType::Usage,
+                confidence: 0.8,
+                entities_involved: high_usage_entities.clone(),
+                affected_entities: high_usage_entities.clone(),
+                description: format!("Entities with high usage frequency ({} entities)", high_usage_entities.len()),
+                frequency: high_usage_entities.len() as f32 / entity_keys.len().max(1) as f32,
+            });
+        }
+        
+        // Low usage pattern (potential for removal)
+        if !low_usage_entities.is_empty() && low_usage_entities.len() >= 5 {
+            patterns.push(DetectedPattern {
+                pattern_id: "low_usage_entities".to_string(),
+                id: "low_usage_entities".to_string(),
+                pattern_type: PatternType::Usage,
+                confidence: 0.7,
+                entities_involved: low_usage_entities.clone(),
+                affected_entities: low_usage_entities.clone(),
+                description: format!("Entities with low usage frequency ({} entities)", low_usage_entities.len()),
+                frequency: low_usage_entities.len() as f32 / entity_keys.len().max(1) as f32,
+            });
+        }
+        
+        // Access pattern based on connectivity
+        let mut connection_counts = HashMap::new();
+        for &key in &entity_keys {
+            let neighbors = self.graph.get_neighbors_with_weights(key).await;
+            connection_counts.insert(key, neighbors.len());
+        }
+        
+        // Find hub entities (frequently accessed)
+        let avg_connections = connection_counts.values().sum::<usize>() as f32 / connection_counts.len().max(1) as f32;
+        let hub_entities: Vec<EntityKey> = connection_counts.iter()
+            .filter(|(_, &count)| count as f32 > avg_connections * 2.0)
+            .map(|(&key, _)| key)
+            .collect();
+        
+        if !hub_entities.is_empty() {
+            patterns.push(DetectedPattern {
+                pattern_id: "access_hub_pattern".to_string(),
+                id: "access_hub_pattern".to_string(),
+                pattern_type: PatternType::Usage,
+                confidence: 0.75,
+                entities_involved: hub_entities.clone(),
+                affected_entities: hub_entities,
+                description: "Hub entities frequently accessed in queries".to_string(),
+                frequency: 0.8,
+            });
+        }
         
         Ok(patterns)
     }

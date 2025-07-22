@@ -110,7 +110,7 @@ mod lateral_tests {
     #[tokio::test]
     async fn test_novelty_threshold_filtering() {
         let graph = create_mixed_novelty_graph().await;
-        let thinking = LateralThinking::new(graph, 0.7, 3); // High novelty threshold
+        let thinking = LateralThinking::new(graph); // High novelty threshold
         
         let result = thinking.find_creative_connections("start", "target", 3).await;
         assert!(result.is_ok());

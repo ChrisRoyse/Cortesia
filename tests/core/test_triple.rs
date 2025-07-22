@@ -5,7 +5,6 @@ use llmkg::core::triple::{
 use llmkg::core::knowledge_engine::KnowledgeEngine;
 use llmkg::core::types::EntityKey;
 use llmkg::embedding::store::EmbeddingStore;
-use llmkg::error::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio;

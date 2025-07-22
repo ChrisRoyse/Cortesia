@@ -18,6 +18,7 @@ use llmkg::learning::{
     NeuralPatternDetectionSystem,
     ParameterTuner,
     ActivationEvent,
+    ActivationContext,
     LearningContext,
     WeightChange,
     LearningUpdate,
@@ -28,6 +29,8 @@ use llmkg::learning::{
     LearningGoalType,
     CorePerformanceBottleneck
 };
+
+use llmkg::cognitive::types::CognitivePatternType;
 
 use llmkg::learning::phase4_integration::{
     Phase4Config,
@@ -43,8 +46,9 @@ use llmkg::learning::phase4_integration::{
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::sdr_storage::SDRStorage;
-use llmkg::core::entity::EntityId;
-use llmkg::core::types::{NodeType, RelationType};
+use llmkg::core::types::EntityKey;
+use llmkg::core::triple::NodeType;
+use llmkg::core::brain_types::RelationType;
 
 /// Test fixture for learning integration tests
 pub struct LearningIntegrationTestFixture {
@@ -58,10 +62,11 @@ impl LearningIntegrationTestFixture {
     /// Create a new test fixture with all dependencies
     pub async fn new() -> Result<Self> {
         // Create test brain graph
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await?);
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
         
         // Create test SDR storage
-        let sdr_storage = Arc::new(SDRStorage::new().await?);
+        use llmkg::core::sdr_types::SDRConfig;
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
         
         // Create Phase 3 cognitive system
         let phase3_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
@@ -71,14 +76,31 @@ impl LearningIntegrationTestFixture {
         
         // Create Phase 4 learning system with test configuration
         let config = Phase4Config {
-            hebbian_learning_rate: 0.01,
-            homeostasis_target_activity: 0.1,
-            adaptive_learning_enabled: true,
-            emergency_threshold: 0.05,
-            max_concurrent_sessions: 3,
-            performance_monitoring_interval: Duration::from_secs(60),
-            safety_checks_enabled: true,
-            rollback_enabled: true,
+            learning_aggressiveness: 0.5,
+            integration_depth: IntegrationDepth::Standard,
+            performance_targets: PerformanceTargets {
+                learning_efficiency_target: 0.8,
+                adaptation_speed_target: Duration::from_secs(300),
+                memory_overhead_limit: 0.2,
+                performance_degradation_limit: 0.1,
+                user_satisfaction_target: 0.85,
+            },
+            safety_constraints: SafetyConstraints {
+                max_concurrent_learning_sessions: 3,
+                rollback_capability_required: true,
+                performance_monitoring_required: true,
+                emergency_protocols_enabled: true,
+                user_intervention_threshold: 0.5,
+                max_learning_impact_per_session: 0.15,
+            },
+            resource_limits: ResourceLimits {
+                max_memory_usage_mb: 1024.0,
+                max_cpu_usage_percentage: 50.0,
+                max_storage_usage_mb: 200.0,
+                max_network_bandwidth_mbps: 25.0,
+                max_session_duration: Duration::from_secs(600),
+                max_daily_learning_time: Duration::from_secs(3600),
+            },
         };
         
         let phase4_system = Phase4LearningSystem::new(
@@ -97,7 +119,7 @@ impl LearningIntegrationTestFixture {
     }
     
     /// Populate the graph with test entities and relationships
-    pub async fn setup_test_knowledge(&self) -> Result<Vec<EntityId>> {
+    pub async fn setup_test_knowledge(&self) -> Result<Vec<EntityKey>> {
         let mut entities = Vec::new();
         
         // Create test concepts
@@ -143,18 +165,17 @@ impl LearningIntegrationTestFixture {
     }
     
     /// Create test activation events
-    pub fn create_test_activation_events(&self, entity_ids: &[EntityId]) -> Vec<ActivationEvent> {
-        entity_ids.iter().enumerate().map(|(i, &entity_id)| {
+    pub fn create_test_activation_events(&self, entity_ids: &[EntityKey]) -> Vec<ActivationEvent> {
+        entity_ids.iter().enumerate().map(|(i, &entity_key)| {
             ActivationEvent {
-                entity_id,
+                entity_key,
                 activation_strength: 0.5 + (i as f32 * 0.1),
-                timestamp: SystemTime::now(),
-                source: format!("test_source_{}", i),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "integration_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["biological_plausibility".to_string()],
+                timestamp: std::time::Instant::now(),
+                context: ActivationContext {
+                    query_id: format!("test_source_{}", i),
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
@@ -339,14 +360,31 @@ async fn test_learning_configuration_update() -> Result<()> {
     
     // Create new configuration
     let new_config = Phase4Config {
-        hebbian_learning_rate: 0.02,  // Different from default
-        homeostasis_target_activity: 0.15,  // Different from default
-        adaptive_learning_enabled: true,
-        emergency_threshold: 0.03,  // Different from default
-        max_concurrent_sessions: 5,  // Different from default
-        performance_monitoring_interval: Duration::from_secs(30),  // Different from default
-        safety_checks_enabled: true,
-        rollback_enabled: true,
+        learning_aggressiveness: 0.7,  // Different from default
+        integration_depth: IntegrationDepth::Deep,  // Different from default
+        performance_targets: PerformanceTargets {
+            learning_efficiency_target: 0.9,
+            adaptation_speed_target: Duration::from_secs(120),
+            memory_overhead_limit: 0.25,
+            performance_degradation_limit: 0.15,
+            user_satisfaction_target: 0.9,
+        },
+        safety_constraints: SafetyConstraints {
+            max_concurrent_learning_sessions: 5,  // Different from default
+            rollback_capability_required: true,
+            performance_monitoring_required: true,
+            emergency_protocols_enabled: true,
+            user_intervention_threshold: 0.3,  // Different from default
+            max_learning_impact_per_session: 0.2,  // Different from default
+        },
+        resource_limits: ResourceLimits {
+            max_memory_usage_mb: 2048.0,  // Different from default
+            max_cpu_usage_percentage: 70.0,  // Different from default
+            max_storage_usage_mb: 500.0,
+            max_network_bandwidth_mbps: 50.0,
+            max_session_duration: Duration::from_secs(900),  // Different from default
+            max_daily_learning_time: Duration::from_secs(7200),
+        },
     };
     
     // Update configuration

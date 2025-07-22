@@ -1,7 +1,6 @@
 //! Custom assertions for cognitive module tests
 
 use crate::core::types::EntityKey;
-use crate::core::entity_compat; // Import for EntityKey::from_hash
 use std::collections::HashMap;
 
 /// Custom assertions for cognitive tests

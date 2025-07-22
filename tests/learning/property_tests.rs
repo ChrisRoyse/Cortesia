@@ -14,17 +14,23 @@ use llmkg::learning::{
     SynapticHomeostasis,
     AdaptiveLearningSystem,
     ActivationEvent,
+    ActivationContext,
     LearningContext,
+    LearningGoal,
+    LearningGoalType,
     WeightChange,
     STDPResult,
     PlasticityType,
     LearningUpdate,
 };
 
+use llmkg::cognitive::types::CognitivePatternType;
+
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::sdr_storage::SDRStorage;
-use llmkg::core::entity::EntityId;
-use llmkg::core::types::{NodeType, RelationType};
+use llmkg::core::types::EntityKey;
+use llmkg::core::triple::NodeType;
+use llmkg::core::brain_types::RelationType;
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 
 /// Property test framework for biological learning principles
@@ -33,7 +39,7 @@ pub struct BiologicalLearningPropertyTests {
     homeostasis_system: Arc<Mutex<SynapticHomeostasis>>,
     adaptive_system: Arc<Mutex<AdaptiveLearningSystem>>,
     brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
-    test_entities: Vec<EntityId>,
+    test_entities: Vec<EntityKey>,
 }
 
 impl BiologicalLearningPropertyTests {
@@ -138,35 +144,33 @@ impl BiologicalLearningPropertyTests {
     }
     
     fn generate_sequential_activations(&self) -> Vec<ActivationEvent> {
-        self.test_entities.iter().enumerate().map(|(i, &entity_id)| {
+        self.test_entities.iter().enumerate().map(|(i, &entity_key)| {
             ActivationEvent {
-                entity_id,
+                entity_key,
                 activation_strength: 0.8,
-                timestamp: SystemTime::now() + Duration::from_millis(i as u64 * 10),
-                source: "sequential_test".to_string(),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "property_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["biological_timing".to_string()],
+                timestamp: std::time::Instant::now() + Duration::from_millis(i as u64 * 10),
+                context: ActivationContext {
+                    query_id: format!("sequential_test_{}", i),
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
     }
     
     fn generate_simultaneous_activations(&self) -> Vec<ActivationEvent> {
-        let timestamp = SystemTime::now();
-        self.test_entities.iter().map(|&entity_id| {
+        let timestamp = std::time::Instant::now();
+        self.test_entities.iter().enumerate().map(|(i, &entity_key)| {
             ActivationEvent {
-                entity_id,
+                entity_key,
                 activation_strength: 0.7,
                 timestamp,
-                source: "simultaneous_test".to_string(),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "property_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["biological_timing".to_string()],
+                context: ActivationContext {
+                    query_id: format!("simultaneous_test_{}", i),
+                    cognitive_pattern: CognitivePatternType::Divergent,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
@@ -176,25 +180,24 @@ impl BiologicalLearningPropertyTests {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
         
-        self.test_entities.iter().enumerate().map(|(i, &entity_id)| {
+        self.test_entities.iter().enumerate().map(|(i, &entity_key)| {
             // Use deterministic "random" based on entity index
             let mut hasher = DefaultHasher::new();
-            entity_id.hash(&mut hasher);
+            entity_key.hash(&mut hasher);
             let hash = hasher.finish();
             
             let strength = 0.1 + (hash % 80) as f32 / 100.0; // 0.1 to 0.9
             let delay = (hash % 100) as u64; // 0 to 99ms
             
             ActivationEvent {
-                entity_id,
+                entity_key,
                 activation_strength: strength,
-                timestamp: SystemTime::now() + Duration::from_millis(delay),
-                source: "random_test".to_string(),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "property_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["biological_variability".to_string()],
+                timestamp: std::time::Instant::now() + Duration::from_millis(delay),
+                context: ActivationContext {
+                    query_id: format!("random_test_{}", i),
+                    cognitive_pattern: CognitivePatternType::Lateral,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
@@ -206,15 +209,14 @@ impl BiologicalLearningPropertyTests {
         for cycle in 0..5 {
             for i in 0..3.min(self.test_entities.len()) {
                 events.push(ActivationEvent {
-                    entity_id: self.test_entities[i],
+                    entity_key: self.test_entities[i],
                     activation_strength: 0.6,
-                    timestamp: SystemTime::now() + Duration::from_millis(cycle * 50 + i * 10),
-                    source: "repetitive_test".to_string(),
-                    context: LearningContext {
-                        session_id: Uuid::new_v4(),
-                        learning_phase: "property_test".to_string(),
-                        performance_target: 0.8,
-                        constraints: vec!["biological_repetition".to_string()],
+                    timestamp: std::time::Instant::now() + Duration::from_millis(cycle * 50 + i * 10),
+                    context: ActivationContext {
+                        query_id: format!("repetitive_test_{}_{}", cycle, i),
+                        cognitive_pattern: CognitivePatternType::Systems,
+                        user_session: Some(Uuid::new_v4().to_string()),
+                        outcome_quality: Some(0.8),
                     },
                 });
             }
@@ -224,17 +226,16 @@ impl BiologicalLearningPropertyTests {
     
     fn generate_sparse_activations(&self) -> Vec<ActivationEvent> {
         // Only activate every 3rd entity
-        self.test_entities.iter().step_by(3).enumerate().map(|(i, &entity_id)| {
+        self.test_entities.iter().step_by(3).enumerate().map(|(i, &entity_key)| {
             ActivationEvent {
-                entity_id,
+                entity_key,
                 activation_strength: 0.9,
-                timestamp: SystemTime::now() + Duration::from_millis(i as u64 * 20),
-                source: "sparse_test".to_string(),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "property_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["biological_sparsity".to_string()],
+                timestamp: std::time::Instant::now() + Duration::from_millis(i as u64 * 20),
+                context: ActivationContext {
+                    query_id: format!("sparse_test_{}", i),
+                    cognitive_pattern: CognitivePatternType::Critical,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
@@ -312,17 +313,16 @@ async fn property_test_homeostasis_stability() -> Result<()> {
     // Test Property: Homeostasis should prevent runaway excitation or inhibition
     
     // Generate very high activation pattern
-    let high_activations = test_framework.test_entities.iter().map(|&entity_id| {
+    let high_activations = test_framework.test_entities.iter().enumerate().map(|(i, &entity_key)| {
         ActivationEvent {
-            entity_id,
+            entity_key,
             activation_strength: 1.0, // Maximum activation
-            timestamp: SystemTime::now(),
-            source: "high_activation_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["homeostasis_test".to_string()],
+            timestamp: std::time::Instant::now(),
+            context: ActivationContext {
+                query_id: format!("high_activation_test_{}", i),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         }
     }).collect::<Vec<_>>();
@@ -402,39 +402,36 @@ async fn property_test_temporal_order_sensitivity() -> Result<()> {
     // Create forward sequence: A -> B -> C
     let forward_sequence = vec![
         ActivationEvent {
-            entity_id: test_framework.test_entities[0],
+            entity_key: test_framework.test_entities[0],
             activation_strength: 0.8,
-            timestamp: SystemTime::now(),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now(),
+            context: ActivationContext {
+                query_id: "temporal_test_0".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
         ActivationEvent {
-            entity_id: test_framework.test_entities[1],
+            entity_key: test_framework.test_entities[1],
             activation_strength: 0.8,
-            timestamp: SystemTime::now() + Duration::from_millis(10),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now() + Duration::from_millis(10),
+            context: ActivationContext {
+                query_id: "temporal_test_1".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
         ActivationEvent {
-            entity_id: test_framework.test_entities[2],
+            entity_key: test_framework.test_entities[2],
             activation_strength: 0.8,
-            timestamp: SystemTime::now() + Duration::from_millis(20),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now() + Duration::from_millis(20),
+            context: ActivationContext {
+                query_id: "temporal_test_2".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
     ];
@@ -442,39 +439,36 @@ async fn property_test_temporal_order_sensitivity() -> Result<()> {
     // Create reverse sequence: C -> B -> A
     let reverse_sequence = vec![
         ActivationEvent {
-            entity_id: test_framework.test_entities[2],
+            entity_key: test_framework.test_entities[2],
             activation_strength: 0.8,
-            timestamp: SystemTime::now(),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now(),
+            context: ActivationContext {
+                query_id: "reverse_temporal_test_0".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
         ActivationEvent {
-            entity_id: test_framework.test_entities[1],
+            entity_key: test_framework.test_entities[1],
             activation_strength: 0.8,
-            timestamp: SystemTime::now() + Duration::from_millis(10),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now() + Duration::from_millis(10),
+            context: ActivationContext {
+                query_id: "reverse_temporal_test_1".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
         ActivationEvent {
-            entity_id: test_framework.test_entities[0],
+            entity_key: test_framework.test_entities[0],
             activation_strength: 0.8,
-            timestamp: SystemTime::now() + Duration::from_millis(20),
-            source: "temporal_test".to_string(),
-            context: LearningContext {
-                session_id: Uuid::new_v4(),
-                learning_phase: "property_test".to_string(),
-                performance_target: 0.8,
-                constraints: vec!["temporal_order".to_string()],
+            timestamp: std::time::Instant::now() + Duration::from_millis(20),
+            context: ActivationContext {
+                query_id: "reverse_temporal_test_2".to_string(),
+                cognitive_pattern: CognitivePatternType::Convergent,
+                user_session: Some(Uuid::new_v4().to_string()),
+                outcome_quality: Some(0.8),
             },
         },
     ];
@@ -585,7 +579,7 @@ async fn property_test_adaptation_convergence() -> Result<()> {
 
 // Helper functions for property tests
 
-async fn get_connection_strengths(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityId]) -> Result<Vec<f32>> {
+async fn get_connection_strengths(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityKey]) -> Result<Vec<f32>> {
     let mut strengths = Vec::new();
     
     for i in 0..entities.len()-1 {
@@ -597,7 +591,7 @@ async fn get_connection_strengths(brain_graph: &BrainEnhancedKnowledgeGraph, ent
     Ok(strengths)
 }
 
-async fn measure_average_activity(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityId]) -> Result<f32> {
+async fn measure_average_activity(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityKey]) -> Result<f32> {
     // In real implementation, would measure actual neural activity
     // For now, simulate with dummy value
     Ok(0.3)
@@ -621,8 +615,7 @@ fn simulate_temporal_learning(events: &[ActivationEvent]) -> f32 {
     // Calculate time differences and simulate learning effect
     let mut total_effect = 0.0;
     for i in 0..events.len()-1 {
-        let time_diff = events[i+1].timestamp.duration_since(events[i].timestamp)
-            .unwrap_or_default().as_millis() as f32;
+        let time_diff = events[i+1].timestamp.saturating_duration_since(events[i].timestamp).as_millis() as f32;
         
         // STDP window: stronger learning for shorter time differences
         let stdp_factor = (-time_diff / 20.0).exp(); // 20ms time constant
@@ -632,7 +625,7 @@ fn simulate_temporal_learning(events: &[ActivationEvent]) -> f32 {
     total_effect / (events.len() - 1) as f32
 }
 
-async fn calculate_system_energy(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityId]) -> Result<f32> {
+async fn calculate_system_energy(brain_graph: &BrainEnhancedKnowledgeGraph, entities: &[EntityKey]) -> Result<f32> {
     // Simulate system energy calculation
     // In real implementation, would calculate based on actual neural activities and connections
     Ok(entities.len() as f32 * 0.1) // Simple energy proportional to number of entities

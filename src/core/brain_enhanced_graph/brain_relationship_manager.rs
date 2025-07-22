@@ -65,6 +65,22 @@ impl BrainEnhancedKnowledgeGraph {
         self.insert_brain_relationship(relationship).await
     }
 
+    /// Add connection (test compatibility method) - takes entity IDs instead of EntityKeys
+    pub async fn add_connection(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
+        // Get EntityKeys from IDs using the core graph's lookup
+        let source_key = self.core_graph.get_entity_key(source_id)
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
+        let target_key = self.core_graph.get_entity_key(target_id)
+            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
+        
+        self.add_weighted_edge(source_key, target_key, weight).await
+    }
+
+    /// Add relationship (test compatibility method) - alias for add_connection
+    pub async fn add_relationship(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
+        self.add_connection(source_id, target_id, weight).await
+    }
+
     /// Check if relationship exists
     pub async fn has_relationship(&self, source: EntityKey, target: EntityKey) -> bool {
         self.core_graph.has_relationship(source, target)

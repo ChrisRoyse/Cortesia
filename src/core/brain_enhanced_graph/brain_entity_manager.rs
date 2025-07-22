@@ -55,6 +55,28 @@ impl BrainEnhancedKnowledgeGraph {
         self.insert_brain_entity(id, data).await
     }
 
+    /// Add entity with string parameters (test compatibility method)
+    pub async fn add_entity_with_id(&self, id: &str, description: &str) -> Result<EntityKey> {
+        // Generate a numeric ID from the string identifier
+        let numeric_id = {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            
+            let mut hasher = DefaultHasher::new();
+            id.hash(&mut hasher);
+            (hasher.finish() as u32) % 1000000 + 1 // Ensure non-zero
+        };
+        
+        // Create entity data with the description as properties
+        let entity_data = EntityData {
+            type_id: 1, // Default type
+            embedding: vec![0.1; self.embedding_dimension()],
+            properties: description.to_string(),
+        };
+        
+        self.insert_brain_entity(numeric_id, entity_data).await
+    }
+
     /// Insert logic gate entity
     pub async fn insert_logic_gate(&self, id: u32, gate_type: &str, inputs: Vec<EntityKey>, outputs: Vec<EntityKey>) -> Result<EntityKey> {
         // Create gate properties
@@ -250,6 +272,57 @@ impl BrainEnhancedKnowledgeGraph {
             .filter(|(_, &activation)| activation >= threshold)
             .map(|(&key, &activation)| (key, activation))
             .collect()
+    }
+
+    /// Get entity by description (searches properties for matching description)
+    pub async fn get_entity_by_description(&self, description: &str) -> Result<Option<crate::core::types::Entity>> {
+        let all_entities = self.get_all_entities().await;
+        
+        for (key, data, activation) in all_entities {
+            // First check if the properties string directly matches the description
+            if data.properties == description {
+                // Get the entity ID from the reverse mapping
+                let id = self.get_entity_id_for_key(key).unwrap_or(0);
+                return Ok(Some(crate::core::types::Entity {
+                    id,
+                    key,
+                    data,
+                    activation,
+                }));
+            }
+            
+            // Also try parsing as JSON and check for matches
+            if let Ok(props) = serde_json::from_str::<serde_json::Value>(&data.properties) {
+                // Check if any property value matches the description
+                if let Some(obj) = props.as_object() {
+                    for (_, value) in obj {
+                        if let Some(value_str) = value.as_str() {
+                            if value_str == description {
+                                // Get the entity ID from the reverse mapping
+                                let id = self.get_entity_id_for_key(key).unwrap_or(0);
+                                return Ok(Some(crate::core::types::Entity {
+                                    id,
+                                    key,
+                                    data,
+                                    activation,
+                                }));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(None)
+    }
+
+    /// Get entity ID for a given EntityKey
+    fn get_entity_id_for_key(&self, entity_key: EntityKey) -> Option<u32> {
+        // This is a simplified implementation - in practice you'd want a reverse mapping
+        // For now, we'll use a simple approach based on the entity key's internal representation
+        use slotmap::{Key, KeyData};
+        let key_data: KeyData = entity_key.data();
+        Some(key_data.as_ffi() as u32)
     }
 
     /// Calculate initial activation for entity

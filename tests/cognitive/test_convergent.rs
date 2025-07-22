@@ -72,15 +72,16 @@ mod convergent_tests {
         graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 128])).await.unwrap();
         graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 128])).await.unwrap();
         
-        // Add relationships using entity IDs
-        let dog_id = graph.get_entity_by_description("dog").await.unwrap().unwrap().id;
-        let mammal_id = graph.get_entity_by_description("mammal").await.unwrap().unwrap().id;
-        let warm_id = graph.get_entity_by_description("warm_blooded").await.unwrap().unwrap().id;
-        let pet_id = graph.get_entity_by_description("pet").await.unwrap().unwrap().id;
+        // Store entity keys for relationships
+        let dog_key = graph.add_entity(EntityData::new(5, "dog".to_string(), vec![0.1; 128])).await.unwrap();
+        let mammal_key = graph.add_entity(EntityData::new(6, "mammal".to_string(), vec![0.2; 128])).await.unwrap();
+        let warm_key = graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 128])).await.unwrap();
+        let pet_key = graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 128])).await.unwrap();
         
-        graph.add_connection(dog_id, mammal_id, 0.9).await.unwrap();
-        graph.add_connection(mammal_id, warm_id, 0.8).await.unwrap();
-        graph.add_connection(dog_id, pet_id, 0.7).await.unwrap();
+        // Add relationships using add_relationship method
+        graph.add_relationship(5, 6, 0.9).await.unwrap(); // dog -> mammal
+        graph.add_relationship(6, 7, 0.8).await.unwrap(); // mammal -> warm_blooded  
+        graph.add_relationship(5, 8, 0.7).await.unwrap(); // dog -> pet
         
         graph
     }
@@ -95,17 +96,13 @@ mod convergent_tests {
         graph.add_entity(EntityData::new(3, "chain_middle".to_string(), vec![0.0; 128])).await.unwrap();
         graph.add_entity(EntityData::new(4, "chain_end".to_string(), vec![0.0; 128])).await.unwrap();
         
-        let start_id = graph.get_entity_by_description("start").await.unwrap().unwrap().id;
-        let dead_id = graph.get_entity_by_description("dead_end").await.unwrap().unwrap().id;
-        let middle_id = graph.get_entity_by_description("chain_middle").await.unwrap().unwrap().id;
-        let end_id = graph.get_entity_by_description("chain_end").await.unwrap().unwrap().id;
-        
+        // Add relationships using entity IDs
         // High activation path that leads nowhere
-        graph.add_connection(start_id, dead_id, 0.9).await.unwrap();
+        graph.add_relationship(1, 2, 0.9).await.unwrap(); // start -> dead_end
         
         // Lower activation path that continues
-        graph.add_connection(start_id, middle_id, 0.4).await.unwrap();
-        graph.add_connection(middle_id, end_id, 0.8).await.unwrap();
+        graph.add_relationship(1, 3, 0.4).await.unwrap(); // start -> chain_middle
+        graph.add_relationship(3, 4, 0.8).await.unwrap(); // chain_middle -> chain_end
         
         graph
     }
@@ -152,14 +149,10 @@ mod convergent_tests {
         graph.add_entity(EntityData::new(3, "level2".to_string(), vec![0.0; 128])).await.unwrap();
         graph.add_entity(EntityData::new(4, "level3".to_string(), vec![0.0; 128])).await.unwrap();
         
-        let root_id = graph.get_entity_by_description("root").await.unwrap().unwrap().id;
-        let level1_id = graph.get_entity_by_description("level1").await.unwrap().unwrap().id;
-        let level2_id = graph.get_entity_by_description("level2").await.unwrap().unwrap().id;
-        let level3_id = graph.get_entity_by_description("level3").await.unwrap().unwrap().id;
-        
-        graph.add_connection(root_id, level1_id, 0.8).await.unwrap();
-        graph.add_connection(level1_id, level2_id, 0.8).await.unwrap();
-        graph.add_connection(level2_id, level3_id, 0.8).await.unwrap();
+        // Add relationships using entity IDs
+        graph.add_relationship(1, 2, 0.8).await.unwrap(); // root -> level1
+        graph.add_relationship(2, 3, 0.8).await.unwrap(); // level1 -> level2
+        graph.add_relationship(3, 4, 0.8).await.unwrap(); // level2 -> level3
         
         graph
     }

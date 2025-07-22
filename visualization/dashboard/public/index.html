@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta 
+    name="description" 
+    content="LLMKG Dashboard - Real-time visualization and monitoring for Large Language Model Knowledge Graphs" 
+  />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dashboard.llmkg.dev/" />
+  <meta property="og:title" content="LLMKG Dashboard" />
+  <meta property="og:description" content="Real-time visualization and monitoring for Large Language Model Knowledge Graphs" />
+  <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://dashboard.llmkg.dev/" />
+  <meta property="twitter:title" content="LLMKG Dashboard" />
+  <meta property="twitter:description" content="Real-time visualization and monitoring for Large Language Model Knowledge Graphs" />
+  <meta property="twitter:image" content="%PUBLIC_URL%/twitter-image.png" />
+
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  
+  <!-- Preconnect to WebSocket server -->
+  <link rel="preconnect" href="ws://localhost:8080" />
+  
+  <!-- Preconnect to MCP server -->
+  <link rel="preconnect" href="http://localhost:3000" />
+  
+  <!-- DNS prefetch for common domains -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <title>LLMKG Dashboard</title>
+  
+  <!-- Global Styles -->
+  <style>
+    /* CSS Reset and Base Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* Focus styles */
+    *:focus {
+      outline: 2px solid #007acc;
+      outline-offset: 2px;
+    }
+
+    /* Selection styles */
+    ::selection {
+      background-color: #007acc;
+      color: #ffffff;
+    }
+
+    /* Scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #2d2d2d;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #404040;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4a4a4a;
+    }
+
+    /* Firefox scrollbar */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #404040 #2d2d2d;
+    }
+
+    /* Loading screen styles */
+    #root {
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .app-loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: #ffffff;
+    }
+
+    .app-loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #404040;
+      border-top: 3px solid #007acc;
+      border-radius: 50%;
+      animation: app-spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    .app-loading-text {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #b3b3b3;
+      margin-bottom: 0.5rem;
+    }
+
+    .app-loading-subtitle {
+      font-size: 0.875rem;
+      color: #666666;
+    }
+
+    @keyframes app-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Error styles */
+    .app-error {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #1a1a1a;
+      color: #ffffff;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .app-error h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ff6b6b;
+    }
+
+    .app-error p {
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      color: #b3b3b3;
+      max-width: 500px;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      body {
+        background-color: #000000;
+        color: #ffffff;
+      }
+    }
+
+    /* Dark mode preference */
+    @media (prefers-color-scheme: light) {
+      body {
+        background-color: #ffffff;
+        color: #212529;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <noscript>
+    <div class="app-error">
+      <h1>JavaScript Required</h1>
+      <p>
+        The LLMKG Dashboard requires JavaScript to function properly. 
+        Please enable JavaScript in your browser and refresh the page.
+      </p>
+    </div>
+  </noscript>
+  
+  <div id="root">
+    <!-- Initial loading screen -->
+    <div class="app-loading">
+      <div class="app-loading-spinner"></div>
+      <div class="app-loading-text">Loading LLMKG Dashboard</div>
+      <div class="app-loading-subtitle">Initializing real-time connections...</div>
+    </div>
+  </div>
+
+  <!-- Environment Configuration -->
+  <script>
+    // Make environment variables available to the app
+    window.LLMKG_CONFIG = {
+      development: %NODE_ENV% === 'development',
+      websocketUrl: '%REACT_APP_WEBSOCKET_URL%' || 'ws://localhost:8080',
+      mcpServerUrl: '%REACT_APP_MCP_SERVER_URL%' || 'http://localhost:3000',
+      version: '%REACT_APP_VERSION%' || '2.0.0',
+      buildTime: '%REACT_APP_BUILD_TIME%' || new Date().toISOString(),
+    };
+
+    // Performance monitoring
+    if (window.LLMKG_CONFIG.development) {
+      window.addEventListener('load', function() {
+        const loadTime = performance.now();
+        console.log(`🚀 LLMKG Dashboard loaded in ${loadTime.toFixed(2)}ms`);
+      });
+    }
+
+    // Error handling for unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error('Unhandled promise rejection:', event.reason);
+      
+      // In production, you might want to send this to an error reporting service
+      if (!window.LLMKG_CONFIG.development) {
+        // Example: Sentry.captureException(event.reason);
+      }
+    });
+
+    // Global error handler
+    window.addEventListener('error', function(event) {
+      console.error('Global error:', event.error);
+      
+      // In production, you might want to send this to an error reporting service
+      if (!window.LLMKG_CONFIG.development) {
+        // Example: Sentry.captureException(event.error);
+      }
+    });
+
+    // Service worker registration (for PWA functionality)
+    if ('serviceWorker' in navigator && !window.LLMKG_CONFIG.development) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
+          .then(function(registration) {
+            console.log('SW registered: ', registration);
+          })
+          .catch(function(registrationError) {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+
+    // WebSocket connection monitoring
+    function monitorWebSocketConnection() {
+      const wsUrl = window.LLMKG_CONFIG.websocketUrl;
+      
+      // Test connection on page load
+      const testWs = new WebSocket(wsUrl);
+      
+      testWs.onopen = function() {
+        console.log('✅ WebSocket server is available');
+        testWs.close();
+      };
+      
+      testWs.onerror = function() {
+        console.warn('⚠️  WebSocket server not available at', wsUrl);
+        
+        // Show user-friendly message
+        const loadingElement = document.querySelector('.app-loading-subtitle');
+        if (loadingElement) {
+          loadingElement.textContent = 'WebSocket server not available - using offline mode';
+          loadingElement.style.color = '#ffb000';
+        }
+      };
+    }
+
+    // Monitor WebSocket after a short delay
+    setTimeout(monitorWebSocketConnection, 1000);
+  </script>
+
+  <!-- 
+    This HTML file is a template.
+    If you open it directly in the browser, you will see an empty page.
+    
+    You can add webfonts, meta tags, or analytics to this file.
+    The build step will place the bundled scripts into the <body> tag.
+    
+    To begin the development, run `npm start` or `yarn start`.
+    To create a production bundle, use `npm run build` or `yarn build`.
+  -->
+</body>
+</html>

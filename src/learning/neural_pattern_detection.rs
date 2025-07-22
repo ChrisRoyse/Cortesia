@@ -2,9 +2,9 @@ use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity};
 use crate::core::types::EntityKey;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::learning::types::{ActivationEvent, ActivationContext};
-use crate::cognitive::types::CognitivePatternType;
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::error::Result;
+use crate::cognitive::types::CognitivePatternType;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

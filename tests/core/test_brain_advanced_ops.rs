@@ -9,7 +9,7 @@ use tokio;
 
 /// Helper to create a test knowledge graph with initial data
 async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeGraph {
-    let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new().unwrap();
     
     // Add test entities with varied properties
     for i in 0..num_entities {
@@ -23,7 +23,7 @@ async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeG
             ),
             (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
         );
-        graph.core_graph.insert_entity(entity_data).unwrap();
+        graph.insert_entity(entity_data).unwrap();
     }
     
     // Add relationships to create interesting graph structure

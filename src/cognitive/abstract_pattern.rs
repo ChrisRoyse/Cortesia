@@ -358,19 +358,142 @@ impl AbstractThinking {
         Ok(patterns)
     }
     
-    async fn detect_temporal_patterns(&self, _data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
-        // Would use N-BEATS or TimesNet for temporal pattern detection
-        Ok(Vec::new())
+    async fn detect_temporal_patterns(&self, data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
+        let mut patterns = Vec::new();
+        
+        // Analyze temporal patterns in activation hotspots
+        if !data.activation_hotspots.temporal_patterns.is_empty() {
+            patterns.push(DetectedPattern {
+                pattern_id: "temporal_activation_pattern".to_string(),
+                id: "temporal_activation_pattern".to_string(),
+                pattern_type: PatternType::Temporal,
+                description: "Temporal activation patterns detected in entity usage".to_string(),
+                confidence: 0.7,
+                frequency: data.activation_hotspots.temporal_patterns.len() as f32,
+                entities_involved: data.activation_hotspots.hotspot_entities.clone(),
+                affected_entities: data.activation_hotspots.hotspot_entities.clone(),
+            });
+        }
+        
+        // Detect periodic patterns based on activation frequency
+        let periodic_entities: Vec<EntityKey> = data.activation_hotspots.activation_frequency.iter()
+            .filter(|(_, &freq)| freq > 0.5)
+            .map(|(&key, _)| key)
+            .collect();
+            
+        if periodic_entities.len() >= 3 {
+            patterns.push(DetectedPattern {
+                pattern_id: "periodic_activation_pattern".to_string(),
+                id: "periodic_activation_pattern".to_string(),
+                pattern_type: PatternType::Temporal,
+                description: format!("Periodic activation pattern with {} entities", periodic_entities.len()),
+                confidence: 0.75,
+                frequency: periodic_entities.len() as f32 / data.activation_hotspots.activation_frequency.len().max(1) as f32,
+                entities_involved: periodic_entities.clone(),
+                affected_entities: periodic_entities,
+            });
+        }
+        
+        Ok(patterns)
     }
     
-    async fn detect_semantic_patterns(&self, _data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
-        // Would analyze semantic relationships and clustering
-        Ok(Vec::new())
+    async fn detect_semantic_patterns(&self, data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
+        let mut patterns = Vec::new();
+        
+        // Detect semantic clustering based on entity distribution
+        if data.entity_distribution.distribution_entropy > 0.5 {
+            patterns.push(DetectedPattern {
+                pattern_id: "semantic_clustering_pattern".to_string(),
+                id: "semantic_clustering_pattern".to_string(),
+                pattern_type: PatternType::Semantic,
+                description: "Semantic clustering pattern with diverse entity types".to_string(),
+                confidence: 0.65 + (data.entity_distribution.distribution_entropy * 0.2).min(0.2),
+                frequency: 3.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+            });
+        }
+        
+        // Detect semantic coherence based on clustering coefficient
+        if data.relationship_frequency.clustering_coefficient > 0.5 {
+            patterns.push(DetectedPattern {
+                pattern_id: "semantic_coherence_pattern".to_string(),
+                id: "semantic_coherence_pattern".to_string(),
+                pattern_type: PatternType::Semantic,
+                description: format!("High semantic coherence with clustering coefficient {:.2}", 
+                    data.relationship_frequency.clustering_coefficient),
+                confidence: data.relationship_frequency.clustering_coefficient,
+                frequency: 4.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+            });
+        }
+        
+        // Detect semantic domains based on small-world properties
+        if data.relationship_frequency.small_world_coefficient > 0.3 {
+            patterns.push(DetectedPattern {
+                pattern_id: "semantic_domain_pattern".to_string(),
+                id: "semantic_domain_pattern".to_string(),
+                pattern_type: PatternType::Semantic,
+                description: "Semantic domain organization with small-world properties".to_string(),
+                confidence: 0.7,
+                frequency: 5.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+            });
+        }
+        
+        Ok(patterns)
     }
     
-    async fn detect_usage_patterns(&self, _data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
-        // Would analyze query patterns and access frequency
-        Ok(Vec::new())
+    async fn detect_usage_patterns(&self, data: &StructuralPatterns) -> Result<Vec<DetectedPattern>> {
+        let mut patterns = Vec::new();
+        
+        // Detect high-usage patterns based on hotspot entities
+        if !data.activation_hotspots.hotspot_entities.is_empty() {
+            patterns.push(DetectedPattern {
+                pattern_id: "high_usage_hotspot_pattern".to_string(),
+                id: "high_usage_hotspot_pattern".to_string(),
+                pattern_type: PatternType::Usage,
+                description: format!("High usage pattern with {} hotspot entities", 
+                    data.activation_hotspots.hotspot_entities.len()),
+                confidence: 0.8,
+                frequency: data.activation_hotspots.hotspot_entities.len() as f32,
+                entities_involved: data.activation_hotspots.hotspot_entities.clone(),
+                affected_entities: data.activation_hotspots.hotspot_entities.clone(),
+            });
+        }
+        
+        // Detect query path patterns based on average connections
+        if data.relationship_frequency.average_connections_per_entity > 3.0 {
+            patterns.push(DetectedPattern {
+                pattern_id: "frequent_query_path_pattern".to_string(),
+                id: "frequent_query_path_pattern".to_string(),
+                pattern_type: PatternType::Usage,
+                description: format!("Frequent query paths with avg {:.1} connections per entity", 
+                    data.relationship_frequency.average_connections_per_entity),
+                confidence: 0.7,
+                frequency: data.relationship_frequency.average_connections_per_entity,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+            });
+        }
+        
+        // Detect underutilized areas based on complexity vs usage
+        if data.complexity_metrics > 0.5 && data.activation_hotspots.activation_frequency.len() < 10 {
+            patterns.push(DetectedPattern {
+                pattern_id: "underutilized_complexity_pattern".to_string(),
+                id: "underutilized_complexity_pattern".to_string(),
+                pattern_type: PatternType::Usage,
+                description: "Complex graph areas with low utilization".to_string(),
+                confidence: 0.6,
+                frequency: 2.0,
+                entities_involved: Vec::new(),
+                affected_entities: Vec::new(),
+            });
+        }
+        
+        Ok(patterns)
     }
     
     fn determine_abstraction_type(&self, pattern: &DetectedPattern) -> String {

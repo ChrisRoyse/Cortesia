@@ -103,17 +103,11 @@ mod divergent_tests {
         graph.add_entity(EntityData::new(4, "symphony".to_string(), vec![0.4; 128])).await.unwrap();
         graph.add_entity(EntityData::new(5, "guitar".to_string(), vec![0.5; 128])).await.unwrap();
         
-        // Add relationships
-        let music_id = graph.get_entity_by_description("music").await.unwrap().unwrap().id;
-        let classical_id = graph.get_entity_by_description("classical").await.unwrap().unwrap().id;
-        let rock_id = graph.get_entity_by_description("rock").await.unwrap().unwrap().id;
-        let symphony_id = graph.get_entity_by_description("symphony").await.unwrap().unwrap().id;
-        let guitar_id = graph.get_entity_by_description("guitar").await.unwrap().unwrap().id;
-        
-        graph.add_connection(music_id, classical_id, 0.8).await.unwrap();
-        graph.add_connection(music_id, rock_id, 0.8).await.unwrap();
-        graph.add_connection(classical_id, symphony_id, 0.7).await.unwrap();
-        graph.add_connection(rock_id, guitar_id, 0.7).await.unwrap();
+        // Add relationships using entity IDs
+        graph.add_relationship(1, 2, 0.8).await.unwrap(); // music -> classical
+        graph.add_relationship(1, 3, 0.8).await.unwrap(); // music -> rock
+        graph.add_relationship(2, 4, 0.7).await.unwrap(); // classical -> symphony
+        graph.add_relationship(3, 5, 0.7).await.unwrap(); // rock -> guitar
         
         graph
     }
@@ -134,24 +128,16 @@ mod divergent_tests {
         graph.add_entity(EntityData::new(6, "band".to_string(), vec![0.6; 128])).await.unwrap();
         graph.add_entity(EntityData::new(7, "drummer".to_string(), vec![0.7; 128])).await.unwrap();
         
-        // Get entity IDs
-        let music_id = graph.get_entity_by_description("music").await.unwrap().unwrap().id;
-        let classical_id = graph.get_entity_by_description("classical").await.unwrap().unwrap().id;
-        let rock_id = graph.get_entity_by_description("rock").await.unwrap().unwrap().id;
-        let orchestra_id = graph.get_entity_by_description("orchestra").await.unwrap().unwrap().id;
-        let composer_id = graph.get_entity_by_description("composer").await.unwrap().unwrap().id;
-        let band_id = graph.get_entity_by_description("band").await.unwrap().unwrap().id;
-        let drummer_id = graph.get_entity_by_description("drummer").await.unwrap().unwrap().id;
-        
+        // Add relationships using entity IDs
         // Connect clusters to seed
-        graph.add_connection(music_id, classical_id, 0.8).await.unwrap();
-        graph.add_connection(music_id, rock_id, 0.8).await.unwrap();
+        graph.add_relationship(1, 2, 0.8).await.unwrap(); // music -> classical
+        graph.add_relationship(1, 5, 0.8).await.unwrap(); // music -> rock
         
         // Internal cluster connections
-        graph.add_connection(classical_id, orchestra_id, 0.9).await.unwrap();
-        graph.add_connection(classical_id, composer_id, 0.9).await.unwrap();
-        graph.add_connection(rock_id, band_id, 0.9).await.unwrap();
-        graph.add_connection(rock_id, drummer_id, 0.8).await.unwrap();
+        graph.add_relationship(2, 3, 0.9).await.unwrap(); // classical -> orchestra
+        graph.add_relationship(2, 4, 0.9).await.unwrap(); // classical -> composer
+        graph.add_relationship(5, 6, 0.9).await.unwrap(); // rock -> band
+        graph.add_relationship(5, 7, 0.8).await.unwrap(); // rock -> drummer
         
         graph
     }
@@ -163,15 +149,12 @@ mod divergent_tests {
         graph.add_entity(EntityData::new(2, "obvious".to_string(), vec![0.2; 128])).await.unwrap();
         graph.add_entity(EntityData::new(3, "novel".to_string(), vec![0.3; 128])).await.unwrap();
         
-        let seed_id = graph.get_entity_by_description("seed").await.unwrap().unwrap().id;
-        let obvious_id = graph.get_entity_by_description("obvious").await.unwrap().unwrap().id;
-        let novel_id = graph.get_entity_by_description("novel").await.unwrap().unwrap().id;
-        
+        // Add relationships using entity IDs
         // Strong, obvious connection
-        graph.add_connection(seed_id, obvious_id, 0.9).await.unwrap();
+        graph.add_relationship(1, 2, 0.9).await.unwrap(); // seed -> obvious
         
         // Weaker but more novel connection
-        graph.add_connection(seed_id, novel_id, 0.4).await.unwrap();
+        graph.add_relationship(1, 3, 0.4).await.unwrap(); // seed -> novel
         
         graph
     }

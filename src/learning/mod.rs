@@ -37,6 +37,7 @@ pub use phase4_integration::{
 // From types - rename conflicting types
 pub use types::{
     ActivationEvent,
+    ActivationContext,
     LearningContext,
     WeightChange,
     LearningUpdate,

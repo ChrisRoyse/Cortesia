@@ -18,10 +18,15 @@ use llmkg::learning::{
     ParameterTuner,
     MetaLearningSystem,
     ActivationEvent,
+    ActivationContext,
     LearningContext,
+    LearningGoal,
+    LearningGoalType,
     WeightChange,
     LearningUpdate,
 };
+
+use llmkg::cognitive::types::CognitivePatternType;
 
 use llmkg::learning::phase4_integration::{
     Phase4Config,
@@ -32,14 +37,15 @@ use llmkg::learning::phase4_integration::{
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::sdr_storage::SDRStorage;
-use llmkg::core::entity::EntityId;
-use llmkg::core::types::{NodeType, RelationType};
+use llmkg::core::types::EntityKey;
+use llmkg::core::triple::NodeType;
+use llmkg::core::brain_types::RelationType;
 
 /// Performance test fixture with configurable scale
 pub struct PerformanceTestFixture {
     pub phase4_system: Phase4LearningSystem,
     pub brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
-    pub test_entities: Vec<EntityId>,
+    pub test_entities: Vec<EntityKey>,
     pub scale_factor: usize,
 }
 
@@ -119,15 +125,14 @@ impl PerformanceTestFixture {
         (0..event_count).map(|i| {
             let entity_idx = i % self.test_entities.len();
             ActivationEvent {
-                entity_id: self.test_entities[entity_idx],
+                entity_key: self.test_entities[entity_idx],
                 activation_strength: 0.5 + (i as f32 % 10.0) / 20.0, // 0.5 to 1.0
-                timestamp: SystemTime::now() + Duration::from_millis(i as u64),
-                source: format!("perf_test_{}", i),
-                context: LearningContext {
-                    session_id: Uuid::new_v4(),
-                    learning_phase: "performance_test".to_string(),
-                    performance_target: 0.8,
-                    constraints: vec!["efficiency".to_string()],
+                timestamp: std::time::Instant::now() + Duration::from_millis(i as u64),
+                context: ActivationContext {
+                    query_id: format!("perf_test_{}", i),
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: Some(Uuid::new_v4().to_string()),
+                    outcome_quality: Some(0.8),
                 },
             }
         }).collect()
@@ -136,7 +141,7 @@ impl PerformanceTestFixture {
     /// Measure memory usage (simplified)
     pub fn measure_memory_usage(&self) -> usize {
         // Simplified memory measurement
-        self.test_entities.len() * std::mem::size_of::<EntityId>() +
+        self.test_entities.len() * std::mem::size_of::<EntityKey>() +
         self.scale_factor * 1024 // Approximate overhead
     }
 }

@@ -72,7 +72,7 @@ async fn create_test_attention_manager() -> (
     let orchestrator = Arc::new(CognitiveOrchestrator::new(
         graph.clone(),
         cognitive_config,
-    ));
+    ).await.expect("Failed to create orchestrator"));
     
     // Create activation engine and SDR storage for working memory
     let activation_engine = Arc::new(ActivationPropagationEngine::new(
@@ -358,7 +358,7 @@ mod edge_case_tests {
     
     #[tokio::test]
     async fn test_extreme_cognitive_load() -> Result<()> {
-        let (_manager, _, _, _) = create_test_attention_manager().await;
+        let (_manager, _, _) = create_test_attention_manager().await;
         
         // Test state behavior under extreme conditions
         let mut state = AttentionState::new();

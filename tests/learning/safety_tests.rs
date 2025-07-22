@@ -3,11 +3,11 @@
 //! These tests validate that the learning system can handle emergencies,
 //! perform safe rollbacks, and maintain system integrity under adverse conditions.
 
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use std::collections::HashMap;
-use uuid::Uuid;
 use anyhow::Result;
+use futures::future;
 
 use llmkg::learning::{
     Phase4LearningSystem,
@@ -15,32 +15,35 @@ use llmkg::learning::{
     HebbianLearningEngine,
     SynapticHomeostasis,
     ActivationEvent,
+    ActivationContext,
     LearningContext,
+    LearningGoal,
+    LearningGoalType,
     WeightChange,
     LearningUpdate,
 };
 
+use llmkg::cognitive::types::CognitivePatternType;
+
 use llmkg::learning::phase4_integration::{
     Phase4Config,
-    ComprehensiveLearningResult,
-    emergency::{EmergencyType, EmergencyProtocols, EmergencyResponse},
-    LearningSessionType,
-    SystemAssessment,
-    ValidationResult
+    EmergencyType,
+    EmergencyResponse
 };
 
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::sdr_storage::SDRStorage;
-use llmkg::core::entity::EntityId;
-use llmkg::core::types::{NodeType, RelationType};
+use llmkg::core::types::EntityKey;
+use llmkg::core::triple::NodeType;
+use llmkg::core::brain_types::RelationType;
 
 /// Test fixture for safety testing
 pub struct SafetyTestFixture {
     pub phase4_system: Phase4LearningSystem,
     pub brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
     pub sdr_storage: Arc<SDRStorage>,
-    pub test_entities: Vec<EntityId>,
+    pub test_entities: Vec<EntityKey>,
     pub initial_state: SystemSnapshot,
 }
 

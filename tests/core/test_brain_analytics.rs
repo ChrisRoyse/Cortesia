@@ -14,7 +14,7 @@ async fn create_structured_graph(
     edges_per_node: usize,
     clustering: f32
 ) -> BrainEnhancedKnowledgeGraph {
-    let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new().unwrap();
     
     // Add nodes
     for i in 0..nodes {
@@ -23,7 +23,7 @@ async fn create_structured_graph(
             format!("type:analytics_test, index:{}, cluster:{}, name:node_{}", i, i / 10, i),
             (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
         );
-        graph.core_graph.insert_entity(entity_data).unwrap();
+        graph.insert_entity(entity_data).unwrap();
     }
     
     // Create edges with controlled structure
@@ -66,14 +66,14 @@ async fn create_test_topologies() -> HashMap<String, BrainEnhancedKnowledgeGraph
     graphs.insert("clustered".to_string(), clustered);
     
     // Random network
-    let random = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let random = BrainEnhancedKnowledgeGraph::new().unwrap();
     for i in 0..100 {
         let entity_data = EntityData::new(
             i as u16,
             format!("type:random, name:random_{}", i),
             vec![0.5; 128],
         );
-        random.core_graph.insert_entity(entity_data).unwrap();
+        random.insert_entity(entity_data).unwrap();
     }
     
     // Add random edges
@@ -249,7 +249,7 @@ async fn test_graph_health_assessment() {
     
     // Fragmented graph - disconnected components
     println!("\n--- Fragmented Graph ---");
-    let fragmented = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let fragmented = BrainEnhancedKnowledgeGraph::new().unwrap();
     
     // Create disconnected islands
     for island in 0..5 {
@@ -260,7 +260,7 @@ async fn test_graph_health_assessment() {
                 format!("island:{}, name:island{}_{}", island, island, i),
                 vec![island as f32 / 5.0; 128],
             );
-            fragmented.core_graph.insert_entity(entity_data).unwrap();
+            fragmented.insert_entity(entity_data).unwrap();
             
             // Connect within island only
             if i > 0 {
@@ -284,7 +284,7 @@ async fn test_graph_health_assessment() {
     
     // Overconnected graph - too many connections
     println!("\n--- Overconnected Graph ---");
-    let overconnected = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let overconnected = BrainEnhancedKnowledgeGraph::new().unwrap();
     
     // Add nodes
     for i in 0..50 {
@@ -293,7 +293,7 @@ async fn test_graph_health_assessment() {
             properties: "type:overconnected".to_string(),
             embedding: vec![0.5; 128],
         };
-        overconnected.core_graph.insert_entity(entity_data).unwrap();
+        overconnected.insert_entity(entity_data).unwrap();
     }
     
     // Connect almost everything
@@ -407,7 +407,7 @@ async fn test_centrality_and_importance_metrics() {
     println!("\n=== Centrality and Importance Metrics Test ===");
     
     // Create hub-and-spoke topology
-    let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new().unwrap();
     
     // Create hubs
     let num_hubs = 5;
@@ -421,7 +421,7 @@ async fn test_centrality_and_importance_metrics() {
             properties: format!("type:hub, importance:high"),
             embedding: vec![1.0; 128],
         };
-        graph.core_graph.insert_entity(hub_data).unwrap();
+        graph.insert_entity(hub_data).unwrap();
         
         // Spoke nodes
         for spoke in 1..=nodes_per_hub {
@@ -431,7 +431,7 @@ async fn test_centrality_and_importance_metrics() {
                 properties: format!("type:spoke, hub:{}", hub),
                 embedding: vec![0.5; 128],
             };
-            graph.core_graph.insert_entity(spoke_data).unwrap();
+            graph.insert_entity(spoke_data).unwrap();
             
             // Connect spoke to hub
             graph.add_relationship(spoke_id as u32, hub_id as u32, 1, 0.9).await.unwrap();
