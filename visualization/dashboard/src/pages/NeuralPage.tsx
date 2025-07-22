@@ -6,7 +6,7 @@ const NeuralPage: React.FC = () => {
 
   return (
     <div className="neural-page">
-      <h1>Neural Activity</h1>
+      <h1>Neural Activity Monitor</h1>
       <p>Real-time neural network activity visualization and analysis.</p>
       
       {neuralData && (

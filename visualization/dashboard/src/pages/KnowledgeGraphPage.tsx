@@ -6,7 +6,7 @@ const KnowledgeGraphPage: React.FC = () => {
 
   return (
     <div className="knowledge-page">
-      <h1>Knowledge Graph</h1>
+      <h1>Knowledge Graph Visualization</h1>
       <p>Interactive knowledge graph visualization and exploration.</p>
       
       {knowledgeData && (

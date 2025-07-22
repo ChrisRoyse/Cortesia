@@ -59,6 +59,7 @@ pub enum RelationType {
     Opposite,       // Opposition relationship
     Temporal,       // Temporal relationship
     Learned,        // Learned relationship
+    Influences,     // Influence relationship
 }
 
 /// Brain-inspired entity with activation state and temporal tracking

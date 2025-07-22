@@ -21,6 +21,9 @@ pub enum EmergencyType {
     LearningDivergence,
     ResourceExhaustion,
     UserExodus,
+    PerformanceCritical,
+    MemoryExhaustion,
+    InfiniteLoop,
 }
 
 /// Emergency protocol definition

@@ -16,7 +16,7 @@ const ToolsPage: React.FC = () => {
 
   return (
     <div className="tools-page">
-      <h1>MCP Tools</h1>
+      <h1>Development Tools</h1>
       <p>Available MCP tools for LLMKG system interaction and testing.</p>
       
       {loading && <div>Loading tools...</div>}

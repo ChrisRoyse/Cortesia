@@ -23,12 +23,13 @@ async fn test_critical_thinking_execute_basic_validation() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(10),
-        confidence_threshold: Some(0.7),
-        exploration_depth: Some(3),
-        creativity_level: Some(0.5),
+        max_depth: Some(10),
+        activation_threshold: Some(0.7),
+        exploration_breadth: Some(3),
+        creativity_threshold: Some(0.5),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute(
@@ -51,12 +52,13 @@ async fn test_critical_thinking_execute_comprehensive_validation() -> Result<()>
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(15),
-        confidence_threshold: Some(0.8),
-        exploration_depth: Some(5),
-        creativity_level: Some(0.3),
+        max_depth: Some(15),
+        activation_threshold: Some(0.8),
+        exploration_breadth: Some(5),
+        creativity_threshold: Some(0.3),
         validation_level: Some(ValidationLevel::Comprehensive),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute(
@@ -78,12 +80,13 @@ async fn test_critical_thinking_execute_rigorous_validation() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(20),
-        confidence_threshold: Some(0.9),
-        exploration_depth: Some(7),
-        creativity_level: Some(0.1),
+        max_depth: Some(20),
+        activation_threshold: Some(0.9),
+        exploration_breadth: Some(7),
+        creativity_threshold: Some(0.1),
         validation_level: Some(ValidationLevel::Rigorous),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute(
@@ -105,12 +108,13 @@ async fn test_critical_thinking_contradiction_detection() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(10),
-        confidence_threshold: Some(0.6),
-        exploration_depth: Some(3),
-        creativity_level: Some(0.5),
+        max_depth: Some(10),
+        activation_threshold: Some(0.6),
+        exploration_breadth: Some(3),
+        creativity_threshold: Some(0.5),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     // Query that might contain contradictory information
@@ -134,12 +138,13 @@ async fn test_critical_thinking_information_source_validation() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(12),
-        confidence_threshold: Some(0.7),
-        exploration_depth: Some(4),
-        creativity_level: Some(0.4),
+        max_depth: Some(12),
+        activation_threshold: Some(0.7),
+        exploration_breadth: Some(4),
+        creativity_threshold: Some(0.4),
         validation_level: Some(ValidationLevel::Comprehensive),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute(
@@ -163,12 +168,13 @@ async fn test_critical_thinking_exception_resolution() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(8),
-        confidence_threshold: Some(0.5),
-        exploration_depth: Some(2),
-        creativity_level: Some(0.6),
+        max_depth: Some(8),
+        activation_threshold: Some(0.5),
+        exploration_breadth: Some(2),
+        creativity_threshold: Some(0.6),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     // Test with potentially conflicting information
@@ -192,12 +198,13 @@ async fn test_critical_thinking_empty_query() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(5),
-        confidence_threshold: Some(0.5),
-        exploration_depth: Some(1),
-        creativity_level: Some(0.5),
+        max_depth: Some(5),
+        activation_threshold: Some(0.5),
+        exploration_breadth: Some(1),
+        creativity_threshold: Some(0.5),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute("", None, parameters).await?;
@@ -214,12 +221,13 @@ async fn test_critical_thinking_stop_words_query() -> Result<()> {
     let critical = create_test_critical_thinking().await;
     
     let parameters = PatternParameters {
-        max_iterations: Some(5),
-        confidence_threshold: Some(0.5),
-        exploration_depth: Some(1),
-        creativity_level: Some(0.5),
+        max_depth: Some(5),
+        activation_threshold: Some(0.5),
+        exploration_breadth: Some(1),
+        creativity_threshold: Some(0.5),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     // Query with only stop words
@@ -333,12 +341,13 @@ async fn test_critical_thinking_performance_characteristics() -> Result<()> {
     let start = std::time::Instant::now();
     
     let parameters = PatternParameters {
-        max_iterations: Some(5),
-        confidence_threshold: Some(0.6),
-        exploration_depth: Some(2),
-        creativity_level: Some(0.5),
+        max_depth: Some(5),
+        activation_threshold: Some(0.6),
+        exploration_breadth: Some(2),
+        creativity_threshold: Some(0.5),
         validation_level: Some(ValidationLevel::Basic),
-        output_format: None,
+        pattern_type: None,
+        reasoning_strategy: None,
     };
     
     let result = critical.execute(

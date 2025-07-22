@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Layout, Layouts } from 'react-grid-layout';
 import GridLayout, { LayoutItem } from './GridLayout';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../stores/hooks';
 import { 
   setLayout, 
   saveLayoutPreset, 
@@ -10,7 +10,7 @@ import {
   selectCurrentLayout,
   selectLayoutPresets,
   selectLayoutSettings 
-} from '../../store/slices/layoutSlice';
+} from '../../stores/slices/layoutSlice';
 
 export interface LayoutPreset {
   id: string;

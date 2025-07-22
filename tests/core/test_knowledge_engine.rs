@@ -15,7 +15,6 @@ fn create_triple(subject: &str, predicate: &str, object: &str) -> Triple {
         object: object.to_string(),
         confidence: 0.9,
         source: Some("test_data".to_string()),
-        metadata: HashMap::new(),
     }
 }
 

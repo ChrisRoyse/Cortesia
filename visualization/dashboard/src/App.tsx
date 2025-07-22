@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { store } from './stores';
 import { WebSocketProvider } from './providers/WebSocketProvider';
 import { MCPProvider, MCPProviderDev } from './providers/MCPProvider';
+import { ThemeProvider } from './components/ThemeProvider/ThemeProvider';
 import { DashboardLayout } from './components/Layout/DashboardLayout';
+import './styles/globals.css';
 
 // Lazy load pages for code splitting
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -14,6 +16,7 @@ const KnowledgeGraphPage = React.lazy(() => import('./pages/KnowledgeGraphPage')
 const MemoryPage = React.lazy(() => import('./pages/MemoryPage'));
 const ToolsPage = React.lazy(() => import('./pages/ToolsPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const ArchitecturePage = React.lazy(() => import('./pages/Architecture/ArchitecturePage'));
 
 // Configuration
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -220,7 +223,7 @@ const AppRoutes: React.FC = () => (
       } 
     />
     <Route 
-      path="/knowledge" 
+      path="/knowledge-graph" 
       element={
         <RouteErrorBoundary>
           <KnowledgeGraphPage />
@@ -251,6 +254,14 @@ const AppRoutes: React.FC = () => (
         </RouteErrorBoundary>
       } 
     />
+    <Route 
+      path="/architecture" 
+      element={
+        <RouteErrorBoundary>
+          <ArchitecturePage />
+        </RouteErrorBoundary>
+      } 
+    />
     {/* Catch all route - redirect to home */}
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
@@ -263,19 +274,25 @@ const App: React.FC = () => {
   return (
     <AppErrorBoundary>
       <Provider store={store}>
-        <WebSocketProvider 
-          url={WEBSOCKET_URL}
-          reconnectDelay={3000}
-          heartbeatInterval={30000}
+        <ThemeProvider 
+          defaultMode="dark"
+          enableSystemPreference={true}
+          storageKey="llmkg-theme-mode"
         >
-          <MCPComponent serverUrl={MCP_SERVER_URL}>
-            <Router>
-              <DashboardLayout>
-                <AppRoutes />
-              </DashboardLayout>
-            </Router>
-          </MCPComponent>
-        </WebSocketProvider>
+          <WebSocketProvider 
+            url={WEBSOCKET_URL}
+            reconnectDelay={3000}
+            heartbeatInterval={30000}
+          >
+            <MCPComponent serverUrl={MCP_SERVER_URL}>
+              <Router>
+                <DashboardLayout>
+                  <AppRoutes />
+                </DashboardLayout>
+              </Router>
+            </MCPComponent>
+          </WebSocketProvider>
+        </ThemeProvider>
       </Provider>
     </AppErrorBoundary>
   );

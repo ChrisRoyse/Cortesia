@@ -8,7 +8,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-overview">
-      <h1>LLMKG Dashboard Overview</h1>
+      <h1>System Overview</h1>
       
       <div className="status-grid">
         <div className="status-card">

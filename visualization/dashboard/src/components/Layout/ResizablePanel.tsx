@@ -226,6 +226,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
       <div
         key={direction}
         className={`resize-handle resize-handle-${direction}`}
+        data-testid="resize-handle"
         style={{ ...baseStyle, ...positionStyle }}
         onMouseDown={(e) => handleMouseDown(e, direction)}
       />

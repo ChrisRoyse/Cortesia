@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { Box } from '@mui/material';
 import { Sidebar } from '../Navigation/Sidebar';
 import { Header } from '../Navigation/Header';
 import { Breadcrumb } from '../Navigation/Breadcrumb';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { useTheme } from '../../hooks/useTheme';
 
 export const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isMobile } = useBreakpoint();
+  const { colors, spacing } = useTheme();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        overflow: 'hidden',
+        backgroundColor: colors.background.primary,
+      }}
+    >
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen || !isMobile} 
@@ -22,21 +32,46 @@ export const DashboardLayout: React.FC = () => {
       />
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          overflow: 'hidden',
+        }}
+      >
         {/* Header */}
         <Header onToggleSidebar={toggleSidebar} />
 
         {/* Breadcrumb */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3">
+        <Box
+          sx={{
+            backgroundColor: colors.surface.primary,
+            borderBottom: `1px solid ${colors.border.primary}`,
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 1.5,
+          }}
+        >
           <Breadcrumb />
-        </div>
+        </Box>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto focus:outline-none">
+        <Box
+          component="main"
+          role="main"
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            backgroundColor: colors.background.secondary,
+            '&:focus': {
+              outline: 'none',
+            },
+          }}
+        >
           <Outlet />
-        </main>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

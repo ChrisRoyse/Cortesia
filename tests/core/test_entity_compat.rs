@@ -539,6 +539,8 @@ async fn test_end_to_end_knowledge_engine_workflow() {
         subject: entity1.name().to_string(),
         predicate: "works_for".to_string(),
         object: entity2.name().to_string(),
+        confidence: 0.8,
+        source: Some("test".to_string()),
     };
     
     // Store triple in knowledge engine

@@ -9,3 +9,6 @@ export * from './common';
 
 // Layout Components
 export * from './Layout';
+
+// Theme Components
+export { ThemeProvider, ThemeToggle, useThemeContext } from './ThemeProvider/ThemeProvider';

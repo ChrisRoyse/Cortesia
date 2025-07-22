@@ -10,6 +10,7 @@ import {
   LoadingState 
 } from '../types';
 import layoutReducer from './slices/layoutSlice';
+import realtimeReducer from './slices/realtimeSlice';
 
 // Dashboard Slice
 const initialDashboardState: DashboardState = {
@@ -239,6 +240,7 @@ export const store = configureStore({
     webSocket: webSocketSlice.reducer,
     mcp: mcpSlice.reducer,
     layout: layoutReducer,
+    realtime: realtimeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

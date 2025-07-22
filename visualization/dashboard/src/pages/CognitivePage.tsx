@@ -6,7 +6,7 @@ const CognitivePage: React.FC = () => {
 
   return (
     <div className="cognitive-page">
-      <h1>Cognitive Patterns</h1>
+      <h1>Cognitive Pattern Analysis</h1>
       <p>Real-time visualization of cognitive patterns and inhibitory mechanisms.</p>
       
       {cognitiveData && (

@@ -8,6 +8,8 @@ import {
   Cog6ToothIcon,
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 import { useRealTimeStatus } from '../../hooks/useRealTimeStatus';
 import { StatusIndicator } from '../common/StatusIndicator';
@@ -15,6 +17,7 @@ import { DropdownMenu } from '../common/DropdownMenu';
 import { NotificationCenter } from '../common/NotificationCenter';
 import { SearchBox } from '../common/SearchBox';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
+import { useTheme } from '../../hooks/useTheme';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -32,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const { systemStatus, notifications } = useRealTimeStatus();
+  const { mode, toggleTheme } = useTheme();
 
   useOnClickOutside(searchRef, () => setIsSearchExpanded(false));
   useOnClickOutside(notificationsRef, () => setIsNotificationsOpen(false));
@@ -71,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header role="navigation" className="bg-white shadow-sm border-b border-gray-200">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left section */}
@@ -80,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
             <button
               onClick={onToggleSidebar}
               className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:hidden"
-              aria-label="Toggle sidebar"
+              aria-label="Toggle menu"
             >
               <Bars3Icon className="w-6 h-6" />
             </button>
@@ -135,6 +139,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
                 </button>
               )}
             </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              aria-label="Toggle theme"
+            >
+              {mode === 'light' ? (
+                <MoonIcon className="w-5 h-5" />
+              ) : (
+                <SunIcon className="w-5 h-5" />
+              )}
+            </button>
 
             {/* Notifications */}
             <div ref={notificationsRef} className="relative">

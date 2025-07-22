@@ -6,7 +6,7 @@ const MemoryPage: React.FC = () => {
 
   return (
     <div className="memory-page">
-      <h1>Memory Systems</h1>
+      <h1>Memory System Status</h1>
       <p>Memory usage, performance metrics, and storage optimization.</p>
       
       {memoryData && (

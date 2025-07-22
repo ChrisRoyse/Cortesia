@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppDispatch, useAppSelector, dashboardActions } from '../stores';
+import { setLayoutSettings } from '../stores/slices/layoutSlice';
 
 const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const config = useAppSelector(state => state.dashboard.config);
+  const layoutSettings = useAppSelector(state => state.layout.settings);
+  const [primaryColor, setPrimaryColor] = useState('#3B82F6');
 
   const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
     dispatch(dashboardActions.setTheme(theme));
@@ -21,9 +24,20 @@ const SettingsPage: React.FC = () => {
     dispatch(dashboardActions.toggleAnimations());
   };
 
+  const handleLayoutToggle = () => {
+    dispatch(setLayoutSettings({ 
+      compactType: layoutSettings.compactType === 'vertical' ? 'horizontal' : 'vertical' 
+    }));
+  };
+
+  const handleApplyTheme = () => {
+    // Update CSS variable for primary color
+    document.documentElement.style.setProperty('--color-primary', primaryColor);
+  };
+
   return (
     <div className="settings-page">
-      <h1>Settings</h1>
+      <h1>Dashboard Settings</h1>
       <p>Configure dashboard preferences and performance settings.</p>
       
       <div className="settings-sections">
@@ -46,6 +60,31 @@ const SettingsPage: React.FC = () => {
           </div>
           
           <div className="setting-item">
+            <label htmlFor="primary-color">Primary Color</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input
+                id="primary-color"
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                aria-label="Primary color"
+              />
+              <input
+                type="text"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                style={{ width: '100px' }}
+              />
+              <button
+                onClick={handleApplyTheme}
+                className="apply-button"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          
+          <div className="setting-item">
             <label>
               <input
                 type="checkbox"
@@ -54,6 +93,23 @@ const SettingsPage: React.FC = () => {
               />
               Enable Animations
             </label>
+          </div>
+        </section>
+        
+        <section className="settings-section">
+          <h2>Layout</h2>
+          
+          <div className="setting-item">
+            <button
+              onClick={handleLayoutToggle}
+              className="layout-toggle-button"
+              aria-label="Toggle layout"
+            >
+              Toggle Layout Direction
+            </button>
+            <p className="setting-description">
+              Current: {layoutSettings.compactType === 'vertical' ? 'Vertical' : 'Horizontal'} compaction
+            </p>
           </div>
         </section>
         

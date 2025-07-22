@@ -130,6 +130,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
       <div 
         key={item.i} 
         className="grid-item"
+        data-testid="draggable-panel"
         style={{
           border: '1px solid #ddd',
           borderRadius: '8px',
