@@ -5,6 +5,49 @@ use crate::core::types::{EntityKey, Relationship};
 use crate::error::Result;
 use std::collections::{HashSet, VecDeque};
 
+/// Trait for adding relationships with different signatures
+pub trait AddRelationship<T> {
+    async fn add_relationship(&self, source: T, target: T, weight: f32) -> Result<()>;
+    async fn add_relationship_with_type(&self, source: T, target: T, rel_type: T, weight: f32) -> Result<()>;
+}
+
+/// Implementation for numeric IDs (i32)
+impl AddRelationship<i32> for BrainEnhancedKnowledgeGraph {
+    async fn add_relationship(&self, source: i32, target: i32, weight: f32) -> Result<()> {
+        self.add_connection(source as u32, target as u32, weight).await
+    }
+    
+    async fn add_relationship_with_type(&self, source: i32, target: i32, _rel_type: i32, weight: f32) -> Result<()> {
+        self.add_connection(source as u32, target as u32, weight).await
+    }
+}
+
+/// Implementation for string IDs (&str)
+impl AddRelationship<&str> for BrainEnhancedKnowledgeGraph {
+    async fn add_relationship(&self, source: &str, target: &str, weight: f32) -> Result<()> {
+        self.add_relationship_with_type(source, target, "", weight).await
+    }
+    
+    async fn add_relationship_with_type(&self, source: &str, target: &str, rel_type: &str, weight: f32) -> Result<()> {
+        // Convert string IDs to numeric IDs using hash
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        source.hash(&mut hasher);
+        let source_id = (hasher.finish() as u32) % 1000000 + 1;
+        
+        let mut hasher = DefaultHasher::new();
+        target.hash(&mut hasher);
+        let target_id = (hasher.finish() as u32) % 1000000 + 1;
+        
+        // For now, ignore relationship_type as it's not stored in the current structure
+        let _ = rel_type;
+        
+        self.add_connection(source_id, target_id, weight).await
+    }
+}
+
 impl BrainEnhancedKnowledgeGraph {
     /// Get neighbors with synaptic weights
     pub async fn get_neighbors_with_weights(&self, entity: EntityKey) -> Vec<(EntityKey, f32)> {
@@ -67,19 +110,67 @@ impl BrainEnhancedKnowledgeGraph {
 
     /// Add connection (test compatibility method) - takes entity IDs instead of EntityKeys
     pub async fn add_connection(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
-        // Get EntityKeys from IDs using the core graph's lookup
-        let source_key = self.core_graph.get_entity_key(source_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
-        let target_key = self.core_graph.get_entity_key(target_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
+        // Try to get EntityKeys from IDs using the core graph's lookup
+        if let (Some(source_key), Some(target_key)) = (
+            self.core_graph.get_entity_key(source_id),
+            self.core_graph.get_entity_key(target_id)
+        ) {
+            return self.add_weighted_edge(source_key, target_key, weight).await;
+        }
+        
+        // If entities don't exist, create them first
+        let source_key = if let Some(key) = self.core_graph.get_entity_key(source_id) {
+            key
+        } else {
+            // Create a default entity with the ID
+            let entity_data = crate::core::types::EntityData {
+                type_id: 1,
+                embedding: vec![0.5; self.embedding_dimension()],
+                properties: format!("{{\"id\": {}}}", source_id),
+            };
+            self.insert_brain_entity(source_id, entity_data).await?
+        };
+        
+        let target_key = if let Some(key) = self.core_graph.get_entity_key(target_id) {
+            key
+        } else {
+            // Create a default entity with the ID
+            let entity_data = crate::core::types::EntityData {
+                type_id: 1,
+                embedding: vec![0.5; self.embedding_dimension()],
+                properties: format!("{{\"id\": {}}}", target_id),
+            };
+            self.insert_brain_entity(target_id, entity_data).await?
+        };
         
         self.add_weighted_edge(source_key, target_key, weight).await
     }
 
-    /// Add relationship (test compatibility method) - alias for add_connection
-    pub async fn add_relationship(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
+    /// Add relationship with entity keys directly  
+    pub async fn add_relationship_keys(&self, source_key: EntityKey, target_key: EntityKey, weight: f32) -> Result<()> {
+        self.add_weighted_edge(source_key, target_key, weight).await
+    }
+
+    /// Add relationship with string IDs and type - now handled by trait (4 parameters: source, target, rel_type, weight)
+    pub async fn add_relationship_str(&self, source_str: &str, target_str: &str, relationship_type: &str, weight: f32) -> Result<()> {
+        // Convert string IDs to numeric IDs using hash
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        source_str.hash(&mut hasher);
+        let source_id = (hasher.finish() as u32) % 1000000 + 1;
+        
+        let mut hasher = DefaultHasher::new();
+        target_str.hash(&mut hasher);
+        let target_id = (hasher.finish() as u32) % 1000000 + 1;
+        
+        // For now, ignore relationship_type as it's not stored in the current structure
+        let _ = relationship_type;
+        
         self.add_connection(source_id, target_id, weight).await
     }
+
 
     /// Check if relationship exists
     pub async fn has_relationship(&self, source: EntityKey, target: EntityKey) -> bool {

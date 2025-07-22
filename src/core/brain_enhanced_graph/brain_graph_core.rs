@@ -383,6 +383,105 @@ impl BrainEnhancedKnowledgeGraph {
         let cache = self.query_cache.read().await;
         (cache.len(), cache.capacity())
     }
+
+    /// Get entity degree (number of connections)
+    pub async fn get_entity_degree(&self, entity: EntityKey) -> usize {
+        self.get_neighbors(entity).len()
+    }
+
+    /// Propagate activation from a specific entity
+    pub async fn propagate_activation_from_entity(&self, source_entity: EntityKey, decay_factor: f32) -> Result<ActivationPropagationResult> {
+        let start_time = std::time::Instant::now();
+        
+        // Get source activation
+        let source_activation = self.get_entity_activation(source_entity).await;
+        if source_activation == 0.0 {
+            return Ok(ActivationPropagationResult {
+                affected_entities: 0,
+                total_activation_spread: 0.0,
+                propagation_time: start_time.elapsed(),
+            });
+        }
+
+        // Get neighbors of the source entity
+        let neighbors = self.get_neighbors(source_entity);
+        let mut affected_entities = 0;
+        let mut total_activation_spread = 0.0;
+
+        // Propagate to each neighbor
+        for neighbor in neighbors {
+            let synaptic_weight = self.get_synaptic_weight(source_entity, neighbor).await;
+            let propagated_activation = source_activation * decay_factor * synaptic_weight;
+            
+            if propagated_activation > 0.001 { // Minimum threshold
+                let current_activation = self.get_entity_activation(neighbor).await;
+                let new_activation = (current_activation + propagated_activation).min(1.0);
+                
+                self.set_entity_activation(neighbor, new_activation).await;
+                affected_entities += 1;
+                total_activation_spread += propagated_activation;
+            }
+        }
+
+        // Update learning statistics
+        self.update_learning_stats(|stats| {
+            stats.total_propagations += 1;
+            stats.total_affected_entities += affected_entities;
+        }).await;
+
+        Ok(ActivationPropagationResult {
+            affected_entities,
+            total_activation_spread,
+            propagation_time: start_time.elapsed(),
+        })
+    }
+
+    /// Get entities with activation above a threshold
+    pub async fn get_entities_above_threshold(&self, threshold: f32) -> Vec<(EntityKey, f32)> {
+        let activations = self.get_all_activations().await;
+        activations
+            .into_iter()
+            .filter(|(_, activation)| *activation > threshold)
+            .collect()
+    }
+
+    /// Perform cognitive query using brain-specific processing
+    pub async fn cognitive_query(&self, query_embedding: &[f32], k: usize) -> Result<BrainQueryResult> {
+        let start_time = std::time::Instant::now();
+        
+        // Validate embedding dimension
+        if query_embedding.len() != self.embedding_dimension() {
+            return Err(crate::error::GraphError::InvalidEmbeddingDimension {
+                expected: self.embedding_dimension(),
+                actual: query_embedding.len(),
+            });
+        }
+
+        // Perform neural query
+        let result = self.neural_query(query_embedding, k).await?;
+        
+        // Enhance with activation context
+        let activated_entities = self.get_entities_above_threshold(0.1).await;
+        
+        // Combine results with activation-weighted scoring
+        let mut enhanced_entities = Vec::new();
+        for (entity_key, similarity) in &result.entities {
+            let activation = self.get_entity_activation(*entity_key).await;
+            let cognitive_score = similarity * 0.7 + activation * 0.3;
+            enhanced_entities.push((*entity_key, cognitive_score));
+        }
+
+        // Sort by cognitive score
+        enhanced_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        enhanced_entities.truncate(k);
+
+        Ok(BrainQueryResult {
+            entities: enhanced_entities,
+            query_time: start_time.elapsed(),
+            activation_context: activated_entities,
+            confidence: result.confidence,
+        })
+    }
 }
 
 /// Memory usage information for brain-enhanced graph

@@ -17,6 +17,12 @@ export {
 } from './StatusIndicator';
 
 export { DataGrid } from './DataGrid';
+export { NotificationCenter } from './NotificationCenter';
+export { SearchBox } from './SearchBox';
+export { ActivityFeed } from './ActivityFeed';
+export { DropdownMenu } from './DropdownMenu';
+export { Badge } from './Badge';
+export { LoadingSpinner } from './LoadingSpinner';
 
 // Re-export types for convenience
 export type { 

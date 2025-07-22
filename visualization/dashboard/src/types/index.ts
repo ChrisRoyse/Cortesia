@@ -142,7 +142,11 @@ export interface WebSocketContextType {
 }
 
 // MCP Types
-export interface MCPTool {
+// Re-export comprehensive MCPTool from tools feature
+export type { MCPTool, ToolCategory, ToolStatus } from '../features/tools/types';
+
+// Legacy MCPTool interface for backward compatibility
+export interface LegacyMCPTool {
   name: string;
   description: string;
   parameters: Record<string, any>;
@@ -150,7 +154,7 @@ export interface MCPTool {
 }
 
 export interface MCPContextType {
-  tools: MCPTool[];
+  tools: LegacyMCPTool[];
   loading: boolean;
   error: string | null;
   executeTool: (toolName: string, parameters: Record<string, any>) => Promise<any>;

@@ -10,7 +10,7 @@ use llmkg::core::graph::KnowledgeGraph;
 use llmkg::error::Result;
 
 fn create_test_graph() -> KnowledgeGraph {
-    KnowledgeGraph::new(128, 10000)
+    KnowledgeGraph::new(128).expect("Failed to create graph")
 }
 
 #[test]

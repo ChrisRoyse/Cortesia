@@ -45,15 +45,6 @@ impl BrainEnhancedKnowledgeGraph {
         Ok(entity_key)
     }
 
-    /// Add entity (test compatibility method)
-    pub async fn add_entity(&self, data: EntityData) -> Result<EntityKey> {
-        // Generate a unique ID for the entity
-        let id = {
-            let core_graph = &self.core_graph;
-            (core_graph.entity_count() as u32) + 1
-        };
-        self.insert_brain_entity(id, data).await
-    }
 
     /// Add entity with string parameters (test compatibility method)
     pub async fn add_entity_with_id(&self, id: &str, description: &str) -> Result<EntityKey> {
@@ -75,6 +66,16 @@ impl BrainEnhancedKnowledgeGraph {
         };
         
         self.insert_brain_entity(numeric_id, entity_data).await
+    }
+    
+    /// Add entity with EntityData (original method)
+    pub async fn add_entity_data(&self, data: EntityData) -> Result<EntityKey> {
+        // Generate a unique ID for the entity
+        let id = {
+            let core_graph = &self.core_graph;
+            (core_graph.entity_count() as u32) + 1
+        };
+        self.insert_brain_entity(id, data).await
     }
 
     /// Insert logic gate entity
@@ -263,6 +264,11 @@ impl BrainEnhancedKnowledgeGraph {
             .collect()
     }
 
+    /// Add entity with EntityData directly (used by most cognitive tests)
+    pub async fn add_entity(&self, data: EntityData) -> Result<EntityKey> {
+        self.add_entity_data(data).await
+    }
+
     /// Get highly activated entities
     pub async fn get_highly_activated_entities(&self, threshold: f32) -> Vec<(EntityKey, f32)> {
         let activations = self.entity_activations.read().await;
@@ -273,6 +279,7 @@ impl BrainEnhancedKnowledgeGraph {
             .map(|(&key, &activation)| (key, activation))
             .collect()
     }
+
 
     /// Get entity by description (searches properties for matching description)
     pub async fn get_entity_by_description(&self, description: &str) -> Result<Option<crate::core::types::Entity>> {

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMKG Knowledge Graph Query Animation - Phase 4</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #knowledge-graph-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #4CAF50;
+            font-size: 18px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .info-overlay {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #4CAF50;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 400px;
+            z-index: 999;
+        }
+
+        .info-overlay h4 {
+            margin: 0 0 10px 0;
+            color: #FFF;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .metric {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .metric strong {
+            color: #4CAF50;
+        }
+
+        .warning {
+            color: #FF9800;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 4px;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="knowledge-graph-container">
+        <div class="loading" id="loading">
+            Loading LLMKG Knowledge Graph Visualization
+        </div>
+        
+        <div class="info-overlay">
+            <h4>LLMKG Phase 4 - Knowledge Graph Query Animation</h4>
+            <div>
+                <strong>Visualization Features:</strong><br/>
+                • 3D Force-Directed Graph Layout with Physics Simulation<br/>
+                • Real-Time Query Path Visualization & Step-by-Step Execution<br/>
+                • Entity Lifecycle Animation (Create/Update/Delete/Merge/Split)<br/>
+                • SPO Triple Store Operations with Atomic Transaction Effects<br/>
+                • Interactive Graph Exploration with Zoom/Pan/Selection<br/>
+                • Performance Bottleneck Analysis & Query Optimization Display
+            </div>
+            
+            <div class="metrics" id="metrics">
+                <div class="metric">
+                    <strong>Graph:</strong><br/>
+                    Nodes: <span id="node-count">0</span><br/>
+                    Edges: <span id="edge-count">0</span>
+                </div>
+                <div class="metric">
+                    <strong>Animation:</strong><br/>
+                    FPS: <span id="fps">60</span><br/>
+                    Status: <span id="status">Initializing</span>
+                </div>
+                <div class="metric">
+                    <strong>Queries:</strong><br/>
+                    Executed: <span id="query-count">0</span><br/>
+                    Avg Time: <span id="avg-time">0ms</span>
+                </div>
+                <div class="metric">
+                    <strong>Triples:</strong><br/>
+                    Count: <span id="triple-count">0</span><br/>
+                    Transactions: <span id="transaction-count">0</span>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>Note:</strong> This demo requires WebGL support and modern browser features.
+                For best performance, use Chrome or Firefox with hardware acceleration enabled.
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Demo Script (In a real implementation, this would be bundled) -->
+    <script type="module">
+        // Mock implementation for demo purposes
+        // In actual implementation, import from built TypeScript modules
+        
+        class MockKnowledgeGraphDemo {
+            constructor(container) {
+                this.container = container;
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                
+                this.setupRenderer();
+                this.createMockVisualization();
+                this.setupEventHandlers();
+                this.animate();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('status').textContent = 'Running';
+                
+                console.log('LLMKG Knowledge Graph Demo initialized');
+                console.log('This is a mock demo - see TypeScript files for full implementation');
+            }
+            
+            setupRenderer() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.setClearColor(0x0a0a0a);
+                this.container.appendChild(this.renderer.domElement);
+                
+                this.camera.position.set(0, 0, 20);
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+                this.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                this.scene.add(directionalLight);
+            }
+            
+            createMockVisualization() {
+                // Create sample nodes
+                const nodePositions = [
+                    { x: -5, y: 0, z: 0, color: 0x4CAF50, label: 'Albert Einstein' },
+                    { x: 5, y: 0, z: 0, color: 0x2196F3, label: 'Theory of Relativity' },
+                    { x: 0, y: 5, z: 0, color: 0xFF9800, label: 'Princeton' },
+                    { x: 0, y: -5, z: 0, color: 0x9C27B0, label: 'Nobel Prize' },
+                    { x: 3, y: 3, z: 3, color: 0xF44336, label: 'Spacetime' }
+                ];
+                
+                this.nodes = [];
+                this.edges = [];
+                
+                nodePositions.forEach((pos, i) => {
+                    // Create node geometry
+                    const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+                    const material = new THREE.MeshLambertMaterial({ color: pos.color });
+                    const node = new THREE.Mesh(geometry, material);
+                    node.position.set(pos.x, pos.y, pos.z);
+                    node.userData = { id: i, label: pos.label };
+                    
+                    this.scene.add(node);
+                    this.nodes.push(node);
+                    
+                    // Create label
+                    this.createLabel(pos.label, node.position);
+                });
+                
+                // Create edges between some nodes
+                const connections = [
+                    [0, 1], [0, 2], [0, 3], [1, 4]
+                ];
+                
+                connections.forEach(([i, j]) => {
+                    const points = [
+                        this.nodes[i].position.clone(),
+                        this.nodes[j].position.clone()
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: 0x666666, opacity: 0.6, transparent: true });
+                    const line = new THREE.Line(geometry, material);
+                    
+                    this.scene.add(line);
+                    this.edges.push(line);
+                });
+                
+                // Create particle system
+                this.createParticleSystem();
+                
+                // Update metrics
+                document.getElementById('node-count').textContent = this.nodes.length;
+                document.getElementById('edge-count').textContent = this.edges.length;
+                document.getElementById('triple-count').textContent = connections.length;
+            }
+            
+            createLabel(text, position) {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 256;
+                canvas.height = 64;
+                
+                context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                context.fillStyle = 'white';
+                context.font = '16px Arial';
+                context.textAlign = 'center';
+                context.fillText(text, canvas.width / 2, canvas.height / 2 + 5);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                const sprite = new THREE.Sprite(material);
+                sprite.position.copy(position);
+                sprite.position.y += 1;
+                sprite.scale.set(2, 0.5, 1);
+                
+                this.scene.add(sprite);
+            }
+            
+            createParticleSystem() {
+                const particleCount = 500;
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 50;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+                    
+                    colors[i * 3] = Math.random() * 0.5 + 0.5;
+                    colors[i * 3 + 1] = Math.random() * 0.3 + 0.2;
+                    colors[i * 3 + 2] = Math.random() * 0.8 + 0.2;
+                }
+                
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 0.02,
+                    vertexColors: true,
+                    blending: THREE.AdditiveBlending,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                this.particles = new THREE.Points(geometry, material);
+                this.scene.add(this.particles);
+            }
+            
+            setupEventHandlers() {
+                // Mouse controls
+                const mouse = new THREE.Vector2();
+                const raycaster = new THREE.Raycaster();
+                
+                this.renderer.domElement.addEventListener('mousemove', (event) => {
+                    const rect = this.renderer.domElement.getBoundingClientRect();
+                    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    raycaster.setFromCamera(mouse, this.camera);
+                    const intersects = raycaster.intersectObjects(this.nodes);
+                    
+                    // Reset previous highlights
+                    this.nodes.forEach(node => {
+                        node.material.emissive.setHex(0x000000);
+                    });
+                    
+                    if (intersects.length > 0) {
+                        intersects[0].object.material.emissive.setHex(0x222222);
+                    }
+                });
+                
+                // Keyboard controls
+                document.addEventListener('keydown', (event) => {
+                    switch (event.key) {
+                        case '1':
+                            this.demoBasicAnimation();
+                            break;
+                        case '2':
+                            this.demoQueryPath();
+                            break;
+                        case '3':
+                            this.demoActivationPropagation();
+                            break;
+                        case 'r':
+                            this.resetAnimation();
+                            break;
+                    }
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+                
+                // Add control instructions
+                this.addControlPanel();
+            }
+            
+            addControlPanel() {
+                const panel = document.createElement('div');
+                panel.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    font-family: monospace;
+                    z-index: 1000;
+                    font-size: 12px;
+                `;
+                
+                panel.innerHTML = `
+                    <h4 style="margin: 0 0 10px 0; color: #4CAF50;">Mock Knowledge Graph Demo</h4>
+                    <div style="line-height: 1.4;">
+                        <strong>Demo Controls:</strong><br/>
+                        • 1: Basic Animation<br/>
+                        • 2: Query Path Demo<br/>
+                        • 3: Activation Propagation<br/>
+                        • R: Reset<br/>
+                        <br/>
+                        <strong>Mouse:</strong> Hover over nodes<br/>
+                        <br/>
+                        <em>Note: This is a simplified demo.<br/>
+                        See TypeScript files for full implementation.</em>
+                    </div>
+                `;
+                
+                document.body.appendChild(panel);
+            }
+            
+            demoBasicAnimation() {
+                console.log('Demo: Basic node animation');
+                this.nodes.forEach((node, i) => {
+                    setTimeout(() => {
+                        // Pulse animation
+                        let scale = 1;
+                        const animate = () => {
+                            scale += 0.02;
+                            if (scale > 1.5) scale = 1;
+                            node.scale.setScalar(scale);
+                            if (scale > 1) requestAnimationFrame(animate);
+                        };
+                        animate();
+                    }, i * 200);
+                });
+                document.getElementById('query-count').textContent = 
+                    parseInt(document.getElementById('query-count').textContent) + 1;
+            }
+            
+            demoQueryPath() {
+                console.log('Demo: Query path highlighting');
+                const path = [0, 1, 4]; // Einstein -> Relativity -> Spacetime
+                
+                path.forEach((nodeIndex, i) => {
+                    setTimeout(() => {
+                        const node = this.nodes[nodeIndex];
+                        node.material.emissive.setHex(0x444400);
+                        
+                        setTimeout(() => {
+                            node.material.emissive.setHex(0x000000);
+                        }, 1000);
+                    }, i * 500);
+                });
+                
+                document.getElementById('avg-time').textContent = '650ms';
+            }
+            
+            demoActivationPropagation() {
+                console.log('Demo: Activation propagation');
+                this.nodes.forEach((node, i) => {
+                    setTimeout(() => {
+                        const originalColor = node.material.color.clone();
+                        node.material.color.setHex(0xFFFFFF);
+                        
+                        setTimeout(() => {
+                            node.material.color.copy(originalColor);
+                        }, 300);
+                    }, i * 150);
+                });
+            }
+            
+            resetAnimation() {
+                console.log('Reset: Clearing all animations');
+                this.nodes.forEach(node => {
+                    node.scale.setScalar(1);
+                    node.material.emissive.setHex(0x000000);
+                });
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Rotate camera around scene
+                const time = performance.now() * 0.0005;
+                this.camera.position.x = Math.cos(time) * 20;
+                this.camera.position.z = Math.sin(time) * 20;
+                this.camera.lookAt(this.scene.position);
+                
+                // Rotate particle system
+                if (this.particles) {
+                    this.particles.rotation.x += 0.001;
+                    this.particles.rotation.y += 0.002;
+                }
+                
+                // Animate nodes with subtle floating
+                this.nodes.forEach((node, i) => {
+                    node.position.y += Math.sin(time + i) * 0.01;
+                });
+                
+                this.renderer.render(this.scene, this.camera);
+                
+                // Update FPS counter occasionally
+                if (Math.random() < 0.01) {
+                    document.getElementById('fps').textContent = Math.round(60 + (Math.random() - 0.5) * 10);
+                }
+            }
+        }
+        
+        // Initialize demo
+        const container = document.getElementById('knowledge-graph-container');
+        const demo = new MockKnowledgeGraphDemo(container);
+        
+        // Make demo globally available
+        window.knowledgeGraphDemo = demo;
+        
+        console.log('LLMKG Knowledge Graph Visualization Demo Ready!');
+        console.log('Press 1, 2, 3 for different demos, R to reset');
+        console.log('For full implementation, see the TypeScript files in src/knowledge/');
+        
+        // Simulate some metrics updates
+        setInterval(() => {
+            const transactionCount = parseInt(document.getElementById('transaction-count').textContent);
+            if (Math.random() < 0.1) {
+                document.getElementById('transaction-count').textContent = transactionCount + 1;
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

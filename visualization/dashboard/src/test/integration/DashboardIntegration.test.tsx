@@ -26,6 +26,9 @@ describe('LLMKG Dashboard Phase 2 Integration Tests', () => {
     store.dispatch({ type: 'RESET' });
     // Reset viewport
     setViewport(viewportSizes.desktop.width, viewportSizes.desktop.height);
+    // Reset WebSocket instances
+    MockWebSocket.instances = [];
+    (global as any).WebSocket.instances = [];
   });
 
   describe('Component Integration', () => {

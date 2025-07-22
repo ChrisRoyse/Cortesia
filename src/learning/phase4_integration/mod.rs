@@ -16,7 +16,7 @@ pub use types::*;
 pub use emergency::{EmergencyProtocols, EmergencyType};
 pub use coordination::LearningCoordinator;
 pub use performance::Phase4PerformanceTracker;
-pub use config::{Phase4Config, IntegrationDepth};
+pub use config::{Phase4Config, IntegrationDepth, PerformanceTargets, SafetyConstraints, ResourceLimits};
 pub use system::Phase4LearningSystem;
 
 // Re-export for backward compatibility

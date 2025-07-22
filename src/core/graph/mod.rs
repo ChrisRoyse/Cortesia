@@ -26,4 +26,4 @@ pub use entity_operations::EntityStats;
 pub use relationship_operations::RelationshipStats;
 pub use path_finding::PathStats;
 pub use similarity_search::SimilarityStats;
-pub use query_system::{QueryStats, QueryExplanation, EntityExplanation};
+pub use query_system::{QueryStats, QueryExplanation, EntityExplanation, AdvancedQueryResult};

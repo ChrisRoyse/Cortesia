@@ -79,7 +79,7 @@ async fn test_brain_enhanced_graph_complete_workflow() {
     
     let mut entity_keys = Vec::new();
     for (i, entity_data) in brain_entities.iter().enumerate() {
-        let key = brain_graph.insert_entity((i + 1) as u32, entity_data.clone()).unwrap();
+        let key = brain_graph.insert_brain_entity((i + 1) as u32, entity_data.clone()).await.unwrap();
         entity_keys.push(key);
     }
     
@@ -312,7 +312,7 @@ async fn test_brain_module_cognitive_processing() {
                                concept_name, domain, importance),
         };
         
-        let key = brain_graph.insert_entity((i + 10) as u32, entity_data).unwrap();
+        let key = brain_graph.insert_brain_entity((i + 10) as u32, entity_data).await.unwrap();
         concept_keys.push(key);
         
         // Set initial activation based on importance
@@ -470,7 +470,7 @@ async fn test_brain_module_performance_and_scaling() {
                                i, i % 10, (i as f32) / (num_concepts as f32)),
         };
         
-        let key = brain_graph.insert_entity(i as u32, entity_data).unwrap();
+        let key = brain_graph.insert_brain_entity(i as u32, entity_data).await.unwrap();
         concept_keys.push(key);
         
         // Set varying activation levels

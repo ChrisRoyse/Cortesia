@@ -1,7 +1,7 @@
 //! Query system for knowledge graph
 
 use super::graph_core::{KnowledgeGraph, MAX_QUERY_TIME};
-use crate::core::types::{EntityKey, EntityData, QueryResult, ContextEntity};
+use crate::core::types::{EntityKey, EntityData, QueryResult, ContextEntity, Relationship};
 use crate::error::{GraphError, Result};
 use crate::embedding::similarity::cosine_similarity;
 use std::time::Instant;
@@ -428,6 +428,67 @@ impl KnowledgeGraph {
         Ok(())
     }
 
+    /// Advanced query with performance metrics
+    pub fn advanced_query(&self, query_embedding: &[f32], k: usize) -> Result<AdvancedQueryResult> {
+        let start_time = Instant::now();
+        
+        // Validate parameters
+        self.validate_query_params(query_embedding, k)?;
+        
+        // Perform similarity search
+        let similar_entities = self.similarity_search(query_embedding, k)?;
+        
+        // Convert to context entities
+        let entities: Vec<ContextEntity> = similar_entities
+            .into_iter()
+            .map(|(key, similarity)| {
+                let neighbors = self.get_neighbors(key);
+                let properties = if let Some((_, data)) = self.get_entity(key) {
+                    format!("{:?}", data.properties)
+                } else {
+                    String::new()
+                };
+                ContextEntity {
+                    id: key,
+                    similarity,
+                    neighbors,
+                    properties,
+                }
+            })
+            .collect();
+        
+        // Collect relationships
+        let mut relationships = Vec::new();
+        for entity in &entities {
+            let entity_rels = self.get_entity_relationships(entity.id);
+            relationships.extend(entity_rels);
+        }
+        
+        // Calculate confidence
+        let confidence = if entities.is_empty() {
+            0.0
+        } else {
+            entities.iter().map(|e| e.similarity).sum::<f32>() / entities.len() as f32
+        };
+        
+        Ok(AdvancedQueryResult {
+            entities,
+            relationships,
+            confidence,
+            query_time: start_time.elapsed(),
+        })
+    }
+
+    /// Get entity degree (number of connections)
+    pub fn get_entity_degree(&self, entity: EntityKey) -> usize {
+        self.get_neighbors(entity).len()
+    }
+
+    /// Get query statistics for the graph
+    pub fn get_query_statistics(&self) -> QueryStats {
+        self.get_query_stats()
+    }
+
     /// Explain query (for debugging)
     pub fn explain_query(&self, query_embedding: &[f32], k: usize) -> Result<QueryExplanation> {
         let start_time = Instant::now();
@@ -459,6 +520,15 @@ impl KnowledgeGraph {
             explanations,
         })
     }
+}
+
+/// Advanced query result with performance metrics
+#[derive(Debug, Clone)]
+pub struct AdvancedQueryResult {
+    pub entities: Vec<ContextEntity>,
+    pub relationships: Vec<Relationship>,
+    pub confidence: f32,
+    pub query_time: std::time::Duration,
 }
 
 /// Query statistics
@@ -511,5 +581,82 @@ impl QueryStats {
     /// Check if caching is effective
     pub fn is_caching_effective(&self) -> bool {
         self.cache_hit_rate > 0.3 && self.cache_size > 0
+    }
+
+    /// Create QueryStats from an AdvancedQueryResult
+    pub fn from_query_result(result: &AdvancedQueryResult) -> Self {
+        QueryStats {
+            entity_count: result.entities.len(),
+            relationship_count: result.relationships.len(),
+            cache_size: 0, // Default value
+            cache_capacity: 100, // Default value
+            cache_hit_rate: 0.0, // Default value
+            average_degree: 0.0, // Will be calculated if needed
+        }
+    }
+
+    /// Get total entities in the result
+    pub fn total_entities(&self) -> usize {
+        self.entity_count
+    }
+
+    /// Get query time as Duration (placeholder)
+    pub fn query_time(&self) -> std::time::Duration {
+        std::time::Duration::from_nanos(0) // Default value
+    }
+
+    /// Get average similarity (placeholder)
+    pub fn average_similarity(&self) -> f32 {
+        0.0 // Default value, should be calculated from actual results
+    }
+}
+
+impl QueryExplanation {
+    /// Create QueryExplanation for a query result
+    pub fn for_query(result: &AdvancedQueryResult) -> Self {
+        QueryExplanation {
+            query_time: result.query_time,
+            entities_examined: result.entities.len(),
+            results_returned: result.entities.len(),
+            explanations: result.entities.iter().map(|entity| {
+                EntityExplanation {
+                    entity_key: entity.id,
+                    similarity_score: entity.similarity,
+                    degree: entity.neighbors.len(),
+                    properties_count: entity.properties.split(',').count(),
+                }
+            }).collect(),
+        }
+    }
+
+    /// Get summary of the query explanation
+    pub fn summary(&self) -> String {
+        format!("Query examined {} entities and returned {} results in {:.2}ms",
+            self.entities_examined,
+            self.results_returned,
+            self.query_time.as_millis()
+        )
+    }
+
+    /// Get entity count
+    pub fn entity_count(&self) -> usize {
+        self.explanations.len()
+    }
+}
+
+impl EntityExplanation {
+    /// Create EntityExplanation for an entity
+    pub fn for_entity(entity: &ContextEntity) -> Self {
+        EntityExplanation {
+            entity_key: entity.id,
+            similarity_score: entity.similarity,
+            degree: entity.neighbors.len(),
+            properties_count: entity.properties.split(',').count(),
+        }
+    }
+
+    /// Get similarity score
+    pub fn similarity_score(&self) -> f32 {
+        self.similarity_score
     }
 }

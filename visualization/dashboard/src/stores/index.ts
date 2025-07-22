@@ -11,6 +11,7 @@ import {
 } from '../types';
 import layoutReducer from './slices/layoutSlice';
 import realtimeReducer from './slices/realtimeSlice';
+import toolsReducer from '../features/tools/stores/toolsSlice';
 
 // Dashboard Slice
 const initialDashboardState: DashboardState = {
@@ -241,12 +242,13 @@ export const store = configureStore({
     mcp: mcpSlice.reducer,
     layout: layoutReducer,
     realtime: realtimeReducer,
+    tools: toolsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['data/setCurrentData', 'webSocket/setLastMessage'],
-        ignoredPaths: ['data.current', 'data.history', 'webSocket.lastMessage'],
+        ignoredActions: ['data/setCurrentData', 'webSocket/setLastMessage', 'tools/setTools', 'tools/addTool', 'tools/updateTool'],
+        ignoredPaths: ['data.current', 'data.history', 'webSocket.lastMessage', 'tools.tools', 'tools.executions', 'tools.executionHistory'],
       },
     }),
 });
