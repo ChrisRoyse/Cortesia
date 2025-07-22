@@ -4,6 +4,7 @@ use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
 use crate::core::brain_types::BrainInspiredRelationship;
 use crate::core::types::EntityKey;
 use crate::learning::types::*;
+use crate::cognitive::types::CognitivePatternType;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -669,8 +670,9 @@ mod tests {
                 timestamp: Instant::now(),
                 context: ActivationContext {
                     query_id: "test_query_1".to_string(),
-                    source_pattern: None,
-                    propagation_depth: 0,
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: None,
+                    outcome_quality: None,
                 },
             },
             ActivationEvent {
@@ -679,8 +681,9 @@ mod tests {
                 timestamp: Instant::now(),
                 context: ActivationContext {
                     query_id: "test_query_2".to_string(),
-                    source_pattern: None,
-                    propagation_depth: 0,
+                    cognitive_pattern: CognitivePatternType::Convergent,
+                    user_session: None,
+                    outcome_quality: None,
                 },
             }
         ]
@@ -732,15 +735,15 @@ mod tests {
                 entity_key: EntityKey::default(),
                 activation_strength: 0.9,
                 timestamp: Instant::now(),
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             },
             ActivationEvent {
                 entity_key: EntityKey::default(),
                 activation_strength: 0.8,
                 timestamp: Instant::now(), // Same timestamp = simultaneous
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             }
         ];
         
@@ -770,16 +773,16 @@ mod tests {
             entity_key: EntityKey::default(),
             activation_strength: 0.8,
             timestamp: now,
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let post_event = ActivationEvent {
             entity_key: EntityKey::default(),
             activation_strength: 0.7,
             timestamp: now + Duration::from_millis(20), // 20ms later
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
@@ -807,16 +810,16 @@ mod tests {
             entity_key: EntityKey::default(),
             activation_strength: 0.8,
             timestamp: now + Duration::from_millis(20), // 20ms later
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let post_event = ActivationEvent {
             entity_key: EntityKey::default(),
             activation_strength: 0.7,
             timestamp: now, // Earlier
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
@@ -844,16 +847,16 @@ mod tests {
             entity_key: EntityKey::default(),
             activation_strength: 0.8,
             timestamp: now,
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let post_event = ActivationEvent {
             entity_key: EntityKey::default(),
             activation_strength: 0.7,
             timestamp: now + Duration::from_millis(200), // Outside STDP window
-            event_type: ActivationEventType::EntityActivated,
-            duration: Duration::from_millis(50),
+            context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+            // duration field removed
         };
         
         let result = engine.spike_timing_dependent_plasticity(pre_event, post_event).await
@@ -878,8 +881,8 @@ mod tests {
         
         assert!(!tracker.activation_history.is_empty(), 
                "Should track activation history");
-        assert!(tracker.global_activity_level >= 0.0, 
-               "Should track global activity level");
+        assert!(tracker.correlation_threshold >= 0.0, 
+               "Should have valid correlation threshold");
     }
 
     #[tokio::test]
@@ -892,15 +895,15 @@ mod tests {
                 entity_key: EntityKey::default(),
                 activation_strength: 0.9,
                 timestamp: Instant::now(),
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             },
             ActivationEvent {
                 entity_key: EntityKey::default(),
                 activation_strength: 0.8,
                 timestamp: Instant::now() + Duration::from_millis(10),
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             }
         ];
         
@@ -931,8 +934,8 @@ mod tests {
                 entity_key: entity_a,
                 activation_strength: 0.8,
                 timestamp: now,
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             }
         ]);
         
@@ -941,8 +944,8 @@ mod tests {
                 entity_key: entity_b,
                 activation_strength: 0.7,
                 timestamp: now + Duration::from_millis(30), // Close in time
-                event_type: ActivationEventType::EntityActivated,
-                duration: Duration::from_millis(100),
+                context: ActivationContext { query_id: "test_query".to_string(), cognitive_pattern: CognitivePatternType::Convergent, user_session: None, outcome_quality: None, },
+                // duration field removed
             }
         ]);
         

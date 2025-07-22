@@ -611,7 +611,8 @@ mod tests {
         let cognitive_result = result.unwrap();
         assert_eq!(cognitive_result.query, "What is the relationship between cause and effect?");
         assert!(cognitive_result.confidence >= 0.0 && cognitive_result.confidence <= 1.0);
-        assert!(cognitive_result.execution_time_ms >= 0);
+        // execution_time_ms is unsigned, so just check it exists
+        let _ = cognitive_result.execution_time_ms;
     }
 
     // Test private method: cognitive_reasoning without cognitive orchestrator
@@ -808,8 +809,9 @@ mod tests {
         let stats = integration.get_phase1_statistics().await;
         assert!(stats.is_ok());
         let phase1_stats = stats.unwrap();
-        assert!(phase1_stats.brain_statistics.entity_count >= 0);
-        assert!(phase1_stats.current_queue_size >= 0);
+        // These are unsigned, so just check they exist
+        let _ = phase1_stats.brain_statistics.entity_count;
+        let _ = phase1_stats.current_queue_size;
         
         // Test cognitive statistics
         let cognitive_stats = integration.get_cognitive_statistics().await;

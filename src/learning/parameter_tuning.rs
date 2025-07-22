@@ -1,4 +1,4 @@
-use crate::learning::types::PerformanceData;
+use crate::learning::types::{PerformanceData, ThroughputMetrics};
 use crate::error::Result;
 
 use std::collections::HashMap;
@@ -695,14 +695,33 @@ mod tests {
 
     fn create_test_performance_data() -> PerformanceData {
         PerformanceData {
-            accuracy: 0.85,
-            speed: 0.7,
-            memory_efficiency: 0.8,
-            stability: 0.9,
-            resource_utilization: 0.6,
-            error_rate: 0.05,
-            throughput: 1000.0,
-            latency: Duration::from_millis(50),
+            query_latencies: vec![Duration::from_millis(50), Duration::from_millis(60)],
+            memory_usage: vec![0.6, 0.7, 0.8],
+            accuracy_scores: vec![0.85, 0.86, 0.84],
+            user_satisfaction: vec![0.8, 0.85, 0.9],
+            system_stability: 0.9,
+            error_rates: {
+                let mut rates = HashMap::new();
+                rates.insert("timeout".to_string(), 0.05);
+                rates.insert("memory".to_string(), 0.02);
+                rates
+            },
+            throughput_metrics: ThroughputMetrics {
+                queries_per_second: 1000.0,
+                successful_queries: 9500,
+                failed_queries: 500,
+                average_response_time: Duration::from_millis(50),
+            },
+            timestamp: SystemTime::now(),
+            system_health: 0.85,
+            overall_performance_score: 0.8,
+            component_scores: {
+                let mut scores = HashMap::new();
+                scores.insert("attention".to_string(), 0.85);
+                scores.insert("memory".to_string(), 0.8);
+                scores
+            },
+            bottlenecks: vec![],
         }
     }
 

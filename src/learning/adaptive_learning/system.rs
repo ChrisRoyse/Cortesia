@@ -524,8 +524,13 @@ mod tests {
     use std::time::Duration;
     use uuid::Uuid;
 
-    // Test helper to create mock components
+    // Test helper to create mock components  
     fn create_test_adaptive_learning_system() -> AdaptiveLearningSystem {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(create_test_adaptive_learning_system_async())
+    }
+    
+    async fn create_test_adaptive_learning_system_async() -> AdaptiveLearningSystem {
         use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
         use crate::cognitive::working_memory::WorkingMemorySystem;
         use crate::cognitive::attention_manager::AttentionManager;
@@ -538,15 +543,84 @@ mod tests {
         // These would be properly initialized in real tests
         // For now, we'll create mock implementations where needed
         
+        // Create a mock brain graph for testing
+        let embedding_dim = 512;
+        let brain_graph = Arc::new(crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph::new(embedding_dim)
+            .expect("Failed to create brain graph"));
+        
+        // Create activation engine
+        let activation_config = crate::core::activation_config::ActivationConfig {
+            max_iterations: 100,
+            convergence_threshold: 0.01,
+            decay_rate: 0.1,
+            inhibition_strength: 0.3,
+            default_threshold: 0.5,
+        };
+        let activation_engine = Arc::new(crate::core::activation_engine::ActivationPropagationEngine::new(activation_config));
+        
+        // Create SDR storage
+        let sdr_config = crate::core::sdr_types::SDRConfig {
+            total_bits: embedding_dim * 4,
+            active_bits: (embedding_dim * 4) / 50,
+            sparsity: 0.02,
+            overlap_threshold: 0.5,
+        };
+        let sdr_storage = Arc::new(crate::core::sdr_storage::SDRStorage::new(sdr_config));
+        
+        // Create working memory
+        let working_memory = Arc::new(WorkingMemorySystem::new(
+            activation_engine.clone(),
+            sdr_storage.clone(),
+        ).await.expect("Failed to create working memory"));
+        
+        // Create orchestrator
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            crate::cognitive::orchestrator::CognitiveOrchestratorConfig::default(),
+        ).await.expect("Failed to create orchestrator"));
+        
+        // Create attention manager
+        let attention_manager = Arc::new(AttentionManager::new(
+            orchestrator.clone(),
+            activation_engine.clone(),
+            working_memory.clone(),
+        ).await.expect("Failed to create attention manager"));
+        
+        // Create critical thinking
+        let critical_thinking = Arc::new(crate::cognitive::critical::CriticalThinking::new(
+            brain_graph.clone()
+        ));
+        
+        // Create inhibition system
+        let inhibition_system = Arc::new(crate::cognitive::inhibitory::CompetitiveInhibitionSystem::new(
+            activation_engine.clone(),
+            critical_thinking
+        ));
+        
+        // Create hebbian engine
+        let hebbian_engine = Arc::new(Mutex::new(HebbianLearningEngine::new(
+            brain_graph.clone(),
+            activation_engine.clone(),
+            inhibition_system.clone(),
+        ).await.expect("Failed to create hebbian engine")));
+        
+        // Create integrated cognitive system
+        let integrated_cognitive_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
+            orchestrator.clone(),
+            activation_engine.clone(),
+            brain_graph.clone(),
+            sdr_storage.clone(),
+        ).await.expect("Failed to create integrated cognitive system"));
+        
         AdaptiveLearningSystem {
-            integrated_cognitive_system: Arc::new(Phase3IntegratedCognitiveSystem::default()),
-            working_memory: Arc::new(WorkingMemorySystem::new().expect("Failed to create working memory")),
-            attention_manager: Arc::new(AttentionManager::new().expect("Failed to create attention manager")),
-            orchestrator: Arc::new(CognitiveOrchestrator::new().expect("Failed to create orchestrator")),
-            hebbian_engine: Arc::new(Mutex::new(HebbianLearningEngine::default())),
-            performance_monitor: Arc::new(PerformanceMonitor::new()),
-            feedback_aggregator: Arc::new(FeedbackAggregator::new()),
-            learning_scheduler: Arc::new(LearningScheduler::new()),
+            integrated_cognitive_system,
+            working_memory,
+            attention_manager,
+            orchestrator,
+            hebbian_engine,
+            performance_monitor: Arc::new(PerformanceMonitor::default()),
+            feedback_aggregator: Arc::new(FeedbackAggregator::default()),
+            learning_scheduler: Arc::new(LearningScheduler::default()),
             adaptation_history: Arc::new(RwLock::new(Vec::new())),
             learning_config: AdaptiveLearningConfig::default(),
         }
@@ -561,24 +635,23 @@ mod tests {
                 bottleneck_type: BottleneckType::Memory,
                 severity: 0.8,
                 description: "High memory usage".to_string(),
-                affected_components: vec!["working_memory".to_string()],
-                suggested_actions: vec!["Optimize memory allocation".to_string()],
+                potential_solutions: vec!["Optimize memory allocation".to_string()],
             }
         ];
         
         let satisfaction_analysis = SatisfactionAnalysis {
-            overall_satisfaction: 0.6,
+            satisfaction_trends: vec![0.5, 0.6, 0.7],
             problem_areas: vec!["response_time".to_string()],
             improvement_opportunities: vec!["faster_processing".to_string()],
-            user_feedback_trends: HashMap::new(),
         };
         
         let correlation_analysis = CorrelationAnalysis {
+            performance_satisfaction_correlation: 0.7,
+            speed_satisfaction_correlation: -0.5,
+            accuracy_satisfaction_correlation: 0.8,
             significant_correlations: vec![
                 ("memory_usage".to_string(), "response_time".to_string(), -0.7)
             ],
-            correlation_strength_threshold: 0.6,
-            temporal_correlations: HashMap::new(),
         };
         
         let targets = system.identify_learning_targets(
@@ -720,8 +793,7 @@ mod tests {
             severity: 0.9,
             affected_components: vec!["core_system".to_string()],
             performance_before: 0.3,
-            emergency_description: "Critical system failure detected".to_string(),
-            immediate_actions_required: vec!["restart_components".to_string()],
+            emergency_actions: vec!["restart_components".to_string()],
         };
         
         let result = system.handle_emergency(emergency_context)
@@ -743,8 +815,7 @@ mod tests {
             severity: 0.8,
             affected_components: vec!["cognitive_system".to_string()],
             performance_before: 0.2,
-            emergency_description: "Performance collapsed below threshold".to_string(),
-            immediate_actions_required: vec!["optimize_parameters".to_string()],
+            emergency_actions: vec!["optimize_parameters".to_string()],
         };
         
         let result = system.handle_emergency(emergency_context)
@@ -798,29 +869,27 @@ mod tests {
                 bottleneck_type: BottleneckType::Memory,
                 severity: 0.9, // High severity
                 description: "Critical memory bottleneck".to_string(),
-                affected_components: vec!["working_memory".to_string()],
-                suggested_actions: vec!["Urgent optimization".to_string()],
+                potential_solutions: vec!["Urgent optimization".to_string()],
             },
             AdaptivePerformanceBottleneck {
                 bottleneck_type: BottleneckType::Computation,
                 severity: 0.3, // Low severity
                 description: "Minor computational bottleneck".to_string(),
-                affected_components: vec!["attention_system".to_string()],
-                suggested_actions: vec!["Minor optimization".to_string()],
+                potential_solutions: vec!["Minor optimization".to_string()],
             }
         ];
         
         let satisfaction_analysis = SatisfactionAnalysis {
-            overall_satisfaction: 0.8,
+            satisfaction_trends: vec![0.6, 0.7, 0.8],
             problem_areas: vec![],
             improvement_opportunities: vec![],
-            user_feedback_trends: HashMap::new(),
         };
         
         let correlation_analysis = CorrelationAnalysis {
+            performance_satisfaction_correlation: 0.8,
+            speed_satisfaction_correlation: 0.7,
+            accuracy_satisfaction_correlation: 0.9,
             significant_correlations: vec![],
-            correlation_strength_threshold: 0.6,
-            temporal_correlations: HashMap::new(),
         };
         
         let targets = system.identify_learning_targets(
@@ -848,31 +917,29 @@ mod tests {
                 bottleneck_type: BottleneckType::Memory,
                 severity: 0.8,
                 description: "Memory bottleneck".to_string(),
-                affected_components: vec!["memory".to_string()],
-                suggested_actions: vec!["Optimize memory".to_string()],
+                potential_solutions: vec!["Optimize memory".to_string()],
             },
             AdaptivePerformanceBottleneck {
                 bottleneck_type: BottleneckType::Computation,
                 severity: 0.7,
                 description: "Computation bottleneck".to_string(),
-                affected_components: vec!["cpu".to_string()],
-                suggested_actions: vec!["Optimize computation".to_string()],
+                potential_solutions: vec!["Optimize computation".to_string()],
             }
         ];
         
         let satisfaction_analysis = SatisfactionAnalysis {
-            overall_satisfaction: 0.7,
+            satisfaction_trends: vec![0.5, 0.6, 0.7],
             problem_areas: vec!["response_speed".to_string()],
             improvement_opportunities: vec![],
-            user_feedback_trends: HashMap::new(),
         };
         
         let correlation_analysis = CorrelationAnalysis {
+            performance_satisfaction_correlation: 0.7,
+            speed_satisfaction_correlation: 0.6,
+            accuracy_satisfaction_correlation: 0.8,
             significant_correlations: vec![
                 ("feature_a".to_string(), "feature_b".to_string(), 0.8)
             ],
-            correlation_strength_threshold: 0.6,
-            temporal_correlations: HashMap::new(),
         };
         
         let targets = system.identify_learning_targets(
@@ -907,9 +974,9 @@ mod tests {
         
         assert!(config.max_concurrent_adaptations > 0, 
                "Should allow at least one concurrent adaptation");
-        assert!(config.learning_rate > 0.0 && config.learning_rate <= 1.0,
-               "Learning rate should be normalized");
-        assert!(config.adaptation_threshold > 0.0 && config.adaptation_threshold <= 1.0,
-               "Adaptation threshold should be normalized");
+        assert!(config.adaptation_aggressiveness > 0.0 && config.adaptation_aggressiveness <= 1.0,
+               "Adaptation aggressiveness should be normalized");
+        assert!(config.emergency_adaptation_threshold > 0.0 && config.emergency_adaptation_threshold <= 1.0,
+               "Emergency adaptation threshold should be normalized");
     }
 }

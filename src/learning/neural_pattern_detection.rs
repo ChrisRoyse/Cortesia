@@ -860,8 +860,9 @@ mod tests {
 
     // Test helper to create mock neural pattern detection system
     async fn create_test_pattern_detection_system() -> Result<NeuralPatternDetectionSystem> {
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new());
-        let neural_server = Arc::new(NeuralProcessingServer::new()?);
+        let embedding_dim = 512;
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(embedding_dim)?);
+        let neural_server = Arc::new(NeuralProcessingServer::new_mock());
         
         NeuralPatternDetectionSystem::new(brain_graph, neural_server).await
     }

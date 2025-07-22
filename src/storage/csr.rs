@@ -636,7 +636,7 @@ mod tests {
         assert_eq!(graph.edge_count(), node_count - 1);
         
         // Test path finding in large graph
-        let path = graph.find_path(0, 999, 1000).unwrap();
+        let path = graph.find_path(0, 999, 255).unwrap();
         assert_eq!(path.len(), 1000);
         assert_eq!(path[0], 0);
         assert_eq!(path[999], 999);
