@@ -2,18 +2,21 @@
 
 use super::types::*;
 use crate::cognitive::types::CognitivePatternType;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Mutex};
 use std::collections::HashMap;
 use std::time::SystemTime;
 use anyhow::Result;
 use uuid::Uuid;
+use sysinfo::System;
 
 /// Adaptation engine for cognitive patterns
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AdaptationEngine {
     pub adaptation_triggers: Arc<RwLock<Vec<AdaptationTrigger>>>,
     pub adaptation_executor: Arc<AdaptationExecutor>,
     pub adaptation_monitor: Arc<AdaptationMonitor>,
+    /// System monitor for real-time metrics
+    system_monitor: Arc<Mutex<System>>,
 }
 
 /// Triggers for adaptation
@@ -63,11 +66,13 @@ pub struct AdaptationMonitor {
 }
 
 /// Pattern adaptation engine
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PatternAdaptationEngine {
     pub adaptation_rules: Arc<RwLock<Vec<AdaptationRule>>>,
     pub adaptation_history: Arc<RwLock<Vec<AdaptationEvent>>>,
     pub effectiveness_tracker: Arc<RwLock<AdaptationEffectivenessTracker>>,
+    /// System monitor for real-time metrics
+    system_monitor: Arc<Mutex<System>>,
 }
 
 /// Rules for pattern adaptation
@@ -113,6 +118,9 @@ pub struct AdaptationEffectivenessTracker {
 impl AdaptationEngine {
     /// Create new adaptation engine
     pub async fn new() -> Result<Self> {
+        // Initialize system monitor
+        let system = System::new_all();
+        
         Ok(Self {
             adaptation_triggers: Arc::new(RwLock::new(Vec::new())),
             adaptation_executor: Arc::new(AdaptationExecutor {
@@ -140,7 +148,34 @@ impl AdaptationEngine {
                     user_retention_impact: 0.0,
                 },
             }),
+            system_monitor: Arc::new(Mutex::new(system)),
         })
+    }
+    
+    /// Get current performance score based on system metrics
+    fn get_current_performance_score(&self) -> f32 {
+        let mut system = self.system_monitor.lock().unwrap();
+        system.refresh_all();
+        
+        // Get CPU usage (lower is better)
+        let cpu_usage = system.global_cpu_info().cpu_usage() / 100.0;
+        let cpu_score = 1.0 - cpu_usage.min(1.0);
+        
+        // Get memory usage (lower is better)
+        let memory_used = system.used_memory() as f32;
+        let memory_total = system.total_memory() as f32;
+        let memory_score = if memory_total > 0.0 {
+            1.0 - (memory_used / memory_total).min(1.0)
+        } else {
+            0.5
+        };
+        
+        // Get load score using CPU usage
+        let cpu_usage = system.global_cpu_info().cpu_usage() / 100.0;
+        let load_score = 1.0 - cpu_usage.min(1.0);
+        
+        // Combined performance score
+        (cpu_score * 0.4 + memory_score * 0.3 + load_score * 0.3).max(0.0).min(1.0)
     }
     
     /// Add adaptation trigger
@@ -270,9 +305,9 @@ impl AdaptationEngine {
         };
         
         // Execute the adaptation
-        let performance_before = 0.7; // Would be measured from system
+        let performance_before = self.get_current_performance_score();
         let success = self.execute_adaptation_action(&adaptation_action).await?;
-        let performance_after = if success { 0.75 } else { 0.65 }; // Would be measured from system
+        let performance_after = self.get_current_performance_score();
         
         let event = AdaptationEvent {
             event_id,
@@ -387,6 +422,8 @@ impl AdaptationEngine {
 impl PatternAdaptationEngine {
     /// Create new pattern adaptation engine
     pub fn new() -> Self {
+        let system = System::new_all();
+        
         Self {
             adaptation_rules: Arc::new(RwLock::new(Vec::new())),
             adaptation_history: Arc::new(RwLock::new(Vec::new())),
@@ -396,7 +433,34 @@ impl PatternAdaptationEngine {
                 performance_improvements: HashMap::new(),
                 user_satisfaction_changes: HashMap::new(),
             })),
+            system_monitor: Arc::new(Mutex::new(system)),
         }
+    }
+    
+    /// Get current performance score based on system metrics
+    fn get_current_performance_score(&self) -> f32 {
+        let mut system = self.system_monitor.lock().unwrap();
+        system.refresh_all();
+        
+        // Get CPU usage (lower is better)
+        let cpu_usage = system.global_cpu_info().cpu_usage() / 100.0;
+        let cpu_score = 1.0 - cpu_usage.min(1.0);
+        
+        // Get memory usage (lower is better)
+        let memory_used = system.used_memory() as f32;
+        let memory_total = system.total_memory() as f32;
+        let memory_score = if memory_total > 0.0 {
+            1.0 - (memory_used / memory_total).min(1.0)
+        } else {
+            0.5
+        };
+        
+        // Get load score using CPU usage
+        let cpu_usage = system.global_cpu_info().cpu_usage() / 100.0;
+        let load_score = 1.0 - cpu_usage.min(1.0);
+        
+        // Combined performance score
+        (cpu_score * 0.4 + memory_score * 0.3 + load_score * 0.3).max(0.0).min(1.0)
     }
     
     /// Add adaptation rule
@@ -448,7 +512,10 @@ impl PatternAdaptationEngine {
         
         // Execute the adaptation action
         let success = self.execute_rule_action(&rule.adaptation_action).await?;
-        let performance_after = if success { performance_before + 0.05 } else { performance_before - 0.02 };
+        
+        // Get actual performance after adaptation
+        std::thread::sleep(std::time::Duration::from_millis(100)); // Brief delay to let changes take effect
+        let performance_after = self.get_current_performance_score();
         
         Ok(AdaptationEvent {
             event_id,
