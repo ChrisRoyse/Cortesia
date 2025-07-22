@@ -279,9 +279,13 @@ impl AbstractThinking {
     }
     
     fn calculate_structural_complexity(&self, stats: &crate::core::brain_enhanced_graph::BrainStatistics) -> f32 {
-        let entity_complexity = (stats.entity_count as f32).ln() as f32 / 10.0;
-        let relationship_complexity = (stats.relationship_count as f32).ln() as f32 / 10.0;
-        let gate_complexity = (stats.entity_count as f32 * 0.1).ln() as f32 / 10.0; // Approximate gate count
+        if stats.entity_count == 0 {
+            return 0.0; // No complexity for empty graph
+        }
+        
+        let entity_complexity = ((stats.entity_count as f32).max(1.0)).ln() / 10.0;
+        let relationship_complexity = ((stats.relationship_count as f32).max(1.0)).ln() / 10.0;
+        let gate_complexity = ((stats.entity_count as f32 * 0.1).max(1.0)).ln() / 10.0; // Approximate gate count
         
         (entity_complexity + relationship_complexity + gate_complexity) / 3.0
     }

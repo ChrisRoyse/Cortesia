@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod neural_bridge_finder_tests {
     use tokio;
+    use std::sync::Arc;
     use llmkg::cognitive::neural_bridge_finder::NeuralBridgeFinder;
     use llmkg::cognitive::BridgePath;
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
@@ -290,11 +291,11 @@ mod neural_bridge_finder_tests {
 
     async fn create_test_bridge_finder() -> NeuralBridgeFinder {
         let graph = create_test_graph().await;
-        NeuralBridgeFinder::new(graph, 3, 0.3)
+        NeuralBridgeFinder::new(Arc::new(graph))
     }
 
     async fn create_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         // Create basic test concepts
         graph.add_entity("art", "Artistic domain").await.unwrap();
@@ -312,7 +313,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_weighted_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         graph.add_entity("node_a", "Start node").await.unwrap();
         graph.add_entity("node_b", "Middle node").await.unwrap();
@@ -331,7 +332,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_art_physics_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         // Create Art -> Symmetry -> Physics bridge path
         graph.add_entity("Art", "Artistic domain").await.unwrap();
@@ -351,7 +352,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_long_chain_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         // Create: Start -> Bridge1 -> Bridge2 -> Bridge3 -> End
         graph.add_entity("Start", "Starting concept").await.unwrap();
@@ -369,7 +370,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_pathfinding_test_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         graph.add_entity("source", "Source").await.unwrap();
         graph.add_entity("intermediate1", "Path 1").await.unwrap();
@@ -387,7 +388,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_mixed_creativity_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         graph.add_entity("start", "Start").await.unwrap();
         graph.add_entity("end", "End").await.unwrap();
@@ -406,7 +407,7 @@ mod neural_bridge_finder_tests {
     }
 
     async fn create_concept_graph() -> BrainEnhancedKnowledgeGraph {
-        let mut graph = BrainEnhancedKnowledgeGraph::new().await;
+        let mut graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
         
         graph.add_entity("art", "Art concept").await.unwrap();
         graph.add_entity("artistic", "Artistic concept").await.unwrap();

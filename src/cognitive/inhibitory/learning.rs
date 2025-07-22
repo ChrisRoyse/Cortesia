@@ -105,7 +105,7 @@ pub async fn apply_learning_mechanisms(
 }
 
 /// Learn optimal inhibition strength adjustments
-async fn learn_inhibition_strength_adjustment(
+pub async fn learn_inhibition_strength_adjustment(
     _pattern: &ActivationPattern,
     results: &[GroupCompetitionResult],
     _history: &[InhibitionPerformanceMetrics],
@@ -150,7 +150,7 @@ async fn learn_inhibition_strength_adjustment(
 }
 
 /// Learn optimal competition group configurations
-async fn learn_competition_group_optimization(
+pub async fn learn_competition_group_optimization(
     results: &[GroupCompetitionResult],
     _history: &[InhibitionPerformanceMetrics],
 ) -> Result<Option<ParameterAdjustment>> {
@@ -181,7 +181,7 @@ async fn learn_competition_group_optimization(
 }
 
 /// Learn optimal temporal dynamics
-async fn learn_temporal_dynamics_optimization(
+pub async fn learn_temporal_dynamics_optimization(
     _pattern: &ActivationPattern,
     history: &[InhibitionPerformanceMetrics],
 ) -> Result<Option<ParameterAdjustment>> {
@@ -239,7 +239,7 @@ async fn apply_parameter_adjustment(
 }
 
 /// Calculate performance metrics
-fn calculate_performance_metrics(
+pub fn calculate_performance_metrics(
     activation_pattern: &ActivationPattern,
     inhibition_results: &[GroupCompetitionResult],
 ) -> InhibitionPerformanceMetrics {

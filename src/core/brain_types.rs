@@ -384,7 +384,6 @@ impl BrainInspiredRelationship {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
 
     // Helper function to create test keys
     fn create_test_key(id: u64) -> EntityKey {

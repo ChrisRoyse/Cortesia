@@ -12,11 +12,11 @@ use tokio;
 fn create_entity_data_with_properties(id: u32, embedding_len: usize, properties: HashMap<String, String>) -> EntityData {
     let embedding = (0..embedding_len).map(|i| (i as f32 * 0.01) % 1.0).collect();
     
-    EntityData {
-        type_id: id,
-        embedding,
-        properties: serde_json::to_string(&properties).unwrap_or_default(),
-    }
+    EntityData::new(
+        id as u16,
+        serde_json::to_string(&properties).unwrap_or_default(),
+        embedding
+    )
 }
 
 #[tokio::test]

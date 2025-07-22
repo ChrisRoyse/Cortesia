@@ -15,11 +15,7 @@ fn create_test_graph() -> KnowledgeGraph {
 }
 
 fn create_test_entity_data(type_id: u32, properties: &str) -> EntityData {
-    EntityData {
-        type_id,
-        embedding: vec![0.1; 96], // Simple test embedding
-        properties: properties.to_string(),
-    }
+    EntityData::new(type_id as u16, properties.to_string(), vec![0.1; 96])
 }
 
 fn create_random_embedding(dim: usize, seed: u64) -> Vec<f32> {
@@ -52,11 +48,7 @@ fn test_single_entity_insertion_lifecycle() {
     let graph = create_test_graph();
     
     // Phase 1: Insert single entity
-    let entity_data = EntityData {
-        type_id: 1,
-        embedding: create_random_embedding(96, 42),
-        properties: r#"{"name": "Test Entity", "type": "test"}"#.to_string(),
-    };
+    let entity_data = EntityData::new(1, r#"{"name": "Test Entity", "type": "test"}"#.to_string(), create_random_embedding(96, 42));
     
     let insert_result = graph.insert_entity(100, entity_data.clone());
     assert!(insert_result.is_ok());
@@ -99,11 +91,7 @@ fn test_single_entity_insertion_lifecycle() {
     assert_eq!(embedding.unwrap(), entity_data.embedding);
     
     // Phase 8: Update entity
-    let updated_data = EntityData {
-        type_id: 2,
-        embedding: create_random_embedding(96, 43),
-        properties: r#"{"name": "Updated Entity", "type": "updated", "version": "2.0"}"#.to_string(),
-    };
+    let updated_data = EntityData::new(2, r#"{"name": "Updated Entity", "type": "updated", "version": "2.0"}"#.to_string(), create_random_embedding(96, 43));
     
     let update_result = graph.update_entity(entity_key, updated_data.clone());
     assert!(update_result.is_ok());
@@ -142,31 +130,11 @@ fn test_batch_entity_operations() {
     
     // Phase 1: Prepare batch data
     let batch_entities = vec![
-        (1, EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 1),
-            properties: r#"{"name": "Entity 1", "category": "A"}"#.to_string(),
-        }),
-        (2, EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 2),
-            properties: r#"{"name": "Entity 2", "category": "A"}"#.to_string(),
-        }),
-        (3, EntityData {
-            type_id: 2,
-            embedding: create_random_embedding(96, 3),
-            properties: r#"{"name": "Entity 3", "category": "B"}"#.to_string(),
-        }),
-        (4, EntityData {
-            type_id: 2,
-            embedding: create_random_embedding(96, 4),
-            properties: r#"{"name": "Entity 4", "category": "B"}"#.to_string(),
-        }),
-        (5, EntityData {
-            type_id: 3,
-            embedding: create_random_embedding(96, 5),
-            properties: r#"{"name": "Entity 5", "category": "C"}"#.to_string(),
-        }),
+        (1, EntityData::new(1, r#"{"name": "Entity 1", "category": "A"}"#.to_string(), create_random_embedding(96, 1))),
+        (2, EntityData::new(1, r#"{"name": "Entity 2", "category": "A"}"#.to_string(), create_random_embedding(96, 2))),
+        (3, EntityData::new(2, r#"{"name": "Entity 3", "category": "B"}"#.to_string(), create_random_embedding(96, 3))),
+        (4, EntityData::new(2, r#"{"name": "Entity 4", "category": "B"}"#.to_string(), create_random_embedding(96, 4))),
+        (5, EntityData::new(3, r#"{"name": "Entity 5", "category": "C"}"#.to_string(), create_random_embedding(96, 5))),
     ];
     
     // Phase 2: Batch insert
@@ -243,11 +211,7 @@ fn test_entity_validation_and_error_handling() {
     let graph = create_test_graph();
     
     // Test 1: Invalid embedding dimension
-    let invalid_embedding_data = EntityData {
-        type_id: 1,
-        embedding: vec![0.1; 64], // Wrong dimension (should be 96)
-        properties: "{}".to_string(),
-    };
+    let invalid_embedding_data = EntityData::new(1, "{}".to_string(), vec![0.1; 64]);
     
     let invalid_result = graph.insert_entity(1, invalid_embedding_data);
     assert!(invalid_result.is_err());
@@ -261,21 +225,13 @@ fn test_entity_validation_and_error_handling() {
     
     // Test 2: Very large properties string
     let large_properties = "x".repeat(1_000_000); // 1MB string
-    let large_data = EntityData {
-        type_id: 1,
-        embedding: create_random_embedding(96, 1),
-        properties: large_properties,
-    };
+    let large_data = EntityData::new(1, large_properties, create_random_embedding(96, 1));
     
     let large_result = graph.insert_entity(2, large_data);
     // This might fail depending on validation limits, which is expected
     
     // Test 3: Empty embedding
-    let empty_embedding_data = EntityData {
-        type_id: 1,
-        embedding: vec![], // Empty embedding
-        properties: "{}".to_string(),
-    };
+    let empty_embedding_data = EntityData::new(1, "{}".to_string(), vec![]);
     
     let empty_result = graph.insert_entity(3, empty_embedding_data);
     assert!(empty_result.is_err());
@@ -291,11 +247,7 @@ fn test_entity_validation_and_error_handling() {
     assert!(!fake_exists);
     
     // Test 5: Update non-existent entity
-    let update_data = EntityData {
-        type_id: 1,
-        embedding: create_random_embedding(96, 10),
-        properties: "{}".to_string(),
-    };
+    let update_data = EntityData::new(1, "{}".to_string(), create_random_embedding(96, 10));
     
     // Since we can't create fake keys through public API, we'll skip this test
     // and focus on other validation aspects
@@ -303,11 +255,7 @@ fn test_entity_validation_and_error_handling() {
     // Since we can't easily create a fake key, let's test with actual entity operations
     
     // Test 6: Double insertion of same ID
-    let valid_data = EntityData {
-        type_id: 1,
-        embedding: create_random_embedding(96, 20),
-        properties: "{}".to_string(),
-    };
+    let valid_data = EntityData::new(1, "{}".to_string(), create_random_embedding(96, 20));
     
     let first_insert = graph.insert_entity(100, valid_data.clone());
     assert!(first_insert.is_ok());
@@ -318,16 +266,8 @@ fn test_entity_validation_and_error_handling() {
     
     // Test 7: Batch with mixed valid/invalid entities
     let mixed_batch = vec![
-        (200, EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 30),
-            properties: "{}".to_string(),
-        }),
-        (201, EntityData {
-            type_id: 1,
-            embedding: vec![0.1; 32], // Wrong dimension
-            properties: "{}".to_string(),
-        }),
+        (200, EntityData::new(1, "{}".to_string(), create_random_embedding(96, 30))),
+        (201, EntityData::new(1, "{}".to_string(), vec![0.1; 32])),
     ];
     
     let mixed_result = graph.insert_entities_batch(mixed_batch);
@@ -357,11 +297,7 @@ fn test_entity_embedding_operations() {
     
     for (i, embedding) in embeddings.iter().enumerate() {
         let id = (i + 1) as u32;
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: embedding.clone(),
-            properties: format!(r#"{{"name": "Entity {}", "id": {}}}"#, id, id),
-        };
+        let entity_data = EntityData::new(1, format!(r#"{{"name": "Entity {}", "id": {}}}"#, id, id), embedding.clone());
         
         let result = graph.insert_entity(id, entity_data);
         assert!(result.is_ok());
@@ -386,11 +322,7 @@ fn test_entity_embedding_operations() {
     
     // Phase 3: Update embeddings and verify changes
     let new_embedding = create_random_embedding(96, 200);
-    let updated_data = EntityData {
-        type_id: 1,
-        embedding: new_embedding.clone(),
-        properties: r#"{"name": "Updated Entity", "updated": true}"#.to_string(),
-    };
+    let updated_data = EntityData::new(1, r#"{"name": "Updated Entity", "updated": true}"#.to_string(), new_embedding.clone());
     
     let update_key = entity_keys[0];
     let update_result = graph.update_entity(update_key, updated_data);
@@ -408,11 +340,7 @@ fn test_entity_embedding_operations() {
     let mut test_embedding = unnormalized.clone();
     test_embedding.resize(96, 0.0);
     
-    let embedding_data = EntityData {
-        type_id: 1,
-        embedding: test_embedding.clone(),
-        properties: "{}".to_string(),
-    };
+    let embedding_data = EntityData::new(1, "{}".to_string(), test_embedding.clone());
     
     let norm_result = graph.insert_entity(500, embedding_data);
     assert!(norm_result.is_ok());
@@ -425,11 +353,7 @@ fn test_entity_embedding_operations() {
     
     // Phase 5: Test zero embedding handling
     let zero_embedding = vec![0.0; 96];
-    let zero_data = EntityData {
-        type_id: 1,
-        embedding: zero_embedding.clone(),
-        properties: "{}".to_string(),
-    };
+    let zero_data = EntityData::new(1, "{}".to_string(), zero_embedding.clone());
     
     let zero_result = graph.insert_entity(600, zero_data);
     assert!(zero_result.is_ok());
@@ -455,11 +379,7 @@ fn test_entity_properties_operations() {
     let mut entity_keys = Vec::new();
     
     for (id, properties) in &test_cases {
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, *id as u64),
-            properties: properties.to_string(),
-        };
+        let entity_data = EntityData::new(1, properties.to_string(), create_random_embedding(96, *id as u64));
         
         let result = graph.insert_entity(*id, entity_data);
         assert!(result.is_ok());
@@ -491,11 +411,7 @@ fn test_entity_properties_operations() {
         let current = graph.get_entity(entity_key).unwrap();
         let (_, current_data) = current;
         
-        let updated_data = EntityData {
-            type_id: current_data.type_id,
-            embedding: current_data.embedding,
-            properties: new_properties.to_string(),
-        };
+        let updated_data = EntityData::new(current_data.type_id, new_properties.to_string(), current_data.embedding);
         
         let update_result = graph.update_entity(entity_key, updated_data);
         assert!(update_result.is_ok());
@@ -517,11 +433,7 @@ fn test_entity_properties_operations() {
     ];
     
     for (id, properties) in searchable_entities {
-        let entity_data = EntityData {
-            type_id: 2,
-            embedding: create_random_embedding(96, id),
-            properties: properties.to_string(),
-        };
+        let entity_data = EntityData::new(2, properties.to_string(), create_random_embedding(96, id));
         
         let result = graph.insert_entity(id, entity_data);
         assert!(result.is_ok());
@@ -558,11 +470,7 @@ fn test_entity_type_management() {
     ];
     
     for (id, type_id, type_name) in &type_test_cases {
-        let entity_data = EntityData {
-            type_id: *type_id,
-            embedding: create_random_embedding(96, *id as u64),
-            properties: format!(r#"{{"type": "{}", "id": {}}}"#, type_name, id),
-        };
+        let entity_data = EntityData::new(*type_id as u16, format!(r#"{{"type": "{}", "id": {}}}"#, type_name, id), create_random_embedding(96, *id as u64));
         
         let result = graph.insert_entity(*id, entity_data);
         assert!(result.is_ok());
@@ -588,11 +496,7 @@ fn test_entity_type_management() {
         let entity = graph.get_entity_by_id(id).unwrap();
         let (key, data) = entity;
         
-        let updated_data = EntityData {
-            type_id: new_type_id,
-            embedding: data.embedding,
-            properties: format!(r#"{{"type": "changed", "old_id": {}}}"#, id),
-        };
+        let updated_data = EntityData::new(new_type_id as u16, format!(r#"{{"type": "changed", "old_id": {}}}"#, id), data.embedding);
         
         let update_result = graph.update_entity(key, updated_data);
         assert!(update_result.is_ok());
@@ -616,11 +520,7 @@ fn test_entity_type_management() {
     ];
     
     for (id, type_id) in extreme_cases {
-        let entity_data = EntityData {
-            type_id,
-            embedding: create_random_embedding(96, id),
-            properties: format!(r#"{{"extreme_type": {}}}"#, type_id),
-        };
+        let entity_data = EntityData::new(type_id as u16, format!(r#"{{"extreme_type": {}}}"#, type_id), create_random_embedding(96, id));
         
         let result = graph.insert_entity(id, entity_data);
         assert!(result.is_ok());
@@ -652,11 +552,7 @@ fn test_concurrent_entity_operations() {
             
             for i in 0..entities_per_thread {
                 let entity_id = (thread_id * entities_per_thread + i) as u32;
-                let entity_data = EntityData {
-                    type_id: thread_id as u32 + 1,
-                    embedding: create_random_embedding(96, entity_id as u64),
-                    properties: format!(r#"{{"thread": {}, "index": {}}}"#, thread_id, i),
-                };
+                let entity_data = EntityData::new((thread_id + 1) as u16, format!(r#"{{"thread": {}, "index": {}}}"#, thread_id, i), create_random_embedding(96, entity_id as u64));
                 
                 let result = graph_clone.insert_entity(entity_id, entity_data);
                 results.push((entity_id, result));
@@ -703,11 +599,7 @@ fn test_concurrent_entity_operations() {
                 let entity_id = (thread_id * entities_per_thread + i) as u32;
                 
                 if let Some((key, data)) = graph_clone.get_entity_by_id(entity_id) {
-                    let updated_data = EntityData {
-                        type_id: data.type_id,
-                        embedding: data.embedding,
-                        properties: format!(r#"{{"updated": true, "thread": {}}}"#, thread_id),
-                    };
+                    let updated_data = EntityData::new(data.type_id, format!(r#"{{"updated": true, "thread": {}}}"#, thread_id), data.embedding);
                     
                     let _ = graph_clone.update_entity(key, updated_data);
                 }
@@ -771,31 +663,11 @@ fn test_comprehensive_entity_lifecycle_workflows() {
     
     // Phase 1: Create entities representing a research paper workflow
     let workflow_entities = vec![
-        (10000, EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 10000),
-            properties: r#"{"type": "researcher", "name": "Dr. Johnson", "affiliation": "MIT", "h_index": 45}"#.to_string(),
-        }),
-        (10001, EntityData {
-            type_id: 2,
-            embedding: create_random_embedding(96, 10001),
-            properties: r#"{"type": "paper", "title": "Deep Learning in NLP", "status": "draft", "pages": 12}"#.to_string(),
-        }),
-        (10002, EntityData {
-            type_id: 3,
-            embedding: create_random_embedding(96, 10002),
-            properties: r#"{"type": "dataset", "name": "TextCorpus-2024", "size": "10GB", "samples": 1000000}"#.to_string(),
-        }),
-        (10003, EntityData {
-            type_id: 4,
-            embedding: create_random_embedding(96, 10003),
-            properties: r#"{"type": "venue", "name": "ICML 2024", "location": "Vienna", "deadline": "2024-02-01"}"#.to_string(),
-        }),
-        (10004, EntityData {
-            type_id: 5,
-            embedding: create_random_embedding(96, 10004),
-            properties: r#"{"type": "code", "repository": "github.com/user/nlp-project", "language": "Python", "stars": 156}"#.to_string(),
-        }),
+        (10000, EntityData::new(1, r#"{"type": "researcher", "name": "Dr. Johnson", "affiliation": "MIT", "h_index": 45}"#.to_string(), create_random_embedding(96, 10000))),
+        (10001, EntityData::new(2, r#"{"type": "paper", "title": "Deep Learning in NLP", "status": "draft", "pages": 12}"#.to_string(), create_random_embedding(96, 10001))),
+        (10002, EntityData::new(3, r#"{"type": "dataset", "name": "TextCorpus-2024", "size": "10GB", "samples": 1000000}"#.to_string(), create_random_embedding(96, 10002))),
+        (10003, EntityData::new(4, r#"{"type": "venue", "name": "ICML 2024", "location": "Vienna", "deadline": "2024-02-01"}"#.to_string(), create_random_embedding(96, 10003))),
+        (10004, EntityData::new(5, r#"{"type": "code", "repository": "github.com/user/nlp-project", "language": "Python", "stars": 156}"#.to_string(), create_random_embedding(96, 10004))),
     ];
     
     // Insert entities and track their keys
@@ -818,11 +690,7 @@ fn test_comprehensive_entity_lifecycle_workflows() {
     ];
     
     for (stage_idx, properties) in lifecycle_stages.iter().enumerate() {
-        let updated_data = EntityData {
-            type_id: 2,
-            embedding: create_random_embedding(96, 10001 + stage_idx as u64),
-            properties: properties.to_string(),
-        };
+        let updated_data = EntityData::new(2, properties.to_string(), create_random_embedding(96, 10001 + stage_idx as u64));
         
         let update_result = graph.update_entity(paper_key, updated_data);
         assert!(update_result.is_ok(), "Failed to update paper at stage {}", stage_idx);
@@ -856,12 +724,12 @@ fn test_comprehensive_entity_lifecycle_workflows() {
     // Phase 4: Test batch entity operations with complex data
     let batch_updates: Vec<_> = entity_keys.iter().enumerate().map(|(idx, &key)| {
         let base_id = 10000 + idx as u64;
-        let updated_data = EntityData {
-            type_id: (idx % 3 + 1) as u32,
-            embedding: create_random_embedding(96, base_id + 1000),
-            properties: format!(r#"{{"batch_updated": true, "update_timestamp": "2024-01-{:02d}", "iteration": {}}}"#, 
-                               idx + 1, idx),
-        };
+        let updated_data = EntityData::new(
+            (idx % 3 + 1) as u16,
+            format!(r#"{{"batch_updated": true, "update_timestamp": "2024-01-{:02}", "iteration": {}}}"#, 
+                   idx + 1, idx),
+            create_random_embedding(96, base_id + 1000),
+        );
         (key, updated_data)
     }).collect();
     
@@ -931,11 +799,7 @@ fn test_entity_memory_and_performance_operations() {
             property_size
         );
         
-        let entity_data = EntityData {
-            type_id: (i % 5 + 1) as u32,
-            embedding: create_random_embedding(96, i as u64 + 20000),
-            properties: large_properties,
-        };
+        let entity_data = EntityData::new(((i % 5 + 1) as u16), large_properties, create_random_embedding(96, i as u64 + 20000));
         
         let result = graph.insert_entity(i as u32 + 20000, entity_data);
         if result.is_ok() {
@@ -983,11 +847,7 @@ fn test_entity_memory_and_performance_operations() {
     
     for i in 0..sample_size {
         let key = large_entity_keys[i];
-        let updated_data = EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, i as u64 + 30000),
-            properties: format!(r#"{{"type": "updated_large", "id": {}, "updated": true}}"#, i),
-        };
+        let updated_data = EntityData::new(1, format!(r#"{{"type": "updated_large", "id": {}, "updated": true}}"#, i), create_random_embedding(96, i as u64 + 30000));
         
         let result = graph.update_entity(key, updated_data);
         assert!(result.is_ok(), "Failed to update large entity {}", i);
@@ -1015,32 +875,16 @@ fn test_entity_memory_and_performance_operations() {
     // Phase 5: Test edge cases with extreme entity data
     let edge_cases = vec![
         // Empty properties
-        EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 40000),
-            properties: "{}".to_string(),
-        },
+        EntityData::new(1, "{}".to_string(), create_random_embedding(96, 40000)),
         
         // Minimal properties
-        EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 40001),
-            properties: r#"{"a":"b"}"#.to_string(),
-        },
+        EntityData::new(1, r#"{"a":"b"}"#.to_string(), create_random_embedding(96, 40001)),
         
         // Zero embedding (all zeros)
-        EntityData {
-            type_id: 1,
-            embedding: vec![0.0; 96],
-            properties: r#"{"type": "zero_embedding"}"#.to_string(),
-        },
+        EntityData::new(1, r#"{"type": "zero_embedding"}"#.to_string(), vec![0.0; 96]),
         
         // Extreme type ID
-        EntityData {
-            type_id: u32::MAX,
-            embedding: create_random_embedding(96, 40002),
-            properties: r#"{"type": "extreme_type_id"}"#.to_string(),
-        },
+        EntityData::new(u16::MAX, r#"{"type": "extreme_type_id"}"#.to_string(), create_random_embedding(96, 40002)),
     ];
     
     for (idx, edge_case_data) in edge_cases.into_iter().enumerate() {
@@ -1081,11 +925,7 @@ fn test_entity_validation_comprehensive() {
     ];
     
     for (idx, (embedding, should_succeed)) in dimension_tests.iter().enumerate() {
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: embedding.clone(),
-            properties: format!(r#"{{"test_case": {}}}"#, idx),
-        };
+        let entity_data = EntityData::new(1, format!(r#"{{"test_case": {}}}"#, idx), embedding.clone());
         
         let result = graph.insert_entity(50000 + idx as u32, entity_data);
         
@@ -1110,11 +950,7 @@ fn test_entity_validation_comprehensive() {
     ];
     
     for (idx, (properties, should_succeed)) in property_tests.iter().enumerate() {
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, 51000 + idx as u64),
-            properties: properties.to_string(),
-        };
+        let entity_data = EntityData::new(1, properties.to_string(), create_random_embedding(96, 51000 + idx as u64));
         
         let result = graph.insert_entity(51000 + idx as u32, entity_data);
         
@@ -1137,11 +973,7 @@ fn test_entity_validation_comprehensive() {
     ];
     
     for (id, should_succeed) in id_tests {
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: create_random_embedding(96, id as u64),
-            properties: format!(r#"{{"id_test": {}}}"#, id),
-        };
+        let entity_data = EntityData::new(1, format!(r#"{{"id_test": {}}}"#, id), create_random_embedding(96, id as u64));
         
         let result = graph.insert_entity(id, entity_data);
         
@@ -1165,11 +997,7 @@ fn test_entity_validation_comprehensive() {
     ];
     
     for (type_id, should_succeed) in type_id_tests {
-        let entity_data = EntityData {
-            type_id,
-            embedding: create_random_embedding(96, 52000),
-            properties: format!(r#"{{"type_id_test": {}}}"#, type_id),
-        };
+        let entity_data = EntityData::new(type_id as u16, format!(r#"{{"type_id_test": {}}}"#, type_id), create_random_embedding(96, 52000));
         
         let result = graph.insert_entity(52000, entity_data);
         

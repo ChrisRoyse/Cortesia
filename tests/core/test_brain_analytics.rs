@@ -18,11 +18,11 @@ async fn create_structured_graph(
     
     // Add nodes
     for i in 0..nodes {
-        let entity_data = EntityData {
-            name: format!("node_{}", i),
-            properties: format!("type:analytics_test, index:{}, cluster:{}", i, i / 10),
-            embedding: (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
-        };
+        let entity_data = EntityData::new(
+            i as u16,
+            format!("type:analytics_test, index:{}, cluster:{}, name:node_{}", i, i / 10, i),
+            (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
+        );
         graph.core_graph.insert_entity(entity_data).unwrap();
     }
     
@@ -68,11 +68,11 @@ async fn create_test_topologies() -> HashMap<String, BrainEnhancedKnowledgeGraph
     // Random network
     let random = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
     for i in 0..100 {
-        let entity_data = EntityData {
-            name: format!("random_{}", i),
-            properties: "type:random".to_string(),
-            embedding: vec![0.5; 128],
-        };
+        let entity_data = EntityData::new(
+            i as u16,
+            format!("type:random, name:random_{}", i),
+            vec![0.5; 128],
+        );
         random.core_graph.insert_entity(entity_data).unwrap();
     }
     
@@ -255,11 +255,11 @@ async fn test_graph_health_assessment() {
     for island in 0..5 {
         let base = island * 40;
         for i in 0..30 {
-            let entity_data = EntityData {
-                name: format!("island{}_{}", island, i),
-                properties: format!("island:{}", island),
-                embedding: vec![island as f32 / 5.0; 128],
-            };
+            let entity_data = EntityData::new(
+                (base + i) as u16,
+                format!("island:{}, name:island{}_{}", island, island, i),
+                vec![island as f32 / 5.0; 128],
+            );
             fragmented.core_graph.insert_entity(entity_data).unwrap();
             
             // Connect within island only

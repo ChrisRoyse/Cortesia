@@ -8,11 +8,11 @@ use llmkg::core::types::{EntityData, EntityKey};
 
 /// Helper function to create test entity data with specific size characteristics
 fn create_sized_entity_data(id: u16, embedding_size: usize) -> EntityData {
-    EntityData {
-        type_id: id,
-        properties: format!("entity_{}_with_size_{}", id, embedding_size),
-        embedding: vec![0.1 * id as f32; embedding_size],
-    }
+    EntityData::new(
+        id,
+        format!("entity_{}_with_size_{}", id, embedding_size),
+        vec![0.1 * id as f32; embedding_size]
+    )
 }
 
 /// Helper function to create a large property string
@@ -266,11 +266,11 @@ async fn test_thread_safety_with_entity_updates() {
                 let key = keys_clone[key_index];
                 
                 // Create new entity data with thread-specific values
-                let new_entity = EntityData {
-                    type_id: (thread_id * 1000 + i) as u16,
-                    properties: format!("updated_by_thread_{}_iteration_{}", thread_id, i),
-                    embedding: vec![thread_id as f32 + i as f32 * 0.01; 128],
-                };
+                let new_entity = EntityData::new(
+                    (thread_id * 1000 + i) as u16,
+                    format!("updated_by_thread_{}_iteration_{}", thread_id, i),
+                    vec![thread_id as f32 + i as f32 * 0.01; 128]
+                );
                 
                 // Update entity
                 let result = {
@@ -567,11 +567,11 @@ async fn test_large_entity_handling() {
     
     for (idx, &size_kb) in sizes.iter().enumerate() {
         let large_properties = create_large_properties("base", size_kb);
-        let entity = EntityData {
-            type_id: idx as u16,
-            properties: large_properties.clone(),
-            embedding: vec![0.1; 1024], // Large embedding too
-        };
+        let entity = EntityData::new(
+            idx as u16,
+            large_properties.clone(),
+            vec![0.1; 1024]
+        );
         
         let start = Instant::now();
         let key = arena.allocate_entity(entity);
@@ -781,20 +781,16 @@ async fn test_boundary_conditions() {
     let mut arena = GraphArena::new();
     
     // Test with minimum size entity
-    let min_entity = EntityData {
-        type_id: 0,
-        properties: String::new(),
-        embedding: vec![],
-    };
+    let min_entity = EntityData::new(0, String::new(), vec![]);
     let min_key = arena.allocate_entity(min_entity);
     assert!(arena.contains_entity(min_key));
     
     // Test with maximum reasonable size entity
-    let max_entity = EntityData {
-        type_id: u16::MAX,
-        properties: "x".repeat(1_000_000), // 1MB string
-        embedding: vec![1.0; 10_000], // 10k floats
-    };
+    let max_entity = EntityData::new(
+        u16::MAX,
+        "x".repeat(1_000_000),
+        vec![1.0; 10_000]
+    );
     let max_key = arena.allocate_entity(max_entity);
     assert!(arena.contains_entity(max_key));
     

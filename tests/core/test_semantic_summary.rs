@@ -13,11 +13,11 @@ use tokio;
 
 /// Integration test helper for creating test entity data
 fn create_test_entity_data(id: u16, text: &str, embedding_size: usize) -> EntityData {
-    EntityData {
-        type_id: id,
-        properties: text.to_string(),
-        embedding: (0..embedding_size).map(|i| (i as f32) * 0.01).collect(),
-    }
+    EntityData::new(
+        id,
+        text.to_string(),
+        (0..embedding_size).map(|i| (i as f32) * 0.01).collect()
+    )
 }
 
 /// Integration test helper for simulating LLM responses
@@ -140,11 +140,11 @@ async fn test_semantic_summary_workflow() {
         
         for (name, description) in &entities {
             // Create entity data
-            let entity_data = EntityData {
-                type_id: 1, // All are concept entities
-                properties: format!("name: {}, description: {}", name, description),
-                embedding: vec![0.1; 128], // Simplified embedding
-            };
+            let entity_data = EntityData::new(
+                1, // All are concept entities
+                format!("name: {}, description: {}", name, description),
+                vec![0.1; 128] // Simplified embedding
+            );
             
             // Add to knowledge engine
             let entity_key = engine_write.add_entity(entity_data.clone()).await.unwrap();
@@ -278,11 +278,11 @@ async fn test_semantic_summary_memory_efficiency() {
     
     // Test memory efficiency with different entity sizes
     let large_text = "Lorem ipsum ".repeat(100); // ~1200 bytes
-    let large_entity = EntityData {
-        type_id: 1,
-        properties: large_text.clone(),
-        embedding: vec![0.1; 512], // Large embedding
-    };
+    let large_entity = EntityData::new(
+        1,
+        large_text.clone(),
+        vec![0.1; 512] // Large embedding
+    );
 
     let original_size = large_entity.properties.len() + large_entity.embedding.len() * 4;
     println!("Original entity size: {} bytes", original_size);
@@ -314,11 +314,7 @@ async fn test_semantic_summary_edge_cases() {
     let mut summarizer = SemanticSummarizer::new();
     
     // Test 1: Empty entity
-    let empty_entity = EntityData {
-        type_id: 0,
-        properties: String::new(),
-        embedding: vec![],
-    };
+    let empty_entity = EntityData::new(0, String::new(), vec![]);
     
     let result = summarizer.create_summary(&empty_entity, EntityKey::default());
     assert!(result.is_ok(), "Should handle empty entity gracefully");
@@ -328,11 +324,11 @@ async fn test_semantic_summary_edge_cases() {
     assert!(!summary.key_features.is_empty(), "Should still have some features");
     
     // Test 2: Very large embedding
-    let large_embedding_entity = EntityData {
-        type_id: 1,
-        properties: "Test".to_string(),
-        embedding: vec![0.1; 2048], // Very large
-    };
+    let large_embedding_entity = EntityData::new(
+        1,
+        "Test".to_string(),
+        vec![0.1; 2048] // Very large
+    );
     
     let result = summarizer.create_summary(&large_embedding_entity, EntityKey::default());
     assert!(result.is_ok(), "Should handle large embeddings");
@@ -342,21 +338,21 @@ async fn test_semantic_summary_edge_cases() {
             "Should compress to target dimensions");
     
     // Test 3: Special characters in properties
-    let special_chars_entity = EntityData {
-        type_id: 2,
-        properties: "Special chars: 你好世界 🌍 \n\t\r".to_string(),
-        embedding: vec![0.1; 64],
-    };
+    let special_chars_entity = EntityData::new(
+        2,
+        "Special chars: 你好世界 🌍 \n\t\r".to_string(),
+        vec![0.1; 64]
+    );
     
     let result = summarizer.create_summary(&special_chars_entity, EntityKey::default());
     assert!(result.is_ok(), "Should handle special characters");
     
     // Test 4: Numeric properties
-    let numeric_entity = EntityData {
-        type_id: 3,
-        properties: "value: 3.14159, count: 42, ratio: 0.618".to_string(),
-        embedding: vec![0.1; 64],
-    };
+    let numeric_entity = EntityData::new(
+        3,
+        "value: 3.14159, count: 42, ratio: 0.618".to_string(),
+        vec![0.1; 64]
+    );
     
     let summary = summarizer.create_summary(&numeric_entity, EntityKey::default()).unwrap();
     let has_numeric_feature = summary.key_features.iter().any(|f| {

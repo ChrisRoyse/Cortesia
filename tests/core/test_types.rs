@@ -14,11 +14,7 @@ use serde_json;
 
 /// Helper to create test entity data
 fn create_test_entity(type_id: u16, properties: &str, embedding_size: usize) -> EntityData {
-    EntityData {
-        type_id,
-        properties: properties.to_string(),
-        embedding: vec![0.1; embedding_size],
-    }
+    EntityData::new(type_id, properties.to_string(), vec![0.1; embedding_size])
 }
 
 #[tokio::test]
@@ -137,11 +133,7 @@ async fn test_serialization_deserialization_workflows() {
     }
 
     // Test 2: EntityData with embeddings
-    let entity_data = EntityData {
-        type_id: 10,
-        properties: r#"{"name": "Test Entity", "description": "A test entity for serialization"}"#.to_string(),
-        embedding: vec![0.1, 0.2, 0.3, 0.4, 0.5],
-    };
+    let entity_data = EntityData::new(10, r#"{"name": "Test Entity", "description": "A test entity for serialization"}"#.to_string(), vec![0.1, 0.2, 0.3, 0.4, 0.5]);
     
     let entity_json = serde_json::to_string(&entity_data).unwrap();
     let entity_restored: EntityData = serde_json::from_str(&entity_json).unwrap();
@@ -293,11 +285,7 @@ async fn test_type_integration_with_knowledge_engine() {
     }));
     properties.insert("embedding".to_string(), AttributeValue::Vector(vec![0.1, 0.2, 0.3]));
     
-    let entity_data = EntityData {
-        type_id: 1,
-        properties: serde_json::to_string(&properties).unwrap(),
-        embedding: vec![0.1; 128],
-    };
+    let entity_data = EntityData::new(1, serde_json::to_string(&properties).unwrap(), vec![0.1; 128]);
 
     // Add entity
     let entity_key = {
@@ -481,11 +469,7 @@ async fn test_type_performance_characteristics() {
     
     // Test 3: EntityData with large embeddings
     let large_embedding = vec![0.1; 1024];
-    let entity = EntityData {
-        type_id: 1,
-        properties: "test".to_string(),
-        embedding: large_embedding,
-    };
+    let entity = EntityData::new(1, "test".to_string(), large_embedding);
     
     let start = Instant::now();
     for _ in 0..100 {
@@ -530,11 +514,7 @@ async fn test_error_propagation_across_types() {
     
     // Test 3: JSON parsing errors with EntityData
     let invalid_json = r#"{"invalid": json"#;
-    let entity = EntityData {
-        type_id: 1,
-        properties: invalid_json.to_string(),
-        embedding: vec![0.1],
-    };
+    let entity = EntityData::new(1, invalid_json.to_string(), vec![0.1]);
     
     // Attempting to parse properties should fail
     let parse_result: Result<HashMap<String, AttributeValue>, _> = 

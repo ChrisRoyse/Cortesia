@@ -1,11 +1,11 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use ahash::AHashMap;
 use rand::prelude::*;
 
 use crate::core::types::EntityKey;
-use crate::core::sdr_types::{SDRConfig, SDR, SDRPattern, SDRStatistics, SimilaritySearchResult, SDREntry, SDRQuery};
+use crate::core::sdr_types::{SDRConfig, SDR, SDRPattern, SDRStatistics, SimilaritySearchResult};
 use crate::core::sdr_index::SimilarityIndex;
 use crate::error::{Result, GraphError};
 

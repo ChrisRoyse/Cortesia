@@ -28,10 +28,11 @@ mod test_parallel_integration {
 
     // Helper function to create test entity data
     fn create_test_entity_data(dim: usize, seed: f32) -> EntityData {
-        EntityData {
-            embedding: create_test_embedding(dim, seed),
-            properties: format!("test_entity_{}", seed),
-        }
+        EntityData::new(
+            1, // default type_id
+            format!("test_entity_{}", seed),
+            create_test_embedding(dim, seed)
+        )
     }
 
     // Helper to create test triple

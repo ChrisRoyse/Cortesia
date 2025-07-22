@@ -4,7 +4,7 @@
 
 use llmkg::core::brain_enhanced_graph::{
     BrainEnhancedKnowledgeGraph, BrainQueryResult, ConceptStructure, 
-    BrainStatistics, BrainEnhancedConfig
+    BrainStatistics, BrainEnhancedConfig, BrainMemoryUsage
 };
 use llmkg::core::types::{EntityKey, EntityData, Relationship};
 use llmkg::error::Result;
@@ -19,11 +19,11 @@ fn create_test_entity_data(id: u32, embedding_len: usize) -> EntityData {
     properties.insert("id".to_string(), id.to_string());
     properties.insert("type".to_string(), "test".to_string());
     
-    EntityData {
-        type_id: id,
-        embedding,
-        properties: serde_json::to_string(&properties).unwrap_or_default(),
-    }
+    EntityData::new(
+        id as u16,
+        serde_json::to_string(&properties).unwrap_or_default(),
+        embedding
+    )
 }
 
 #[tokio::test]

@@ -49,31 +49,11 @@ fn test_graph_submodule_integration() {
     
     // Phase 1: Test graph_core + entity_operations integration
     let entities = vec![
-        EntityData {
-            type_id: 1,
-            embedding: create_embedding(1),
-            properties: r#"{"type": "person", "name": "Alice", "expertise": "AI"}"#.to_string(),
-        },
-        EntityData {
-            type_id: 1,
-            embedding: create_embedding(2),
-            properties: r#"{"type": "person", "name": "Bob", "expertise": "ML"}"#.to_string(),
-        },
-        EntityData {
-            type_id: 2,
-            embedding: create_embedding(3),
-            properties: r#"{"type": "project", "name": "AI Research", "status": "active"}"#.to_string(),
-        },
-        EntityData {
-            type_id: 2,
-            embedding: create_embedding(4),
-            properties: r#"{"type": "project", "name": "ML Platform", "status": "completed"}"#.to_string(),
-        },
-        EntityData {
-            type_id: 3,
-            embedding: create_embedding(5),
-            properties: r#"{"type": "technology", "name": "TensorFlow", "category": "framework"}"#.to_string(),
-        },
+        EntityData::new(1, r#"{"type": "person", "name": "Alice", "expertise": "AI"}"#.to_string(), create_embedding(1)),
+        EntityData::new(1, r#"{"type": "person", "name": "Bob", "expertise": "ML"}"#.to_string(), create_embedding(2)),
+        EntityData::new(2, r#"{"type": "project", "name": "AI Research", "status": "active"}"#.to_string(), create_embedding(3)),
+        EntityData::new(2, r#"{"type": "project", "name": "ML Platform", "status": "completed"}"#.to_string(), create_embedding(4)),
+        EntityData::new(3, r#"{"type": "technology", "name": "TensorFlow", "category": "framework"}"#.to_string(), create_embedding(5)),
     ];
     
     let mut entity_keys = Vec::new();
@@ -243,11 +223,11 @@ fn test_graph_module_performance_integration() {
     
     let mut batch_entities = Vec::new();
     for i in 0..num_entities {
-        let entity_data = EntityData {
-            type_id: (i % 10) + 1, // 10 different types
-            embedding: create_embedding(i as u64),
-            properties: format!(r#"{{"id": {}, "type": {}, "value": "entity_{}"}}""#, i, (i % 10) + 1, i),
-        };
+        let entity_data = EntityData::new(
+            ((i % 10) + 1) as u16,
+            format!(r#"{{"id": {}, "type": {}, "value": "entity_{}"}}""#, i, (i % 10) + 1, i),
+            create_embedding(i as u64)
+        );
         batch_entities.push((i as u32, entity_data));
     }
     
@@ -391,11 +371,7 @@ fn test_graph_module_error_handling_integration() {
     let graph = create_test_graph();
     
     // Phase 1: Test entity_operations error propagation
-    let invalid_entity = EntityData {
-        type_id: 1,
-        embedding: vec![0.1; 64], // Wrong dimension
-        properties: "{}".to_string(),
-    };
+    let invalid_entity = EntityData::new(1, "{}".to_string(), vec![0.1; 64]);
     
     let entity_result = graph.insert_entity(1, invalid_entity);
     assert!(entity_result.is_err());
@@ -404,11 +380,7 @@ fn test_graph_module_error_handling_integration() {
     assert_eq!(graph.entity_count(), 0);
     
     // Phase 2: Test relationship_operations error handling
-    let valid_entity = EntityData {
-        type_id: 1,
-        embedding: create_embedding(1),
-        properties: "{}".to_string(),
-    };
+    let valid_entity = EntityData::new(1, "{}".to_string(), create_embedding(1));
     
     let entity_key = graph.insert_entity(1, valid_entity).unwrap();
     
@@ -486,11 +458,7 @@ fn test_graph_module_error_handling_integration() {
     
     // Add more entities
     for i in 2..5 {
-        let entity = EntityData {
-            type_id: 1,
-            embedding: create_embedding(i),
-            properties: format!(r#"{{"id": {}}}"#, i),
-        };
+        let entity = EntityData::new(1, format!(r#"{{"id": {}}}"#, i), create_embedding(i));
         let result = graph.insert_entity(i, entity);
         assert!(result.is_ok());
     }

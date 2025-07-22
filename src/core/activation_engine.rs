@@ -242,7 +242,7 @@ impl ActivationPropagationEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::brain_types::{EntityDirection, LogicGateType, RelationType, ActivationStep, ActivationOperation};
+    use crate::core::brain_types::{EntityDirection, LogicGateType, RelationType};
     use std::time::SystemTime;
 
     fn create_test_config() -> ActivationConfig {

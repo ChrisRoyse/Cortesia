@@ -1,11 +1,11 @@
 /// Integration tests for the attention manager system
 /// These tests focus on the public API and system behavior
-use llmkg::cognitive::attention_manager::{AttentionManager, AttentionState, AttentionType, AttentionFocus, ExecutiveCommand, AttentionStateInfo};
-use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
-use llmkg::cognitive::working_memory::{WorkingMemorySystem, MemoryContent, MemoryItem};
-use llmkg::core::activation_engine::ActivationPropagationEngine;
-use llmkg::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainEnhancedConfig};
+use llmkg::cognitive::{AttentionManager, AttentionState, AttentionType, AttentionFocus, ExecutiveCommand, AttentionTarget, AttentionTargetType};
+use llmkg::cognitive::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
+use llmkg::cognitive::{WorkingMemorySystem, MemoryContent, MemoryItem, BufferType};
+use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use llmkg::core::types::EntityKey;
+use llmkg::core::activation_engine::{ActivationPropagationEngine, ActivationConfig};
 use llmkg::core::sdr_storage::SDRStorage;
 use llmkg::core::sdr_types::SDRConfig;
 use std::sync::Arc;
@@ -31,11 +31,11 @@ fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
     let mut keys = Vec::new();
     
     for i in 0..count {
-        let key = sm.insert(EntityData {
-            type_id: 1,
-            properties: format!("test_entity_{}", i),
-            embedding: vec![0.0; 64],
-        });
+        let key = sm.insert(EntityData::new(
+            1,
+            format!("test_entity_{}", i),
+            vec![0.0; 64],
+        ));
         keys.push(key);
     }
     
@@ -57,18 +57,13 @@ struct TestFocus {
 async fn create_test_attention_manager() -> (
     AttentionManager,
     Arc<CognitiveOrchestrator>,
-    Arc<ActivationPropagationEngine>,
     Arc<WorkingMemorySystem>,
 ) {
-    use llmkg::cognitive::orchestrator::CognitiveOrchestratorConfig;
-    use llmkg::core::activation_engine::ActivationConfig;
-    
-    let config = BrainEnhancedConfig::default();
     let embedding_dim = 128;
     
     // Create the brain graph
     let graph = Arc::new(
-        BrainEnhancedKnowledgeGraph::new_with_config(embedding_dim, config.clone())
+        BrainEnhancedKnowledgeGraph::new(embedding_dim)
             .expect("Failed to create graph")
     );
     
@@ -77,20 +72,18 @@ async fn create_test_attention_manager() -> (
     let orchestrator = Arc::new(CognitiveOrchestrator::new(
         graph.clone(),
         cognitive_config,
-    ).await.expect("Failed to create orchestrator"));
+    ));
     
-    // Create activation engine
-    let activation_config = ActivationConfig::default();
-    let activation_engine = Arc::new(ActivationPropagationEngine::new(activation_config));
-    
-    // Create SDR storage for working memory
-    let sdr_config = SDRConfig {
+    // Create activation engine and SDR storage for working memory
+    let activation_engine = Arc::new(ActivationPropagationEngine::new(
+        ActivationConfig::default()
+    ));
+    let sdr_storage = Arc::new(SDRStorage::new(SDRConfig {
         total_bits: embedding_dim * 16,
         active_bits: 40,
-        sparsity: 0.02,
+        sparsity: 0.025,
         overlap_threshold: 0.5,
-    };
-    let sdr_storage = Arc::new(SDRStorage::new(sdr_config));
+    }));
     
     // Create working memory
     let working_memory = Arc::new(WorkingMemorySystem::new(
@@ -101,11 +94,11 @@ async fn create_test_attention_manager() -> (
     // Create attention manager
     let attention_manager = AttentionManager::new(
         orchestrator.clone(),
-        activation_engine.clone(),
+        activation_engine,
         working_memory.clone(),
     ).await.expect("Failed to create attention manager");
     
-    (attention_manager, orchestrator, activation_engine, working_memory)
+    (attention_manager, orchestrator, working_memory)
 }
 
 
@@ -115,7 +108,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_attention_focus_with_activation_boost() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(3);
         
         // Focus attention on the first target
@@ -136,7 +129,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_executive_control_commands() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(3);
         
         // First, focus on initial target
@@ -182,7 +175,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_divided_attention_management() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(4);
         
         // Set divided attention mode
@@ -205,7 +198,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_sustained_attention_over_time() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let target = create_test_entity_keys(1)[0];
         
         // Set sustained attention mode
@@ -235,7 +228,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_alternating_attention_patterns() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(3);
         
         // Set alternating attention mode
@@ -261,7 +254,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_cognitive_load_adaptation() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(10);
         
         // Gradually increase cognitive load
@@ -290,7 +283,7 @@ mod integration_tests {
     
     #[tokio::test]
     async fn test_memory_integration_workflow() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(3);
         
         // Focus attention to influence working memory
@@ -323,7 +316,7 @@ mod edge_case_tests {
     
     #[tokio::test]
     async fn test_empty_targets_handling() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         
         // Get snapshot with no focused entities
         let snapshot = manager.get_attention_state().await?;
@@ -336,7 +329,7 @@ mod edge_case_tests {
     
     #[tokio::test]
     async fn test_rapid_mode_switching() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let target = create_test_entity_keys(1)[0];
         
         // Rapidly switch between all attention modes
@@ -397,7 +390,7 @@ mod scenario_tests {
         let test_scenarios = scenarios::generate_scenarios();
         
         for scenario in test_scenarios {
-            let (mut manager, _, _, _) = create_test_attention_manager().await;
+            let (mut manager, _, _) = create_test_attention_manager().await;
             
             // Apply cognitive load
             let mut state = AttentionState::new();
@@ -437,7 +430,7 @@ mod performance_tests {
     
     #[tokio::test]
     async fn test_attention_switching_performance() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(100);
         
         let timer = PerformanceTimer::new("Attention switching");
@@ -459,7 +452,7 @@ mod performance_tests {
     
     #[tokio::test]
     async fn test_snapshot_generation_performance() -> Result<()> {
-        let (mut manager, _, _, _) = create_test_attention_manager().await;
+        let (mut manager, _, _) = create_test_attention_manager().await;
         let targets = create_test_entity_keys(20);
         
         // Populate attention state

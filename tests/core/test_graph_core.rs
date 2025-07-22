@@ -89,31 +89,11 @@ fn test_complete_entity_relationship_workflow() {
     
     // Phase 1: Create a small knowledge graph about a university
     let entities = vec![
-        (1, EntityData {
-            type_id: 1,
-            embedding: create_embedding(1, 128),
-            properties: r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor"}"#.to_string(),
-        }),
-        (2, EntityData {
-            type_id: 1,
-            embedding: create_embedding(2, 128),
-            properties: r#"{"type": "person", "name": "Bob Johnson", "role": "student"}"#.to_string(),
-        }),
-        (3, EntityData {
-            type_id: 2,
-            embedding: create_embedding(3, 128),
-            properties: r#"{"type": "course", "name": "Machine Learning", "code": "CS-401"}"#.to_string(),
-        }),
-        (4, EntityData {
-            type_id: 2,
-            embedding: create_embedding(4, 128),
-            properties: r#"{"type": "course", "name": "Data Structures", "code": "CS-201"}"#.to_string(),
-        }),
-        (5, EntityData {
-            type_id: 3,
-            embedding: create_embedding(5, 128),
-            properties: r#"{"type": "department", "name": "Computer Science"}"#.to_string(),
-        }),
+        (1, EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor"}"#.to_string(), create_embedding(1, 128))),
+        (2, EntityData::new(1, r#"{"type": "person", "name": "Bob Johnson", "role": "student"}"#.to_string(), create_embedding(2, 128))),
+        (3, EntityData::new(2, r#"{"type": "course", "name": "Machine Learning", "code": "CS-401"}"#.to_string(), create_embedding(3, 128))),
+        (4, EntityData::new(2, r#"{"type": "course", "name": "Data Structures", "code": "CS-201"}"#.to_string(), create_embedding(4, 128))),
+        (5, EntityData::new(3, r#"{"type": "department", "name": "Computer Science"}"#.to_string(), create_embedding(5, 128))),
     ];
     
     // Insert entities
@@ -213,11 +193,7 @@ fn test_complete_entity_relationship_workflow() {
     }
     
     // Phase 7: Test entity updates
-    let updated_alice = EntityData {
-        type_id: 1,
-        embedding: create_embedding(10, 128),
-        properties: r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor", "tenure": true}"#.to_string(),
-    };
+    let updated_alice = EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor", "tenure": true}"#.to_string(), create_embedding(10, 128));
     
     let update_result = graph.update_entity(alice_key, updated_alice.clone());
     assert!(update_result.is_ok());
@@ -252,11 +228,7 @@ fn test_batch_operations_and_performance() {
     // Phase 1: Prepare batch data
     let mut batch_entities = Vec::new();
     for i in 0..batch_size {
-        let entity_data = EntityData {
-            type_id: (i % 5) + 1, // 5 different types
-            embedding: create_embedding(i as u64, 128),
-            properties: format!(r#"{{"id": {}, "batch": "test", "category": "{}"}}"#, i, i % 10),
-        };
+        let entity_data = EntityData::new(((i % 5) + 1) as u16, format!(r#"{{"id": {}, "batch": "test", "category": "{}"}}"#, i, i % 10), create_embedding(i as u64, 128));
         batch_entities.push((i as u32, entity_data));
     }
     
@@ -342,11 +314,7 @@ fn test_graph_validation_and_consistency() {
     
     // Create entities
     for i in 0..num_entities {
-        let entity_data = EntityData {
-            type_id: (i % 3) + 1,
-            embedding: create_embedding(i as u64, 128),
-            properties: format!(r#"{{"id": {}, "type": "test_entity"}}"#, i),
-        };
+        let entity_data = EntityData::new(((i % 3) + 1) as u16, format!(r#"{{"id": {}, "type": "test_entity"}}"#, i), create_embedding(i as u64, 128));
         
         let key = graph.insert_entity(i as u32, entity_data);
         assert!(key.is_ok());
@@ -473,11 +441,7 @@ fn test_error_handling_and_edge_cases() {
     // and focus on other aspects
     
     // Test 2: Invalid relationship operations
-    let valid_entity = EntityData {
-        type_id: 1,
-        embedding: create_embedding(1, 128),
-        properties: "{}".to_string(),
-    };
+    let valid_entity = EntityData::new(1, "{}".to_string(), create_embedding(1, 128));
     
     let entity_key = graph.insert_entity(1, valid_entity);
     assert!(entity_key.is_ok());
@@ -491,11 +455,7 @@ fn test_error_handling_and_edge_cases() {
     // Try to insert many entities quickly
     let mut large_batch = Vec::new();
     for i in 0..1000 {
-        let entity_data = EntityData {
-            type_id: 1,
-            embedding: large_embedding.clone(),
-            properties: format!("{{\"id\": {}}}", i),
-        };
+        let entity_data = EntityData::new(1, format!("{{\"id\": {}}}", i), large_embedding.clone());
         large_batch.push((i + 100, entity_data));
     }
     
@@ -588,72 +548,24 @@ fn test_comprehensive_graph_workflow_integration() {
     // Phase 1: Build a comprehensive knowledge graph representing a university
     let university_entities = vec![
         // Students
-        (100, EntityData {
-            type_id: 1,
-            embedding: create_embedding(100, 128),
-            properties: r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 3, "gpa": 3.8}"#.to_string(),
-        }),
-        (101, EntityData {
-            type_id: 1,
-            embedding: create_embedding(101, 128),
-            properties: r#"{"type": "student", "name": "Bob Smith", "major": "Mathematics", "year": 4, "gpa": 3.9}"#.to_string(),
-        }),
-        (102, EntityData {
-            type_id: 1,
-            embedding: create_embedding(102, 128),
-            properties: r#"{"type": "student", "name": "Carol Davis", "major": "Physics", "year": 2, "gpa": 3.7}"#.to_string(),
-        }),
+        (100, EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 3, "gpa": 3.8}"#.to_string(), create_embedding(100, 128))),
+        (101, EntityData::new(1, r#"{"type": "student", "name": "Bob Smith", "major": "Mathematics", "year": 4, "gpa": 3.9}"#.to_string(), create_embedding(101, 128))),
+        (102, EntityData::new(1, r#"{"type": "student", "name": "Carol Davis", "major": "Physics", "year": 2, "gpa": 3.7}"#.to_string(), create_embedding(102, 128))),
         
         // Faculty
-        (200, EntityData {
-            type_id: 2,
-            embedding: create_embedding(200, 128),
-            properties: r#"{"type": "faculty", "name": "Dr. Emma Wilson", "department": "Computer Science", "title": "Professor", "tenure": true}"#.to_string(),
-        }),
-        (201, EntityData {
-            type_id: 2,
-            embedding: create_embedding(201, 128),
-            properties: r#"{"type": "faculty", "name": "Dr. Michael Brown", "department": "Mathematics", "title": "Associate Professor", "tenure": true}"#.to_string(),
-        }),
-        (202, EntityData {
-            type_id: 2,
-            embedding: create_embedding(202, 128),
-            properties: r#"{"type": "faculty", "name": "Dr. Sarah Lee", "department": "Physics", "title": "Assistant Professor", "tenure": false}"#.to_string(),
-        }),
+        (200, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Emma Wilson", "department": "Computer Science", "title": "Professor", "tenure": true}"#.to_string(), create_embedding(200, 128))),
+        (201, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Michael Brown", "department": "Mathematics", "title": "Associate Professor", "tenure": true}"#.to_string(), create_embedding(201, 128))),
+        (202, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Sarah Lee", "department": "Physics", "title": "Assistant Professor", "tenure": false}"#.to_string(), create_embedding(202, 128))),
         
         // Courses
-        (300, EntityData {
-            type_id: 3,
-            embedding: create_embedding(300, 128),
-            properties: r#"{"type": "course", "code": "CS-301", "title": "Data Structures", "credits": 3, "semester": "Fall"}"#.to_string(),
-        }),
-        (301, EntityData {
-            type_id: 3,
-            embedding: create_embedding(301, 128),
-            properties: r#"{"type": "course", "code": "CS-401", "title": "Machine Learning", "credits": 4, "semester": "Spring"}"#.to_string(),
-        }),
-        (302, EntityData {
-            type_id: 3,
-            embedding: create_embedding(302, 128),
-            properties: r#"{"type": "course", "code": "MATH-301", "title": "Linear Algebra", "credits": 3, "semester": "Fall"}"#.to_string(),
-        }),
+        (300, EntityData::new(3, r#"{"type": "course", "code": "CS-301", "title": "Data Structures", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(300, 128))),
+        (301, EntityData::new(3, r#"{"type": "course", "code": "CS-401", "title": "Machine Learning", "credits": 4, "semester": "Spring"}"#.to_string(), create_embedding(301, 128))),
+        (302, EntityData::new(3, r#"{"type": "course", "code": "MATH-301", "title": "Linear Algebra", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(302, 128))),
         
         // Departments
-        (400, EntityData {
-            type_id: 4,
-            embedding: create_embedding(400, 128),
-            properties: r#"{"type": "department", "name": "Computer Science", "building": "Engineering Hall", "faculty_count": 25}"#.to_string(),
-        }),
-        (401, EntityData {
-            type_id: 4,
-            embedding: create_embedding(401, 128),
-            properties: r#"{"type": "department", "name": "Mathematics", "building": "Science Center", "faculty_count": 18}"#.to_string(),
-        }),
-        (402, EntityData {
-            type_id: 4,
-            embedding: create_embedding(402, 128),
-            properties: r#"{"type": "department", "name": "Physics", "building": "Physics Lab", "faculty_count": 15}"#.to_string(),
-        }),
+        (400, EntityData::new(4, r#"{"type": "department", "name": "Computer Science", "building": "Engineering Hall", "faculty_count": 25}"#.to_string(), create_embedding(400, 128))),
+        (401, EntityData::new(4, r#"{"type": "department", "name": "Mathematics", "building": "Science Center", "faculty_count": 18}"#.to_string(), create_embedding(401, 128))),
+        (402, EntityData::new(4, r#"{"type": "department", "name": "Physics", "building": "Physics Lab", "faculty_count": 15}"#.to_string(), create_embedding(402, 128))),
     ];
     
     // Insert all entities
@@ -753,11 +665,7 @@ fn test_comprehensive_graph_workflow_integration() {
     assert!(wilson_neighbors.contains(&cs_dept_key), "Dr. Wilson should be connected to CS Department");
     
     // Phase 6: Test entity updates in complex graph
-    let updated_alice = EntityData {
-        type_id: 1,
-        embedding: create_embedding(100, 128),
-        properties: r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 4, "gpa": 3.85, "honors": true}"#.to_string(),
-    };
+    let updated_alice = EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 4, "gpa": 3.85, "honors": true}"#.to_string(), create_embedding(100, 128));
     
     let alice_update_result = graph.update_entity(alice_key, updated_alice);
     assert!(alice_update_result.is_ok(), "Failed to update Alice's information");
@@ -828,10 +736,9 @@ fn test_graph_scalability_and_performance() {
         let mut batch_entities = Vec::new();
         
         for i in batch_start..batch_end {
-            let entity_data = EntityData {
-                type_id: (i % 10 + 1) as u32, // 10 different types
-                embedding: create_embedding(i as u64 + 10000, 128),
-                properties: format!(
+            let entity_data = EntityData::new(
+                ((i % 10 + 1) as u16),
+                format!(
                     r#"{{"type": "entity_{}", "id": {}, "category": "{}", "value": {}}}"#,
                     i % 10,
                     i,
@@ -844,7 +751,8 @@ fn test_graph_scalability_and_performance() {
                     },
                     (i as f64 * 1.23) % 100.0
                 ),
-            };
+                create_embedding(i as u64 + 10000, 128)
+            );
             
             batch_entities.push((i as u32 + 10000, entity_data));
         }
@@ -1000,31 +908,16 @@ fn test_graph_robustness_and_edge_cases() {
     // Phase 1: Test with extreme entity configurations
     let extreme_entities = vec![
         // Minimal entity
-        EntityData {
-            type_id: 0,
-            embedding: vec![0.0; 128],
-            properties: "".to_string(),
-        },
+        EntityData::new(0, "".to_string(), vec![0.0; 128]),
         
         // Maximum type ID
-        EntityData {
-            type_id: u32::MAX,
-            embedding: vec![1.0; 128],
-            properties: "{}".to_string(),
-        },
+        EntityData::new(u16::MAX, "{}".to_string(), vec![1.0; 128]),
         
         // Large property string
-        EntityData {
-            type_id: 1,
-            embedding: create_embedding(20000, 128),
-            properties: format!("{{\n  \"large_data\": \"{}\"\n}}", "x".repeat(50000)),
-        },
+        EntityData::new(1, format!("{{\n  \"large_data\": \"{}\"\n}}", "x".repeat(50000)), create_embedding(20000, 128)),
         
         // Complex JSON properties
-        EntityData {
-            type_id: 2,
-            embedding: create_embedding(20001, 128),
-            properties: r#"{
+        EntityData::new(2, r#"{
                 "nested": {
                     "deeply": {
                         "nested": {
@@ -1040,13 +933,10 @@ fn test_graph_robustness_and_edge_cases() {
                 "unicode": "Hello 世界 🌍",
                 "escaped": "quotes\"and\\backslashes",
                 "special_chars": "\n\t\r\b\f"
-            }"#.to_string(),
-        },
+            }"#.to_string(), create_embedding(20001, 128)),
         
         // Normalized embedding
-        EntityData {
-            type_id: 3,
-            embedding: {
+        EntityData::new(3, r#"{"normalized": true}"#.to_string(), {
                 let mut emb = create_embedding(20002, 128);
                 // Normalize to unit length
                 let magnitude: f32 = emb.iter().map(|x| x * x).sum::<f32>().sqrt();
@@ -1056,9 +946,7 @@ fn test_graph_robustness_and_edge_cases() {
                     }
                 }
                 emb
-            },
-            properties: r#"{"normalized": true}"#.to_string(),
-        },
+            }),
     ];
     
     let mut extreme_keys = Vec::new();
@@ -1119,11 +1007,7 @@ fn test_graph_robustness_and_edge_cases() {
                 match i % 4 {
                     0 => {
                         // Insert entity
-                        let entity_data = EntityData {
-                            type_id: thread_id as u32,
-                            embedding: create_embedding(base_id as u64, 128),
-                            properties: format!(r#"{{"thread": {}, "op": {}}}"#, thread_id, i),
-                        };
+                        let entity_data = EntityData::new(thread_id as u16, format!(r#"{{"thread": {}, "op": {}}}"#, thread_id, i), create_embedding(base_id as u64, 128));
                         
                         if graph_clone.insert_entity(base_id as u32, entity_data).is_ok() {
                             local_stats.0 += 1;
@@ -1197,11 +1081,7 @@ fn test_graph_robustness_and_edge_cases() {
     
     // Phase 4: Recovery and cleanup testing
     // Verify graph is still functional after stress
-    let recovery_test_entity = EntityData {
-        type_id: 999,
-        embedding: create_embedding(99999, 128),
-        properties: r#"{"recovery_test": true}"#.to_string(),
-    };
+    let recovery_test_entity = EntityData::new(999, r#"{"recovery_test": true}"#.to_string(), create_embedding(99999, 128));
     
     let recovery_result = graph_arc.insert_entity(99999, recovery_test_entity);
     assert!(recovery_result.is_ok(), "Graph should be functional after concurrent stress");

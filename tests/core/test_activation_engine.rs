@@ -1,4 +1,5 @@
-use llmkg::core::activation_engine::{ActivationPropagationEngine, ActivationConfig, PropagationResult};
+use llmkg::core::activation_engine::ActivationPropagationEngine;
+use llmkg::core::activation_config::{ActivationConfig, PropagationResult};
 use llmkg::core::brain_types::{
     BrainInspiredEntity, LogicGate, BrainInspiredRelationship, ActivationPattern,
     EntityDirection, LogicGateType, RelationType

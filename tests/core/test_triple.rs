@@ -41,11 +41,11 @@ async fn test_triple_knowledge_engine_integration() {
             let node = KnowledgeNode::new_triple(triple.clone(), create_test_embedding(128));
             
             // Store as entity in knowledge engine
-            let entity_data = llmkg::core::types::EntityData {
-                type_id: 1, // Triple type
-                properties: serde_json::to_string(&node).unwrap(),
-                embedding: node.embedding.clone(),
-            };
+            let entity_data = llmkg::core::types::EntityData::new(
+                1, // Triple type
+                serde_json::to_string(&node).unwrap(),
+                node.embedding.clone()
+            );
             
             let entity_key = engine_write.add_entity(entity_data).await.unwrap();
             stored_nodes.push((entity_key, node));
@@ -173,16 +173,16 @@ async fn test_knowledge_representation_workflow() {
         let mut engine_write = engine.write().await;
         
         for node in vec![chunk_node, ai_entity, relationship_node] {
-            let entity_data = llmkg::core::types::EntityData {
-                type_id: match node.node_type {
+            let entity_data = llmkg::core::types::EntityData::new(
+                match node.node_type {
                     NodeType::Triple => 1,
                     NodeType::Chunk => 2,
                     NodeType::Entity => 3,
                     NodeType::Relationship => 4,
                 },
-                properties: serde_json::to_string(&node).unwrap(),
-                embedding: node.embedding.clone(),
-            };
+                serde_json::to_string(&node).unwrap(),
+                node.embedding.clone()
+            );
             
             engine_write.add_entity(entity_data).await.unwrap();
         }
@@ -416,11 +416,11 @@ async fn test_complete_knowledge_workflow() {
         
         // Store chunks
         for (doc_id, chunk) in &chunk_nodes {
-            let entity_data = llmkg::core::types::EntityData {
-                type_id: 2, // Chunk type
-                properties: serde_json::to_string(&chunk).unwrap(),
-                embedding: chunk.embedding.clone(),
-            };
+            let entity_data = llmkg::core::types::EntityData::new(
+                2, // Chunk type
+                serde_json::to_string(&chunk).unwrap(),
+                chunk.embedding.clone()
+            );
             
             engine_write.add_entity(entity_data).await.unwrap();
         }
@@ -428,11 +428,11 @@ async fn test_complete_knowledge_workflow() {
         // Store individual triples
         for triple in &all_triples {
             let node = KnowledgeNode::new_triple(triple.clone(), create_test_embedding(128));
-            let entity_data = llmkg::core::types::EntityData {
-                type_id: 1, // Triple type
-                properties: serde_json::to_string(&node).unwrap(),
-                embedding: node.embedding.clone(),
-            };
+            let entity_data = llmkg::core::types::EntityData::new(
+                1, // Triple type
+                serde_json::to_string(&node).unwrap(),
+                node.embedding.clone()
+            );
             
             engine_write.add_entity(entity_data).await.unwrap();
         }

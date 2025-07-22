@@ -13,15 +13,16 @@ async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeG
     
     // Add test entities with varied properties
     for i in 0..num_entities {
-        let entity_data = EntityData {
-            name: format!("entity_{}", i),
-            properties: format!("type:{}, category:{}, importance:{}", 
+        let entity_data = EntityData::new(
+            i as u16,
+            format!("type:{}, category:{}, importance:{}, name:entity_{}", 
                 if i % 3 == 0 { "input" } else if i % 3 == 1 { "output" } else { "processing" },
                 i % 5,
-                i as f32 / num_entities as f32
+                i as f32 / num_entities as f32,
+                i
             ),
-            embedding: (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
-        };
+            (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
+        );
         graph.core_graph.insert_entity(entity_data).unwrap();
     }
     
@@ -400,9 +401,11 @@ async fn test_advanced_learning_scenarios() {
         }
         graph.spread_activation(3).await.unwrap();
         
-        let a_avg = concept_a_entities.iter()
-            .map(|&e| graph.get_entity_activation(e).await)
-            .sum::<f32>() / concept_a_entities.len() as f32;
+        let mut a_sum = 0.0;
+        for &entity in &concept_a_entities {
+            a_sum += graph.get_entity_activation(entity).await;
+        }
+        let a_avg = a_sum / concept_a_entities.len() as f32;
         
         // Activate concept B
         for &entity in &concept_b_entities {
@@ -410,9 +413,11 @@ async fn test_advanced_learning_scenarios() {
         }
         graph.spread_activation(3).await.unwrap();
         
-        let b_avg = concept_b_entities.iter()
-            .map(|&e| graph.get_entity_activation(e).await)
-            .sum::<f32>() / concept_b_entities.len() as f32;
+        let mut b_sum = 0.0;
+        for &entity in &concept_b_entities {
+            b_sum += graph.get_entity_activation(entity).await;
+        }
+        let b_avg = b_sum / concept_b_entities.len() as f32;
         
         println!("Round {}: Concept A avg = {:.3}, Concept B avg = {:.3}", 
             round, a_avg, b_avg);

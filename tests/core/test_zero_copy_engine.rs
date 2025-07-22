@@ -30,12 +30,12 @@ async fn create_populated_engine(num_entities: usize, embedding_dim: usize) -> A
 /// Helper function to create test entities with varied data
 fn create_test_entities(count: usize, embedding_dim: usize) -> Vec<EntityData> {
     (0..count).map(|i| {
-        EntityData {
-            type_id: (i % 20) as u16,
-            properties: format!("Entity {} with detailed properties: category={}, importance={}, tags={}",
+        EntityData::new(
+            (i % 20) as u16,
+            format!("Entity {} with detailed properties: category={}, importance={}, tags={}",
                 i, i % 5, i as f32 / count as f32, ["tag1", "tag2", "tag3"][i % 3]),
-            embedding: (0..embedding_dim).map(|j| ((i * j) as f32).sin() / 10.0).collect(),
-        }
+            (0..embedding_dim).map(|j| ((i * j) as f32).sin() / 10.0).collect()
+        )
     }).collect()
 }
 

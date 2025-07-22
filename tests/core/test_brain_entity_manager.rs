@@ -15,11 +15,11 @@ fn create_test_entity_data(id: u32, embedding_len: usize) -> EntityData {
     properties.insert("name".to_string(), format!("Entity_{}", id));
     properties.insert("type".to_string(), "test_entity".to_string());
     
-    EntityData {
-        type_id: id,
-        embedding,
-        properties: serde_json::to_string(&properties).unwrap_or_default(),
-    }
+    EntityData::new(
+        id as u16,
+        serde_json::to_string(&properties).unwrap_or_default(),
+        embedding
+    )
 }
 
 #[tokio::test]
@@ -216,23 +216,11 @@ async fn test_entity_similarity_and_clustering() -> Result<()> {
     different_embedding[0] = 0.1;
     different_embedding[1] = 0.1;
     
-    let similar_data_1 = EntityData {
-        type_id: 1,
-        embedding: similar_embedding.clone(),
-        properties: r#"{"type": "similar", "group": "A"}"#.to_string(),
-    };
+    let similar_data_1 = EntityData::new(1, r#"{"type": "similar", "group": "A"}"#.to_string(), similar_embedding.clone());
     
-    let similar_data_2 = EntityData {
-        type_id: 2,
-        embedding: similar_embedding_2,
-        properties: r#"{"type": "similar", "group": "A"}"#.to_string(),
-    };
+    let similar_data_2 = EntityData::new(2, r#"{"type": "similar", "group": "A"}"#.to_string(), similar_embedding_2);
     
-    let different_data = EntityData {
-        type_id: 3,
-        embedding: different_embedding,
-        properties: r#"{"type": "different", "group": "B"}"#.to_string(),
-    };
+    let different_data = EntityData::new(3, r#"{"type": "different", "group": "B"}"#.to_string(), different_embedding);
     
     // Insert entities
     let similar_key_1 = brain_graph.insert_brain_entity(1, similar_data_1).await?;
@@ -316,23 +304,11 @@ async fn test_entity_concept_formation() -> Result<()> {
     let brain_graph = BrainEnhancedKnowledgeGraph::new_for_test()?;
     
     // Create conceptually related entities
-    let concept_a_data_1 = EntityData {
-        type_id: 1,
-        embedding: vec![0.8, 0.2, 0.1, 0.1].iter().cycle().take(96).cloned().collect(),
-        properties: r#"{"concept": "A", "instance": "1"}"#.to_string(),
-    };
+    let concept_a_data_1 = EntityData::new(1, r#"{"concept": "A", "instance": "1"}"#.to_string(), vec![0.8, 0.2, 0.1, 0.1].iter().cycle().take(96).cloned().collect());
     
-    let concept_a_data_2 = EntityData {
-        type_id: 2,
-        embedding: vec![0.7, 0.3, 0.1, 0.1].iter().cycle().take(96).cloned().collect(),
-        properties: r#"{"concept": "A", "instance": "2"}"#.to_string(),
-    };
+    let concept_a_data_2 = EntityData::new(2, r#"{"concept": "A", "instance": "2"}"#.to_string(), vec![0.7, 0.3, 0.1, 0.1].iter().cycle().take(96).cloned().collect());
     
-    let concept_b_data = EntityData {
-        type_id: 3,
-        embedding: vec![0.1, 0.1, 0.8, 0.2].iter().cycle().take(96).cloned().collect(),
-        properties: r#"{"concept": "B", "instance": "1"}"#.to_string(),
-    };
+    let concept_b_data = EntityData::new(3, r#"{"concept": "B", "instance": "1"}"#.to_string(), vec![0.1, 0.1, 0.8, 0.2].iter().cycle().take(96).cloned().collect());
     
     // Insert entities and trigger concept formation
     let key_a1 = brain_graph.insert_brain_entity(1, concept_a_data_1).await?;

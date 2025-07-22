@@ -47,7 +47,7 @@ pub async fn handle_inhibition_exceptions(
 }
 
 /// Detect mutual exclusion violations
-fn detect_mutual_exclusions(
+pub fn detect_mutual_exclusions(
     pattern: &ActivationPattern,
     _exceptions: &mut Vec<InhibitionException>,
 ) {
@@ -69,7 +69,7 @@ fn detect_mutual_exclusions(
 }
 
 /// Detect temporal conflicts
-fn detect_temporal_conflicts(
+pub fn detect_temporal_conflicts(
     _pattern: &ActivationPattern,
     _competition_results: &[GroupCompetitionResult],
     _exceptions: &mut Vec<InhibitionException>,
@@ -79,7 +79,7 @@ fn detect_temporal_conflicts(
 }
 
 /// Detect hierarchical inconsistencies
-fn detect_hierarchical_inconsistencies(
+pub fn detect_hierarchical_inconsistencies(
     hierarchical_result: &HierarchicalInhibitionResult,
     exceptions: &mut Vec<InhibitionException>,
 ) {
@@ -97,7 +97,7 @@ fn detect_hierarchical_inconsistencies(
 }
 
 /// Detect resource contention
-fn detect_resource_contentions(
+pub fn detect_resource_contentions(
     pattern: &ActivationPattern,
     exceptions: &mut Vec<InhibitionException>,
 ) {

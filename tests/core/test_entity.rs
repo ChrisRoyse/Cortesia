@@ -13,11 +13,11 @@ fn create_test_keys(count: usize) -> Vec<EntityKey> {
     let mut keys = Vec::new();
     
     for i in 0..count {
-        let key = sm.insert(EntityData {
-            type_id: (i % 100) as u16,
-            properties: format!("test_entity_{}", i),
-            embedding: vec![0.0; 64],
-        });
+        let key = sm.insert(EntityData::new(
+            (i % 100) as u16,
+            format!("test_entity_{}", i),
+            vec![0.0; 64]
+        ));
         keys.push(key);
     }
     
@@ -26,11 +26,7 @@ fn create_test_keys(count: usize) -> Vec<EntityKey> {
 
 /// Helper to create test entity data
 fn create_test_entity_data(type_id: u16, properties: &str) -> EntityData {
-    EntityData {
-        type_id,
-        properties: properties.to_string(),
-        embedding: vec![0.0; 64],
-    }
+    EntityData::new(type_id, properties.to_string(), vec![0.0; 64])
 }
 
 // ===== ENTITY LIFECYCLE INTEGRATION TESTS =====
@@ -868,11 +864,11 @@ fn test_integration_with_slotmap_keys() {
     // Create entities in slotmap and store
     let mut keys = Vec::new();
     for i in 0..20 {
-        let data = EntityData {
-            type_id: i,
-            properties: format!("slotmap_entity_{}", i),
-            embedding: vec![i as f32; 32],
-        };
+        let data = EntityData::new(
+            i,
+            format!("slotmap_entity_{}", i),
+            vec![i as f32; 32]
+        );
         
         let key = sm.insert(data.clone());
         keys.push(key);
