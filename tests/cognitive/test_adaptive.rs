@@ -17,7 +17,7 @@ fn create_mock_activation_step(step_id: usize, concept: &str) -> ActivationStep 
     let key = sm.insert(EntityData {
         type_id: 1,
         properties: format!("test_entity_{}", step_id),
-        embedding: vec![0.0; 64],
+        embedding: vec![0.0; 96],
     });
     
     ActivationStep {
@@ -32,7 +32,7 @@ fn create_mock_activation_step(step_id: usize, concept: &str) -> ActivationStep 
 
 /// Create a test knowledge graph
 fn create_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
-    let graph = BrainEnhancedKnowledgeGraph::new(768).unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
     
     // Add some test entities
     // Note: Since add_entity is not available in the public API,

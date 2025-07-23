@@ -900,7 +900,7 @@ mod tests {
         Arc<WorkingMemorySystem>,
     ) {
         let config = BrainEnhancedConfig::default();
-        let embedding_dim = 128;
+        let embedding_dim = 96;
         
         // Create the brain graph
         let graph = Arc::new(

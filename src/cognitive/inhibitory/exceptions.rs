@@ -235,7 +235,7 @@ mod tests {
     use super::*;
     use crate::cognitive::inhibitory::{
         CompetitiveInhibitionSystem, GroupCompetitionResult, HierarchicalInhibitionResult,
-        HierarchicalLayer, InhibitionException, InhibitionConfig
+        HierarchicalLayer, InhibitionException
     };
     use crate::core::brain_types::ActivationPattern;
     use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppDispatch, useAppSelector, dashboardActions } from '../stores';
-import { setLayoutSettings } from '../stores/slices/layoutSlice';
+import { updateLayoutSettings } from '../stores/slices/layoutSlice';
 
 const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -25,7 +25,7 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleLayoutToggle = () => {
-    dispatch(setLayoutSettings({ 
+    dispatch(updateLayoutSettings({ 
       compactType: layoutSettings.compactType === 'vertical' ? 'horizontal' : 'vertical' 
     }));
   };

@@ -160,8 +160,9 @@ async fn test_entity_statistics_and_monitoring() -> Result<()> {
     // Get initial statistics
     let initial_stats = brain_graph.get_entity_statistics().await;
     assert_eq!(initial_stats.total_entities, 0);
-    assert_eq!(initial_stats.active_entities, 0);
-    assert_eq!(initial_stats.average_activation, 0.0);
+    // Check that type distribution is empty initially
+    assert!(initial_stats.type_distribution.is_empty());
+    assert_eq!(initial_stats.avg_activation, 0.0);
     
     // Insert entities with different activation levels
     let high_entity_data = create_test_entity_data(1, 96);
@@ -183,7 +184,7 @@ async fn test_entity_statistics_and_monitoring() -> Result<()> {
     
     // Check average activation
     let expected_avg = (0.9 + 0.5 + 0.1) / 3.0;
-    assert!((updated_stats.average_activation - expected_avg).abs() < 0.01);
+    assert!((updated_stats.avg_activation - expected_avg).abs() < 0.01);
     
     // Test active entity counting with different thresholds
     let high_threshold_count = brain_graph.count_entities_above_threshold(0.8).await;
@@ -319,7 +320,7 @@ async fn test_entity_concept_formation() -> Result<()> {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
     
     // Test concept-based querying
-    let concept_a_query = vec![0.75, 0.25, 0.1, 0.1].iter().cycle().take(96).cloned().collect();
+    let concept_a_query: Vec<f32> = vec![0.75, 0.25, 0.1, 0.1].iter().cycle().take(96).cloned().collect();
     let concept_a_results = brain_graph.neural_query(&concept_a_query, 3).await?;
     
     // Concept A entities should be more activated

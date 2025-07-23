@@ -26,7 +26,6 @@ fn create_test_triple(subject: &str, predicate: &str, object: &str) -> Triple {
         object: object.to_string(),
         confidence: 0.9,
         source: Some("test".to_string()),
-        timestamp: std::time::SystemTime::now(),
     }
 }
 

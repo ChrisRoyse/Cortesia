@@ -14,6 +14,14 @@ if (!container) {
 // Create React root
 const root = createRoot(container);
 
+// Remove initial loader
+const loader = document.getElementById('initial-loader');
+if (loader) {
+  loader.style.opacity = '0';
+  loader.style.transition = 'opacity 0.3s ease-out';
+  setTimeout(() => loader.remove(), 300);
+}
+
 // Render the App
 root.render(
   <React.StrictMode>
@@ -24,7 +32,7 @@ root.render(
 // Performance monitoring
 reportWebVitals((metric) => {
   // Log performance metrics in development
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.log('Web Vital:', metric);
   }
   

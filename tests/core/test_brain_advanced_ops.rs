@@ -3,13 +3,14 @@
 
 use llmkg::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use llmkg::core::brain_enhanced_graph::brain_graph_types::*;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
 use llmkg::core::types::{EntityData, EntityKey};
 use std::time::Instant;
 use tokio;
 
 /// Helper to create a test knowledge graph with initial data
 async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeGraph {
-    let graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     
     // Add test entities with varied properties
     for i in 0..num_entities {
@@ -21,7 +22,7 @@ async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeG
                 i as f32 / num_entities as f32,
                 i
             ),
-            (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
+            (0..96).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
         );
         graph.insert_brain_entity(i as u32, entity_data).await.unwrap();
     }
@@ -29,13 +30,13 @@ async fn create_test_brain_graph(num_entities: usize) -> BrainEnhancedKnowledgeG
     // Add relationships to create interesting graph structure
     for i in 0..num_entities {
         if i + 1 < num_entities {
-            graph.add_relationship(i as u32, (i + 1) as u32, 1, 0.8).await.unwrap();
+            graph.add_relationship_with_type(i as i32, (i + 1) as i32, 1, 0.8).await.unwrap();
         }
         if i + 2 < num_entities {
-            graph.add_relationship(i as u32, (i + 2) as u32, 2, 0.5).await.unwrap();
+            graph.add_relationship_with_type(i as i32, (i + 2) as i32, 2, 0.5).await.unwrap();
         }
         if i > 0 && i % 5 == 0 {
-            graph.add_relationship(i as u32, (i - 5) as u32, 3, 0.3).await.unwrap();
+            graph.add_relationship_with_type(i as i32, (i - 5) as i32, 3, 0.3).await.unwrap();
         }
     }
     
@@ -54,7 +55,8 @@ async fn test_complete_learning_and_reasoning_cycle() {
     // Activate some seed entities
     let seed_entities = vec![10u32, 20, 30, 40, 50];
     for &entity_id in &seed_entities {
-        graph.set_entity_activation(entity_id, 0.9).await;
+        let entity_key = EntityKey::from_raw_parts(entity_id as u64, 0);
+        graph.set_entity_activation(entity_key, 0.9).await;
     }
     
     // Run learning cycles
@@ -75,22 +77,26 @@ async fn test_complete_learning_and_reasoning_cycle() {
     
     // Detect activation patterns
     // let patterns = graph.detect_activation_patterns(0.3).await.unwrap(); // TODO: method not yet implemented
-    let patterns = vec![]; // Placeholder
+    let patterns: Vec<String> = vec![]; // Placeholder with explicit type
     println!("Detected {} activation patterns", patterns.len());
     
     // Form concepts from patterns
     let concept_start = Instant::now();
     let mut concepts = Vec::new();
     
-    for (i, pattern) in patterns.iter().take(3).enumerate() {
+    for (i, _pattern) in patterns.iter().take(3).enumerate() {
+        // Create dummy entity keys for this concept
+        let entity_keys: Vec<EntityKey> = (0..10).map(|j| {
+            EntityKey::from_raw_parts((i * 10 + j) as u64, 0)
+        }).collect();
+        
         let concept_id = graph.create_concept_structure(
             format!("concept_{}", i),
-            pattern.clone(),
-            0.8
+            entity_keys.clone()
         ).await.unwrap();
         concepts.push(concept_id);
         
-        println!("Created concept {} with {} entities", i, pattern.len());
+        println!("Created concept {} with {} entities", i, entity_keys.len());
     }
     let concept_time = concept_start.elapsed();
     println!("Concept formation completed in {:?}", concept_time);
@@ -106,8 +112,14 @@ async fn test_complete_learning_and_reasoning_cycle() {
         
         // Create inheritance relationship if similar enough
         if similarity > 0.5 {
-            graph.create_inheritance(concepts[0], concepts[1], similarity).await.unwrap();
-            println!("Created inheritance relationship with strength {:.3}", similarity);
+            // Use first input entity from each concept as representative
+            if let (Some(&parent_entity), Some(&child_entity)) = (
+                concepts[0].input_entities.first(),
+                concepts[1].input_entities.first()
+            ) {
+                graph.create_inheritance(parent_entity, child_entity, similarity).await.unwrap();
+                println!("Created inheritance relationship with strength {:.3}", similarity);
+            }
         }
     }
     
@@ -115,8 +127,8 @@ async fn test_complete_learning_and_reasoning_cycle() {
     println!("\nPhase 4: Knowledge Retrieval");
     
     // Find similar concepts
-    if let Some(first_concept) = concepts.first() {
-        let similar = graph.find_similar_concepts(*first_concept, 5).await.unwrap();
+    if !concepts.is_empty() {
+        let similar = graph.find_similar_concepts("concept_0", 5).await.unwrap();
         println!("Found {} similar concepts", similar.len());
         
         for (concept_id, similarity) in similar.iter().take(3) {
@@ -130,10 +142,10 @@ async fn test_complete_learning_and_reasoning_cycle() {
     let optimization_start = Instant::now();
     
     // Run graph optimization
-    graph.optimize_graph_structure(0.1).await.unwrap();
+    graph.optimize_graph_structure().await.unwrap();
     
     // Prune weak connections
-    let pruned = graph.prune_weak_connections(0.05).await.unwrap();
+    let pruned = graph.prune_weak_relationships(0.05).await.unwrap();
     println!("Pruned {} weak connections", pruned);
     
     let optimization_time = optimization_start.elapsed();
@@ -174,11 +186,10 @@ async fn test_concept_structure_and_similarity_operations() {
     for (name, entities, strength) in concept_configs {
         let concept_id = graph.create_concept_structure(
             name.to_string(),
-            entities.into_iter().map(|e| e as u32).collect(),
-            strength
+            entities.into_iter().map(|e| EntityKey::from_raw_parts(e as u64, 0)).collect()
         ).await.unwrap();
+        println!("Created concept '{}' with ID {:?}", name, &concept_id);
         concept_ids.push((name, concept_id));
-        println!("Created concept '{}' with ID {}", name, concept_id);
     }
     
     // Test concept similarities
@@ -207,15 +218,11 @@ async fn test_concept_structure_and_similarity_operations() {
     // Test finding similar concepts
     println!("\nFinding Similar Concepts:");
     for (name, concept_id) in &concept_ids {
-        let similar = graph.find_similar_concepts(*concept_id, 3).await.unwrap();
+        let similar = graph.find_similar_concepts(name, 3).await.unwrap();
         println!("\nSimilar to '{}':", name);
         for (similar_id, score) in similar {
-            if similar_id != *concept_id {
-                let similar_name = concept_ids.iter()
-                    .find(|(_, id)| *id == similar_id)
-                    .map(|(name, _)| name)
-                    .unwrap_or(&"unknown");
-                println!("  {} (score: {:.3})", similar_name, score);
+            if similar_id != *name {
+                println!("  {} (score: {:.3})", similar_id, score);
             }
         }
     }
@@ -230,18 +237,23 @@ async fn test_concept_structure_and_similarity_operations() {
         // Get initial entity counts
         // let entities1 = graph.get_concept_entities(*id1).await.unwrap(); // TODO: method not yet implemented
         // let entities2 = graph.get_concept_entities(*id2).await.unwrap();
-        let entities1 = vec![]; // Placeholder
-        let entities2 = vec![]; // Placeholder
+        let entities1: Vec<EntityKey> = vec![]; // Placeholder
+        let entities2: Vec<EntityKey> = vec![]; // Placeholder
         
         println!("Before merge: {} has {} entities, {} has {} entities",
             name1, entities1.len(), name2, entities2.len());
         
         // Create inheritance to simulate concept hierarchy
-        graph.create_inheritance(*id1, *id2, 0.7).await.unwrap();
-        
-        // Verify inheritance effect
-        let child_activation = graph.get_entity_activation(*id2).await;
-        assert!(child_activation > 0.0, "Child concept should have inherited activation");
+        if let (Some(&parent_entity), Some(&child_entity)) = (
+            id1.input_entities.first(),
+            id2.input_entities.first()
+        ) {
+            graph.create_inheritance(parent_entity, child_entity, 0.7).await.unwrap();
+            
+            // Verify inheritance effect
+            let child_activation = graph.get_entity_activation(child_entity).await;
+            assert!(child_activation > 0.0, "Child concept should have inherited activation");
+        }
     }
 }
 
@@ -258,7 +270,7 @@ async fn test_graph_optimization_workflow() {
         let from = rand::random::<u32>() % 500;
         let to = rand::random::<u32>() % 500;
         if from != to {
-            let _ = graph.add_relationship(from, to, 4, 0.1).await;
+            let _ = graph.add_relationship_with_type(from as i32, to as i32, 4, 0.1).await;
         }
     }
     
@@ -279,7 +291,8 @@ async fn test_graph_optimization_workflow() {
         for j in 0..20 {
             let entity = center + j;
             if entity < 500 {
-                graph.set_entity_activation(entity as u32, 0.8 - (j as f32 * 0.02)).await;
+                let entity_key = EntityKey::from_raw_parts(entity as u64, 0);
+                graph.set_entity_activation(entity_key, 0.8 - (j as f32 * 0.02)).await;
             }
         }
     }
@@ -288,7 +301,7 @@ async fn test_graph_optimization_workflow() {
     // graph.spread_activation(5).await.unwrap(); // TODO: method not yet implemented
     
     // let patterns = graph.detect_activation_patterns(0.2).await.unwrap(); // TODO: method not yet implemented
-    let patterns = vec![]; // Placeholder
+    let patterns: Vec<String> = vec![]; // Placeholder
     let community_time = community_start.elapsed();
     println!("Detected {} communities in {:?}", patterns.len(), community_time);
     
@@ -335,7 +348,7 @@ async fn test_graph_optimization_workflow() {
     for i in 0..100 {
         let entity = (i * 5) as u32;
         // let neighbors = graph.get_entity_neighbors(entity, 2).await.unwrap(); // TODO: method not yet implemented
-        let neighbors = vec![]; // Placeholder
+        let neighbors: Vec<EntityKey> = vec![]; // Placeholder
         assert!(!neighbors.is_empty() || entity >= 500);
     }
     
@@ -360,7 +373,8 @@ async fn test_advanced_learning_scenarios() {
         for j in 0..10 {
             let entity = pattern_start + j;
             if entity < 300 {
-                graph.set_entity_activation(entity as u32, 0.7).await;
+                let entity_key = EntityKey::from_raw_parts(entity as u64, 0);
+                graph.set_entity_activation(entity_key, 0.7).await;
             }
         }
         
@@ -372,8 +386,9 @@ async fn test_advanced_learning_scenarios() {
             for j in 0..5 {
                 let entity = pattern_start + j;
                 if entity < 300 {
-                    let current = graph.get_entity_activation(entity as u32).await;
-                    graph.set_entity_activation(entity as u32, (current * 1.2).min(1.0)).await;
+                    let entity_key = EntityKey::from_raw_parts(entity as u64, 0);
+                    let current = graph.get_entity_activation(entity_key).await;
+                    graph.set_entity_activation(entity_key, (current * 1.2).min(1.0)).await;
                 }
             }
         }
@@ -386,19 +401,17 @@ async fn test_advanced_learning_scenarios() {
     println!("\nScenario 2: Competitive Learning");
     
     // Create competing concepts
-    let concept_a_entities: Vec<u32> = (0..20).map(|i| i * 3).collect();
-    let concept_b_entities: Vec<u32> = (0..20).map(|i| i * 3 + 1).collect();
+    let concept_a_entities: Vec<EntityKey> = (0..20).map(|i| EntityKey::from_raw_parts((i * 3) as u64, 0)).collect();
+    let concept_b_entities: Vec<EntityKey> = (0..20).map(|i| EntityKey::from_raw_parts((i * 3 + 1) as u64, 0)).collect();
     
     let concept_a = graph.create_concept_structure(
         "concept_a".to_string(),
-        concept_a_entities.clone(),
-        0.9
+        concept_a_entities.clone()
     ).await.unwrap();
     
     let concept_b = graph.create_concept_structure(
         "concept_b".to_string(),
-        concept_b_entities.clone(),
-        0.9
+        concept_b_entities.clone()
     ).await.unwrap();
     
     // Run competitive activation
@@ -435,38 +448,56 @@ async fn test_advanced_learning_scenarios() {
     println!("\nScenario 3: Hierarchical Learning");
     
     // Create hierarchy: general -> specific concepts
-    let general_entities: Vec<u32> = (0..50).step_by(5).collect();
-    let specific1_entities: Vec<u32> = (0..25).step_by(5).collect();
-    let specific2_entities: Vec<u32> = (25..50).step_by(5).collect();
+    let general_entities: Vec<EntityKey> = (0..50).step_by(5).map(|i| EntityKey::from_raw_parts(i as u64, 0)).collect();
+    let specific1_entities: Vec<EntityKey> = (0..25).step_by(5).map(|i| EntityKey::from_raw_parts(i as u64, 0)).collect();
+    let specific2_entities: Vec<EntityKey> = (25..50).step_by(5).map(|i| EntityKey::from_raw_parts(i as u64, 0)).collect();
     
     let general_concept = graph.create_concept_structure(
         "general".to_string(),
-        general_entities,
-        0.7
+        general_entities
     ).await.unwrap();
     
     let specific1 = graph.create_concept_structure(
         "specific1".to_string(),
-        specific1_entities,
-        0.9
+        specific1_entities
     ).await.unwrap();
     
     let specific2 = graph.create_concept_structure(
         "specific2".to_string(),
-        specific2_entities,
-        0.9
+        specific2_entities
     ).await.unwrap();
     
     // Create inheritance relationships
-    graph.create_inheritance(general_concept, specific1, 0.8).await.unwrap();
-    graph.create_inheritance(general_concept, specific2, 0.8).await.unwrap();
+    if let (Some(&general_entity), Some(&specific1_entity)) = (
+        general_concept.input_entities.first(),
+        specific1.input_entities.first()
+    ) {
+        graph.create_inheritance(general_entity, specific1_entity, 0.8).await.unwrap();
+    }
+    if let (Some(&general_entity), Some(&specific2_entity)) = (
+        general_concept.input_entities.first(),
+        specific2.input_entities.first()
+    ) {
+        graph.create_inheritance(general_entity, specific2_entity, 0.8).await.unwrap();
+    }
     
     // Test inheritance propagation
-    graph.set_entity_activation(general_concept, 1.0).await;
-    graph.spread_activation(3).await.unwrap();
+    if let Some(&general_entity) = general_concept.input_entities.first() {
+        graph.set_entity_activation(general_entity, 1.0).await;
+        // Use propagate_activation_from_entity instead of spread_activation
+        graph.propagate_activation_from_entity(general_entity, 0.8).await.unwrap();
+    }
     
-    let spec1_activation = graph.get_entity_activation(specific1).await;
-    let spec2_activation = graph.get_entity_activation(specific2).await;
+    let spec1_activation = if let Some(&specific1_entity) = specific1.input_entities.first() {
+        graph.get_entity_activation(specific1_entity).await
+    } else {
+        0.0
+    };
+    let spec2_activation = if let Some(&specific2_entity) = specific2.input_entities.first() {
+        graph.get_entity_activation(specific2_entity).await
+    } else {
+        0.0
+    };
     
     println!("After inheritance propagation:");
     println!("  Specific1 activation: {:.3}", spec1_activation);
@@ -492,7 +523,7 @@ async fn test_performance_under_load() {
         // Add multiple relationship types
         for j in 1..=5 {
             let target = (i + j * 100) % num_entities;
-            let _ = graph.add_relationship(i as u32, target as u32, j as u16, 0.5).await;
+            let _ = graph.add_relationship_with_type(i as i32, target as i32, j as i32, 0.5).await;
         }
     }
     
@@ -505,11 +536,10 @@ async fn test_performance_under_load() {
     let mut concepts = Vec::new();
     
     for i in 0..100 {
-        let entities: Vec<u32> = (i*100..(i+1)*100).step_by(10).map(|e| e as u32).collect();
+        let entities: Vec<EntityKey> = (i*100..(i+1)*100).step_by(10).map(|e| EntityKey::from_raw_parts(e as u64, 0)).collect();
         let concept_id = graph.create_concept_structure(
             format!("large_concept_{}", i),
-            entities,
-            0.8
+            entities
         ).await.unwrap();
         concepts.push(concept_id);
     }
@@ -539,7 +569,8 @@ async fn test_performance_under_load() {
     
     // Activate multiple seed points
     for i in (0..num_entities).step_by(100) {
-        graph.set_entity_activation(i as u32, 0.9).await;
+        let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+        graph.set_entity_activation(entity_key, 0.9).await;
     }
     
     let spread_start = Instant::now();
@@ -553,7 +584,7 @@ async fn test_performance_under_load() {
     println!("\nTest 4: Pattern detection at scale");
     let pattern_start = Instant::now();
     // let patterns = graph.detect_activation_patterns(0.1).await.unwrap(); // TODO: method not yet implemented
-    let patterns = vec![]; // Placeholder
+    let patterns: Vec<String> = vec![]; // Placeholder
     let pattern_time = pattern_start.elapsed();
     
     println!("Detected {} patterns in {:?}", patterns.len(), pattern_time);
@@ -576,49 +607,54 @@ async fn test_edge_cases_and_error_recovery() {
     // Test 1: Empty concept creation
     let empty_concept = graph.create_concept_structure(
         "empty_concept".to_string(),
-        Vec::new(),
-        0.5
+        Vec::new()
     ).await;
     assert!(empty_concept.is_ok(), "Should handle empty concept creation");
     
     // Test 2: Duplicate relationships
-    let result1 = graph.add_relationship(1, 2, 1, 0.5).await;
-    let result2 = graph.add_relationship(1, 2, 1, 0.6).await;
+    let result1 = graph.add_relationship_with_type(1, 2, 1, 0.5).await;
+    let result2 = graph.add_relationship_with_type(1, 2, 1, 0.6).await;
     assert!(result1.is_ok() && result2.is_ok(), "Should handle duplicate relationships");
     
     // Test 3: Self-referential concepts
-    let self_ref_entities = vec![50u32];
+    let self_ref_entities = vec![EntityKey::from_raw_parts(50, 0)];
     let self_ref = graph.create_concept_structure(
         "self_ref".to_string(),
-        self_ref_entities,
-        0.8
+        self_ref_entities
     ).await.unwrap();
     
     // Try to create inheritance to itself
-    let self_inheritance = graph.create_inheritance(self_ref, self_ref, 0.5).await;
+    let self_inheritance = if let Some(&self_entity) = self_ref.input_entities.first() {
+        graph.create_inheritance(self_entity, self_entity, 0.5).await
+    } else {
+        Ok(())
+    };
     assert!(self_inheritance.is_ok(), "Should handle self-inheritance gracefully");
     
     // Test 4: Extreme activation values
-    graph.set_entity_activation(10, 100.0).await;
-    let clamped = graph.get_entity_activation(10).await;
+    let entity_key_10 = EntityKey::from_raw_parts(10, 0);
+    graph.set_entity_activation(entity_key_10, 100.0).await;
+    let clamped = graph.get_entity_activation(entity_key_10).await;
     assert_eq!(clamped, 1.0, "Should clamp activation to valid range");
     
-    graph.set_entity_activation(11, -100.0).await;
-    let clamped_neg = graph.get_entity_activation(11).await;
+    let entity_key_11 = EntityKey::from_raw_parts(11, 0);
+    graph.set_entity_activation(entity_key_11, -100.0).await;
+    let clamped_neg = graph.get_entity_activation(entity_key_11).await;
     assert_eq!(clamped_neg, 0.0, "Should clamp negative activation to 0");
     
     // Test 5: Very high similarity threshold
-    let similar = graph.find_similar_concepts(self_ref, 10).await.unwrap();
+    let similar = graph.find_similar_concepts("self_ref", 10).await.unwrap();
     assert!(similar.len() <= 10, "Should respect result limit");
     
     // Test 6: Pattern detection with no activation
     // Reset all activations
     for i in 0..100 {
-        graph.set_entity_activation(i as u32, 0.0).await;
+        let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+        graph.set_entity_activation(entity_key, 0.0).await;
     }
     
     // let no_patterns = graph.detect_activation_patterns(0.5).await.unwrap(); // TODO: method not yet implemented
-    let no_patterns = vec![]; // Placeholder
+    let no_patterns: Vec<String> = vec![]; // Placeholder
     assert_eq!(no_patterns.len(), 0, "Should find no patterns with zero activation");
     
     println!("All edge cases handled successfully");

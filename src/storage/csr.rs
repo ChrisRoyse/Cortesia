@@ -681,7 +681,7 @@ mod tests {
 
     #[cfg(test)]
     mod simd_tests {
-        use super::*;
+        
         
         #[test]
         #[cfg(target_feature = "avx2")]

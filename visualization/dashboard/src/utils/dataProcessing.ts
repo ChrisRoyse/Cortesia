@@ -169,7 +169,7 @@ export interface TrendAnalysisConfig {
 /**
  * Time Series Aggregation Engine
  */
-export class TimeSeriesAggregator<T = number> {
+class TimeSeriesAggregator<T = number> {
   private config: AggregationConfig;
 
   constructor(config: AggregationConfig) {
@@ -308,7 +308,7 @@ export class TimeSeriesAggregator<T = number> {
 /**
  * Pattern Detection Engine
  */
-export class PatternDetector {
+class PatternDetector {
   private config: PatternDetectionConfig;
 
   constructor(config: PatternDetectionConfig) {
@@ -850,7 +850,7 @@ export class PatternDetector {
 /**
  * Anomaly Detection Engine
  */
-export class AnomalyDetector {
+class AnomalyDetector {
   private config: AnomalyDetectionConfig;
 
   constructor(config: AnomalyDetectionConfig) {
@@ -1092,7 +1092,7 @@ export class AnomalyDetector {
 /**
  * Trend Analysis Engine
  */
-export class TrendAnalyzer {
+class TrendAnalyzer {
   private config: TrendAnalysisConfig;
 
   constructor(config: TrendAnalysisConfig) {
@@ -1346,7 +1346,7 @@ export class TrendAnalyzer {
 /**
  * Data Compression Engine
  */
-export class DataCompressor {
+class DataCompressor {
   /**
    * Compress time series data using various algorithms
    */
@@ -1641,7 +1641,7 @@ export class DataCompressor {
 /**
  * Utility functions for data processing
  */
-export class DataProcessingUtils {
+class DataProcessingUtils {
   /**
    * Calculate correlation matrix for multiple time series
    */

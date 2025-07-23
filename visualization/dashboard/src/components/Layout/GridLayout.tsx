@@ -187,7 +187,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
         layouts={generateLayouts()}
         onLayoutChange={handleLayoutChange}
         onBreakpointChange={handleBreakpointChange}
-        breakpoints={breakpoints}
+        breakpoints={breakpoints as any}
         cols={cols}
         rowHeight={rowHeight}
         margin={margin}
@@ -208,7 +208,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({
       >
         {renderGridItems()}
       </ResponsiveGridLayout>
-      <style jsx>{`
+      <style>{`
         .grid-item:hover {
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
         }

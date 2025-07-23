@@ -519,7 +519,7 @@ mod tests {
                 ((i * 3) as f32 / 50.0),
                 ((i * 4) as f32 / 50.0),
             ];
-            index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+            index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
         }
         
         let stats = index.stats();
@@ -644,7 +644,7 @@ mod tests {
         // Insert enough nodes to likely create multiple layers
         for i in 0..100 {
             let embedding: Vec<f32> = (0..8).map(|j| (i * j) as f32 / 100.0).collect();
-            index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+            index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
         }
         
         let stats = index.stats();
@@ -721,7 +721,7 @@ mod tests {
         ];
         
         for (id, embedding) in points {
-            index.insert(id, EntityKey::default(), embedding).unwrap();
+            index.insert(id, EntityKey::from_u32(id), embedding).unwrap();
         }
         
         // Query close to origin
@@ -806,11 +806,11 @@ mod tests {
         let index = HnswIndex::new(3);
         
         // Insert initial node
-        index.insert(1, EntityKey::default(), vec![1.0, 0.0, 0.0]).unwrap();
-        index.insert(2, EntityKey::default(), vec![0.0, 1.0, 0.0]).unwrap();
+        index.insert(1, EntityKey::from_u32(1), vec![1.0, 0.0, 0.0]).unwrap();
+        index.insert(2, EntityKey::from_u32(2), vec![0.0, 1.0, 0.0]).unwrap();
         
         // Update entity 1
-        let result = index.update_entity(1, EntityKey::default(), vec![0.0, 0.0, 1.0]);
+        let result = index.update_entity(1, EntityKey::from_u32(1), vec![0.0, 0.0, 1.0]);
         assert!(result.is_ok());
         
         // Verify update (search should find updated entity closer to new position)
@@ -819,7 +819,7 @@ mod tests {
         assert_eq!(results[0].0, 1);
         
         // Test updating non-existent entity
-        let result = index.update_entity(99, EntityKey::default(), vec![1.0, 1.0, 1.0]);
+        let result = index.update_entity(99, EntityKey::from_u32(99), vec![1.0, 1.0, 1.0]);
         assert!(result.is_err());
     }
 
@@ -838,7 +838,7 @@ mod tests {
         // Insert a few nodes
         for i in 0..5 {
             let embedding = vec![i as f32, (i*2) as f32, (i*3) as f32, (i*4) as f32];
-            index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+            index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
         }
         
         let encoded_size = index.encoded_size();
@@ -884,7 +884,7 @@ mod tests {
             // Insert many nodes
             for i in 0..1000 {
                 let embedding: Vec<f32> = (0..64).map(|j| (i * j) as f32 / 1000.0).collect();
-                index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+                index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
             }
             
             let duration = start.elapsed();
@@ -902,7 +902,7 @@ mod tests {
             // Build index
             for i in 0..1000 {
                 let embedding: Vec<f32> = (0..32).map(|j| (i + j) as f32 / 1000.0).collect();
-                index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+                index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
             }
             
             let query: Vec<f32> = (0..32).map(|i| i as f32 / 32.0).collect();
@@ -930,7 +930,7 @@ mod tests {
                     let start = Instant::now();
                     for i in 0..size {
                         let embedding: Vec<f32> = (0..dim).map(|j| (i * j) as f32 / size as f32).collect();
-                        index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+                        index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
                     }
                     let build_time = start.elapsed();
                     
@@ -965,7 +965,7 @@ mod tests {
                     (i as f32 / 10.0),
                     (i as f32 / 5.0) % 1.0,
                 ];
-                index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+                index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
             }
             
             let nodes = index.nodes.read();
@@ -1033,7 +1033,7 @@ mod tests {
                     ((i * 3) as f32 / 1000.0),
                     ((i * 4) as f32 / 1000.0),
                 ];
-                index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+                index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
             }
             
             let nodes = index.nodes.read();

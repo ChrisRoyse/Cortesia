@@ -3,12 +3,19 @@
 use super::graph_core::{KnowledgeGraph, MAX_INSERTION_TIME};
 use crate::core::types::{EntityKey, EntityData, EntityMeta};
 use crate::core::parallel::{ParallelProcessor, ParallelOperation};
+use crate::trace_function;
 use crate::error::{GraphError, Result};
 use std::time::Instant;
 
 impl KnowledgeGraph {
     /// Insert a single entity into the graph
     pub fn insert_entity(&self, id: u32, data: EntityData) -> Result<EntityKey> {
+        let _trace = if let Some(profiler) = &self.runtime_profiler {
+            Some(trace_function!(profiler, "insert_entity", id, data.embedding.len()))
+        } else {
+            None
+        };
+        
         let start_time = Instant::now();
         
         // Validate text size to prevent bloat
@@ -69,6 +76,12 @@ impl KnowledgeGraph {
     
     /// Add entity (test compatibility method)
     pub fn add_entity(&self, data: EntityData) -> Result<EntityKey> {
+        let _trace = if let Some(profiler) = &self.runtime_profiler {
+            Some(trace_function!(profiler, "add_entity", data.embedding.len()))
+        } else {
+            None
+        };
+        
         // Generate a unique ID for the entity
         let id = {
             let id_map = self.entity_id_map.read();

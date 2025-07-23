@@ -31,12 +31,7 @@ interface UseToolDiscoveryResult {
 
 // Default LLMKG endpoints
 const DEFAULT_ENDPOINTS = [
-  'http://localhost:8080',  // Knowledge Graph Server
-  'http://localhost:8081',  // Cognitive Server
-  'http://localhost:8082',  // Neural Server
-  'http://localhost:8083',  // Memory Server
-  'http://localhost:8084',  // Federation Server
-  'http://localhost:8085',  // Analysis Server
+  'http://localhost:3001',  // LLMKG API Server
 ];
 
 export function useToolDiscovery(options: UseToolDiscoveryOptions = {}): UseToolDiscoveryResult {

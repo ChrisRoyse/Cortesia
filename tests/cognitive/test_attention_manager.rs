@@ -34,7 +34,7 @@ fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
         let key = sm.insert(EntityData::new(
             1,
             format!("test_entity_{}", i),
-            vec![0.0; 64],
+            vec![0.0; 96],
         ));
         keys.push(key);
     }
@@ -59,11 +59,11 @@ async fn create_test_attention_manager() -> (
     Arc<CognitiveOrchestrator>,
     Arc<WorkingMemorySystem>,
 ) {
-    let embedding_dim = 128;
+    let embedding_dim = 96;
     
     // Create the brain graph
     let graph = Arc::new(
-        BrainEnhancedKnowledgeGraph::new(embedding_dim)
+        BrainEnhancedKnowledgeGraph::new_for_test()
             .expect("Failed to create graph")
     );
     

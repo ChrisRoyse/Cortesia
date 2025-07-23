@@ -2,6 +2,7 @@
 
 use super::graph_core::{KnowledgeGraph, MAX_QUERY_TIME};
 use crate::core::types::{EntityKey, EntityData, QueryResult, ContextEntity, Relationship};
+use crate::trace_function;
 use crate::error::{GraphError, Result};
 use crate::embedding::similarity::cosine_similarity;
 use std::time::Instant;
@@ -10,6 +11,12 @@ use std::collections::HashMap;
 impl KnowledgeGraph {
     /// Perform complex query with context entities and relationships
     pub fn query(&self, query_embedding: &[f32], context_entities: &[ContextEntity], k: usize) -> Result<QueryResult> {
+        let _trace = if let Some(profiler) = &self.runtime_profiler {
+            Some(trace_function!(profiler, "query", query_embedding.len(), context_entities.len(), k))
+        } else {
+            None
+        };
+        
         let start_time = Instant::now();
         
         // Validate query embedding

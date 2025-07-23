@@ -24,6 +24,143 @@ pub struct BrainQueryResult {
     pub confidence: f32,
 }
 
+/// Result of memory consolidation process
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConsolidationResult {
+    pub concepts_consolidated: usize,
+    pub connections_strengthened: usize,
+    pub consolidation_efficiency: f32,
+}
+
+/// Result of attention-guided query
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AttentionQueryResult {
+    pub entities: Vec<AttentionEntityResult>,
+    pub total_attention: f32,
+    pub query_time: Duration,
+}
+
+/// Entity result with attention scoring
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AttentionEntityResult {
+    pub entity_key: EntityKey,
+    pub attention_score: f32,
+    pub relevance_score: f32,
+}
+
+/// Cognitive patterns recognized in the graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CognitivePatterns {
+    pub hierarchical_structures: Vec<HierarchicalStructure>,
+    pub concept_clusters: Vec<ConceptCluster>,
+    pub learning_pathways: Vec<LearningPathway>,
+}
+
+/// Hierarchical structure in the graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HierarchicalStructure {
+    pub root_entity: EntityKey,
+    pub depth: usize,
+    pub children: usize,
+    pub influence_score: f32,
+}
+
+/// Concept cluster in the graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConceptCluster {
+    pub center_entity: EntityKey,
+    pub cluster_entities: Vec<EntityKey>,
+    pub coherence_score: f32,
+    pub cluster_size: usize,
+}
+
+/// Learning pathway in the graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LearningPathway {
+    pub pathway_entities: Vec<EntityKey>,
+    pub pathway_strength: f32,
+    pub learning_efficiency: f32,
+}
+
+/// Result of concept integration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntegrationResult {
+    pub integrated_concept_key: EntityKey,
+    pub connections_created: usize,
+    pub integration_strength: f32,
+}
+
+/// Cognitive load assessment
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CognitiveLoad {
+    pub processing_load: f32,
+    pub memory_utilization: f32,
+    pub attention_distribution: f32,
+}
+
+/// Result of load reduction operation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoadReductionResult {
+    pub load_reduced: bool,
+    pub operations_simplified: usize,
+}
+
+/// Result of memory formation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryFormationResult {
+    pub memories_formed: usize,
+    pub memory_strength: f32,
+    pub consolidation_success: bool,
+}
+
+/// Result of memory recall
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryRecallResult {
+    pub related_memories: Vec<RelatedMemory>,
+    pub recall_success: bool,
+    pub average_recall_strength: f32,
+}
+
+/// Related memory entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RelatedMemory {
+    pub entity_key: EntityKey,
+    pub recall_strength: f32,
+    pub association_type: String,
+}
+
+/// Concept statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConceptStatistics {
+    pub total_concepts: usize,
+    pub active_concepts: usize,
+    pub average_activation: f32,
+    pub max_activation: f32,
+    pub min_activation: f32,
+    pub connectivity_density: f32,
+}
+
+/// Community in the graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Community {
+    pub entities: Vec<EntityKey>,
+    pub cohesion_score: f32,
+    pub size: usize,
+}
+
+/// Performance metrics for the brain graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceMetrics {
+    pub entity_count: usize,
+    pub relationship_count: usize,
+    pub avg_activation: f32,
+    pub memory_usage_mb: f32,
+    pub connectivity_density: f32,
+    pub learning_efficiency: f32,
+    pub query_response_time: Duration,
+    pub overall_performance: f32,
+}
+
 impl BrainQueryResult {
     /// Create new empty query result
     pub fn new() -> Self {

@@ -5,6 +5,7 @@ pub mod dashboard;
 pub mod metrics;
 pub mod collectors;
 pub mod exporters;
+pub mod brain_metrics_collector;
 
 pub use performance::{
     PerformanceMonitor,
@@ -57,6 +58,8 @@ pub use collectors::{
     CustomMetricsCollector,
     MetricsCollectionConfig,
 };
+
+pub use brain_metrics_collector::BrainMetricsCollector;
 
 pub use exporters::{
     PrometheusExporter,

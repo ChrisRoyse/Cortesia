@@ -11,7 +11,7 @@ use llmkg::core::types::{EntityData, Relationship};
 use llmkg::error::{GraphError, Result};
 
 fn create_test_graph() -> KnowledgeGraph {
-    KnowledgeGraph::new(128).expect("Failed to create test graph")
+    KnowledgeGraph::new(96).expect("Failed to create test graph")
 }
 
 fn create_embedding(seed: u64, dim: usize) -> Vec<f32> {
@@ -89,11 +89,11 @@ fn test_complete_entity_relationship_workflow() {
     
     // Phase 1: Create a small knowledge graph about a university
     let entities = vec![
-        (1, EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor"}"#.to_string(), create_embedding(1, 128))),
-        (2, EntityData::new(1, r#"{"type": "person", "name": "Bob Johnson", "role": "student"}"#.to_string(), create_embedding(2, 128))),
-        (3, EntityData::new(2, r#"{"type": "course", "name": "Machine Learning", "code": "CS-401"}"#.to_string(), create_embedding(3, 128))),
-        (4, EntityData::new(2, r#"{"type": "course", "name": "Data Structures", "code": "CS-201"}"#.to_string(), create_embedding(4, 128))),
-        (5, EntityData::new(3, r#"{"type": "department", "name": "Computer Science"}"#.to_string(), create_embedding(5, 128))),
+        (1, EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor"}"#.to_string(), create_embedding(1, 96))),
+        (2, EntityData::new(1, r#"{"type": "person", "name": "Bob Johnson", "role": "student"}"#.to_string(), create_embedding(2, 96))),
+        (3, EntityData::new(2, r#"{"type": "course", "name": "Machine Learning", "code": "CS-401"}"#.to_string(), create_embedding(3, 96))),
+        (4, EntityData::new(2, r#"{"type": "course", "name": "Data Structures", "code": "CS-201"}"#.to_string(), create_embedding(4, 96))),
+        (5, EntityData::new(3, r#"{"type": "department", "name": "Computer Science"}"#.to_string(), create_embedding(5, 96))),
     ];
     
     // Insert entities
@@ -145,7 +145,7 @@ fn test_complete_entity_relationship_workflow() {
         // Embedding retrieval
         let embedding = graph.get_entity_embedding(entity_keys[i]);
         assert!(embedding.is_some());
-        assert_eq!(embedding.unwrap().len(), 128);
+        assert_eq!(embedding.unwrap().len(), 96);
         
         // ID reverse lookup
         let reverse_id = graph.get_entity_id(entity_keys[i]);
@@ -179,7 +179,7 @@ fn test_complete_entity_relationship_workflow() {
     assert_eq!(path[path.len() - 1], bob_key);
     
     // Phase 6: Test similarity search
-    let query_embedding = create_embedding(100, 128); // Different from existing
+    let query_embedding = create_embedding(100, 96); // Different from existing
     let similar = graph.similarity_search(&query_embedding, 3);
     assert!(similar.is_ok());
     
@@ -193,7 +193,7 @@ fn test_complete_entity_relationship_workflow() {
     }
     
     // Phase 7: Test entity updates
-    let updated_alice = EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor", "tenure": true}"#.to_string(), create_embedding(10, 128));
+    let updated_alice = EntityData::new(1, r#"{"type": "person", "name": "Dr. Alice Smith", "role": "professor", "tenure": true}"#.to_string(), create_embedding(10, 96));
     
     let update_result = graph.update_entity(alice_key, updated_alice.clone());
     assert!(update_result.is_ok());
@@ -228,7 +228,7 @@ fn test_batch_operations_and_performance() {
     // Phase 1: Prepare batch data
     let mut batch_entities = Vec::new();
     for i in 0..batch_size {
-        let entity_data = EntityData::new(((i % 5) + 1) as u16, format!(r#"{{"id": {}, "batch": "test", "category": "{}"}}"#, i, i % 10), create_embedding(i as u64, 128));
+        let entity_data = EntityData::new(((i % 5) + 1) as u16, format!(r#"{{"id": {}, "batch": "test", "category": "{}"}}"#, i, i % 10), create_embedding(i as u64, 96));
         batch_entities.push((i as u32, entity_data));
     }
     
@@ -255,11 +255,11 @@ fn test_batch_operations_and_performance() {
         
         let (_, data) = entity.unwrap();
         let expected_type = ((i % 5) + 1) as u32;
-        assert_eq!(data.type_id, expected_type);
+        assert_eq!(data.type_id, expected_type as u16);
     }
     
     // Phase 4: Test performance of individual operations
-    let query_embedding = create_embedding(1000, 128);
+    let query_embedding = create_embedding(1000, 96);
     
     let similarity_start = std::time::Instant::now();
     let similarity_results = graph.similarity_search(&query_embedding, 10);
@@ -291,7 +291,7 @@ fn test_batch_operations_and_performance() {
     
     // Perform multiple similarity searches to test caching
     for i in 0..10 {
-        let test_embedding = create_embedding(2000 + i, 128);
+        let test_embedding = create_embedding(2000 + i, 96);
         let _ = graph.similarity_search(&test_embedding, 5);
     }
     
@@ -314,7 +314,7 @@ fn test_graph_validation_and_consistency() {
     
     // Create entities
     for i in 0..num_entities {
-        let entity_data = EntityData::new(((i % 3) + 1) as u16, format!(r#"{{"id": {}, "type": "test_entity"}}"#, i), create_embedding(i as u64, 128));
+        let entity_data = EntityData::new(((i % 3) + 1) as u16, format!(r#"{{"id": {}, "type": "test_entity"}}"#, i), create_embedding(i as u64, 96));
         
         let key = graph.insert_entity(i as u32, entity_data);
         assert!(key.is_ok());
@@ -327,7 +327,7 @@ fn test_graph_validation_and_consistency() {
             let relationship = Relationship {
                 from: entity_keys[i],
                 to: entity_keys[j],
-                rel_type: ((i + j) % 3) as u32,
+                rel_type: ((i + j) % 3) as u8,
                 weight: (i as f32 + j as f32) / (2.0 * num_entities as f32),
             };
             
@@ -354,7 +354,7 @@ fn test_graph_validation_and_consistency() {
     }
     
     // Phase 3: Test embedding validation
-    let valid_embedding = create_embedding(1000, 128);
+    let valid_embedding = create_embedding(1000, 96);
     let validation_result = graph.validate_embedding_dimension(&valid_embedding);
     assert!(validation_result.is_ok());
     
@@ -363,7 +363,7 @@ fn test_graph_validation_and_consistency() {
     assert!(invalid_result.is_err());
     
     if let Err(GraphError::InvalidEmbeddingDimension { expected, actual }) = invalid_result {
-        assert_eq!(expected, 128);
+        assert_eq!(expected, 96);
         assert_eq!(actual, 64);
     } else {
         panic!("Expected InvalidEmbeddingDimension error");
@@ -403,7 +403,9 @@ fn test_graph_validation_and_consistency() {
     
     // Phase 6: Test epoch manager access
     let epoch_manager = graph.epoch_manager();
-    assert!(epoch_manager.current_epoch() >= 0);
+    // Note: EpochManager doesn't expose current_epoch() method
+    // Just verify we can get the epoch manager reference
+    let _ = epoch_manager;
     
     // Phase 7: Consistency check after complex operations
     let final_entity_count = graph.entity_count();
@@ -417,9 +419,9 @@ fn test_graph_validation_and_consistency() {
         let entity = graph.get_entity_by_id(i as u32);
         assert!(entity.is_some());
         
-        let (key, data) = entity.unwrap();
-        assert_eq!(key, entity_keys[i]);
-        assert_eq!(data.embedding.len(), 128);
+        let (meta, data) = entity.unwrap();
+        // EntityMeta contains metadata about the entity, not the key itself
+        assert_eq!(data.embedding.len(), 96);
         assert!(data.properties.contains("test_entity"));
     }
 }
@@ -429,7 +431,7 @@ fn test_error_handling_and_edge_cases() {
     let graph = create_test_graph();
     
     // Test 1: Operations on empty graph
-    let empty_similarity = graph.similarity_search(&vec![0.1; 128], 5);
+    let empty_similarity = graph.similarity_search(&vec![0.1; 96], 5);
     assert!(empty_similarity.is_ok());
     let empty_results = empty_similarity.unwrap();
     assert!(empty_results.is_empty());
@@ -441,7 +443,7 @@ fn test_error_handling_and_edge_cases() {
     // and focus on other aspects
     
     // Test 2: Invalid relationship operations
-    let valid_entity = EntityData::new(1, "{}".to_string(), create_embedding(1, 128));
+    let valid_entity = EntityData::new(1, "{}".to_string(), create_embedding(1, 96));
     
     let entity_key = graph.insert_entity(1, valid_entity);
     assert!(entity_key.is_ok());
@@ -450,7 +452,7 @@ fn test_error_handling_and_edge_cases() {
     // Instead, test with actual operations that should fail gracefully
     
     // Test 3: Memory pressure scenarios
-    let large_embedding = vec![0.1; 128]; // Valid size but let's test memory limits
+    let large_embedding = vec![0.1; 96]; // Valid size but let's test memory limits
     
     // Try to insert many entities quickly
     let mut large_batch = Vec::new();
@@ -464,8 +466,8 @@ fn test_error_handling_and_edge_cases() {
     if let Err(e) = large_batch_result {
         // Error should be meaningful
         match e {
-            GraphError::MemoryLimitExceeded => (),
-            GraphError::BatchTooLarge => (),
+            GraphError::OutOfMemory => (),
+            GraphError::ResourceExhausted { resource: _ } => (),
             _ => println!("Unexpected error: {:?}", e),
         }
     } else {
@@ -508,7 +510,7 @@ fn test_error_handling_and_edge_cases() {
                 }
                 
                 // Try similarity search (should be thread-safe)
-                let query = create_embedding((thread_id * 1000 + i) as u64, 128);
+                let query = create_embedding((thread_id * 1000 + i) as u64, 96);
                 let _ = graph_clone.similarity_search(&query, 3);
             }
             
@@ -548,24 +550,24 @@ fn test_comprehensive_graph_workflow_integration() {
     // Phase 1: Build a comprehensive knowledge graph representing a university
     let university_entities = vec![
         // Students
-        (100, EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 3, "gpa": 3.8}"#.to_string(), create_embedding(100, 128))),
-        (101, EntityData::new(1, r#"{"type": "student", "name": "Bob Smith", "major": "Mathematics", "year": 4, "gpa": 3.9}"#.to_string(), create_embedding(101, 128))),
-        (102, EntityData::new(1, r#"{"type": "student", "name": "Carol Davis", "major": "Physics", "year": 2, "gpa": 3.7}"#.to_string(), create_embedding(102, 128))),
+        (100, EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 3, "gpa": 3.8}"#.to_string(), create_embedding(100, 96))),
+        (101, EntityData::new(1, r#"{"type": "student", "name": "Bob Smith", "major": "Mathematics", "year": 4, "gpa": 3.9}"#.to_string(), create_embedding(101, 96))),
+        (102, EntityData::new(1, r#"{"type": "student", "name": "Carol Davis", "major": "Physics", "year": 2, "gpa": 3.7}"#.to_string(), create_embedding(102, 96))),
         
         // Faculty
-        (200, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Emma Wilson", "department": "Computer Science", "title": "Professor", "tenure": true}"#.to_string(), create_embedding(200, 128))),
-        (201, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Michael Brown", "department": "Mathematics", "title": "Associate Professor", "tenure": true}"#.to_string(), create_embedding(201, 128))),
-        (202, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Sarah Lee", "department": "Physics", "title": "Assistant Professor", "tenure": false}"#.to_string(), create_embedding(202, 128))),
+        (200, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Emma Wilson", "department": "Computer Science", "title": "Professor", "tenure": true}"#.to_string(), create_embedding(200, 96))),
+        (201, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Michael Brown", "department": "Mathematics", "title": "Associate Professor", "tenure": true}"#.to_string(), create_embedding(201, 96))),
+        (202, EntityData::new(2, r#"{"type": "faculty", "name": "Dr. Sarah Lee", "department": "Physics", "title": "Assistant Professor", "tenure": false}"#.to_string(), create_embedding(202, 96))),
         
         // Courses
-        (300, EntityData::new(3, r#"{"type": "course", "code": "CS-301", "title": "Data Structures", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(300, 128))),
-        (301, EntityData::new(3, r#"{"type": "course", "code": "CS-401", "title": "Machine Learning", "credits": 4, "semester": "Spring"}"#.to_string(), create_embedding(301, 128))),
-        (302, EntityData::new(3, r#"{"type": "course", "code": "MATH-301", "title": "Linear Algebra", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(302, 128))),
+        (300, EntityData::new(3, r#"{"type": "course", "code": "CS-301", "title": "Data Structures", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(300, 96))),
+        (301, EntityData::new(3, r#"{"type": "course", "code": "CS-401", "title": "Machine Learning", "credits": 4, "semester": "Spring"}"#.to_string(), create_embedding(301, 96))),
+        (302, EntityData::new(3, r#"{"type": "course", "code": "MATH-301", "title": "Linear Algebra", "credits": 3, "semester": "Fall"}"#.to_string(), create_embedding(302, 96))),
         
         // Departments
-        (400, EntityData::new(4, r#"{"type": "department", "name": "Computer Science", "building": "Engineering Hall", "faculty_count": 25}"#.to_string(), create_embedding(400, 128))),
-        (401, EntityData::new(4, r#"{"type": "department", "name": "Mathematics", "building": "Science Center", "faculty_count": 18}"#.to_string(), create_embedding(401, 128))),
-        (402, EntityData::new(4, r#"{"type": "department", "name": "Physics", "building": "Physics Lab", "faculty_count": 15}"#.to_string(), create_embedding(402, 128))),
+        (400, EntityData::new(4, r#"{"type": "department", "name": "Computer Science", "building": "Engineering Hall", "faculty_count": 25}"#.to_string(), create_embedding(400, 96))),
+        (401, EntityData::new(4, r#"{"type": "department", "name": "Mathematics", "building": "Science Center", "faculty_count": 18}"#.to_string(), create_embedding(401, 96))),
+        (402, EntityData::new(4, r#"{"type": "department", "name": "Physics", "building": "Physics Lab", "faculty_count": 15}"#.to_string(), create_embedding(402, 96))),
     ];
     
     // Insert all entities
@@ -635,7 +637,7 @@ fn test_comprehensive_graph_workflow_integration() {
     assert!(bob_to_math_dept.is_some(), "Should find path from Bob to Math Department");
     
     // Phase 4: Test similarity search across different entity types
-    let cs_query = create_embedding(1000, 128); // Simulate a computer science query
+    let cs_query = create_embedding(1000, 96); // Simulate a computer science query
     let cs_results = graph.similarity_search(&cs_query, 5);
     assert!(cs_results.is_ok());
     
@@ -665,7 +667,7 @@ fn test_comprehensive_graph_workflow_integration() {
     assert!(wilson_neighbors.contains(&cs_dept_key), "Dr. Wilson should be connected to CS Department");
     
     // Phase 6: Test entity updates in complex graph
-    let updated_alice = EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 4, "gpa": 3.85, "honors": true}"#.to_string(), create_embedding(100, 128));
+    let updated_alice = EntityData::new(1, r#"{"type": "student", "name": "Alice Johnson", "major": "Computer Science", "year": 4, "gpa": 3.85, "honors": true}"#.to_string(), create_embedding(100, 96));
     
     let alice_update_result = graph.update_entity(alice_key, updated_alice);
     assert!(alice_update_result.is_ok(), "Failed to update Alice's information");
@@ -703,7 +705,7 @@ fn test_comprehensive_graph_workflow_integration() {
     
     assert_eq!(final_stats.0, 11, "Should have 11 entities after removal");
     assert!(final_stats.1 > 0, "Should have relationships");
-    assert_eq!(final_stats.2, 128, "Embedding dimension should be 128");
+    assert_eq!(final_stats.2, 96, "Embedding dimension should be 96");
     
     // Test memory usage reporting
     let memory_usage = graph.memory_usage();
@@ -751,14 +753,14 @@ fn test_graph_scalability_and_performance() {
                     },
                     (i as f64 * 1.23) % 100.0
                 ),
-                create_embedding(i as u64 + 10000, 128)
+                create_embedding(i as u64 + 10000, 96)
             );
             
             batch_entities.push((i as u32 + 10000, entity_data));
         }
         
         let batch_start_time = std::time::Instant::now();
-        let batch_result = graph.insert_entities_batch(batch_entities);
+        let batch_result = graph.insert_entities_batch(batch_entities.clone());
         let batch_duration = batch_start_time.elapsed();
         
         if let Ok(keys) = batch_result {
@@ -796,8 +798,8 @@ fn test_graph_scalability_and_performance() {
         let relationship = Relationship {
             from: source_key,
             to: target_key,
-            rel_type: (i % 5 + 1) as u32,
-            weight: (i as f64 * 0.123) % 1.0,
+            rel_type: (i % 5 + 1) as u8,
+            weight: ((i as f64 * 0.123) % 1.0) as f32,
         };
         
         if graph.insert_relationship(relationship).is_ok() {
@@ -831,7 +833,7 @@ fn test_graph_scalability_and_performance() {
     
     // Test similarity search performance
     let similarity_start_time = std::time::Instant::now();
-    let query_embedding = create_embedding(99999, 128);
+    let query_embedding = create_embedding(99999, 96);
     let similarity_results = graph.similarity_search(&query_embedding, 10);
     let similarity_duration = similarity_start_time.elapsed();
     
@@ -888,7 +890,7 @@ fn test_graph_scalability_and_performance() {
     let (_, _, initial_hit_rate) = graph.cache_stats();
     
     // Perform repeated similarity searches to warm up cache
-    let cache_test_query = create_embedding(88888, 128);
+    let cache_test_query = create_embedding(88888, 96);
     for _ in 0..5 {
         let _ = graph.similarity_search(&cache_test_query, 5);
     }
@@ -908,13 +910,13 @@ fn test_graph_robustness_and_edge_cases() {
     // Phase 1: Test with extreme entity configurations
     let extreme_entities = vec![
         // Minimal entity
-        EntityData::new(0, "".to_string(), vec![0.0; 128]),
+        EntityData::new(0, "".to_string(), vec![0.0; 96]),
         
         // Maximum type ID
-        EntityData::new(u16::MAX, "{}".to_string(), vec![1.0; 128]),
+        EntityData::new(u16::MAX, "{}".to_string(), vec![1.0; 96]),
         
         // Large property string
-        EntityData::new(1, format!("{{\n  \"large_data\": \"{}\"\n}}", "x".repeat(50000)), create_embedding(20000, 128)),
+        EntityData::new(1, format!("{{\n  \"large_data\": \"{}\"\n}}", "x".repeat(50000)), create_embedding(20000, 96)),
         
         // Complex JSON properties
         EntityData::new(2, r#"{
@@ -933,11 +935,11 @@ fn test_graph_robustness_and_edge_cases() {
                 "unicode": "Hello 世界 🌍",
                 "escaped": "quotes\"and\\backslashes",
                 "special_chars": "\n\t\r\b\f"
-            }"#.to_string(), create_embedding(20001, 128)),
+            }"#.to_string(), create_embedding(20001, 96)),
         
         // Normalized embedding
         EntityData::new(3, r#"{"normalized": true}"#.to_string(), {
-                let mut emb = create_embedding(20002, 128);
+                let mut emb = create_embedding(20002, 96);
                 // Normalize to unit length
                 let magnitude: f32 = emb.iter().map(|x| x * x).sum::<f32>().sqrt();
                 if magnitude > 0.0 {
@@ -973,8 +975,8 @@ fn test_graph_robustness_and_edge_cases() {
             let relationship = Relationship {
                 from: extreme_keys[i],
                 to: extreme_keys[i + 1],
-                rel_type: i as u32,
-                weight: 1.0 / (i + 1) as f64, // Varying weights including very small values
+                rel_type: i as u8,
+                weight: (1.0 / (i + 1) as f64) as f32, // Varying weights including very small values
             };
             
             let rel_result = graph.insert_relationship(relationship);
@@ -1007,7 +1009,7 @@ fn test_graph_robustness_and_edge_cases() {
                 match i % 4 {
                     0 => {
                         // Insert entity
-                        let entity_data = EntityData::new(thread_id as u16, format!(r#"{{"thread": {}, "op": {}}}"#, thread_id, i), create_embedding(base_id as u64, 128));
+                        let entity_data = EntityData::new(thread_id as u16, format!(r#"{{"thread": {}, "op": {}}}"#, thread_id, i), create_embedding(base_id as u64, 96));
                         
                         if graph_clone.insert_entity(base_id as u32, entity_data).is_ok() {
                             local_stats.0 += 1;
@@ -1026,7 +1028,7 @@ fn test_graph_robustness_and_edge_cases() {
                     
                     2 => {
                         // Similarity search
-                        let query_emb = create_embedding(base_id as u64 + 50000, 128);
+                        let query_emb = create_embedding(base_id as u64 + 50000, 96);
                         if graph_clone.similarity_search(&query_emb, 3).is_ok() {
                             local_stats.1 += 1;
                         } else {
@@ -1081,7 +1083,7 @@ fn test_graph_robustness_and_edge_cases() {
     
     // Phase 4: Recovery and cleanup testing
     // Verify graph is still functional after stress
-    let recovery_test_entity = EntityData::new(999, r#"{"recovery_test": true}"#.to_string(), create_embedding(99999, 128));
+    let recovery_test_entity = EntityData::new(999, r#"{"recovery_test": true}"#.to_string(), create_embedding(99999, 96));
     
     let recovery_result = graph_arc.insert_entity(99999, recovery_test_entity);
     assert!(recovery_result.is_ok(), "Graph should be functional after concurrent stress");

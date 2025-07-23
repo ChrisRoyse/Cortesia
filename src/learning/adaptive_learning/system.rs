@@ -520,7 +520,7 @@ impl Default for AdaptiveLearningSystem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    
     use std::time::Duration;
     use uuid::Uuid;
 

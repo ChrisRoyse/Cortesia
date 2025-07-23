@@ -9,6 +9,22 @@ license = "MIT"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "llmkg-server"
+path = "src/bin/llmkg_server.rs"
+
+[[bin]]
+name = "llmkg-brain-server"
+path = "src/bin/llmkg_brain_server.rs"
+
+[[bin]]
+name = "llmkg_api_server"
+path = "src/bin/llmkg_api_server.rs"
+
+[[bin]]
+name = "test-brain-metrics"
+path = "src/bin/test_brain_metrics.rs"
+
 [dependencies]
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
@@ -77,6 +93,11 @@ getrandom = { version = "0.2", features = ["js"], optional = true }
 sha2 = "0.10"
 tower = "0.4"
 num_cpus = "1.16"
+
+# Code analysis and monitoring dependencies
+syn = { version = "2.0", features = ["full", "visit"] }
+walkdir = "2.4"
+notify = "6.1"
 
 # Test infrastructure dependencies (optional)
 rusqlite = { version = "0.30", features = ["bundled"], optional = true }

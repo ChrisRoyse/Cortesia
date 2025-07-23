@@ -30,7 +30,7 @@ interface MemoryDashboardProps {
 }
 
 export const MemoryDashboard: React.FC<MemoryDashboardProps> = ({ 
-  wsUrl = 'ws://localhost:8080', 
+  wsUrl = 'ws://localhost:8081', 
   className = '' 
 }) => {
   const [activeTab, setActiveTab] = useState('overview');

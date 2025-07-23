@@ -8,6 +8,69 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 impl BrainEnhancedKnowledgeGraph {
+    /// Batch update activations for multiple entities
+    pub async fn batch_update_activations(&self, activation_updates: &[(EntityKey, f32)]) {
+        for (entity_key, activation) in activation_updates {
+            self.set_entity_activation(*entity_key, *activation).await;
+        }
+    }
+
+    /// Count entities above activation threshold
+    pub async fn count_entities_above_threshold(&self, threshold: f32) -> usize {
+        let activations = self.get_all_activations().await;
+        activations.values().filter(|&&activation| activation > threshold).count()
+    }
+
+    /// Get entities in activation range
+    pub async fn get_entities_in_activation_range(&self, min_activation: f32, max_activation: f32) -> Vec<(EntityKey, f32)> {
+        let activations = self.get_all_activations().await;
+        activations
+            .into_iter()
+            .filter(|(_, activation)| *activation >= min_activation && *activation <= max_activation)
+            .collect()
+    }
+
+    /// Get top k entities by activation
+    pub async fn get_top_k_entities(&self, k: usize) -> Vec<(EntityKey, f32)> {
+        let activations = self.get_all_activations().await;
+        let mut entities: Vec<_> = activations.into_iter().collect();
+        entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        entities.truncate(k);
+        entities
+    }
+
+    /// Get concept statistics
+    pub async fn get_concept_statistics(&self) -> ConceptStatistics {
+        let activations = self.get_all_activations().await;
+        let entity_count = self.entity_count();
+        let relationship_count = self.relationship_count();
+        
+        let total_activation: f32 = activations.values().sum();
+        let average_activation = if entity_count > 0 {
+            total_activation / entity_count as f32
+        } else {
+            0.0
+        };
+
+        let max_activation = activations.values().cloned().fold(0.0f32, f32::max);
+        let min_activation = activations.values().cloned().fold(1.0f32, f32::min);
+        
+        let active_concepts = activations.values().filter(|&&v| v > 0.1).count();
+        
+        ConceptStatistics {
+            total_concepts: entity_count,
+            active_concepts,
+            average_activation,
+            max_activation,
+            min_activation,
+            connectivity_density: if entity_count > 0 {
+                relationship_count as f32 / entity_count as f32
+            } else {
+                0.0
+            },
+        }
+    }
+
     /// Insert brain entity with neural activation
     pub async fn insert_brain_entity(&self, id: u32, data: EntityData) -> Result<EntityKey> {
         let _start_time = Instant::now();
@@ -567,7 +630,7 @@ impl EntityStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::brain_enhanced_graph::brain_graph_types::BrainEnhancedConfig;
+    
     use std::collections::HashMap;
     use tokio;
 
@@ -578,7 +641,12 @@ mod tests {
 
     /// Helper function to create test entity data
     fn create_test_entity_data(type_id: u16, properties: Option<HashMap<String, String>>) -> EntityData {
-        let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5]; // Simple 5-dimensional embedding
+        let mut embedding = vec![0.0; 96]; // 96-dimensional embedding
+        embedding[0] = 0.1;
+        embedding[1] = 0.2;
+        embedding[2] = 0.3;
+        embedding[3] = 0.4;
+        embedding[4] = 0.5;
         let props = if let Some(p) = properties {
             serde_json::to_string(&p).unwrap_or_default()
         } else {
@@ -594,9 +662,14 @@ mod tests {
 
     /// Helper function to create entity data with no properties
     fn create_empty_entity_data() -> EntityData {
+        let mut embedding = vec![0.0; 96]; // 96-dimensional embedding
+        embedding[0] = 0.1;
+        embedding[1] = 0.2;
+        embedding[2] = 0.3;
+        
         EntityData {
             type_id: 1,
-            embedding: vec![0.1, 0.2, 0.3],
+            embedding,
             properties: String::new(),
         }
     }
@@ -607,9 +680,14 @@ mod tests {
         props.insert("importance".to_string(), importance.to_string());
         let properties_json = serde_json::json!({"importance": importance}).to_string();
         
+        let mut embedding = vec![0.0; 96]; // 96-dimensional embedding
+        embedding[0] = 0.5;
+        embedding[1] = 0.5;
+        embedding[2] = 0.5;
+        
         EntityData {
             type_id: 1,
-            embedding: vec![0.5, 0.5, 0.5],
+            embedding,
             properties: properties_json,
         }
     }
@@ -1422,7 +1500,7 @@ mod tests {
             
             // Create entity with zero embedding
             let mut entity_data = create_test_entity_data(1, None);
-            entity_data.embedding = vec![0.0; 5];
+            entity_data.embedding = vec![0.0; 96];
             
             let result = graph.insert_brain_entity(91, entity_data).await;
             assert!(result.is_ok());

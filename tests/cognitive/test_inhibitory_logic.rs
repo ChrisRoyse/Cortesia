@@ -21,7 +21,7 @@ use llmkg::cognitive::critical::CriticalThinking;
 
 /// Helper function to create a test system
 async fn create_test_inhibitory_system() -> CompetitiveInhibitionSystem {
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
     let critical_thinking = Arc::new(CriticalThinking::new(graph));
     
@@ -359,8 +359,16 @@ async fn test_create_learned_competition_groups_integration() {
     let (pattern3, _) = create_test_activation_pattern(vec![0.9, 0.0, 0.8, 0.1]);
     
     // Update activation patterns to use same entities
-    let mut pattern2_updated = ActivationPattern { activations: HashMap::new() };
-    let mut pattern3_updated = ActivationPattern { activations: HashMap::new() };
+    let mut pattern2_updated = ActivationPattern {
+        activations: HashMap::new(),
+        timestamp: std::time::SystemTime::now(),
+        query: "pattern2_test".to_string(),
+    };
+    let mut pattern3_updated = ActivationPattern {
+        activations: HashMap::new(),
+        timestamp: std::time::SystemTime::now(),
+        query: "pattern3_test".to_string(),
+    };
     
     for (i, &entity) in entities.iter().enumerate() {
         pattern2_updated.activations.insert(entity, if i % 2 == 0 { 0.2 } else { 0.9 });
@@ -458,7 +466,7 @@ async fn test_spatial_and_causal_competition() {
 #[tokio::test]
 async fn test_integration_with_custom_config() {
     // Create system with custom configuration
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
     let critical_thinking = Arc::new(CriticalThinking::new(graph));
     

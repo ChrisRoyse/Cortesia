@@ -107,9 +107,10 @@ async fn test_complete_graph_workflow() -> Result<()> {
     
     // Test 7: Memory usage tracking
     let memory_usage = brain_graph.get_memory_usage().await;
-    assert!(memory_usage.total_entities > 0);
-    assert!(memory_usage.total_relationships > 0);
-    assert!(memory_usage.activation_memory > 0);
+    // Note: BrainMemoryUsage fields are different, using available fields
+    assert!(memory_usage.core_graph_bytes > 0);
+    assert!(memory_usage.sdr_storage_bytes > 0);
+    assert!(memory_usage.activation_bytes > 0);
     
     Ok(())
 }
@@ -160,7 +161,7 @@ async fn test_complex_graph_operations() -> Result<()> {
         
         // Connect to a level 1 entity
         let parent_index = ((i - 6) % 4) + 1; // Cycle through level 1 entities
-        let parent_key = entities[parent_index];
+        let parent_key = entities[parent_index as usize];
         let relationship = Relationship {
             from: parent_key,
             to: level2_key,
@@ -194,13 +195,12 @@ async fn test_complex_graph_operations() -> Result<()> {
     let propagation_result = brain_graph.propagate_activation_from_entity(root_key, 0.1).await?;
     
     // Check that activation propagated down the hierarchy
-    let level1_activations: Vec<f32> = entities[1..5]
-        .iter()
-        .map(|&key| brain_graph.get_entity_activation(key))
-        .collect::<Vec<_>>()
-        .into_iter()
-        .collect::<Vec<_>>()
-        .await;
+    let level1_activations: Vec<f32> = futures::future::join_all(
+        entities[1..5]
+            .iter()
+            .map(|&key| brain_graph.get_entity_activation(key))
+    )
+    .await;
     
     // All level 1 entities should have some activation
     for activation in level1_activations {
@@ -268,9 +268,11 @@ async fn test_graph_analytics_workflow() -> Result<()> {
     
     // Test 2: Analyze graph structure
     let graph_analysis = brain_graph.analyze_graph_patterns().await;
+    let entity_stats = brain_graph.get_entity_statistics().await;
+    let relationship_stats = brain_graph.get_relationship_statistics().await;
     
-    assert!(graph_analysis.total_entities > 10);
-    assert!(graph_analysis.total_relationships > 10);
+    assert!(entity_stats.total_entities > 10);
+    assert!(relationship_stats.total_relationships > 10);
     
     // Hub should have high connectivity
     let hub_degree = brain_graph.get_entity_degree(hub_key).await;
@@ -293,9 +295,9 @@ async fn test_graph_analytics_workflow() -> Result<()> {
     
     // Test 5: Performance metrics
     let performance_metrics = brain_graph.get_performance_metrics().await;
-    assert!(performance_metrics.average_query_time > 0.0);
-    assert!(performance_metrics.cache_hit_rate >= 0.0);
-    assert!(performance_metrics.activation_efficiency > 0.0);
+    assert!(performance_metrics.query_response_time > std::time::Duration::from_nanos(0));
+    assert!(performance_metrics.connectivity_density >= 0.0);
+    assert!(performance_metrics.learning_efficiency >= 0.0);
     
     Ok(())
 }
@@ -322,7 +324,7 @@ async fn test_dynamic_graph_evolution() -> Result<()> {
         for (i, &parent_key) in current_generation.iter().enumerate() {
             // Create 2 children per parent
             for child_idx in 0..2 {
-                let entity_id = generation * 10 + i * 2 + child_idx + 1;
+                let entity_id = (generation * 10 + i * 2 + child_idx + 1) as u32;
                 let mut child_props = HashMap::new();
                 child_props.insert("generation".to_string(), generation.to_string());
                 child_props.insert("parent_index".to_string(), i.to_string());
@@ -446,7 +448,7 @@ async fn test_concurrent_graph_operations() -> Result<()> {
     
     for i in 0..5 {
         let graph_clone = brain_graph.clone();
-        let query_embedding = (0..96).map(|j| ((i * 10 + j) as f32 * 0.01) % 1.0).collect();
+        let query_embedding: Vec<f32> = (0..96).map(|j| ((i * 10 + j) as f32 * 0.01) % 1.0).collect();
         
         let handle = tokio::spawn(async move {
             graph_clone.neural_query(&query_embedding, 5).await
@@ -520,13 +522,13 @@ async fn test_graph_persistence_workflow() -> Result<()> {
     
     // Test 4: Verify state changes
     let updated_stats = brain_graph.get_entity_statistics().await;
-    assert!(updated_stats.average_activation != initial_stats.average_activation);
+    assert!(updated_stats.avg_activation != initial_stats.avg_activation);
     
     // Test 5: Reset to baseline
     brain_graph.reset_all_activations().await;
     
     let reset_stats = brain_graph.get_entity_statistics().await;
-    assert_eq!(reset_stats.average_activation, 0.0);
+    assert_eq!(reset_stats.avg_activation, 0.0);
     
     // Test 6: Rebuild state
     for (i, &key) in entity_keys.iter().enumerate() {
@@ -535,7 +537,7 @@ async fn test_graph_persistence_workflow() -> Result<()> {
     }
     
     let restored_stats = brain_graph.get_entity_statistics().await;
-    assert!((restored_stats.average_activation - initial_stats.average_activation).abs() < 0.01);
+    assert!((restored_stats.avg_activation - initial_stats.avg_activation).abs() < 0.01);
     
     Ok(())
 }

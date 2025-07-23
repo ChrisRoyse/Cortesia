@@ -39,7 +39,10 @@ use llmkg::learning::phase4_integration::{
 };
 
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
+use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
+use llmkg::core::activation_engine::ActivationPropagationEngine;
 use llmkg::core::sdr_storage::SDRStorage;
 use llmkg::core::types::EntityKey;
 use llmkg::core::triple::NodeType;
@@ -56,9 +59,19 @@ pub struct PerformanceTestFixture {
 impl PerformanceTestFixture {
     /// Create new performance test fixture with specified scale
     pub async fn new(scale_factor: usize) -> Result<Self> {
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await?);
-        let sdr_storage = Arc::new(SDRStorage::new().await?);
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(96)?);
+        use llmkg::core::sdr_types::SDRConfig;
+        let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+        
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            Default::default()
+        ).await?);
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        
         let phase3_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
+            orchestrator,
+            activation_engine,
             brain_graph.clone(),
             sdr_storage.clone()
         ).await?);
@@ -66,10 +79,9 @@ impl PerformanceTestFixture {
         // Create test entities based on scale factor
         let mut test_entities = Vec::new();
         for i in 0..scale_factor * 10 {
+            use llmkg::core::types::EntityData;
             let entity = brain_graph.add_entity(
-                format!("perf_test_entity_{}", i),
-                NodeType::Concept,
-                HashMap::new()
+                EntityData::new(i as u16, format!("perf_test_entity_{}", i), vec![0.5; 96])
             ).await?;
             test_entities.push(entity);
         }
@@ -77,22 +89,18 @@ impl PerformanceTestFixture {
         // Create connections (sparse connectivity for performance)
         for i in 0..test_entities.len() {
             let next_idx = (i + 1) % test_entities.len();
-            brain_graph.add_relationship(
+            brain_graph.add_relationship_keys(
                 test_entities[i],
                 test_entities[next_idx],
-                RelationType::RelatedTo,
-                0.5,
-                HashMap::new()
+                0.5
             ).await?;
             
             // Add some cross connections for complexity
             if i % 3 == 0 && i + 3 < test_entities.len() {
-                brain_graph.add_relationship(
+                brain_graph.add_relationship_keys(
                     test_entities[i],
                     test_entities[i + 3],
-                    RelationType::Influences,
-                    0.3,
-                    HashMap::new()
+                    0.3
                 ).await?;
             }
         }

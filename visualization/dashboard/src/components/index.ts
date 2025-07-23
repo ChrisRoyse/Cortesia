@@ -12,3 +12,11 @@ export * from './Layout';
 
 // Theme Components
 export { ThemeProvider, ThemeToggle, useThemeContext } from './ThemeProvider/ThemeProvider';
+
+// Dashboard Components
+export { CognitivePatternVisualizer } from './CognitivePatternVisualizer';
+export { NeuralActivityHeatmap } from './NeuralActivityHeatmap';
+export { KnowledgeGraphPreview } from './KnowledgeGraphPreview';
+export { MemoryConsolidationMonitor } from './MemoryConsolidationMonitor';
+export { PerformanceMetricsCard } from './PerformanceMetricsCard';
+export { SystemHealthIndicator } from './SystemHealthIndicator';

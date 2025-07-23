@@ -777,6 +777,7 @@ impl Default for MetaLearningConfig {
 }
 
 /// Meta-learner trait for consistent interface
+#[allow(async_fn_in_trait)]
 pub trait MetaLearner {
     async fn learn_to_learn(&self, learning_tasks: &[LearningTask]) -> Result<MetaLearningModel>;
     async fn adapt_learning_strategy(&self, task_context: &TaskContext) -> Result<LearningStrategy>;
@@ -801,8 +802,8 @@ impl MetaLearner for MetaLearningSystem {
 mod tests {
     use super::*;
     use std::collections::HashMap;
-    use std::time::{Duration, SystemTime};
-    use uuid::Uuid;
+    use std::time::Duration;
+    
 
     // Test helper to create mock meta-learning system
     async fn create_test_meta_learning_system() -> Result<MetaLearningSystem> {

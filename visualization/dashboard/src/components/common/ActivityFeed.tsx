@@ -3,7 +3,7 @@ import {
   ClockIcon,
   UserCircleIcon,
   CpuChipIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   WrenchScrewdriverIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,

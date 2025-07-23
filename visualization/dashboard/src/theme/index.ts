@@ -388,5 +388,3 @@ export const themeUtils = {
 // Re-export everything from colors and typography
 export * from './colors';
 export * from './typography';
-
-export type { LLMKGTheme, ThemeMode };

@@ -604,7 +604,7 @@ impl CriticalThinking {
     async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>> {
         // Create a simple embedding by hashing words and creating a sparse vector
         let words: Vec<&str> = query.split_whitespace().collect();
-        let mut embedding = vec![0.0; 128]; // Standard embedding size
+        let mut embedding = vec![0.0; 96]; // Standard embedding size
         
         for (i, word) in words.iter().enumerate() {
             let hash = word.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
@@ -985,7 +985,7 @@ mod critical_thinking_unit_tests {
         let embedding = thinking.generate_query_embedding("test query with words").await
             .expect("Should generate embedding");
         
-        assert_eq!(embedding.len(), 128, "Should generate 128-dimensional embedding");
+        assert_eq!(embedding.len(), 96, "Should generate 96-dimensional embedding");
         assert!(embedding.iter().any(|&x| x > 0.0), "Should have non-zero values");
     }
     

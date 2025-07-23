@@ -392,9 +392,9 @@ impl Phase1IntegrationLayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::brain_types::RelationType;
+    
     use crate::cognitive::CognitivePatternType;
-    use std::collections::HashMap;
+    
 
     // Helper function to create a test integration layer
     async fn create_test_integration() -> Phase1IntegrationLayer {

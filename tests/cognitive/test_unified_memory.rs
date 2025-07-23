@@ -31,7 +31,7 @@ async fn create_test_unified_memory_system() -> Result<UnifiedMemorySystem> {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await?
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128)?);
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()?);
     
     Ok(UnifiedMemorySystem::new(working_memory, sdr_storage, graph))
 }
@@ -43,7 +43,7 @@ async fn create_test_unified_memory_with_config(config: MemoryIntegrationConfig)
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await?
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128)?);
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()?);
     
     Ok(UnifiedMemorySystem::with_config(working_memory, sdr_storage, graph, config))
 }

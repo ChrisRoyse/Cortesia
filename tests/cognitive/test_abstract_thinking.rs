@@ -11,27 +11,27 @@ use std::time::Duration;
 
 /// Creates a test graph with comprehensive abstract thinking scenarios
 async fn create_abstract_thinking_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).expect("Failed to create test graph"));
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().expect("Failed to create test graph"));
     
     // Add hierarchical biological entities for pattern detection
-    let animal_key = graph.add_entity(EntityData::new(1, "Basic animal concept".to_string(), vec![0.0; 128])).await.unwrap();
-    let mammal_key = graph.add_entity(EntityData::new(1, "Warm-blooded vertebrate animal".to_string(), vec![0.0; 128])).await.unwrap();
-    let carnivore_key = graph.add_entity(EntityData::new(1, "Meat-eating animal".to_string(), vec![0.0; 128])).await.unwrap();
-    let herbivore_key = graph.add_entity(EntityData::new(1, "Plant-eating animal".to_string(), vec![0.0; 128])).await.unwrap();
-    let dog_key = graph.add_entity(EntityData::new(1, "Domesticated canine".to_string(), vec![0.0; 128])).await.unwrap();
-    let cat_key = graph.add_entity(EntityData::new(1, "Domesticated feline".to_string(), vec![0.0; 128])).await.unwrap();
-    let elephant_key = graph.add_entity(EntityData::new(1, "Large mammal".to_string(), vec![0.0; 128])).await.unwrap();
+    let animal_key = graph.add_entity(EntityData::new(1, "Basic animal concept".to_string(), vec![0.0; 96])).await.unwrap();
+    let mammal_key = graph.add_entity(EntityData::new(1, "Warm-blooded vertebrate animal".to_string(), vec![0.0; 96])).await.unwrap();
+    let carnivore_key = graph.add_entity(EntityData::new(1, "Meat-eating animal".to_string(), vec![0.0; 96])).await.unwrap();
+    let herbivore_key = graph.add_entity(EntityData::new(1, "Plant-eating animal".to_string(), vec![0.0; 96])).await.unwrap();
+    let dog_key = graph.add_entity(EntityData::new(1, "Domesticated canine".to_string(), vec![0.0; 96])).await.unwrap();
+    let cat_key = graph.add_entity(EntityData::new(1, "Domesticated feline".to_string(), vec![0.0; 96])).await.unwrap();
+    let elephant_key = graph.add_entity(EntityData::new(1, "Large mammal".to_string(), vec![0.0; 96])).await.unwrap();
     
     // Add technological entities for cross-domain pattern detection
-    let system_key = graph.add_entity(EntityData::new(1, "Organized structure".to_string(), vec![0.0; 128])).await.unwrap();
-    let computer_key = graph.add_entity(EntityData::new(1, "Electronic processing system".to_string(), vec![0.0; 128])).await.unwrap();
-    let ai_key = graph.add_entity(EntityData::new(1, "Computer-based intelligence".to_string(), vec![0.0; 128])).await.unwrap();
-    let network_key = graph.add_entity(EntityData::new(1, "Interconnected system".to_string(), vec![0.0; 128])).await.unwrap();
+    let system_key = graph.add_entity(EntityData::new(1, "Organized structure".to_string(), vec![0.0; 96])).await.unwrap();
+    let computer_key = graph.add_entity(EntityData::new(1, "Electronic processing system".to_string(), vec![0.0; 96])).await.unwrap();
+    let ai_key = graph.add_entity(EntityData::new(1, "Computer-based intelligence".to_string(), vec![0.0; 96])).await.unwrap();
+    let network_key = graph.add_entity(EntityData::new(1, "Interconnected system".to_string(), vec![0.0; 96])).await.unwrap();
     
     // Add properties and attributes for inheritance pattern detection
-    let breathing_key = graph.add_entity(EntityData::new(1, "Respiratory function".to_string(), vec![0.0; 128])).await.unwrap();
-    let intelligence_key = graph.add_entity(EntityData::new(1, "Cognitive capability".to_string(), vec![0.0; 128])).await.unwrap();
-    let mobility_key = graph.add_entity(EntityData::new(1, "Movement capability".to_string(), vec![0.0; 128])).await.unwrap();
+    let breathing_key = graph.add_entity(EntityData::new(1, "Respiratory function".to_string(), vec![0.0; 96])).await.unwrap();
+    let intelligence_key = graph.add_entity(EntityData::new(1, "Cognitive capability".to_string(), vec![0.0; 96])).await.unwrap();
+    let mobility_key = graph.add_entity(EntityData::new(1, "Movement capability".to_string(), vec![0.0; 96])).await.unwrap();
     
     // Create hierarchical relationships
     let _ = graph.add_weighted_edge(mammal_key, animal_key, 0.9).await;
@@ -479,7 +479,7 @@ async fn test_abstract_thinking_performance_within_timeout() -> Result<()> {
 
 #[tokio::test]
 async fn test_abstract_thinking_empty_graph_handling() -> Result<()> {
-    let empty_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).expect("Failed to create empty graph"));
+    let empty_graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().expect("Failed to create empty graph"));
     let abstract_thinking = AbstractThinking::new(empty_graph);
     
     let parameters = PatternParameters::default();

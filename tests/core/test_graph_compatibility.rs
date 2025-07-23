@@ -945,9 +945,10 @@ fn test_legacy_api_error_resilience() {
     }
     
     // Phase 3: Test search resilience
+    let long_query = "x".repeat(1000);
     let challenging_queries = vec![
         "", // Empty query
-        "x".repeat(1000), // Very long query
+        &long_query as &str, // Very long query
         "non_existent_term_12345", // Non-existent terms
         "🚀🌟💫", // Emoji-only query
         "العربية中文日本語", // Mixed scripts

@@ -19,18 +19,25 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
     host: true,
     open: true,
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+      clientPort: 5173,
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:3001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
       },
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: 'ws://localhost:8081',
         ws: true,
+        changeOrigin: true,
       },
     },
   },

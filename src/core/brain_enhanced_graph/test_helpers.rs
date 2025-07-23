@@ -12,8 +12,6 @@ use crate::core::types::{EntityKey, EntityData, Relationship};
 #[cfg(test)]
 use crate::error::Result;
 
-#[cfg(test)]
-use std::sync::Arc;
 
 #[cfg(test)]
 impl BrainEnhancedKnowledgeGraph {

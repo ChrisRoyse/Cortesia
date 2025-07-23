@@ -299,7 +299,7 @@ async fn test_transaction_performance_benchmark() {
     assert!(elapsed < Duration::from_millis(500), "Transaction operations took too long: {:?}", elapsed);
     
     let transaction_result = result.unwrap();
-    assert!(transaction_result.execution_time_ms < 500, "Transaction execution time exceeded 500ms: {}", transaction_result.execution_time_ms);
+    assert!(transaction_result.total_time_ms < 500, "Transaction execution time exceeded 500ms: {}", transaction_result.total_time_ms);
 }
 
 #[tokio::test]

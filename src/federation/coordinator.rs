@@ -124,7 +124,7 @@ pub struct TransactionMetadata {
 }
 
 /// Priority levels for transactions
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum TransactionPriority {
     Low,
     Normal,
@@ -133,7 +133,7 @@ pub enum TransactionPriority {
 }
 
 /// Isolation levels for cross-database transactions
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum IsolationLevel {
     ReadUncommitted,
     ReadCommitted,
@@ -551,7 +551,7 @@ mod tests {
     use std::collections::HashMap;
 
     async fn create_test_registry() -> Arc<DatabaseRegistry> {
-        let mut registry = DatabaseRegistry::new().expect("Failed to create registry");
+        let registry = DatabaseRegistry::new().expect("Failed to create registry");
         
         let db_desc = DatabaseDescriptor {
             id: DatabaseId::new("test_db".to_string()),
@@ -570,7 +570,7 @@ mod tests {
                 relationship_count: Some(0),
                 storage_size_bytes: Some(0),
             },
-            status: crate::federation::registry::DatabaseStatus::Active,
+            status: crate::federation::registry::DatabaseStatus::Online,
         };
         
         registry.register(db_desc).await.expect("Failed to register database");

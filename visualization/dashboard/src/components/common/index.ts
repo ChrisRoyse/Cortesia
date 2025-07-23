@@ -23,6 +23,8 @@ export { ActivityFeed } from './ActivityFeed';
 export { DropdownMenu } from './DropdownMenu';
 export { Badge } from './Badge';
 export { LoadingSpinner } from './LoadingSpinner';
+export { Chart } from './Chart';
+export { ProgressBar } from './ProgressBar';
 
 // Re-export types for convenience
 export type { 

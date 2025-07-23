@@ -303,14 +303,14 @@ impl QueryParams {
 }
 
 // Graph query types for GraphQueryEngine
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphQuery {
     pub query_text: String,
     pub query_type: String,
     pub max_results: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraversalParams {
     pub max_depth: usize,
     pub max_paths: usize,

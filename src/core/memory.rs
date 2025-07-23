@@ -190,8 +190,8 @@ mod tests {
     use std::sync::{Arc, Barrier};
     use std::thread;
     use std::time::Duration;
-    use crate::core::types::{EntityData, AttributeValue};
-    use std::collections::HashMap;
+    use crate::core::types::EntityData;
+    
 
     fn create_test_entity_data(id: u16) -> EntityData {
         EntityData {

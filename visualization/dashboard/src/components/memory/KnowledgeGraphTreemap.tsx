@@ -31,11 +31,11 @@ export const KnowledgeGraphTreemap: React.FC<KnowledgeGraphTreemapProps> = ({ me
       }))
     };
 
-    const root = d3.hierarchy(data)
+    const root = d3.hierarchy<HierarchicalMemoryData>(data)
       .sum(d => d.value || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const treemap = d3.treemap()
+    const treemap = d3.treemap<HierarchicalMemoryData>()
       .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
       .padding(2);
 
@@ -49,11 +49,11 @@ export const KnowledgeGraphTreemap: React.FC<KnowledgeGraphTreemapProps> = ({ me
     const leaves = g.selectAll('g')
       .data(root.leaves())
       .enter().append('g')
-      .attr('transform', d => `translate(${d.x0},${d.y0})`);
+      .attr('transform', d => `translate(${(d as any).x0},${(d as any).y0})`);
 
     leaves.append('rect')
-      .attr('width', d => d.x1 - d.x0)
-      .attr('height', d => d.y1 - d.y0)
+      .attr('width', d => (d as any).x1 - (d as any).x0)
+      .attr('height', d => (d as any).y1 - (d as any).y0)
       .attr('fill', d => color(d.data.name))
       .attr('opacity', 0.7)
       .attr('stroke', '#fff')

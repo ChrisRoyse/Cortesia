@@ -4,6 +4,7 @@ mod divergent_tests {
     use llmkg::cognitive::divergent::DivergentThinking;
     use llmkg::cognitive::{CognitivePattern, PatternResult, DivergentResult, ExplorationPath, CognitivePatternType, PatternParameters, ExplorationType};
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
     use llmkg::core::types::EntityData;
 
     // NOTE: Tests for extract_seed_concept method have been moved to src/cognitive/divergent.rs
@@ -94,7 +95,7 @@ mod divergent_tests {
     }
 
     async fn create_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create a music-focused graph
         graph.add_entity(EntityData::new(1, "music".to_string(), vec![0.1; 128])).await.unwrap();
@@ -113,7 +114,7 @@ mod divergent_tests {
     }
 
     async fn create_diverse_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create distinct clusters connected to music
         graph.add_entity(EntityData::new(1, "music".to_string(), vec![0.1; 128])).await.unwrap();
@@ -143,7 +144,7 @@ mod divergent_tests {
     }
 
     async fn create_novelty_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         graph.add_entity(EntityData::new(1, "seed".to_string(), vec![0.1; 128])).await.unwrap();
         graph.add_entity(EntityData::new(2, "obvious".to_string(), vec![0.2; 128])).await.unwrap();
@@ -160,7 +161,7 @@ mod divergent_tests {
     }
 
     async fn create_path_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         graph.add_entity(EntityData::new(1, "start".to_string(), vec![0.1; 128])).await.unwrap();
         graph.add_entity(EntityData::new(2, "bridge".to_string(), vec![0.2; 128])).await.unwrap();
@@ -178,14 +179,11 @@ mod divergent_tests {
 
     fn create_mock_path(id: &str, relevance: f32, novelty: f32) -> ExplorationPath {
         ExplorationPath {
-            path_id: id.to_string(),
-            source_concept: "test_source".to_string(),
-            destination: format!("dest_{}", id),
-            intermediate_concepts: vec![],
+            path: vec![],  // Empty path for mock
+            concepts: vec!["test_source".to_string(), format!("dest_{}", id)],
+            concept: format!("Mock path {}", id),
             relevance_score: relevance,
             novelty_score: novelty,
-            path_length: 2,
-            explanation: format!("Mock path {}", id),
         }
     }
 

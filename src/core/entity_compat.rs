@@ -166,12 +166,15 @@ impl EntityKey {
         use slotmap::Key;
         use slotmap::KeyData;
         let key_data: KeyData = self.data();
-        key_data.as_ffi() as u32
+        (key_data.as_ffi() & 0xFFFFFFFF) as u32
     }
     
-    pub fn from_u32(_id: u32) -> Self {
-        // This is a simplified conversion - in practice we'd need proper mapping
-        EntityKey::default() // Simplified for now
+    pub fn from_u32(id: u32) -> Self {
+        // Create a proper EntityKey from u32 ID
+        // We'll use the u32 as the lower part and 1 as version to ensure it's valid
+        use slotmap::KeyData;
+        let key_data = KeyData::from_ffi((1u64 << 32) | (id as u64));
+        EntityKey::from(key_data)
     }
     
     pub fn to_string(&self) -> String {
@@ -561,9 +564,11 @@ mod tests {
 
     #[test]
     fn test_entity_key_from_u32() {
-        let key = EntityKey::from_u32(12345);
-        // Currently returns default, but should not panic
-        assert_eq!(key, EntityKey::default());
+        let id = 12345u32;
+        let key = EntityKey::from_u32(id);
+        // Should not be default anymore, and should round-trip correctly
+        assert_ne!(key, EntityKey::default());
+        assert_eq!(key.as_u32(), id);
     }
 
     #[test]

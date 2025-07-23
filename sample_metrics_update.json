@@ -1,0 +1,195 @@
+{
+  "timestamp": 1753249943,
+  "system_metrics": {
+    "cpu_usage_percent": 0,
+    "memory_usage_percent": 0,
+    "memory_used_bytes": 0,
+    "memory_total_bytes": 1,
+    "disk_usage": {},
+    "network_stats": {},
+    "load_average": {
+      "load1": 0,
+      "load5": 0,
+      "load15": 0
+    }
+  },
+  "application_metrics": {
+    "uptime_seconds": 0,
+    "memory_bytes": 0,
+    "threads_total": 0,
+    "operations_per_second": 0,
+    "error_rate": 0,
+    "average_latency_ms": 0
+  },
+  "performance_metrics": {
+    "query_latency_ms": {
+      "count": 0,
+      "sum": 0,
+      "mean": 0,
+      "p50": 0,
+      "p90": 0,
+      "p95": 0,
+      "p99": 0
+    },
+    "indexing_throughput": 0,
+    "cache_hit_rate": 0,
+    "memory_efficiency": 0,
+    "concurrent_operations": 0
+  },
+  "codebase_metrics": {
+    "total_modules": 7,
+    "total_dependencies": 5,
+    "dependency_graph": {
+      "modules": {
+        "embedding": {
+          "name": "embedding",
+          "path": "src/embedding/mod.rs",
+          "module_type": "embedding",
+          "complexity_score": 6.8,
+          "coupling_score": 0.3,
+          "imports": [
+            "core::types",
+            "storage"
+          ],
+          "exports": []
+        },
+        "core::graph": {
+          "name": "core::graph",
+          "path": "src/core/graph/mod.rs",
+          "module_type": "core",
+          "complexity_score": 9.2,
+          "coupling_score": 0.8,
+          "imports": [
+            "core::types",
+            "storage::csr"
+          ],
+          "exports": [
+            "KnowledgeGraph"
+          ]
+        },
+        "cognitive": {
+          "name": "cognitive",
+          "path": "src/cognitive/mod.rs",
+          "module_type": "cognitive",
+          "complexity_score": 7.8,
+          "coupling_score": 0.6,
+          "imports": [
+            "core::types"
+          ],
+          "exports": [
+            "orchestrator"
+          ]
+        },
+        "core": {
+          "name": "core",
+          "path": "src/core/mod.rs",
+          "module_type": "core",
+          "complexity_score": 8.5,
+          "coupling_score": 0.7,
+          "imports": [],
+          "exports": [
+            "types",
+            "graph"
+          ]
+        },
+        "cognitive::orchestrator": {
+          "name": "cognitive::orchestrator",
+          "path": "src/cognitive/orchestrator/mod.rs",
+          "module_type": "cognitive",
+          "complexity_score": 6.5,
+          "coupling_score": 0.5,
+          "imports": [],
+          "exports": []
+        },
+        "storage": {
+          "name": "storage",
+          "path": "src/storage/mod.rs",
+          "module_type": "storage",
+          "complexity_score": 7.2,
+          "coupling_score": 0.4,
+          "imports": [
+            "core::types"
+          ],
+          "exports": [
+            "csr",
+            "hnsw"
+          ]
+        },
+        "monitoring": {
+          "name": "monitoring",
+          "path": "src/monitoring/mod.rs",
+          "module_type": "monitoring",
+          "complexity_score": 5.5,
+          "coupling_score": 0.3,
+          "imports": [],
+          "exports": []
+        }
+      },
+      "edges": [
+        {
+          "from": "core::graph",
+          "to": "core",
+          "dependency_type": "Import",
+          "strength": 0.9
+        },
+        {
+          "from": "cognitive",
+          "to": "core",
+          "dependency_type": "Import",
+          "strength": 0.8
+        },
+        {
+          "from": "cognitive::orchestrator",
+          "to": "cognitive",
+          "dependency_type": "Import",
+          "strength": 0.7
+        },
+        {
+          "from": "storage",
+          "to": "core",
+          "dependency_type": "Import",
+          "strength": 0.6
+        },
+        {
+          "from": "embedding",
+          "to": "storage",
+          "dependency_type": "Import",
+          "strength": 0.4
+        }
+      ],
+      "circular_dependencies": [],
+      "critical_modules": [
+        "core",
+        "core::graph"
+      ]
+    },
+    "complexity_analysis": {
+      "average_complexity": 7.2,
+      "max_complexity": 9.2,
+      "high_complexity_modules": [
+        "core::graph"
+      ],
+      "coupling_distribution": {
+        "high": 0.2,
+        "low": 0.3,
+        "medium": 0.5
+      }
+    },
+    "architecture_health": {
+      "health_score": 0.85,
+      "issues": [
+        {
+          "severity": "warning",
+          "module": "core::graph",
+          "issue_type": "high_complexity",
+          "description": "Module has high complexity score"
+        }
+      ],
+      "recommendations": [
+        "Consider refactoring high-complexity modules",
+        "Reduce coupling between core modules"
+      ]
+    }
+  },
+  "alerts": []
+}

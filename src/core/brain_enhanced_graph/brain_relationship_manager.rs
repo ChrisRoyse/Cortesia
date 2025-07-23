@@ -6,6 +6,7 @@ use crate::error::Result;
 use std::collections::{HashSet, VecDeque};
 
 /// Trait for adding relationships with different signatures
+#[allow(async_fn_in_trait)]
 pub trait AddRelationship<T> {
     async fn add_relationship(&self, source: T, target: T, weight: f32) -> Result<()>;
     async fn add_relationship_with_type(&self, source: T, target: T, rel_type: T, weight: f32) -> Result<()>;
@@ -578,6 +579,116 @@ impl BrainEnhancedKnowledgeGraph {
         
         patterns
     }
+
+    /// Reset all entity activations to 0.0
+    pub async fn reset_all_activations(&self) {
+        let mut activations = self.entity_activations.write().await;
+        activations.clear();
+    }
+
+    /// Get the current brain configuration
+    pub async fn get_configuration(&self) -> super::brain_graph_types::BrainEnhancedConfig {
+        self.config.clone()
+    }
+
+    /// Count relationships by type
+    pub async fn count_relationships_by_type(&self, rel_type: u32) -> usize {
+        let all_relationships = self.core_graph.get_all_relationships();
+        all_relationships.iter()
+            .filter(|rel| rel.rel_type == rel_type as u8)
+            .count()
+    }
+
+    /// Analyze weight distribution of relationships
+    pub async fn analyze_weight_distribution(&self) -> WeightDistribution {
+        let weights = self.synaptic_weights.read().await;
+        let weight_values: Vec<f32> = weights.values().cloned().collect();
+        
+        if weight_values.is_empty() {
+            return WeightDistribution {
+                mean: 0.0,
+                std_dev: 0.0,
+                min: 0.0,
+                max: 0.0,
+            };
+        }
+        
+        let sum: f32 = weight_values.iter().sum();
+        let mean = sum / weight_values.len() as f32;
+        
+        let variance = weight_values.iter()
+            .map(|w| (w - mean).powi(2))
+            .sum::<f32>() / weight_values.len() as f32;
+        let std_dev = variance.sqrt();
+        
+        let min = weight_values.iter().cloned().fold(f32::INFINITY, f32::min);
+        let max = weight_values.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        
+        WeightDistribution {
+            mean,
+            std_dev,
+            min,
+            max,
+        }
+    }
+
+    /// Batch insert relationships
+    pub async fn batch_insert_relationships(&self, relationships: &[crate::core::types::Relationship]) -> Result<()> {
+        for relationship in relationships {
+            self.insert_brain_relationship(relationship.clone()).await?;
+        }
+        Ok(())
+    }
+
+    /// Batch update relationship weights
+    pub async fn batch_update_relationship_weights(&self, updates: &[(EntityKey, EntityKey, f32)]) -> Result<()> {
+        for &(from, to, new_weight) in updates {
+            self.update_relationship_weight(from, to, new_weight).await?;
+        }
+        Ok(())
+    }
+
+    /// Batch strengthen relationships
+    pub async fn batch_strengthen_relationships(&self, updates: &[(EntityKey, EntityKey, f32)]) -> Result<()> {
+        for &(from, to, strength_delta) in updates {
+            let current_weight = self.get_synaptic_weight(from, to).await;
+            let new_weight = (current_weight + strength_delta).clamp(0.0, 1.0);
+            self.update_relationship_weight(from, to, new_weight).await?;
+        }
+        Ok(())
+    }
+
+    /// Batch weaken relationships
+    pub async fn batch_weaken_relationships(&self, updates: &[(EntityKey, EntityKey, f32)]) -> Result<()> {
+        for &(from, to, weaken_delta) in updates {
+            let current_weight = self.get_synaptic_weight(from, to).await;
+            let new_weight = (current_weight - weaken_delta).max(0.0);
+            
+            if new_weight < 0.01 {
+                self.remove_relationship(from, to).await?;
+            } else {
+                self.update_relationship_weight(from, to, new_weight).await?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Batch remove relationships
+    pub async fn batch_remove_relationships(&self, pairs: &[(EntityKey, EntityKey)]) -> Result<()> {
+        for &(from, to) in pairs {
+            self.remove_relationship(from, to).await?;
+        }
+        Ok(())
+    }
+}
+
+/// Weight distribution statistics
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct WeightDistribution {
+    pub mean: f32,
+    pub std_dev: f32,
+    pub min: f32,
+    pub max: f32,
 }
 
 /// Relationship statistics
@@ -660,8 +771,8 @@ impl RelationshipPattern {
 mod tests {
     use super::*;
     use crate::core::types::{EntityData, Relationship};
-    use crate::core::brain_enhanced_graph::brain_graph_types::BrainEnhancedConfig;
-    use std::collections::HashMap;
+    
+    
     use tokio;
 
     /// Helper function to create a test brain graph

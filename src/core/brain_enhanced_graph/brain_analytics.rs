@@ -7,6 +7,139 @@ use crate::error::Result;
 use std::collections::HashMap;
 
 impl BrainEnhancedKnowledgeGraph {
+    /// Find central entities in the graph
+    pub async fn find_central_entities(&self, k: usize) -> Vec<(EntityKey, f32)> {
+        let all_entities = self.get_all_entity_keys();
+        let mut centrality_scores = Vec::new();
+
+        for entity_key in all_entities {
+            let neighbors = self.get_neighbors(entity_key);
+            let activation = self.get_entity_activation(entity_key).await;
+            let degree = neighbors.len() as f32;
+            
+            // Calculate centrality as combination of degree and activation
+            let centrality_score = (degree * 0.7) + (activation * 0.3);
+            centrality_scores.push((entity_key, centrality_score));
+        }
+
+        // Sort by centrality score and take top k
+        centrality_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        centrality_scores.truncate(k);
+        centrality_scores
+    }
+
+    /// Detect communities in the graph
+    pub async fn detect_communities(&self) -> Result<Vec<Community>> {
+        let all_entities = self.get_all_entity_keys();
+        let mut communities = Vec::new();
+        let mut visited = std::collections::HashSet::new();
+
+        for entity_key in all_entities {
+            if !visited.contains(&entity_key) {
+                let mut community_entities = Vec::new();
+                let mut stack = vec![entity_key];
+                
+                while let Some(current) = stack.pop() {
+                    if visited.insert(current) {
+                        community_entities.push(current);
+                        let neighbors = self.get_neighbors(current);
+                        
+                        // Add connected neighbors with sufficient activation
+                        for neighbor in neighbors {
+                            if !visited.contains(&neighbor) {
+                                let activation = self.get_entity_activation(neighbor).await;
+                                if activation > 0.3 {
+                                    stack.push(neighbor);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if community_entities.len() >= 2 {
+                    let cohesion_score = self.calculate_community_cohesion(&community_entities).await;
+                    communities.push(Community {
+                        entities: community_entities.clone(),
+                        cohesion_score,
+                        size: community_entities.len(),
+                    });
+                }
+            }
+        }
+
+        Ok(communities)
+    }
+
+    /// Get performance metrics for the brain graph
+    pub async fn get_performance_metrics(&self) -> PerformanceMetrics {
+        let entity_count = self.entity_count();
+        let relationship_count = self.relationship_count();
+        let activations = self.get_all_activations().await;
+        
+        let total_activation: f32 = activations.values().sum();
+        let avg_activation = if entity_count > 0 {
+            total_activation / entity_count as f32
+        } else {
+            0.0
+        };
+
+        let memory_usage = self.get_memory_usage().await;
+        let connectivity_density = if entity_count > 0 {
+            relationship_count as f32 / entity_count as f32
+        } else {
+            0.0
+        };
+
+        // Calculate learning efficiency (simplified)
+        let learning_stats = self.get_learning_stats().await;
+        let learning_efficiency = learning_stats.learning_efficiency;
+
+        // Calculate query response time (simplified)
+        let query_response_time = std::time::Duration::from_millis(50); // Placeholder
+
+        PerformanceMetrics {
+            entity_count,
+            relationship_count,
+            avg_activation,
+            memory_usage_mb: memory_usage.total_bytes as f32 / (1024.0 * 1024.0),
+            connectivity_density,
+            learning_efficiency,
+            query_response_time,
+            overall_performance: (avg_activation + connectivity_density + learning_efficiency) / 3.0,
+        }
+    }
+
+    /// Calculate community cohesion score
+    async fn calculate_community_cohesion(&self, entities: &[EntityKey]) -> f32 {
+        if entities.len() < 2 {
+            return 0.0;
+        }
+
+        let mut total_connections = 0;
+        let mut total_weight = 0.0;
+
+        for i in 0..entities.len() {
+            for j in (i + 1)..entities.len() {
+                let neighbors_i = self.get_neighbors(entities[i]);
+                if neighbors_i.contains(&entities[j]) {
+                    total_connections += 1;
+                    let weight = self.get_synaptic_weight(entities[i], entities[j]).await;
+                    total_weight += weight;
+                }
+            }
+        }
+
+        let max_possible_connections = (entities.len() * (entities.len() - 1)) / 2;
+        let connection_ratio = total_connections as f32 / max_possible_connections as f32;
+        let avg_weight = if total_connections > 0 {
+            total_weight / total_connections as f32
+        } else {
+            0.0
+        };
+
+        (connection_ratio + avg_weight) / 2.0
+    }
+
     /// Get comprehensive brain statistics
     pub async fn get_brain_statistics(&self) -> Result<BrainStatistics> {
         let entity_count = self.entity_count();
@@ -516,7 +649,7 @@ impl GraphPatternAnalysis {
 mod tests {
     use super::*;
     use crate::core::types::EntityData;
-    use std::collections::HashMap;
+    
     use tokio;
 
     // Helper function to create a test graph with entities and relationships
@@ -524,10 +657,10 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Add test entities
-        let entity1 = graph.core_graph.add_entity(EntityData::new(1, "entity1".to_string(), vec![0.0; 64])).unwrap();
-        let entity2 = graph.core_graph.add_entity(EntityData::new(1, "entity2".to_string(), vec![0.0; 64])).unwrap();
-        let entity3 = graph.core_graph.add_entity(EntityData::new(1, "entity3".to_string(), vec![0.0; 64])).unwrap();
-        let entity4 = graph.core_graph.add_entity(EntityData::new(1, "entity4".to_string(), vec![0.0; 64])).unwrap();
+        let entity1 = graph.core_graph.add_entity(EntityData::new(1, "entity1".to_string(), vec![0.0; 96])).unwrap();
+        let entity2 = graph.core_graph.add_entity(EntityData::new(1, "entity2".to_string(), vec![0.0; 96])).unwrap();
+        let entity3 = graph.core_graph.add_entity(EntityData::new(1, "entity3".to_string(), vec![0.0; 96])).unwrap();
+        let entity4 = graph.core_graph.add_entity(EntityData::new(1, "entity4".to_string(), vec![0.0; 96])).unwrap();
         
         // Add relationships to create a connected graph
         let _ = graph.core_graph.add_relationship(entity1, entity2, 0.5);
@@ -630,7 +763,7 @@ mod tests {
     #[tokio::test]
     async fn test_calculate_average_clustering_coefficient_single_entity() {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
-        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 64])).unwrap();
+        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
         
         let clustering = graph.calculate_average_clustering_coefficient().await;
         
@@ -660,7 +793,7 @@ mod tests {
     #[tokio::test]
     async fn test_calculate_average_path_length_single_entity() {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
-        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 64])).unwrap();
+        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
         
         let avg_path = graph.calculate_average_path_length().await;
         
@@ -794,8 +927,8 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Add isolated entities (no relationships)
-        let entity1 = graph.core_graph.add_entity(EntityData::new(1, "isolated1".to_string(), vec![0.0; 64])).unwrap();
-        let entity2 = graph.core_graph.add_entity(EntityData::new(1, "isolated2".to_string(), vec![0.0; 64])).unwrap();
+        let entity1 = graph.core_graph.add_entity(EntityData::new(1, "isolated1".to_string(), vec![0.0; 96])).unwrap();
+        let entity2 = graph.core_graph.add_entity(EntityData::new(1, "isolated2".to_string(), vec![0.0; 96])).unwrap();
         
         let patterns = graph.analyze_graph_patterns().await;
         
@@ -810,11 +943,11 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Create a hub entity connected to many others
-        let hub = graph.core_graph.add_entity(EntityData::new(1, "hub".to_string(), vec![0.0; 64])).unwrap();
+        let hub = graph.core_graph.add_entity(EntityData::new(1, "hub".to_string(), vec![0.0; 96])).unwrap();
         
         // Connect hub to 12 entities (above hub threshold of 10)
         for i in 0..12 {
-            let entity = graph.core_graph.add_entity(EntityData::new(1, format!("spoke_{}", i), vec![])).unwrap();
+            let entity = graph.core_graph.add_entity(EntityData::new(1, format!("spoke_{}", i), vec![0.0; 96])).unwrap();
             let _ = graph.core_graph.add_relationship(hub, entity, 0.5);
         }
         
@@ -883,7 +1016,7 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Test with single entity
-        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 64])).unwrap();
+        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
         
         {
             let mut activations = graph.entity_activations.write().await;
@@ -904,9 +1037,9 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Create a perfect triangle (each node connected to every other)
-        let a = graph.core_graph.add_entity(EntityData::new(1, "a".to_string(), vec![0.0; 64])).unwrap();
-        let b = graph.core_graph.add_entity(EntityData::new(1, "b".to_string(), vec![0.0; 64])).unwrap();
-        let c = graph.core_graph.add_entity(EntityData::new(1, "c".to_string(), vec![0.0; 64])).unwrap();
+        let a = graph.core_graph.add_entity(EntityData::new(1, "a".to_string(), vec![0.0; 96])).unwrap();
+        let b = graph.core_graph.add_entity(EntityData::new(1, "b".to_string(), vec![0.0; 96])).unwrap();
+        let c = graph.core_graph.add_entity(EntityData::new(1, "c".to_string(), vec![0.0; 96])).unwrap();
         
         // Connect all pairs
         let _ = graph.core_graph.add_relationship(a, b, 0.5);
@@ -924,10 +1057,10 @@ mod tests {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
         
         // Create a linear chain: A -> B -> C -> D
-        let a = graph.core_graph.add_entity(EntityData::new(1, "a".to_string(), vec![0.0; 64])).unwrap();
-        let b = graph.core_graph.add_entity(EntityData::new(1, "b".to_string(), vec![0.0; 64])).unwrap();
-        let c = graph.core_graph.add_entity(EntityData::new(1, "c".to_string(), vec![0.0; 64])).unwrap();
-        let d = graph.core_graph.add_entity(EntityData::new(1, "d".to_string(), vec![0.0; 64])).unwrap();
+        let a = graph.core_graph.add_entity(EntityData::new(1, "a".to_string(), vec![0.0; 96])).unwrap();
+        let b = graph.core_graph.add_entity(EntityData::new(1, "b".to_string(), vec![0.0; 96])).unwrap();
+        let c = graph.core_graph.add_entity(EntityData::new(1, "c".to_string(), vec![0.0; 96])).unwrap();
+        let d = graph.core_graph.add_entity(EntityData::new(1, "d".to_string(), vec![0.0; 96])).unwrap();
         
         let _ = graph.core_graph.add_relationship(a, b, 0.5);
         let _ = graph.core_graph.add_relationship(b, c, 0.5);

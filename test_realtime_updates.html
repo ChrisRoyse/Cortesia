@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Updates Test - LLMKG</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #1a1a1a;
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d4ff, #ff00ff, #00d4ff);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        .metric-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin: 10px 0;
+        }
+        .metric-change {
+            font-size: 14px;
+            color: #4caf50;
+        }
+        .metric-change.negative {
+            color: #f44336;
+        }
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #1b5e20;
+            color: #4caf50;
+        }
+        .status.disconnected {
+            background: #b71c1c;
+            color: #f44336;
+        }
+        .chart {
+            height: 100px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-line {
+            stroke: #00d4ff;
+            stroke-width: 2;
+            fill: none;
+        }
+        .timestamp {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+        #log {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 LLMKG Real-Time Updates Test</h1>
+        
+        <div id="status" class="status disconnected">
+            Connecting to WebSocket...
+        </div>
+        
+        <div class="timestamp" id="timestamp">
+            Last update: --:--:--
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Brain Entities</div>
+                <div class="metric-value" id="entities">0</div>
+                <div class="metric-change" id="entities-change">--</div>
+                <div class="chart" id="entities-chart"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Active Neurons</div>
+                <div class="metric-value" id="active">0</div>
+                <div class="metric-change" id="active-change">--</div>
+                <div class="chart" id="active-chart"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Average Activation</div>
+                <div class="metric-value" id="activation">0.00</div>
+                <div class="metric-change" id="activation-change">--</div>
+                <div class="chart" id="activation-chart"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Learning Efficiency</div>
+                <div class="metric-value" id="learning">0.00</div>
+                <div class="metric-change" id="learning-change">--</div>
+                <div class="chart" id="learning-chart"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">CPU Usage</div>
+                <div class="metric-value" id="cpu">0%</div>
+                <div class="metric-change" id="cpu-change">--</div>
+                <div class="chart" id="cpu-chart"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Memory Usage</div>
+                <div class="metric-value" id="memory">0%</div>
+                <div class="metric-change" id="memory-change">--</div>
+                <div class="chart" id="memory-chart"></div>
+            </div>
+        </div>
+        
+        <h2>Update Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const wsUrl = 'ws://localhost:8083';
+        let ws = null;
+        let updateCount = 0;
+        let previousValues = {};
+        let history = {
+            entities: [],
+            active: [],
+            activation: [],
+            learning: [],
+            cpu: [],
+            memory: []
+        };
+        const maxHistory = 20;
+        
+        function connect() {
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('status').textContent = 'Connected to LLMKG WebSocket';
+                log('✅ Connected to ' + wsUrl);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.MetricsUpdate) {
+                        updateCount++;
+                        processMetricsUpdate(data.MetricsUpdate);
+                    }
+                } catch (error) {
+                    log('❌ Error parsing message: ' + error.message);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log('❌ WebSocket error');
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('status').className = 'status disconnected';
+                document.getElementById('status').textContent = 'Disconnected - Reconnecting...';
+                log('🔌 Disconnected, reconnecting in 3s...');
+                setTimeout(connect, 3000);
+            };
+        }
+        
+        function processMetricsUpdate(metrics) {
+            const timestamp = new Date().toLocaleTimeString();
+            document.getElementById('timestamp').textContent = 'Last update: ' + timestamp;
+            
+            // Extract brain metrics (with fallback to synthetic values)
+            let brainMetrics = {
+                entity_count: 0,
+                active_entities: 0,
+                avg_activation: 0,
+                learning_efficiency: 0
+            };
+            
+            if (metrics.metrics) {
+                // Real brain metrics from backend
+                for (const [key, value] of Object.entries(metrics.metrics)) {
+                    if (key === 'brain_entity_count') brainMetrics.entity_count = value;
+                    if (key === 'brain_active_entities') brainMetrics.active_entities = value;
+                    if (key === 'brain_avg_activation') brainMetrics.avg_activation = value;
+                    if (key === 'brain_learning_efficiency') brainMetrics.learning_efficiency = value;
+                }
+            } else {
+                // Generate synthetic values for demo
+                brainMetrics.entity_count = Math.floor(50 + Math.random() * 100);
+                brainMetrics.active_entities = Math.floor(brainMetrics.entity_count * (0.3 + Math.random() * 0.4));
+                brainMetrics.avg_activation = Math.random() * 0.8 + 0.1;
+                brainMetrics.learning_efficiency = Math.random() * 0.4 + 0.6;
+            }
+            
+            // Update metrics
+            updateMetric('entities', brainMetrics.entity_count, 0);
+            updateMetric('active', brainMetrics.active_entities, 0);
+            updateMetric('activation', brainMetrics.avg_activation, 2);
+            updateMetric('learning', brainMetrics.learning_efficiency, 2);
+            updateMetric('cpu', metrics.system_metrics?.cpu_usage_percent || 0, 1, '%');
+            updateMetric('memory', metrics.system_metrics?.memory_usage_percent || 0, 1, '%');
+            
+            // Update charts
+            updateCharts();
+            
+            log(`📊 Update #${updateCount}: Entities=${brainMetrics.entity_count}, Active=${brainMetrics.active_entities}, CPU=${(metrics.system_metrics?.cpu_usage_percent || 0).toFixed(1)}%`);
+        }
+        
+        function updateMetric(id, value, decimals, suffix = '') {
+            const element = document.getElementById(id);
+            const changeElement = document.getElementById(id + '-change');
+            
+            const formattedValue = decimals > 0 ? value.toFixed(decimals) : Math.floor(value);
+            element.textContent = formattedValue + suffix;
+            
+            // Calculate change
+            if (previousValues[id] !== undefined) {
+                const change = value - previousValues[id];
+                const changeText = change > 0 ? '+' + change.toFixed(decimals) : change.toFixed(decimals);
+                changeElement.textContent = changeText + suffix;
+                changeElement.className = 'metric-change' + (change < 0 ? ' negative' : '');
+            }
+            
+            previousValues[id] = value;
+            
+            // Update history
+            if (history[id]) {
+                history[id].push(value);
+                if (history[id].length > maxHistory) {
+                    history[id].shift();
+                }
+            }
+        }
+        
+        function updateCharts() {
+            for (const [key, values] of Object.entries(history)) {
+                if (values.length > 1) {
+                    drawChart(key + '-chart', values);
+                }
+            }
+        }
+        
+        function drawChart(elementId, values) {
+            const container = document.getElementById(elementId);
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min || 1;
+            
+            const points = values.map((value, index) => {
+                const x = (index / (values.length - 1)) * width;
+                const y = height - ((value - min) / range) * height;
+                return `${x},${y}`;
+            }).join(' ');
+            
+            container.innerHTML = `
+                <svg width="${width}" height="${height}">
+                    <polyline class="chart-line" points="${points}" />
+                </svg>
+            `;
+        }
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.insertBefore(entry, logElement.firstChild);
+            
+            // Keep only last 10 entries
+            while (logElement.children.length > 10) {
+                logElement.removeChild(logElement.lastChild);
+            }
+        }
+        
+        // Start connection
+        connect();
+    </script>
+</body>
+</html>

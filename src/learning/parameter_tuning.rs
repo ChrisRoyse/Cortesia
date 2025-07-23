@@ -1,4 +1,4 @@
-use crate::learning::types::{PerformanceData, ThroughputMetrics};
+use crate::learning::types::PerformanceData;
 use crate::error::Result;
 
 use std::collections::HashMap;
@@ -656,6 +656,7 @@ pub struct SystemState {
 }
 
 /// Parameter tuning trait for standardized interface
+#[allow(async_fn_in_trait)]
 pub trait ParameterTuner {
     async fn tune_hebbian_parameters(&self, performance_data: &PerformanceData) -> Result<HebbianParameterUpdate>;
     async fn tune_attention_parameters(&self, attention_metrics: &AttentionMetrics) -> Result<AttentionParameterUpdate>;
@@ -684,6 +685,7 @@ impl ParameterTuner for ParameterTuningSystem {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::learning::types::ThroughputMetrics;
     use std::collections::HashMap;
     use std::time::{Duration, SystemTime};
     use uuid::Uuid;

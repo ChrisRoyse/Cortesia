@@ -461,9 +461,7 @@ impl KnowledgeGraph {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::core::graph::graph_core::KnowledgeGraph;
-    use crate::core::types::{EntityData, Relationship};
     use std::collections::HashMap;
 
     fn create_test_graph() -> KnowledgeGraph {

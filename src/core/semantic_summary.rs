@@ -471,7 +471,7 @@ impl Default for SemanticSummarizer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    
     use slotmap::SlotMap;
 
     // Helper function to create test EntityData

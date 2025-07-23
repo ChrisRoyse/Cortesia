@@ -4,7 +4,6 @@ use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
 use crate::core::brain_types::BrainInspiredRelationship;
 use crate::core::types::EntityKey;
 use crate::learning::types::*;
-use crate::cognitive::types::CognitivePatternType;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -629,9 +628,10 @@ mod tests {
     use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
     use crate::core::activation_engine::ActivationPropagationEngine;
     use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
-    use crate::learning::types::*;
+    use crate::cognitive::types::CognitivePatternType;
+    
     use std::time::{Instant, Duration};
-    use uuid::Uuid;
+    
 
     // Test helper to create mock components
     async fn create_test_hebbian_engine() -> Result<HebbianLearningEngine> {
@@ -1070,7 +1070,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_biological_learning_constraints() {
-        let mut engine = create_test_hebbian_engine().await
+        let engine = create_test_hebbian_engine().await
             .expect("Failed to create Hebbian engine");
         
         // Test that learning respects biological constraints
@@ -1130,7 +1130,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_learning_statistics_tracking() {
-        let mut engine = create_test_hebbian_engine().await
+        let engine = create_test_hebbian_engine().await
             .expect("Failed to create Hebbian engine");
         
         let weight_updates = WeightUpdateResult {

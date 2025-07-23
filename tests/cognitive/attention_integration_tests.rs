@@ -10,7 +10,6 @@ use tokio::time::sleep;
 use anyhow::Result;
 
 // Import test support utilities for integration tests
-use llmkg::test_support::data::{create_standard_test_entities};
 use llmkg::core::types::{EntityKey, EntityData};
 use std::time::Instant;
 
@@ -25,7 +24,7 @@ fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
         let key = sm.insert(EntityData::new(
             1,
             format!("integration_test_entity_{}", i),
-            vec![0.0; 64],
+            vec![0.0; 96],
         ));
         keys.push(key);
     }

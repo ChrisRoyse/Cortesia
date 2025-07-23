@@ -9,23 +9,24 @@ mod systems_thinking_integration_tests {
         SystemsReasoningType, SystemsResult, InheritedAttribute, Exception, ExceptionType
     };
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
     use llmkg::core::types::EntityKey;
 
     /// Helper function to create a comprehensive test graph with hierarchical relationships
     async fn create_comprehensive_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await.unwrap());
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create a biological taxonomy hierarchy
-        let animal_key = graph.add_entity("animal", "A living organism that feeds on organic matter").await.unwrap();
-        let mammal_key = graph.add_entity("mammal", "A warm-blooded vertebrate").await.unwrap();
-        let carnivore_key = graph.add_entity("carnivore", "An animal that feeds on meat").await.unwrap();
-        let herbivore_key = graph.add_entity("herbivore", "An animal that feeds on plants").await.unwrap();
+        let animal_key = graph.add_entity_with_id("animal", "A living organism that feeds on organic matter").await.unwrap();
+        let mammal_key = graph.add_entity_with_id("mammal", "A warm-blooded vertebrate").await.unwrap();
+        let carnivore_key = graph.add_entity_with_id("carnivore", "An animal that feeds on meat").await.unwrap();
+        let herbivore_key = graph.add_entity_with_id("herbivore", "An animal that feeds on plants").await.unwrap();
         
         // Specific animals
-        let dog_key = graph.add_entity("dog", "A domesticated carnivorous mammal").await.unwrap();
-        let cat_key = graph.add_entity("cat", "An independent carnivorous mammal").await.unwrap();
-        let elephant_key = graph.add_entity("elephant", "A large herbivorous mammal").await.unwrap();
-        let wolf_key = graph.add_entity("wolf", "A wild carnivorous mammal").await.unwrap();
+        let dog_key = graph.add_entity_with_id("dog", "A domesticated carnivorous mammal").await.unwrap();
+        let cat_key = graph.add_entity_with_id("cat", "An independent carnivorous mammal").await.unwrap();
+        let elephant_key = graph.add_entity_with_id("elephant", "A large herbivorous mammal").await.unwrap();
+        let wolf_key = graph.add_entity_with_id("wolf", "A wild carnivorous mammal").await.unwrap();
         
         // Create hierarchical relationships (is_a)
         graph.add_weighted_edge(mammal_key, animal_key, 0.95).await.unwrap();
@@ -398,7 +399,7 @@ mod systems_thinking_integration_tests {
     #[tokio::test]
     async fn test_edge_case_empty_graph() {
         // Test behavior with empty graph
-        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await.unwrap());
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         let systems = SystemsThinking::new(graph);
         let parameters = PatternParameters::default();
         
@@ -418,8 +419,8 @@ mod systems_thinking_integration_tests {
     #[tokio::test]
     async fn test_edge_case_single_entity() {
         // Test behavior with single entity
-        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await.unwrap());
-        let _single_key = graph.add_entity("lonely", "A single entity").await.unwrap();
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
+        let _single_key = graph.add_entity_with_id("lonely", "A single entity").await.unwrap();
         
         let systems = SystemsThinking::new(graph);
         let parameters = PatternParameters::default();

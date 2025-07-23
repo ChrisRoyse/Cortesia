@@ -2,7 +2,9 @@
 // Ultra-efficient serialization that avoids memory allocation and copying during read operations
 // Designed for maximum performance with direct memory access patterns
 
-use crate::core::types::{EntityData, EntityKey, Relationship};
+use crate::core::types::{EntityData, Relationship};
+#[cfg(test)]
+use crate::core::types::EntityKey;
 use crate::error::{GraphError, Result};
 use crate::storage::string_interner::StringInterner;
 use std::mem;

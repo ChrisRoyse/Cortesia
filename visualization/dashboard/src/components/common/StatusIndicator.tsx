@@ -569,13 +569,13 @@ export const WebSocketStatusIndicator: React.FC<Omit<ConnectionStatusProps, 'lab
   return (
     <div data-testid="ws-status">
       <ConnectionStatusIndicator
+        {...props}
         label="WebSocket"
         isConnected={webSocketState.isConnected}
         connectionState={webSocketState.connectionState}
         reconnectAttempts={webSocketState.reconnectAttempts}
         maxReconnectAttempts={webSocketState.maxReconnectAttempts}
         lastUpdated={new Date()}
-        {...props}
       />
     </div>
   );

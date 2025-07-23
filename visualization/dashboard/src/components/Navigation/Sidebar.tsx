@@ -3,14 +3,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import {
   CpuChipIcon,
-  CircuitBoardIcon,
+  CommandLineIcon,
   ShareIcon,
-  DatabaseIcon,
+  CircleStackIcon,
   WrenchScrewdriverIcon,
   CubeTransparentIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   StarIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { useRealTimeStatus } from '../../hooks/useRealTimeStatus';
 import { StatusIndicator } from '../common/StatusIndicator';
@@ -79,21 +80,21 @@ const navigationItems: NavigationItem[] = [
   {
     id: 'neural',
     title: 'Neural Activity',
-    icon: CircuitBoardIcon,
+    icon: CommandLineIcon,
     description: 'Neural network activity and connectivity',
     children: [
       {
         id: 'neural-overview',
         title: 'Overview',
         path: '/neural',
-        icon: CircuitBoardIcon,
+        icon: CommandLineIcon,
         description: 'Neural system overview',
       },
       {
         id: 'activity',
         title: 'Activity Heatmaps',
         path: '/neural/activity',
-        icon: CircuitBoardIcon,
+        icon: CommandLineIcon,
         description: 'Real-time neural activity visualization',
       },
       {
@@ -107,7 +108,7 @@ const navigationItems: NavigationItem[] = [
         id: 'spikes',
         title: 'Spike Analysis',
         path: '/neural/spikes',
-        icon: CircuitBoardIcon,
+        icon: CommandLineIcon,
         description: 'Spike timing and frequency analysis',
       },
     ],
@@ -122,35 +123,35 @@ const navigationItems: NavigationItem[] = [
   {
     id: 'memory',
     title: 'Memory Systems',
-    icon: DatabaseIcon,
+    icon: CircleStackIcon,
     description: 'Memory performance and consolidation',
     children: [
       {
         id: 'memory-overview',
         title: 'Overview',
         path: '/memory',
-        icon: DatabaseIcon,
+        icon: CircleStackIcon,
         description: 'Memory system overview',
       },
       {
         id: 'performance',
         title: 'Performance Metrics',
         path: '/memory/performance',
-        icon: DatabaseIcon,
+        icon: CircleStackIcon,
         description: 'Memory usage and performance',
       },
       {
         id: 'consolidation',
         title: 'Consolidation Monitor',
         path: '/memory/consolidation',
-        icon: DatabaseIcon,
+        icon: CircleStackIcon,
         description: 'Memory consolidation processes',
       },
       {
         id: 'usage',
         title: 'Usage Analytics',
         path: '/memory/usage',
-        icon: DatabaseIcon,
+        icon: CircleStackIcon,
         description: 'Memory access patterns',
       },
     ],
@@ -190,6 +191,13 @@ const navigationItems: NavigationItem[] = [
         description: 'Tool execution logs',
       },
     ],
+  },
+  {
+    id: 'dependencies',
+    title: 'Dependency Analysis',
+    path: '/dependencies',
+    icon: ArrowPathIcon,
+    description: 'Codebase dependency visualization and analysis',
   },
   {
     id: 'architecture',

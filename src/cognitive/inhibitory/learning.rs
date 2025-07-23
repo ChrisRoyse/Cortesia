@@ -380,8 +380,7 @@ fn calculate_variance(values: &[f32]) -> f32 {
 mod tests {
     use super::*;
     use crate::cognitive::inhibitory::{
-        CompetitiveInhibitionSystem, GroupCompetitionResult, InhibitionPerformanceMetrics,
-        CompetitionGroup, CompetitionType, TemporalDynamics, InhibitionConfig
+        CompetitiveInhibitionSystem, GroupCompetitionResult, InhibitionPerformanceMetrics
     };
     use crate::core::brain_types::ActivationPattern;
     use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;

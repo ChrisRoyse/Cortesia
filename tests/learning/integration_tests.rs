@@ -48,7 +48,10 @@ use llmkg::learning::phase4_integration::{
 };
 
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
+use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
+use llmkg::core::activation_engine::ActivationPropagationEngine;
 use llmkg::core::sdr_storage::SDRStorage;
 use llmkg::core::types::EntityKey;
 use llmkg::core::triple::NodeType;
@@ -66,14 +69,22 @@ impl LearningIntegrationTestFixture {
     /// Create a new test fixture with all dependencies
     pub async fn new() -> Result<Self> {
         // Create test brain graph
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(96).unwrap());
         
         // Create test SDR storage
         use llmkg::core::sdr_types::SDRConfig;
         let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
         
         // Create Phase 3 cognitive system
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            Default::default()
+        ).await?);
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        
         let phase3_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
+            orchestrator,
+            activation_engine,
             brain_graph.clone(),
             sdr_storage.clone()
         ).await?);
@@ -127,42 +138,33 @@ impl LearningIntegrationTestFixture {
         let mut entities = Vec::new();
         
         // Create test concepts
+        use llmkg::core::types::EntityData;
         let concept1 = self.brain_graph.add_entity(
-            "Neural Learning".to_string(),
-            NodeType::Concept,
-            HashMap::new()
+            EntityData::new(1, "Neural Learning".to_string(), vec![0.5; 96])
         ).await?;
         entities.push(concept1);
         
         let concept2 = self.brain_graph.add_entity(
-            "Synaptic Plasticity".to_string(),
-            NodeType::Concept,
-            HashMap::new()
+            EntityData::new(2, "Synaptic Plasticity".to_string(), vec![0.6; 96])
         ).await?;
         entities.push(concept2);
         
         let concept3 = self.brain_graph.add_entity(
-            "Homeostasis".to_string(),
-            NodeType::Concept,
-            HashMap::new()
+            EntityData::new(3, "Homeostasis".to_string(), vec![0.7; 96])
         ).await?;
         entities.push(concept3);
         
         // Create test relationships
-        self.brain_graph.add_relationship(
+        self.brain_graph.add_relationship_keys(
             concept1,
             concept2,
-            RelationType::RelatedTo,
-            0.8,
-            HashMap::new()
+            0.8
         ).await?;
         
-        self.brain_graph.add_relationship(
+        self.brain_graph.add_relationship_keys(
             concept2,
             concept3,
-            RelationType::Influences,
-            0.6,
-            HashMap::new()
+            0.6
         ).await?;
         
         Ok(entities)

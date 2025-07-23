@@ -4,6 +4,7 @@ mod orchestrator_tests {
     use std::sync::Arc;
     use llmkg::cognitive::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
     use llmkg::cognitive::ReasoningStrategy;
     use llmkg::core::types::EntityData;
 
@@ -94,7 +95,7 @@ mod orchestrator_tests {
         let result = result.unwrap();
         // Check that we got a valid response
         assert!(!result.final_answer.is_empty());
-        assert!(result.quality_metrics.confidence > 0.0);
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -108,7 +109,7 @@ mod orchestrator_tests {
         let result = result.unwrap();
         // Check that we got a valid response
         assert!(!result.final_answer.is_empty());
-        assert!(result.quality_metrics.confidence > 0.0);
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -122,7 +123,7 @@ mod orchestrator_tests {
         let result = result.unwrap();
         // Check that we got a valid response
         assert!(!result.final_answer.is_empty());
-        assert!(result.quality_metrics.confidence > 0.0);
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -134,8 +135,8 @@ mod orchestrator_tests {
         assert!(result.is_ok());
         
         let result = result.unwrap();
-        assert!(!result.answer.is_empty());
-        assert!(result.confidence > 0.0);
+        assert!(!result.final_answer.is_empty());
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -148,8 +149,8 @@ mod orchestrator_tests {
         
         // Should get results from the execution
         let result = result.unwrap();
-        assert!(!result.answer.is_empty());
-        assert!(result.confidence > 0.0);
+        assert!(!result.final_answer.is_empty());
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -166,8 +167,8 @@ mod orchestrator_tests {
         
         // Should have selected an appropriate pattern and produced a result
         assert!(!response.final_answer.is_empty());
-        assert!(response.quality_metrics.confidence >= 0.0 && response.quality_metrics.confidence <= 1.0);
-        assert!(response.execution_metadata.execution_time_ms > 0);
+        assert!(response.quality_metrics.overall_confidence >= 0.0 && response.quality_metrics.overall_confidence <= 1.0);
+        assert!(response.execution_metadata.total_time_ms > 0);
     }
 
     #[tokio::test]
@@ -182,7 +183,7 @@ mod orchestrator_tests {
         // Should have produced a result even with high threshold
         let result = result.unwrap();
         assert!(!result.final_answer.is_empty());
-        assert!(result.quality_metrics.confidence > 0.0);
+        assert!(result.quality_metrics.overall_confidence > 0.0);
     }
 
     #[tokio::test]
@@ -217,8 +218,8 @@ mod orchestrator_tests {
         assert!(response.final_answer.len() > 10);
         
         // Should have reasonable quality metrics
-        assert!(response.quality_metrics.confidence >= 0.0);
-        assert!(response.quality_metrics.confidence <= 1.0);
+        assert!(response.quality_metrics.overall_confidence >= 0.0);
+        assert!(response.quality_metrics.overall_confidence <= 1.0);
     }
 
     #[tokio::test]
@@ -247,9 +248,9 @@ mod orchestrator_tests {
         
         // Test with malformed or problematic queries
         let problematic_queries = vec![
-            "", // Empty query
-            "   ", // Whitespace only
-            "??????????", // Only punctuation
+            "".to_string(), // Empty query
+            "   ".to_string(), // Whitespace only
+            "??????????".to_string(), // Only punctuation
             "a".repeat(1000), // Very long query
         ];
         
@@ -280,10 +281,10 @@ mod orchestrator_tests {
         let response = result.unwrap();
         
         // Should track performance metrics
-        assert!(response.execution_metadata.execution_time_ms > 0);
+        assert!(response.execution_metadata.total_time_ms > 0);
         
         // Should have reasonable processing time (less than 10 seconds for test)
-        assert!(response.execution_metadata.execution_time_ms < 10000);
+        assert!(response.execution_metadata.total_time_ms < 10000);
     }
 
     #[tokio::test]
@@ -297,13 +298,13 @@ mod orchestrator_tests {
         
         // Should implement the standard cognitive pattern interface
         assert!(!response.final_answer.is_empty());
-        assert!(response.quality_metrics.confidence >= 0.0 && response.quality_metrics.confidence <= 1.0);
+        assert!(response.quality_metrics.overall_confidence >= 0.0 && response.quality_metrics.overall_confidence <= 1.0);
         assert!(matches!(response.strategy_used, ReasoningStrategy::Automatic | ReasoningStrategy::Specific(_)));
     }
 
     #[tokio::test]
     async fn test_orchestrator_creation() {
-        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         let orchestrator_config = CognitiveOrchestratorConfig::default();
         let orchestrator = CognitiveOrchestrator::new(graph, orchestrator_config).await;
         assert!(orchestrator.is_ok());
@@ -320,7 +321,7 @@ mod orchestrator_tests {
     }
 
     async fn create_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create comprehensive test knowledge base
         
@@ -333,26 +334,26 @@ mod orchestrator_tests {
         
         // Animals
         graph.add_entity(EntityData::new(6, "dog".to_string(), vec![0.6; 128])).await.unwrap();
-        graph.add_entity("cat", "Domestic animal").await.unwrap();
-        graph.add_entity("legs", "Body parts for movement").await.unwrap();
+        graph.add_entity_with_id("cat", "Domestic animal").await.unwrap();
+        graph.add_entity_with_id("legs", "Body parts for movement").await.unwrap();
         
         // Technology
-        graph.add_entity("technology", "Applied science").await.unwrap();
-        graph.add_entity("computer", "Computing device").await.unwrap();
-        graph.add_entity("internet", "Global network").await.unwrap();
+        graph.add_entity_with_id("technology", "Applied science").await.unwrap();
+        graph.add_entity_with_id("computer", "Computing device").await.unwrap();
+        graph.add_entity_with_id("internet", "Global network").await.unwrap();
         
         // Relationships
-        graph.add_relationship("art", "creativity", "involves", 0.9).await.unwrap();
-        graph.add_relationship("music", "art", "is_a", 0.8).await.unwrap();
-        graph.add_relationship("music", "mathematics", "relates_to", 0.6).await.unwrap();
-        graph.add_relationship("science", "mathematics", "uses", 0.8).await.unwrap();
-        graph.add_relationship("technology", "science", "applies", 0.7).await.unwrap();
+        graph.add_relationship_with_type("art", "creativity", "involves", 0.9).await.unwrap();
+        graph.add_relationship_with_type("music", "art", "is_a", 0.8).await.unwrap();
+        graph.add_relationship_with_type("music", "mathematics", "relates_to", 0.6).await.unwrap();
+        graph.add_relationship_with_type("science", "mathematics", "uses", 0.8).await.unwrap();
+        graph.add_relationship_with_type("technology", "science", "applies", 0.7).await.unwrap();
         
-        graph.add_relationship("dog", "legs", "has", 0.9).await.unwrap();
-        graph.add_relationship("cat", "legs", "has", 0.9).await.unwrap();
+        graph.add_relationship_with_type("dog", "legs", "has", 0.9).await.unwrap();
+        graph.add_relationship_with_type("cat", "legs", "has", 0.9).await.unwrap();
         
-        graph.add_relationship("computer", "technology", "is_a", 0.8).await.unwrap();
-        graph.add_relationship("internet", "computer", "connects", 0.7).await.unwrap();
+        graph.add_relationship_with_type("computer", "technology", "is_a", 0.8).await.unwrap();
+        graph.add_relationship_with_type("internet", "computer", "connects", 0.7).await.unwrap();
         
         graph
     }

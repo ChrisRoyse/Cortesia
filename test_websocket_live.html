@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Live Test - LLMKG</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        .connected {
+            background: #003300;
+        }
+        .disconnected {
+            background: #330000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        .message {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .message-header {
+            color: #ffff00;
+            margin-bottom: 5px;
+        }
+        .message-body {
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #002200;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .metric-value {
+            font-size: 24px;
+            color: #00ffff;
+        }
+        button {
+            background: #003300;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #004400;
+        }
+        #messageLog {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 LLMKG WebSocket Live Test</h1>
+        
+        <div id="status" class="status disconnected">
+            Status: <span id="statusText">Disconnected</span>
+        </div>
+        
+        <div>
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()">Disconnect</button>
+            <button onclick="sendPing()">Send Ping</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div class="metrics" id="metrics">
+            <div class="metric-card">
+                <div>Messages Received</div>
+                <div class="metric-value" id="messageCount">0</div>
+            </div>
+            <div class="metric-card">
+                <div>Last Update</div>
+                <div class="metric-value" id="lastUpdate">--:--:--</div>
+            </div>
+            <div class="metric-card">
+                <div>Brain Entities</div>
+                <div class="metric-value" id="brainEntities">0</div>
+            </div>
+            <div class="metric-card">
+                <div>CPU Usage</div>
+                <div class="metric-value" id="cpuUsage">0%</div>
+            </div>
+        </div>
+        
+        <h2>Message Log</h2>
+        <div id="messageLog"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let messageCount = 0;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const wsUrl = 'ws://localhost:8083';
+        
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                statusEl.className = 'status connected';
+                statusText.textContent = 'Connected to ' + wsUrl;
+            } else {
+                statusEl.className = 'status disconnected';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+        
+        function addMessage(type, data) {
+            messageCount++;
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            
+            const messageLog = document.getElementById('messageLog');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            header.textContent = `[${new Date().toLocaleTimeString()}] ${type}`;
+            
+            const body = document.createElement('div');
+            body.className = 'message-body';
+            body.textContent = JSON.stringify(data, null, 2);
+            
+            messageDiv.appendChild(header);
+            messageDiv.appendChild(body);
+            messageLog.insertBefore(messageDiv, messageLog.firstChild);
+            
+            // Keep only last 50 messages
+            while (messageLog.children.length > 50) {
+                messageLog.removeChild(messageLog.lastChild);
+            }
+            
+            // Update metrics if it's a MetricsUpdate
+            if (data.MetricsUpdate) {
+                updateMetrics(data.MetricsUpdate);
+            }
+        }
+        
+        function updateMetrics(metrics) {
+            // Update CPU usage
+            if (metrics.system_metrics && metrics.system_metrics.cpu_usage_percent !== undefined) {
+                document.getElementById('cpuUsage').textContent = 
+                    metrics.system_metrics.cpu_usage_percent.toFixed(1) + '%';
+            }
+            
+            // Look for brain-specific metrics
+            if (metrics.metrics) {
+                // Check for brain entity count
+                for (const [key, value] of Object.entries(metrics.metrics)) {
+                    if (key === 'brain_entity_count' || key.includes('entity_count')) {
+                        document.getElementById('brainEntities').textContent = value;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                console.log('Already connected');
+                return;
+            }
+            
+            console.log('Connecting to', wsUrl);
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                updateStatus(true);
+                reconnectAttempts = 0;
+                addMessage('SYSTEM', { event: 'Connected to WebSocket server' });
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Received:', data);
+                    addMessage('MESSAGE', data);
+                } catch (error) {
+                    console.error('Failed to parse message:', error);
+                    addMessage('ERROR', { error: 'Failed to parse message', raw: event.data });
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addMessage('ERROR', { event: 'WebSocket error', error: error.toString() });
+            };
+            
+            ws.onclose = (event) => {
+                console.log('WebSocket closed:', event.code, event.reason);
+                updateStatus(false);
+                addMessage('SYSTEM', { 
+                    event: 'Connection closed', 
+                    code: event.code, 
+                    reason: event.reason 
+                });
+                
+                // Auto-reconnect logic
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                    console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                    setTimeout(connect, delay);
+                }
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                reconnectAttempts = maxReconnectAttempts; // Prevent auto-reconnect
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendPing() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const pingMessage = { Ping: null };
+                ws.send(JSON.stringify(pingMessage));
+                addMessage('SENT', pingMessage);
+            } else {
+                alert('Not connected to WebSocket');
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('messageLog').innerHTML = '';
+            messageCount = 0;
+            document.getElementById('messageCount').textContent = '0';
+        }
+        
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            setTimeout(connect, 1000);
+        });
+    </script>
+</body>
+</html>

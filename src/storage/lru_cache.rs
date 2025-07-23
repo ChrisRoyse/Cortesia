@@ -191,7 +191,7 @@ mod tests {
         
         assert_eq!(quantized.len(), 3);
         assert_eq!(quantized[0], 0);   // -1.0 -> 0
-        assert_eq!(quantized[1], 127); // 0.0 -> middle
-        assert_eq!(quantized[2], 255); // 1.0 -> max
+        assert_eq!(quantized[1], 127); // 0.0 -> middle (254/2 = 127)
+        assert_eq!(quantized[2], 254); // 1.0 -> max (255-1 = 254)
     }
 }

@@ -5,6 +5,7 @@ mod convergent_tests {
     use llmkg::cognitive::convergent::ConvergentThinking;
     use llmkg::cognitive::{CognitivePattern, PatternResult, ConvergentResult, CognitivePatternType, PatternParameters};
     use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+    use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
     use llmkg::core::brain_types::{ActivationStep, ActivationOperation};
 
     // NOTE: Tests for calculate_concept_relevance have been moved to src/cognitive/convergent.rs
@@ -58,25 +59,25 @@ mod convergent_tests {
 
     async fn create_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
         use llmkg::core::types::EntityData;
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create basic animal hierarchy
-        graph.add_entity(EntityData::new(1, "Animal concept".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(2, "Classification concept".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(3, "Property concept".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(4, "Relationship concept".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "Animal concept".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(2, "Classification concept".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(3, "Property concept".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(4, "Relationship concept".to_string(), vec![0.0; 96])).await.unwrap();
         
         // Add entities for relationships
-        graph.add_entity(EntityData::new(5, "dog".to_string(), vec![0.1; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(6, "mammal".to_string(), vec![0.2; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(5, "dog".to_string(), vec![0.1; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(6, "mammal".to_string(), vec![0.2; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 96])).await.unwrap();
         
         // Store entity keys for relationships
-        let dog_key = graph.add_entity(EntityData::new(5, "dog".to_string(), vec![0.1; 128])).await.unwrap();
-        let mammal_key = graph.add_entity(EntityData::new(6, "mammal".to_string(), vec![0.2; 128])).await.unwrap();
-        let warm_key = graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 128])).await.unwrap();
-        let pet_key = graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 128])).await.unwrap();
+        let dog_key = graph.add_entity(EntityData::new(5, "dog".to_string(), vec![0.1; 96])).await.unwrap();
+        let mammal_key = graph.add_entity(EntityData::new(6, "mammal".to_string(), vec![0.2; 96])).await.unwrap();
+        let warm_key = graph.add_entity(EntityData::new(7, "warm_blooded".to_string(), vec![0.3; 96])).await.unwrap();
+        let pet_key = graph.add_entity(EntityData::new(8, "pet".to_string(), vec![0.4; 96])).await.unwrap();
         
         // Add relationships using add_relationship method
         graph.add_relationship(5, 6, 0.9).await.unwrap(); // dog -> mammal
@@ -88,13 +89,13 @@ mod convergent_tests {
 
     async fn create_pruning_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
         use llmkg::core::types::EntityData;
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create a graph where beam search pruning matters
-        graph.add_entity(EntityData::new(1, "start".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(2, "dead_end".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(3, "chain_middle".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(4, "chain_end".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "start".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(2, "dead_end".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(3, "chain_middle".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(4, "chain_end".to_string(), vec![0.0; 96])).await.unwrap();
         
         // Add relationships using entity IDs
         // High activation path that leads nowhere
@@ -141,13 +142,13 @@ mod convergent_tests {
 
     async fn create_deep_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
         use llmkg::core::types::EntityData;
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create a deep chain to test depth limits
-        graph.add_entity(EntityData::new(1, "root".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(2, "level1".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(3, "level2".to_string(), vec![0.0; 128])).await.unwrap();
-        graph.add_entity(EntityData::new(4, "level3".to_string(), vec![0.0; 128])).await.unwrap();
+        graph.add_entity(EntityData::new(1, "root".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(2, "level1".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(3, "level2".to_string(), vec![0.0; 96])).await.unwrap();
+        graph.add_entity(EntityData::new(4, "level3".to_string(), vec![0.0; 96])).await.unwrap();
         
         // Add relationships using entity IDs
         graph.add_relationship(1, 2, 0.8).await.unwrap(); // root -> level1

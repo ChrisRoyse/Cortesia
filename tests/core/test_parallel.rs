@@ -43,7 +43,6 @@ mod test_parallel_integration {
             object: object.to_string(),
             confidence: 0.9,
             source: Some("test".to_string()),
-            metadata: HashMap::new(),
         }
     }
 
@@ -288,7 +287,7 @@ mod test_parallel_integration {
         let num_subspaces = embedding_dim / subspace_dim;
         
         // Create a product quantizer
-        let quantizer = ProductQuantizer::new(embedding_dim, num_subspaces, 256)
+        let mut quantizer = ProductQuantizer::new(embedding_dim, num_subspaces)
             .expect("Failed to create quantizer");
         
         // Train the quantizer with sample data

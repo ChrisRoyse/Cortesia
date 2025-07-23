@@ -310,7 +310,7 @@ const FullDashboardDemo: React.FC = () => {
     <Provider store={store}>
       <BrowserRouter>
         <ThemeProvider>
-          <WebSocketProvider url="ws://localhost:8080">
+          <WebSocketProvider url="ws://localhost:8081">
             <MCPProvider>
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
                 <DashboardLayout>

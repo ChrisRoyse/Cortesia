@@ -2,7 +2,6 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::cognitive::attention_manager::AttentionManager;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::core::types::EntityKey;
-use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
@@ -625,8 +624,9 @@ mod tests {
     use crate::cognitive::working_memory::WorkingMemorySystem;
     use crate::core::activation_engine::ActivationPropagationEngine;
     use crate::cognitive::orchestrator::CognitiveOrchestrator;
+    use crate::cognitive::inhibitory::CompetitiveInhibitionSystem;
     use std::time::Duration;
-    use uuid::Uuid;
+    
 
     // Test helper to create mock homeostasis system
     async fn create_test_homeostasis() -> Result<SynapticHomeostasis> {

@@ -630,8 +630,8 @@ mod tests {
     fn test_quantized_embedding_storage() {
         let mut storage = QuantizedEmbeddingStorage::new();
         
-        let entity1 = EntityKey::new(1);
-        let entity2 = EntityKey::new(2);
+        let entity1 = EntityKey::new(1.to_string());
+        let entity2 = EntityKey::new(2.to_string());
         let codes1 = vec![1, 2, 3, 4];
         let codes2 = vec![5, 6, 7, 8];
         
@@ -679,7 +679,7 @@ mod tests {
         
         let entities_embeddings: Vec<(EntityKey, Vec<f32>)> = embeddings.into_iter()
             .enumerate()
-            .map(|(i, emb)| (EntityKey::new(i as u32), emb))
+            .map(|(i, emb)| (EntityKey::new((i as u32).to_string()), emb))
             .collect();
         
         quantizer.batch_store_quantized(&entities_embeddings).unwrap();
@@ -704,7 +704,7 @@ mod tests {
         
         // Store embeddings
         for (i, embedding) in embeddings.iter().enumerate() {
-            quantizer.store_quantized(EntityKey::new(i as u32), embedding).unwrap();
+            quantizer.store_quantized(EntityKey::new((i as u32).to_string()), embedding).unwrap();
         }
         
         // Search for similar embeddings
@@ -839,8 +839,8 @@ mod tests {
         assert_eq!(storage.memory_usage(), 0);
         
         // Add some quantized embeddings
-        let entity1 = EntityKey::new(100);
-        let entity2 = EntityKey::new(200);
+        let entity1 = EntityKey::new(100.to_string());
+        let entity2 = EntityKey::new(200.to_string());
         let codes1 = vec![1, 2, 3, 4, 5];
         let codes2 = vec![6, 7, 8, 9, 10];
         
@@ -854,7 +854,7 @@ mod tests {
         assert_eq!(storage.get_quantized(&entity1), Some(&codes1));
         assert_eq!(storage.get_quantized(&entity2), Some(&codes2));
         
-        let nonexistent = EntityKey::new(999);
+        let nonexistent = EntityKey::new(999.to_string());
         assert_eq!(storage.get_quantized(&nonexistent), None);
         
         // Test building search index

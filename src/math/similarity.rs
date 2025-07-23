@@ -487,7 +487,7 @@ pub fn euclidean_norm(vec: &[f32]) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::error::GraphError;
+    
 
     #[test]
     fn test_cosine_similarity_edge_cases() {
@@ -588,7 +588,7 @@ mod tests {
         let distance = engine.manhattan_distance(&vec1, &vec2).unwrap();
         
         // Current implementation returns sqrt(sum of squares) instead of sum of absolute differences
-        let expected_euclidean = ((4.0-1.0).powi(2) + (5.0-2.0).powi(2) + (6.0-3.0).powi(2)).sqrt();
+        let expected_euclidean = ((4.0f32-1.0).powi(2) + (5.0f32-2.0).powi(2) + (6.0f32-3.0).powi(2)).sqrt();
         assert!((distance - expected_euclidean).abs() < 1e-6);
         
         // Proper Manhattan distance would be |4-1| + |5-2| + |6-3| = 9.0

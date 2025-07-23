@@ -27,10 +27,13 @@ use llmkg::learning::{
 use llmkg::cognitive::types::CognitivePatternType;
 
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
 use llmkg::core::sdr_storage::SDRStorage;
+use llmkg::core::activation_engine::ActivationPropagationEngine;
 use llmkg::core::types::EntityKey;
 use llmkg::core::triple::NodeType;
 use llmkg::core::brain_types::RelationType;
+use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 
 /// Property test framework for biological learning principles
@@ -46,9 +49,18 @@ impl BiologicalLearningPropertyTests {
     /// Create new property test framework
     pub async fn new() -> Result<Self> {
         // Create test dependencies
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new().await?);
-        let sdr_storage = Arc::new(SDRStorage::new().await?);
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(96)?);
+        let sdr_storage = Arc::new(SDRStorage::new(Default::default()));
+        // Create missing dependencies
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            Default::default()
+        ).await?);
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        
         let phase3_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
+            orchestrator,
+            activation_engine,
             brain_graph.clone(),
             sdr_storage.clone()
         ).await?);
@@ -56,22 +68,19 @@ impl BiologicalLearningPropertyTests {
         // Create test entities
         let mut test_entities = Vec::new();
         for i in 0..10 {
+            use llmkg::core::types::EntityData;
             let entity = brain_graph.add_entity(
-                format!("test_neuron_{}", i),
-                NodeType::Concept,
-                HashMap::new()
+                EntityData::new(i as u16, format!("test_neuron_{}", i), vec![0.5; 96])
             ).await?;
             test_entities.push(entity);
         }
         
         // Create connections between entities
         for i in 0..test_entities.len()-1 {
-            brain_graph.add_relationship(
+            brain_graph.add_relationship_keys(
                 test_entities[i],
                 test_entities[i+1],
-                RelationType::RelatedTo,
-                0.5,
-                HashMap::new()
+                0.5
             ).await?;
         }
         
@@ -211,7 +220,7 @@ impl BiologicalLearningPropertyTests {
                 events.push(ActivationEvent {
                     entity_key: self.test_entities[i],
                     activation_strength: 0.6,
-                    timestamp: std::time::Instant::now() + Duration::from_millis(cycle * 50 + i * 10),
+                    timestamp: std::time::Instant::now() + Duration::from_millis((cycle * 50 + i * 10) as u64),
                     context: ActivationContext {
                         query_id: format!("repetitive_test_{}_{}", cycle, i),
                         cognitive_pattern: CognitivePatternType::Systems,

@@ -459,7 +459,7 @@ describe('LLMKG Dashboard Phase 2 Integration Tests', () => {
 
   describe('Phase 1 Integration', () => {
     test('connects to Phase 1 WebSocket server', async () => {
-      renderWithProviders(<App />, { wsUrl: 'ws://localhost:8080' });
+      renderWithProviders(<App />, { wsUrl: 'ws://localhost:8081' });
       
       // Check connection status
       const wsStatus = await screen.findByTestId('ws-status');

@@ -11,6 +11,8 @@ use crate::storage::lru_cache::{SimilarityCache};
 use crate::storage::hnsw::HnswIndex;
 use crate::storage::lsh::LshIndex;
 use crate::embedding::quantizer::ProductQuantizer;
+use crate::monitoring::collectors::runtime_profiler::RuntimeProfiler;
+use crate::trace_function;
 use crate::error::{GraphError, Result};
 
 use parking_lot::RwLock;
@@ -52,12 +54,23 @@ pub struct KnowledgeGraph {
     
     // Mutable edge buffer for dynamic relationship insertion
     pub edge_buffer: RwLock<Vec<Relationship>>,
+    
+    // Runtime profiling for performance monitoring
+    pub runtime_profiler: Option<Arc<RuntimeProfiler>>,
 }
 
 impl KnowledgeGraph {
     /// Create new knowledge graph with specified embedding dimension
     pub fn new_internal(embedding_dim: usize) -> Result<Self> {
-        let subvector_count = 8; // For 96-dim embeddings, 8 subvectors of 12 dims each
+        // Calculate appropriate subvector count that divides embedding_dim evenly
+        let subvector_count = {
+            let candidates = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32];
+            candidates.iter()
+                .rev() // Start with larger values for better performance
+                .find(|&&count| embedding_dim % count == 0)
+                .copied()
+                .unwrap_or(1) // Fallback to 1 if no divisor found
+        };
         
         Ok(Self {
             arena: RwLock::new(GraphArena::new()),
@@ -76,6 +89,7 @@ impl KnowledgeGraph {
             epoch_manager: Arc::new(EpochManager::new(16)),
             string_dictionary: RwLock::new(AHashMap::new()),
             edge_buffer: RwLock::new(Vec::new()),
+            runtime_profiler: None,
         })
     }
 
@@ -83,14 +97,32 @@ impl KnowledgeGraph {
     pub fn new_with_dimension(embedding_dim: usize) -> Result<Self> {
         Self::new_internal(embedding_dim)
     }
+    
+    /// Set runtime profiler for function tracing
+    pub fn set_runtime_profiler(&mut self, profiler: Arc<RuntimeProfiler>) {
+        self.runtime_profiler = Some(profiler);
+    }
+    
+    /// Create new knowledge graph with runtime profiler
+    pub fn new_with_profiler(embedding_dim: usize, profiler: Arc<RuntimeProfiler>) -> Result<Self> {
+        let mut graph = Self::new_internal(embedding_dim)?;
+        graph.runtime_profiler = Some(profiler);
+        Ok(graph)
+    }
 
     /// Get entity count
     pub fn entity_count(&self) -> usize {
+        if let Some(profiler) = &self.runtime_profiler {
+            let _trace = trace_function!(profiler, "entity_count");
+        }
         self.arena.read().entity_count()
     }
     
     /// Get relationship count
     pub fn relationship_count(&self) -> u32 {
+        if let Some(profiler) = &self.runtime_profiler {
+            let _trace = trace_function!(profiler, "relationship_count");
+        }
         self.graph.read().edge_count()
     }
     
@@ -178,14 +210,9 @@ impl KnowledgeGraph {
 
     /// Flush edge buffer to main graph
     pub fn flush_edge_buffer(&self) -> Result<()> {
-        let mut buffer = self.edge_buffer.write();
-        let mut graph = self.graph.write();
-        
-        for relationship in buffer.drain(..) {
-            if let (Some(from_id), Some(to_id)) = (self.get_entity_id(relationship.from), self.get_entity_id(relationship.to)) {
-                graph.add_edge(from_id, to_id, relationship.weight)?;
-            }
-        }
+        // Note: CSR graph doesn't support dynamic edge insertion
+        // For now, we keep relationships in the edge buffer
+        // TODO: Implement CSR graph rebuilding for proper flushing
         
         Ok(())
     }

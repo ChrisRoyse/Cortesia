@@ -24,6 +24,7 @@ pub mod text;
 pub mod cognitive;
 pub mod learning;
 pub mod graph;
+pub mod api;
 // pub mod agents; // Removed as requested
 
 pub mod test_support;

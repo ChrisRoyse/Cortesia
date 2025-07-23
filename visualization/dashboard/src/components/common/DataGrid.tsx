@@ -696,9 +696,9 @@ export const DataGrid = <T,>({
                   theme,
                   selectable,
                   rowClassName,
-                }}
+                } as any}
               >
-                {VirtualRow}
+                {VirtualRow as any}
               </List>
             )}
           </AutoSizer>

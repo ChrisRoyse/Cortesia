@@ -17,7 +17,7 @@ fn create_test_entity_data(id: u32, embedding_len: usize, entity_type: &str) -> 
     properties.insert("name".to_string(), format!("{}_{}", entity_type, id));
     
     EntityData {
-        type_id: id,
+        type_id: id as u16,
         embedding,
         properties: serde_json::to_string(&properties).unwrap_or_default(),
     }
@@ -82,8 +82,8 @@ async fn test_relationship_lifecycle_complete() -> Result<()> {
     assert!(synaptic_weight_3 > 0.0);
     
     // Test 6: Strengthen relationships
-    brain_graph.strengthen_relationship(person_key, org_key, 0.1).await?;
-    brain_graph.strengthen_relationship(org_key, location_key, 0.05).await?;
+    brain_graph.strengthen_relationship(person_key, org_key).await?;
+    brain_graph.strengthen_relationship(org_key, location_key).await?;
     
     let strengthened_weight_1 = brain_graph.get_relationship_weight(person_key, org_key);
     let strengthened_weight_2 = brain_graph.get_relationship_weight(org_key, location_key);
@@ -92,7 +92,7 @@ async fn test_relationship_lifecycle_complete() -> Result<()> {
     assert!(strengthened_weight_2.unwrap_or(0.0) > 0.9);
     
     // Test 7: Weaken relationships
-    brain_graph.weaken_relationship(person_key, location_key, 0.2).await?;
+    brain_graph.weaken_relationship(person_key, location_key).await?;
     
     let weakened_weight = brain_graph.get_relationship_weight(person_key, location_key);
     assert!(weakened_weight.unwrap_or(1.0) < 0.7);
@@ -201,7 +201,7 @@ async fn test_neighbor_relationship_queries() -> Result<()> {
     
     // Verify expected parents are present
     let parent_keys: Vec<EntityKey> = parents.iter().map(|(key, _)| *key).collect();
-    for &expected_key in expected_incoming.iter().map(|(key, _)| *key) {
+    for expected_key in expected_incoming.iter().map(|(key, _)| *key) {
         assert!(parent_keys.contains(&expected_key));
     }
     
@@ -331,7 +331,7 @@ async fn test_relationship_strength_dynamics() -> Result<()> {
     
     // Test 3: Simulate relationship strengthening through repeated activation
     for _ in 0..5 {
-        brain_graph.strengthen_relationship(key1, key2, 0.05).await?;
+        brain_graph.strengthen_relationship(key1, key2).await?;
     }
     
     let strengthened_weight = brain_graph.get_relationship_weight(key1, key2);
@@ -339,7 +339,7 @@ async fn test_relationship_strength_dynamics() -> Result<()> {
     
     // Test 4: Simulate relationship decay
     for _ in 0..3 {
-        brain_graph.weaken_relationship(key2, key3, 0.1).await?;
+        brain_graph.weaken_relationship(key2, key3).await?;
     }
     
     let weakened_weight = brain_graph.get_relationship_weight(key2, key3);
@@ -348,7 +348,7 @@ async fn test_relationship_strength_dynamics() -> Result<()> {
     // Test 5: Test relationship strength bounds
     // Try to strengthen beyond maximum
     for _ in 0..20 {
-        brain_graph.strengthen_relationship(key1, key2, 0.1).await?;
+        brain_graph.strengthen_relationship(key1, key2).await?;
     }
     
     let max_weight = brain_graph.get_relationship_weight(key1, key2);
@@ -356,7 +356,7 @@ async fn test_relationship_strength_dynamics() -> Result<()> {
     
     // Try to weaken beyond minimum
     for _ in 0..20 {
-        brain_graph.weaken_relationship(key2, key3, 0.1).await?;
+        brain_graph.weaken_relationship(key2, key3).await?;
     }
     
     let min_weight = brain_graph.get_relationship_weight(key2, key3);
@@ -415,9 +415,9 @@ async fn test_relationship_pattern_analysis() -> Result<()> {
     let rel_stats = brain_graph.get_relationship_statistics().await;
     
     assert_eq!(rel_stats.total_relationships, 8); // 5 star + 3 chain
-    assert!(rel_stats.average_relationship_weight > 0.0);
-    assert!(rel_stats.max_relationship_weight <= 1.0);
-    assert!(rel_stats.min_relationship_weight >= 0.0);
+    assert!(rel_stats.avg_synaptic_weight > 0.0);
+    assert!(rel_stats.max_synaptic_weight <= 1.0);
+    assert!(rel_stats.min_synaptic_weight >= 0.0);
     
     // Test 5: Analyze connectivity patterns
     let center_degree = brain_graph.get_entity_degree(center).await;
@@ -455,7 +455,7 @@ async fn test_relationship_statistics_tracking() -> Result<()> {
     assert_eq!(initial_stats.total_relationships, 0);
     assert_eq!(initial_stats.strong_relationships, 0);
     assert_eq!(initial_stats.weak_relationships, 0);
-    assert_eq!(initial_stats.average_relationship_weight, 0.0);
+    assert_eq!(initial_stats.avg_synaptic_weight, 0.0);
     
     // Test 2: Add entities and relationships
     let entity1_data = create_test_entity_data(1, 96, "stats1");
@@ -481,10 +481,10 @@ async fn test_relationship_statistics_tracking() -> Result<()> {
     assert_eq!(updated_stats.total_relationships, 3);
     
     let expected_avg = (0.9 + 0.6 + 0.3) / 3.0;
-    assert!((updated_stats.average_relationship_weight - expected_avg).abs() < 0.01);
+    assert!((updated_stats.avg_synaptic_weight - expected_avg).abs() < 0.01);
     
-    assert_eq!(updated_stats.max_relationship_weight, 0.9);
-    assert_eq!(updated_stats.min_relationship_weight, 0.3);
+    assert_eq!(updated_stats.max_synaptic_weight, 0.9);
+    assert_eq!(updated_stats.min_synaptic_weight, 0.3);
     
     // Test 4: Count strong and weak relationships (assuming threshold = 0.7)
     let strong_count = updated_stats.strong_relationships; // weight >= 0.7
@@ -494,12 +494,12 @@ async fn test_relationship_statistics_tracking() -> Result<()> {
     assert!(weak_count >= 2); // The 0.6 and 0.3 weight relationships
     
     // Test 5: Modify relationship strengths and verify statistics update
-    brain_graph.strengthen_relationship(key1, key3, 0.5).await?; // 0.3 -> 0.8
+    brain_graph.strengthen_relationship(key1, key3).await?; // Strengthens relationship
     
     let strengthened_stats = brain_graph.get_relationship_statistics().await;
-    assert!(strengthened_stats.average_relationship_weight > updated_stats.average_relationship_weight);
-    assert_eq!(strengthened_stats.max_relationship_weight, 0.9); // Should remain same
-    assert!(strengthened_stats.min_relationship_weight > 0.3); // Should increase
+    assert!(strengthened_stats.avg_synaptic_weight > updated_stats.avg_synaptic_weight);
+    assert_eq!(strengthened_stats.max_synaptic_weight, 0.9); // Should remain same
+    assert!(strengthened_stats.min_synaptic_weight > 0.3); // Should increase
     
     // Test 6: Remove relationship and verify statistics
     let removed = brain_graph.remove_relationship(key2, key3).await?;
@@ -510,7 +510,7 @@ async fn test_relationship_statistics_tracking() -> Result<()> {
     
     // Average should change due to removed medium-weight relationship
     let expected_final_avg = (0.9 + 0.8) / 2.0; // Assuming 0.3->0.8 change
-    assert!((final_stats.average_relationship_weight - expected_final_avg).abs() < 0.1);
+    assert!((final_stats.avg_synaptic_weight - expected_final_avg).abs() < 0.1);
     
     Ok(())
 }

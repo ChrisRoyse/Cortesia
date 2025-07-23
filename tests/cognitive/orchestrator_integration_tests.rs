@@ -1,12 +1,11 @@
 //! Integration tests for CognitiveOrchestrator
 //! Tests orchestration of cognitive patterns and workflow management
 
-use std::sync::Arc;
 use tokio;
 
 use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
 use llmkg::cognitive::{
-    CognitivePatternType, ReasoningStrategy, ReasoningResult
+    CognitivePatternType, ReasoningStrategy
 };
 use llmkg::test_support::fixtures::create_test_graph;
 

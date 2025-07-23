@@ -10,7 +10,6 @@ use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
-use std::time::SystemTime;
 
 /// Apply hierarchical inhibition based on abstraction levels
 pub async fn apply_hierarchical_inhibition(
@@ -214,7 +213,8 @@ mod tests {
     use crate::cognitive::critical::CriticalThinking;
     use std::collections::HashMap;
     use std::sync::Arc;
-    use tokio::sync::RwLock;
+    use std::time::SystemTime;
+    
 
     fn create_test_pattern_with_strengths(strengths: Vec<f32>) -> (ActivationPattern, Vec<EntityKey>) {
         let mut activations = HashMap::new();

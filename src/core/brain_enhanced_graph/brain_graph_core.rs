@@ -492,7 +492,7 @@ impl BrainEnhancedKnowledgeGraph {
 }
 
 /// Memory usage information for brain-enhanced graph
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BrainMemoryUsage {
     pub core_graph_bytes: usize,
     pub sdr_storage_bytes: usize,
@@ -533,8 +533,8 @@ impl BrainMemoryUsage {
 mod tests {
     use super::*;
     use crate::core::types::EntityKey;
-    use std::collections::HashMap;
-    use tokio::time::{sleep, Duration};
+    
+    
 
     /// Helper function to create a test brain graph
     async fn create_test_brain_graph() -> Result<BrainEnhancedKnowledgeGraph> {

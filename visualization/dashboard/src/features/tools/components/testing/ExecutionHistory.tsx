@@ -347,4 +347,5 @@ const ExecutionHistory: React.FC<ExecutionHistoryProps> = ({
   );
 };
 
+export { ExecutionHistory };
 export default ExecutionHistory;

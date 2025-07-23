@@ -36,7 +36,10 @@ use llmkg::learning::phase4_integration::{
 };
 
 use llmkg::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
+use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
+use llmkg::core::activation_engine::ActivationPropagationEngine;
 use llmkg::core::sdr_storage::SDRStorage;
 use llmkg::core::types::EntityKey;
 use llmkg::core::triple::NodeType;
@@ -65,10 +68,18 @@ impl SafetyTestFixture {
     /// Create new safety test fixture
     pub async fn new() -> Result<Self> {
         // Create test dependencies with safety-focused configuration
-        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(96).unwrap());
         use llmkg::core::sdr_types::SDRConfig;
         let sdr_storage = Arc::new(SDRStorage::new(SDRConfig::default()));
+        let orchestrator = Arc::new(CognitiveOrchestrator::new(
+            brain_graph.clone(),
+            Default::default()
+        ).await?);
+        let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
+        
         let phase3_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
+            orchestrator,
+            activation_engine,
             brain_graph.clone(),
             sdr_storage.clone()
         ).await?);
@@ -76,22 +87,19 @@ impl SafetyTestFixture {
         // Create test entities
         let mut test_entities = Vec::new();
         for i in 0..5 {
+            use llmkg::core::types::EntityData;
             let entity = brain_graph.add_entity(
-                format!("safety_test_entity_{}", i),
-                NodeType::Concept,
-                HashMap::new()
+                EntityData::new(i as u16, format!("safety_test_entity_{}", i), vec![0.5; 96])
             ).await?;
             test_entities.push(entity);
         }
         
         // Create test connections
         for i in 0..test_entities.len()-1 {
-            brain_graph.add_relationship(
+            brain_graph.add_relationship_keys(
                 test_entities[i],
                 test_entities[i+1],
-                RelationType::RelatedTo,
-                0.5,
-                HashMap::new()
+                0.5
             ).await?;
         }
         
@@ -176,6 +184,21 @@ impl SafetyTestFixture {
                 // Simulate infinite loop detection
                 println!("Simulating infinite loop emergency");
                 // In real implementation, would create loop detection triggers
+            },
+            EmergencyType::PerformanceCollapse => {
+                // Simulate performance collapse
+                println!("Simulating performance collapse emergency");
+                // In real implementation, would create severe performance degradation
+            },
+            EmergencyType::ResourceExhaustion => {
+                // Simulate resource exhaustion
+                println!("Simulating resource exhaustion emergency");
+                // In real implementation, would exhaust CPU/memory resources
+            },
+            EmergencyType::UserExodus => {
+                // Simulate user exodus
+                println!("Simulating user exodus emergency");
+                // In real implementation, would simulate mass user departure
             },
         }
         Ok(())

@@ -614,7 +614,7 @@ impl MetricsExporter for MultiExporter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::monitoring::metrics::{MetricValue, Counter};
+    use crate::monitoring::metrics::MetricValue;
     
     #[test]
     fn test_prometheus_format() {

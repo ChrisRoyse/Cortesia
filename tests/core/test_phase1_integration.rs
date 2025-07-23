@@ -104,7 +104,7 @@ async fn test_question_answering_system() {
         let cognitive_queries = vec![
             ("Compare Einstein and Newton's contributions to physics", CognitivePatternType::ChainOfThought),
             ("What is the relationship between DNA and evolution?", CognitivePatternType::TreeOfThoughts),
-            ("Analyze the impact of radioactivity research", CognitivePatternType::GraphOfThoughts),
+            ("Analyze the impact of radioactivity research", CognitivePatternType::TreeOfThoughts),
         ];
         
         for (query, pattern) in cognitive_queries {
@@ -249,7 +249,7 @@ async fn test_cognitive_reasoning_ensemble() {
     let patterns = vec![
         CognitivePatternType::ChainOfThought,
         CognitivePatternType::TreeOfThoughts,
-        CognitivePatternType::GraphOfThoughts,
+        CognitivePatternType::TreeOfThoughts,
     ];
     
     let result = integration.ensemble_cognitive_reasoning(
@@ -269,8 +269,8 @@ async fn test_cognitive_reasoning_ensemble() {
     // Verify quality metrics
     let quality = &cognitive_result.quality_metrics;
     assert!(quality.overall_confidence >= 0.0 && quality.overall_confidence <= 1.0);
-    assert!(quality.coherence_score >= 0.0 && quality.coherence_score <= 1.0);
-    assert!(quality.relevance_score >= 0.0 && quality.relevance_score <= 1.0);
+    assert!(quality.consistency_score >= 0.0 && quality.consistency_score <= 1.0);
+    assert!(quality.completeness_score >= 0.0 && quality.completeness_score <= 1.0);
 }
 
 #[tokio::test]

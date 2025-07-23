@@ -245,30 +245,26 @@ async fn test_integration_with_knowledge_graph() {
     // Add entities to graph (simulating compatibility workflow)
     let entity_data1 = llmkg::core::types::EntityData {
         type_id: 0,
-        properties: entity1.attributes().iter()
-            .map(|(k, v)| (k.clone(), llmkg::core::types::AttributeValue::String(v.clone())))
-            .collect(),
-        embedding: None,
+        properties: serde_json::to_string(&entity1.attributes()).unwrap_or_default(),
+        embedding: vec![0.1; 96],
     };
     
     let entity_data2 = llmkg::core::types::EntityData {
         type_id: 0,
-        properties: entity2.attributes().iter()
-            .map(|(k, v)| (k.clone(), llmkg::core::types::AttributeValue::String(v.clone())))
-            .collect(),
-        embedding: None,
+        properties: serde_json::to_string(&entity2.attributes()).unwrap_or_default(),
+        embedding: vec![0.2; 96],
     };
     
-    let actual_key1 = graph.add_entity(entity1.name().to_string(), vec![0.1; 96], Some(entity_data1))
+    let actual_key1 = graph.add_entity(entity_data1)
         .expect("Failed to add entity1");
-    let actual_key2 = graph.add_entity(entity2.name().to_string(), vec![0.2; 96], Some(entity_data2))
+    let actual_key2 = graph.add_entity(entity_data2)
         .expect("Failed to add entity2");
     
     // Verify entities were added
     assert_eq!(graph.entity_count(), 2);
     
     // Add relationship
-    graph.add_relationship(actual_key1, actual_key2, "employs".to_string(), 1.0)
+    graph.add_relationship(actual_key1, actual_key2, 1.0)
         .expect("Failed to add relationship");
     
     assert_eq!(graph.relationship_count(), 1);
@@ -287,17 +283,12 @@ async fn test_integration_with_brain_enhanced_graph() {
     for entity in &entities {
         let entity_data = llmkg::core::types::EntityData {
             type_id: 0,
-            properties: entity.attributes().iter()
-                .map(|(k, v)| (k.clone(), llmkg::core::types::AttributeValue::String(v.clone())))
-                .collect(),
-            embedding: None,
+            properties: serde_json::to_string(&entity.attributes()).unwrap_or_default(),
+            embedding: vec![0.1; 96],
         };
         
-        brain_graph.core_graph.add_entity(
-            entity.name().to_string(),
-            vec![0.1; 96],
-            Some(entity_data)
-        ).expect("Failed to add entity to brain graph");
+        brain_graph.core_graph.add_entity(entity_data)
+            .expect("Failed to add entity to brain graph");
     }
     
     // Verify entities were added
@@ -554,9 +545,12 @@ async fn test_end_to_end_knowledge_engine_workflow() {
         subject: Some(entity1.name().to_string()),
         predicate: None,
         object: None,
+        limit: 10,
+        min_confidence: 0.0,
+        include_chunks: false,
     };
     
-    let results = engine.query_triples(&query)
+    let results = engine.query_triples(query)
         .expect("Failed to query triples");
     
     assert!(!results.is_empty());

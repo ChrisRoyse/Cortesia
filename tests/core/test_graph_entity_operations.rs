@@ -11,7 +11,7 @@ use llmkg::core::types::{EntityData};
 use llmkg::error::{GraphError, Result};
 
 fn create_test_graph() -> KnowledgeGraph {
-    KnowledgeGraph::new(96, 10000)
+    KnowledgeGraph::new(96).expect("Failed to create graph")
 }
 
 fn create_test_entity_data(type_id: u32, properties: &str) -> EntityData {
@@ -58,8 +58,8 @@ fn test_single_entity_insertion_lifecycle() {
     let retrieved_entity = graph.get_entity(entity_key);
     assert!(retrieved_entity.is_some());
     
-    let (retrieved_key, retrieved_data) = retrieved_entity.unwrap();
-    assert_eq!(retrieved_key, entity_key);
+    let (retrieved_meta, retrieved_data) = retrieved_entity.unwrap();
+    // EntityMeta contains metadata about the entity, not the key itself
     assert_eq!(retrieved_data.type_id, entity_data.type_id);
     assert_eq!(retrieved_data.properties, entity_data.properties);
     assert_eq!(retrieved_data.embedding, entity_data.embedding);
@@ -68,8 +68,8 @@ fn test_single_entity_insertion_lifecycle() {
     let by_id_result = graph.get_entity_by_id(100);
     assert!(by_id_result.is_some());
     
-    let (by_id_key, by_id_data) = by_id_result.unwrap();
-    assert_eq!(by_id_key, entity_key);
+    let (by_id_meta, by_id_data) = by_id_result.unwrap();
+    // EntityMeta contains metadata about the entity, not the key itself
     assert_eq!(by_id_data.type_id, entity_data.type_id);
     
     // Phase 4: Verify entity key mapping
@@ -158,8 +158,8 @@ fn test_batch_entity_operations() {
         // Check by ID
         let by_id = graph.get_entity_by_id(*id);
         assert!(by_id.is_some());
-        let (by_id_key, id_data) = by_id.unwrap();
-        assert_eq!(by_id_key, entity_key);
+        let (by_id_meta, id_data) = by_id.unwrap();
+        // EntityMeta contains metadata about the entity, not the key itself
         assert_eq!(id_data.type_id, expected_data.type_id);
         
         // Check existence
@@ -435,7 +435,7 @@ fn test_entity_properties_operations() {
     for (id, properties) in searchable_entities {
         let entity_data = EntityData::new(2, properties.to_string(), create_random_embedding(96, id));
         
-        let result = graph.insert_entity(id, entity_data);
+        let result = graph.insert_entity(id.try_into().unwrap(), entity_data);
         assert!(result.is_ok());
     }
     
@@ -494,7 +494,8 @@ fn test_entity_type_management() {
     
     for (id, new_type_id) in type_change_cases {
         let entity = graph.get_entity_by_id(id).unwrap();
-        let (key, data) = entity;
+        let (_, data) = entity;
+        let key = graph.get_entity_key(id).unwrap(); // Get EntityKey separately
         
         let updated_data = EntityData::new(new_type_id as u16, format!(r#"{{"type": "changed", "old_id": {}}}"#, id), data.embedding);
         
@@ -504,7 +505,7 @@ fn test_entity_type_management() {
         // Verify type change
         let updated_entity = graph.get_entity_by_id(id).unwrap();
         let (_, updated_data) = updated_entity;
-        assert_eq!(updated_data.type_id, new_type_id);
+        assert_eq!(updated_data.type_id, new_type_id as u16);
         assert!(updated_data.properties.contains("changed"));
     }
     
@@ -522,13 +523,13 @@ fn test_entity_type_management() {
     for (id, type_id) in extreme_cases {
         let entity_data = EntityData::new(type_id as u16, format!(r#"{{"extreme_type": {}}}"#, type_id), create_random_embedding(96, id));
         
-        let result = graph.insert_entity(id, entity_data);
+        let result = graph.insert_entity(id.try_into().unwrap(), entity_data);
         assert!(result.is_ok());
         
         // Verify extreme type was stored correctly
-        let entity = graph.get_entity_by_id(id).unwrap();
+        let entity = graph.get_entity_by_id(id.try_into().unwrap()).unwrap();
         let (_, data) = entity;
-        assert_eq!(data.type_id, type_id);
+        assert_eq!(data.type_id, type_id as u16);
     }
 }
 
@@ -598,10 +599,12 @@ fn test_concurrent_entity_operations() {
             for i in 0..10 { // Update fewer entities
                 let entity_id = (thread_id * entities_per_thread + i) as u32;
                 
-                if let Some((key, data)) = graph_clone.get_entity_by_id(entity_id) {
-                    let updated_data = EntityData::new(data.type_id, format!(r#"{{"updated": true, "thread": {}}}"#, thread_id), data.embedding);
-                    
-                    let _ = graph_clone.update_entity(key, updated_data);
+                if let Some((_, data)) = graph_clone.get_entity_by_id(entity_id) {
+                    if let Some(key) = graph_clone.get_entity_key(entity_id) {
+                        let updated_data = EntityData::new(data.type_id, format!(r#"{{"updated": true, "thread": {}}}"#, thread_id), data.embedding);
+                        
+                        let _ = graph_clone.update_entity(key, updated_data);
+                    }
                 }
             }
         })
@@ -937,6 +940,7 @@ fn test_entity_validation_comprehensive() {
     }
     
     // Phase 2: Test property validation
+    let long_string = "x".repeat(100000);
     let property_tests = vec![
         ("", true),                           // Empty string
         ("{}", true),                        // Empty JSON
@@ -944,7 +948,7 @@ fn test_entity_validation_comprehensive() {
         ("not json", true),                  // Invalid JSON (should still work as string)
         ("null", true),                      // JSON null
         (r#"{"unicode": "测试"}"#, true),     // Unicode
-        ("x".repeat(100000), true),          // Very long string (might fail due to limits)
+        (long_string.as_str(), true),        // Very long string (might fail due to limits)
         ("\0", true),                        // Null character
         ("\x01\x02\x03", true),             // Binary data
     ];
@@ -1008,7 +1012,7 @@ fn test_entity_validation_comprehensive() {
                 assert!(retrieved.is_some());
                 
                 let (_, data) = retrieved.unwrap();
-                assert_eq!(data.type_id, type_id);
+                assert_eq!(data.type_id, type_id as u16);
                 
                 let _ = graph.remove_entity(key);
             }

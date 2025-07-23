@@ -45,7 +45,7 @@ mod lateral_tests {
     async fn test_indirect_path_discovery() {
         // Create graph with both direct and indirect paths
         let graph = create_indirect_path_graph().await;
-        let thinking = LateralThinking::new(graph, 0.3, 4); // novelty_threshold=0.3, max_bridge_length=4
+        let thinking = LateralThinking::new(graph);
         
         // Execute search for creative connections via execute method
         let params = PatternParameters::default();
@@ -112,13 +112,13 @@ mod lateral_tests {
         let graph = create_mixed_novelty_graph().await;
         let thinking = LateralThinking::new(graph); // High novelty threshold
         
-        let result = thinking.find_creative_connections("start", "target", 3).await;
+        let result = thinking.find_creative_connections("start", "target", Some(3)).await;
         assert!(result.is_ok());
         
-        let bridges = result.unwrap();
+        let lateral_result = result.unwrap();
         
         // All returned bridges should meet the novelty threshold
-        for bridge in &bridges {
+        for bridge in &lateral_result.bridges {
             assert!(bridge.novelty_score >= 0.7, 
                    "Bridge '{}' novelty {} should meet threshold 0.7", 
                    bridge.bridge_id, bridge.novelty_score);
@@ -132,20 +132,15 @@ mod lateral_tests {
     async fn test_cognitive_pattern_interface() {
         let thinking = create_test_lateral_thinking().await;
         
-        let result = thinking.execute("creative links between music and color").await;
+        let params = PatternParameters::default();
+        let result = thinking.execute("creative links between music and color", None, params).await;
         assert!(result.is_ok());
         
         let pattern_result = result.unwrap();
-        match pattern_result {
-            PatternResult::Lateral(lateral_result) => {
-                assert_eq!(lateral_result.pattern_type, CognitivePatternType::Lateral);
-                assert!(!lateral_result.start_concept.is_empty());
-                assert!(!lateral_result.end_concept.is_empty());
-                assert!(lateral_result.overall_creativity_score >= 0.0 && 
-                       lateral_result.overall_creativity_score <= 1.0);
-            },
-            _ => panic!("Expected LateralResult from lateral thinking")
-        }
+        // Check that the pattern type is Lateral
+        assert_eq!(pattern_result.pattern_type, CognitivePatternType::Lateral);
+        assert!(pattern_result.confidence > 0.0);
+        assert!(!pattern_result.answer.is_empty());
     }
 
 
@@ -157,7 +152,7 @@ mod lateral_tests {
     }
 
     async fn create_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         graph.add_entity(EntityData::new(1, "art".to_string(), vec![0.1; 128])).await.unwrap();
         graph.add_entity(EntityData::new(2, "technology".to_string(), vec![0.2; 128])).await.unwrap();
@@ -174,7 +169,7 @@ mod lateral_tests {
     }
 
     async fn create_indirect_path_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         graph.add_entity(EntityData::new(1, "concept_a".to_string(), vec![0.1; 128])).await.unwrap();
         graph.add_entity(EntityData::new(2, "concept_b".to_string(), vec![0.2; 128])).await.unwrap();
@@ -195,7 +190,7 @@ mod lateral_tests {
     }
 
     async fn create_long_path_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Create a long chain: start -> intermediate1 -> intermediate2 -> end
         graph.add_entity(EntityData::new(1, "start".to_string(), vec![0.1; 128])).await.unwrap();
@@ -216,7 +211,7 @@ mod lateral_tests {
     }
 
     async fn create_creative_test_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         // Science and art with creative bridges
         graph.add_entity(EntityData::new(1, "science".to_string(), vec![0.1; 128])).await.unwrap();
@@ -245,7 +240,7 @@ mod lateral_tests {
     }
 
     async fn create_mixed_novelty_graph() -> std::sync::Arc<BrainEnhancedKnowledgeGraph> {
-        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+        let graph = std::sync::Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
         
         graph.add_entity(EntityData::new(1, "start".to_string(), vec![0.1; 128])).await.unwrap();
         graph.add_entity(EntityData::new(2, "target".to_string(), vec![0.2; 128])).await.unwrap();

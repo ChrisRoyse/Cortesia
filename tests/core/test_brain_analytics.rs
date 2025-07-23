@@ -3,7 +3,8 @@
 
 use llmkg::core::brain_enhanced_graph::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use llmkg::core::brain_enhanced_graph::brain_graph_types::*;
-use llmkg::core::types::EntityData;
+use llmkg::core::brain_enhanced_graph::brain_relationship_manager::AddRelationship;
+use llmkg::core::types::{EntityData, EntityKey};
 use std::time::Instant;
 use std::collections::HashMap;
 use tokio;
@@ -14,14 +15,14 @@ async fn create_structured_graph(
     edges_per_node: usize,
     clustering: f32
 ) -> BrainEnhancedKnowledgeGraph {
-    let graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     
     // Add nodes
     for i in 0..nodes {
         let entity_data = EntityData::new(
             i as u16,
             format!("type:analytics_test, index:{}, cluster:{}, name:node_{}", i, i / 10, i),
-            (0..128).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
+            (0..96).map(|j| ((i + j) as f32).sin() / 10.0).collect(),
         );
         graph.insert_brain_entity(i as u32, entity_data).await.unwrap();
     }
@@ -31,7 +32,7 @@ async fn create_structured_graph(
         // Connect to next nodes (ring structure)
         for j in 1..=edges_per_node {
             let target = (i + j) % nodes;
-            graph.add_relationship(i as u32, target as u32, 1, 0.8).await.unwrap();
+            graph.add_relationship_with_type(i as i32, target as i32, 1, 0.8).await.unwrap();
         }
         
         // Add clustering by connecting to nearby nodes
@@ -40,7 +41,7 @@ async fn create_structured_graph(
             for j in 0..cluster_size {
                 let target = (i + j * 2) % nodes;
                 if target != i {
-                    graph.add_relationship(i as u32, target as u32, 2, 0.6).await.unwrap();
+                    graph.add_relationship_with_type(i as i32, target as i32, 2, 0.6).await.unwrap();
                 }
             }
         }
@@ -66,12 +67,12 @@ async fn create_test_topologies() -> HashMap<String, BrainEnhancedKnowledgeGraph
     graphs.insert("clustered".to_string(), clustered);
     
     // Random network
-    let random = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let random = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     for i in 0..100 {
         let entity_data = EntityData::new(
             i as u16,
             format!("type:random, name:random_{}", i),
-            vec![0.5; 128],
+            vec![0.5; 96],
         );
         random.insert_brain_entity(i as u32, entity_data).await.unwrap();
     }
@@ -81,7 +82,7 @@ async fn create_test_topologies() -> HashMap<String, BrainEnhancedKnowledgeGraph
         let from = rand::random::<u32>() % 100;
         let to = rand::random::<u32>() % 100;
         if from != to {
-            let _ = random.add_relationship(from, to, 1, 0.5).await;
+            let _ = random.add_relationship_with_type(from as i32, to as i32, 1, 0.5).await;
         }
     }
     graphs.insert("random".to_string(), random);
@@ -160,7 +161,8 @@ async fn test_statistical_accuracy_large_graphs() {
         // Activate nodes with known distribution
         for i in 0..size {
             let activation = (i as f32 / size as f32).powf(2.0); // Quadratic distribution
-            graph.set_entity_activation(i as u32, activation).await;
+            let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+            graph.set_entity_activation(entity_key, activation).await;
         }
         
         let stats_start = Instant::now();
@@ -224,16 +226,19 @@ async fn test_graph_health_assessment() {
     // Activate with good distribution
     for i in 0..200 {
         let activation = 0.3 + (i as f32 / 400.0);
-        healthy.set_entity_activation(i as u32, activation).await;
+        let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+        healthy.set_entity_activation(entity_key, activation).await;
     }
     
     // Add some concepts
     for i in 0..5 {
-        let entities: Vec<u32> = (i*40..(i+1)*40).step_by(2).collect();
+        let entity_ids: Vec<u32> = (i*40..(i+1)*40).step_by(2).collect();
+        let entities: Vec<EntityKey> = entity_ids.iter().map(|&id| {
+            EntityKey::from_raw_parts(id as u64, 0)
+        }).collect();
         healthy.create_concept_structure(
             format!("healthy_concept_{}", i),
-            entities,
-            0.8
+            entities
         ).await.unwrap();
     }
     
@@ -249,7 +254,7 @@ async fn test_graph_health_assessment() {
     
     // Fragmented graph - disconnected components
     println!("\n--- Fragmented Graph ---");
-    let fragmented = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let fragmented = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     
     // Create disconnected islands
     for island in 0..5 {
@@ -258,16 +263,15 @@ async fn test_graph_health_assessment() {
             let entity_data = EntityData::new(
                 (base + i) as u16,
                 format!("island:{}, name:island{}_{}", island, island, i),
-                vec![island as f32 / 5.0; 128],
+                vec![island as f32 / 5.0; 96],
             );
             fragmented.insert_brain_entity(i as u32, entity_data).await.unwrap();
             
             // Connect within island only
             if i > 0 {
                 fragmented.add_relationship(
-                    (base + i) as u32,
-                    (base + i - 1) as u32,
-                    1,
+                    (base + i) as i32,
+                    (base + i - 1) as i32,
                     0.9
                 ).await.unwrap();
             }
@@ -284,15 +288,15 @@ async fn test_graph_health_assessment() {
     
     // Overconnected graph - too many connections
     println!("\n--- Overconnected Graph ---");
-    let overconnected = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let overconnected = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     
     // Add nodes
     for i in 0..50 {
-        let entity_data = EntityData {
-            name: format!("over_{}", i),
-            properties: "type:overconnected".to_string(),
-            embedding: vec![0.5; 128],
-        };
+        let entity_data = EntityData::new(
+            1,
+            format!(r#"{{"name": "over_{}", "type": "overconnected"}}"#, i),
+            vec![0.5; 96]
+        );
         overconnected.insert_brain_entity(i as u32, entity_data).await.unwrap();
     }
     
@@ -300,7 +304,7 @@ async fn test_graph_health_assessment() {
     for i in 0..50 {
         for j in 0..50 {
             if i != j && rand::random::<f32>() > 0.3 {
-                let _ = overconnected.add_relationship(i, j, 1, 0.5).await;
+                let _ = overconnected.add_relationship_with_type(i as i32, j as i32, 1, 0.5).await;
             }
         }
     }
@@ -334,7 +338,7 @@ async fn test_dynamic_analytics_over_time() {
                     let from = rand::random::<u32>() % 300;
                     let to = rand::random::<u32>() % 300;
                     if from != to {
-                        let _ = graph.add_relationship(from, to, 2, 0.7).await;
+                        let _ = graph.add_relationship_with_type(from as i32, to as i32, 2, 0.7).await;
                     }
                 }
             },
@@ -342,11 +346,13 @@ async fn test_dynamic_analytics_over_time() {
                 // Learning phase - create concepts
                 for i in 0..3 {
                     let start = i * 100;
-                    let entities: Vec<u32> = (start..start+30).step_by(3).collect();
+                    let entity_ids: Vec<u32> = (start..start+30).step_by(3).collect();
+                    let entities: Vec<EntityKey> = entity_ids.iter().map(|&id| {
+                        EntityKey::from_raw_parts(id as u64, 0)
+                    }).collect();
                     graph.create_concept_structure(
                         format!("epoch{}_concept{}", epoch, i),
-                        entities,
-                        0.85
+                        entities
                     ).await.unwrap();
                 }
                 
@@ -407,7 +413,7 @@ async fn test_centrality_and_importance_metrics() {
     println!("\n=== Centrality and Importance Metrics Test ===");
     
     // Create hub-and-spoke topology
-    let graph = BrainEnhancedKnowledgeGraph::new(128).unwrap();
+    let graph = BrainEnhancedKnowledgeGraph::new(96).unwrap();
     
     // Create hubs
     let num_hubs = 5;
@@ -416,25 +422,25 @@ async fn test_centrality_and_importance_metrics() {
     for hub in 0..num_hubs {
         // Hub node
         let hub_id = hub * (nodes_per_hub + 1);
-        let hub_data = EntityData {
-            name: format!("hub_{}", hub),
-            properties: format!("type:hub, importance:high"),
-            embedding: vec![1.0; 128],
-        };
+        let hub_data = EntityData::new(
+            1,
+            format!(r#"{{"name": "hub_{}", "type": "hub", "importance": "high"}}"#, hub),
+            vec![1.0; 96]
+        );
         graph.insert_brain_entity(0, hub_data).await.unwrap();
         
         // Spoke nodes
         for spoke in 1..=nodes_per_hub {
             let spoke_id = hub_id + spoke;
-            let spoke_data = EntityData {
-                name: format!("spoke_{}_{}", hub, spoke),
-                properties: format!("type:spoke, hub:{}", hub),
-                embedding: vec![0.5; 128],
-            };
-            graph.insert_brain_entity(i as u32 + 1, spoke_data).await.unwrap();
+            let spoke_data = EntityData::new(
+                2,
+                format!(r#"{{"name": "spoke_{}_{}", "type": "spoke", "hub": {}}}"#, hub, spoke, hub),
+                vec![0.5; 96]
+            );
+            graph.insert_brain_entity(spoke_id as u32 + 1, spoke_data).await.unwrap();
             
             // Connect spoke to hub
-            graph.add_relationship(spoke_id as u32, hub_id as u32, 1, 0.9).await.unwrap();
+            graph.add_relationship(spoke_id as i32, hub_id as i32, 0.9).await.unwrap();
         }
     }
     
@@ -443,7 +449,7 @@ async fn test_centrality_and_importance_metrics() {
         for j in i+1..num_hubs {
             let hub_i = i * (nodes_per_hub + 1);
             let hub_j = j * (nodes_per_hub + 1);
-            graph.add_relationship(hub_i as u32, hub_j as u32, 2, 0.8).await.unwrap();
+            graph.add_relationship_with_type(hub_i as i32, hub_j as i32, 2, 0.8).await.unwrap();
         }
     }
     
@@ -458,22 +464,25 @@ async fn test_centrality_and_importance_metrics() {
     // Analyze betweenness centrality
     println!("\nBetweenness Centrality Analysis:");
     
-    let mut centralities: Vec<(u32, f32)> = stats.betweenness_centrality.iter()
+    let mut centralities: Vec<(EntityKey, f32)> = stats.betweenness_centrality.iter()
         .map(|(&k, &v)| (k, v))
         .collect();
     centralities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
     
     println!("Top 10 nodes by betweenness centrality:");
     for (i, (node, centrality)) in centralities.iter().take(10).enumerate() {
-        let node_type = if *node % (nodes_per_hub + 1) as u32 == 0 { "hub" } else { "spoke" };
-        println!("  {}: Node {} ({}) - {:.4}", i+1, node, node_type, centrality);
+        // Extract a numeric ID for display - this is a simplified approach
+        let node_display = format!("{:?}", node);
+        let node_type = "node"; // Can't easily determine hub/spoke from EntityKey
+        println!("  {}: {} ({}) - {:.4}", i+1, node_display, node_type, centrality);
     }
     
     // Verify hubs have highest centrality
     let hub_centralities: Vec<f32> = (0..num_hubs)
         .map(|i| {
-            let hub_id = (i * (nodes_per_hub + 1)) as u32;
-            stats.betweenness_centrality.get(&hub_id).cloned().unwrap_or(0.0)
+            let hub_id = (i * (nodes_per_hub + 1)) as u64;
+            let hub_key = EntityKey::from_raw_parts(hub_id, 0);
+            stats.betweenness_centrality.get(&hub_key).cloned().unwrap_or(0.0)
         })
         .collect();
     
@@ -497,7 +506,7 @@ async fn test_activation_distribution_analysis() {
     
     // Test different activation patterns
     let patterns = vec![
-        ("uniform", Box::new(|_: usize| 0.5) as Box<dyn Fn(usize) -> f32>),
+        ("uniform", Box::new(|_: usize| 0.5f32) as Box<dyn Fn(usize) -> f32>),
         ("linear", Box::new(|i: usize| i as f32 / 1000.0)),
         ("exponential", Box::new(|i: usize| (-(i as f32) / 200.0).exp())),
         ("bimodal", Box::new(|i: usize| if i % 2 == 0 { 0.2 } else { 0.8 })),
@@ -512,7 +521,8 @@ async fn test_activation_distribution_analysis() {
         
         // Set activations according to pattern
         for i in 0..1000 {
-            graph.set_entity_activation(i as u32, pattern(i)).await;
+            let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+            graph.set_entity_activation(entity_key, pattern(i)).await;
         }
         
         // Get statistics
@@ -578,18 +588,21 @@ async fn test_performance_scaling_analytics() {
         
         // Add activation
         for i in 0..size {
-            graph.set_entity_activation(i as u32, rand::random()).await;
+            let entity_key = EntityKey::from_raw_parts(i as u64, 0);
+            graph.set_entity_activation(entity_key, rand::random()).await;
         }
         
         // Add some concepts
         for i in 0..10 {
             let concept_size = size / 20;
             let start = i * concept_size;
-            let entities: Vec<u32> = (start..start + concept_size).map(|e| e as u32).collect();
+            let entity_ids: Vec<u32> = (start..start + concept_size).map(|e| e as u32).collect();
+            let entities: Vec<EntityKey> = entity_ids.iter().map(|&id| {
+                EntityKey::from_raw_parts(id as u64, 0)
+            }).collect();
             graph.create_concept_structure(
                 format!("perf_concept_{}", i),
-                entities,
-                0.8
+                entities
             ).await.unwrap();
         }
         

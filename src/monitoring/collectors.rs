@@ -1,6 +1,6 @@
 /*!
-Phase 5.4: Metrics Collectors
-Specialized collectors for system metrics, application metrics, and custom metrics
+Phase 5.4: Enhanced Metrics Collectors
+Comprehensive collectors for system, application, codebase, runtime, API, and test metrics
 */
 
 use crate::monitoring::metrics::MetricRegistry;
@@ -8,6 +8,19 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use serde::{Serialize, Deserialize};
+
+// New enhanced collectors
+pub mod codebase_analyzer;
+pub mod runtime_profiler;
+pub mod api_endpoint_monitor;
+pub mod test_execution_tracker;
+pub mod knowledge_engine_metrics;
+
+pub use codebase_analyzer::{CodebaseAnalyzer, CodebaseMetrics};
+pub use runtime_profiler::{RuntimeProfiler, RuntimeMetrics, ExecutionTrace};
+pub use api_endpoint_monitor::{ApiEndpointMonitor, ApiMetrics, ApiEndpoint};
+pub use test_execution_tracker::{TestExecutionTracker, TestMetrics, TestSuite};
+pub use knowledge_engine_metrics::KnowledgeEngineMetricsCollector;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsCollectionConfig {
@@ -27,12 +40,35 @@ pub struct SystemMetricsConfig {
     pub collect_load: bool,
 }
 
+impl Default for SystemMetricsConfig {
+    fn default() -> Self {
+        Self {
+            collect_cpu: true,
+            collect_memory: true,
+            collect_disk: true,
+            collect_network: true,
+            collect_load: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApplicationMetricsConfig {
     pub collect_performance: bool,
     pub collect_operations: bool,
     pub collect_errors: bool,
     pub collect_resources: bool,
+}
+
+impl Default for ApplicationMetricsConfig {
+    fn default() -> Self {
+        Self {
+            collect_performance: true,
+            collect_operations: true,
+            collect_errors: true,
+            collect_resources: true,
+        }
+    }
 }
 
 impl Default for MetricsCollectionConfig {

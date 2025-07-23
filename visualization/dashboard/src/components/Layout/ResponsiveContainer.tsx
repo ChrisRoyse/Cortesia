@@ -78,7 +78,9 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   const breakpointConfig = breakpoints.find(bp => bp.name === activeBreakpoint) || breakpoints[0];
 
   const updateContainerSize = useCallback(() => {
-    if (!containerRef.current || !observeResize) return;
+    if (!containerRef.current || !observeResize) {
+      return;
+    }
 
     const rect = containerRef.current.getBoundingClientRect();
     let newWidth = rect.width;
@@ -114,6 +116,8 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
         resizeObserver.disconnect();
       };
     }
+
+    return undefined;
   }, [mounted, updateContainerSize, observeResize]);
 
   useEffect(() => {
@@ -190,7 +194,7 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
         </div>
       )}
       
-      <style jsx>{`
+      <style>{`
         .responsive-container {
           transition: padding 0.3s ease;
         }

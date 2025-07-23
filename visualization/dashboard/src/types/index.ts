@@ -7,6 +7,9 @@ export * from './cognitive';
 // Debugging types
 export * from './debugging';
 
+// Brain types
+export * from './brain';
+
 // Core LLMKG Dashboard Types
 export interface LLMKGData {
   cognitive: CognitiveData;

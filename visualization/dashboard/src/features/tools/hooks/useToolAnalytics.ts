@@ -409,4 +409,5 @@ function generateRecommendations(toolMetrics: Array<{ tool: any; metrics: any }>
   return recommendations;
 }
 
+export { useToolAnalytics };
 export default useToolAnalytics;

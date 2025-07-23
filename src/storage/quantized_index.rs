@@ -334,7 +334,7 @@ mod tests {
 
         // Insert an entity
         let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
-        index.insert(1, EntityKey::default(), embedding).unwrap();
+        index.insert(1, EntityKey::from_u32(1), embedding).unwrap();
         assert_eq!(index.len(), 1);
     }
 
@@ -359,7 +359,7 @@ mod tests {
         ];
 
         for (id, embedding) in entities {
-            index.insert(id, EntityKey::default(), embedding).unwrap();
+            index.insert(id, EntityKey::from_u32(id), embedding).unwrap();
         }
 
         // Search for similar vectors
@@ -387,7 +387,7 @@ mod tests {
         // Insert entities
         for i in 0..100 {
             let embedding: Vec<f32> = (0..96).map(|j| ((i + j) as f32) / 100.0).collect();
-            index.insert(i as u32, EntityKey::default(), embedding).unwrap();
+            index.insert(i as u32, EntityKey::from_u32(i as u32), embedding).unwrap();
         }
 
         let stats = index.memory_usage();

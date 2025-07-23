@@ -274,7 +274,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
       
       {isResizable && handles.map(renderHandle)}
       
-      <style jsx>{`
+      <style>{`
         .resizable-panel {
           border: 1px solid #ddd;
           border-radius: 8px;

@@ -291,4 +291,5 @@ const ToolTester: React.FC<ToolTesterProps> = ({ toolId, onClose }) => {
   );
 };
 
+export { ToolTester };
 export default ToolTester;

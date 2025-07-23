@@ -19,7 +19,7 @@ async fn test_triple_knowledge_engine_integration() {
     // Create knowledge engine
     let temp_dir = tempfile::tempdir().unwrap();
     let engine = Arc::new(tokio::sync::RwLock::new(
-        KnowledgeEngine::new(temp_dir.path().to_path_buf()).await.unwrap()
+        KnowledgeEngine::new(128, 10000).unwrap()
     ));
 
     // Create test triples
@@ -46,7 +46,13 @@ async fn test_triple_knowledge_engine_integration() {
                 node.embedding.clone()
             );
             
-            let entity_key = engine_write.add_entity(entity_data).await.unwrap();
+            let entity_id = engine_write.store_entity(
+                format!("triple_{}", stored_nodes.len()),
+                "triple".to_string(),
+                format!("{:?}", triple),
+                HashMap::new()
+            ).unwrap();
+            let entity_key = EntityKey::from_raw_parts(stored_nodes.len() as u64, 0);
             stored_nodes.push((entity_key, node));
         }
     }
@@ -112,7 +118,7 @@ async fn test_knowledge_representation_workflow() {
     // Create a complete knowledge representation system
     let temp_dir = tempfile::tempdir().unwrap();
     let engine = Arc::new(tokio::sync::RwLock::new(
-        KnowledgeEngine::new(temp_dir.path().to_path_buf()).await.unwrap()
+        KnowledgeEngine::new(128, 10000).unwrap()
     ));
 
     // Test different node types
@@ -178,12 +184,18 @@ async fn test_knowledge_representation_workflow() {
                     NodeType::Chunk => 2,
                     NodeType::Entity => 3,
                     NodeType::Relationship => 4,
+                    NodeType::Concept => 5,
                 },
                 serde_json::to_string(&node).unwrap(),
                 node.embedding.clone()
             );
             
-            engine_write.add_entity(entity_data).await.unwrap();
+            engine_write.store_entity(
+                format!("test_entity_{}", 1),
+                "test".to_string(),
+                "test description".to_string(),
+                HashMap::new()
+            ).unwrap();
         }
     }
 
@@ -339,7 +351,7 @@ async fn test_complete_knowledge_workflow() {
     // Test complete workflow: extraction -> storage -> retrieval -> query
     let temp_dir = tempfile::tempdir().unwrap();
     let engine = Arc::new(tokio::sync::RwLock::new(
-        KnowledgeEngine::new(temp_dir.path().to_path_buf()).await.unwrap()
+        KnowledgeEngine::new(128, 10000).unwrap()
     ));
 
     // Simulate document processing
@@ -421,7 +433,12 @@ async fn test_complete_knowledge_workflow() {
                 chunk.embedding.clone()
             );
             
-            engine_write.add_entity(entity_data).await.unwrap();
+            engine_write.store_entity(
+                format!("chunk_{}", doc_id),
+                "chunk".to_string(),
+                "chunk description".to_string(),
+                HashMap::new()
+            ).unwrap();
         }
         
         // Store individual triples
@@ -433,7 +450,12 @@ async fn test_complete_knowledge_workflow() {
                 node.embedding.clone()
             );
             
-            engine_write.add_entity(entity_data).await.unwrap();
+            engine_write.store_entity(
+                format!("triple_{}", triple.subject),
+                "triple".to_string(),
+                "triple description".to_string(),
+                HashMap::new()
+            ).unwrap();
         }
     }
 

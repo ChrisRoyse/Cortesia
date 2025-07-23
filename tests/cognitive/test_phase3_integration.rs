@@ -31,7 +31,7 @@ use super::test_utils::{
 
 /// Creates a test Phase3 system with default configuration
 async fn create_test_phase3_system() -> Result<Phase3IntegratedCognitiveSystem> {
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64)?);
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test()?);
     let orchestrator = Arc::new(
         CognitiveOrchestrator::new(graph.clone(), CognitiveOrchestratorConfig::default()).await?
     );
@@ -69,7 +69,7 @@ async fn populate_test_graph(system: &Phase3IntegratedCognitiveSystem) -> Result
     ];
 
     for (name, description) in test_entities {
-        let _ = system.brain_graph.add_entity(EntityData::new(1, description.to_string(), vec![0.0; 128])).await?;
+        let _ = system.brain_graph.add_entity(EntityData::new(1, description.to_string(), vec![0.0; 96])).await?;
     }
 
     // Add some relationships

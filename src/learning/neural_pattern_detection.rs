@@ -4,8 +4,6 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::learning::types::ActivationEvent;
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::error::Result;
-use crate::cognitive::types::CognitivePatternType;
-use crate::learning::types::ActivationContext;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -542,7 +540,7 @@ impl PatternDetector for ActivationPatternDetector {
                         format!("concept_{}", key_data.as_ffi())
                     },
                     properties: HashMap::new(),
-                    embedding: vec![0.0; 128],
+                    embedding: vec![0.0; 96],
                     activation_state: 0.5,
                     direction: crate::core::brain_types::EntityDirection::Input,
                     last_activation: SystemTime::now(),
@@ -856,6 +854,8 @@ mod tests {
     use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
     use crate::neural::neural_server::NeuralProcessingServer;
     use crate::core::types::EntityKey;
+    use crate::learning::types::ActivationContext;
+    use crate::cognitive::types::CognitivePatternType;
     use std::time::{Duration, SystemTime};
     use uuid::Uuid;
 

@@ -325,10 +325,12 @@ async fn test_critical_thinking_execute_critical_analysis_workflow() -> Result<(
     
     // Test various resolution strategies are possible
     match result.resolution_strategy {
+        ResolutionStrategy::PreferLocal => {},
         ResolutionStrategy::PreferTrusted => {},
+        ResolutionStrategy::WeightedAverage => {},
+        ResolutionStrategy::ExpertSystem => {},
         ResolutionStrategy::PreferHigherConfidence => {},
         ResolutionStrategy::LogicalPriority => {},
-        ResolutionStrategy::ConsensusBased => {},
     }
     
     Ok(())

@@ -605,4 +605,5 @@ const StatusDashboard: React.FC<StatusDashboardProps> = ({
   );
 };
 
+export { StatusDashboard };
 export default StatusDashboard;

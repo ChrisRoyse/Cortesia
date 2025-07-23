@@ -29,13 +29,9 @@ impl KnowledgeGraph {
         if edge_buffer.len() > 1000 {
             drop(edge_buffer);
             self.flush_edge_buffer()?;
-        } else {
-            // Also add directly to CSR graph for immediate queries
-            if let (Some(from_id), Some(to_id)) = (self.get_entity_id(relationship.from), self.get_entity_id(relationship.to)) {
-                let mut graph = self.graph.write();
-                graph.add_edge(from_id, to_id, relationship.weight)?;
-            }
         }
+        // Note: CSR graph doesn't support dynamic edge insertion
+        // All relationships are stored in edge_buffer and accessed via get_neighbors()
         
         Ok(())
     }
@@ -72,13 +68,8 @@ impl KnowledgeGraph {
         let mut edge_buffer = self.edge_buffer.write();
         edge_buffer.extend(relationships.clone());
         
-        // Add to CSR graph
-        let mut graph = self.graph.write();
-        for relationship in relationships {
-            if let (Some(from_id), Some(to_id)) = (self.get_entity_id(relationship.from), self.get_entity_id(relationship.to)) {
-                graph.add_edge(from_id, to_id, relationship.weight)?;
-            }
-        }
+        // Note: CSR graph doesn't support dynamic edge insertion
+        // All relationships are stored in edge_buffer and accessed via get_neighbors()
         
         Ok(())
     }
@@ -295,17 +286,14 @@ impl KnowledgeGraph {
     pub fn remove_relationship(&self, from: EntityKey, to: EntityKey) -> Result<bool> {
         let mut removed = false;
         
-        // Convert EntityKeys to IDs
-        let from_id = self.get_entity_id(from)
+        // Validate that entities exist
+        let _from_id = self.get_entity_id(from)
             .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
-        let to_id = self.get_entity_id(to)
+        let _to_id = self.get_entity_id(to)
             .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
         
-        // Remove from main graph
-        let mut graph = self.graph.write();
-        // CSRGraph doesn't support dynamic removal, so this will always fail
-        // We'll catch the error and just rely on edge buffer removal
-        let _ = graph.remove_edge(from_id, to_id);
+        // Note: CSRGraph doesn't support dynamic removal
+        // All dynamic relationships are managed via edge_buffer
         
         // Remove from edge buffer
         let mut edge_buffer = self.edge_buffer.write();
@@ -327,17 +315,14 @@ impl KnowledgeGraph {
         
         let mut updated = false;
         
-        // Convert EntityKeys to IDs
-        let from_id = self.get_entity_id(from)
+        // Validate that entities exist
+        let _from_id = self.get_entity_id(from)
             .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
-        let to_id = self.get_entity_id(to)
+        let _to_id = self.get_entity_id(to)
             .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
         
-        // Update in main graph
-        let mut graph = self.graph.write();
-        // CSRGraph doesn't support dynamic weight updates, so this will always fail
-        // We'll catch the error and just rely on edge buffer updates
-        let _ = graph.update_edge_weight(from_id, to_id, new_weight);
+        // Note: CSRGraph doesn't support dynamic weight updates
+        // All dynamic relationships are managed via edge_buffer
         
         // Update in edge buffer
         let mut edge_buffer = self.edge_buffer.write();
@@ -445,6 +430,37 @@ impl KnowledgeGraph {
         }
         
         visited.len() == entity_keys.len()
+    }
+
+    /// Get all relationships in the graph
+    pub fn get_all_relationships(&self) -> Vec<Relationship> {
+        let mut relationships = Vec::new();
+        
+        // Get all relationships from CSRGraph
+        let graph = self.graph.read();
+        let entity_map = self.entity_id_map.read();
+        
+        // Iterate through all entities and their outgoing edges
+        for (&entity_id, &entity_key) in entity_map.iter() {
+            let neighbor_ids = graph.get_neighbors(entity_id);
+            
+            for &neighbor_id in neighbor_ids {
+                if let Some(neighbor_key) = self.get_entity_key(neighbor_id) {
+                    relationships.push(Relationship {
+                        from: entity_key,
+                        to: neighbor_key,
+                        rel_type: 0, // Default type
+                        weight: graph.get_edge_weight(entity_id, neighbor_id).unwrap_or(1.0),
+                    });
+                }
+            }
+        }
+        
+        // Also include relationships from edge buffer
+        let edge_buffer = self.edge_buffer.read();
+        relationships.extend(edge_buffer.iter().cloned());
+        
+        relationships
     }
 }
 

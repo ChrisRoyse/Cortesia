@@ -29,7 +29,7 @@ interface CognitivePatternDashboardProps {
 }
 
 export const CognitivePatternDashboard: React.FC<CognitivePatternDashboardProps> = ({ 
-  wsUrl = 'ws://localhost:8080', 
+  wsUrl = 'ws://localhost:8081', 
   className = '' 
 }) => {
   const [activeTab, setActiveTab] = useState('overview');

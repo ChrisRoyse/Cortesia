@@ -7,6 +7,8 @@ use crate::cognitive::{
     CriticalThinking, AbstractThinking, AdaptiveThinking,
 };
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use crate::monitoring::collectors::runtime_profiler::RuntimeProfiler;
+use crate::trace_function;
 // Neural server dependency removed - using pure graph operations
 use crate::monitoring::performance::{PerformanceMonitor, Operation};
 use crate::error::{Result, GraphError};
@@ -18,6 +20,7 @@ pub struct CognitiveOrchestrator {
     performance_monitor: Arc<PerformanceMonitor>,
     brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
     config: CognitiveOrchestratorConfig,
+    runtime_profiler: Option<Arc<RuntimeProfiler>>,
 }
 
 impl std::fmt::Debug for CognitiveOrchestrator {
@@ -107,7 +110,13 @@ impl CognitiveOrchestrator {
             performance_monitor,
             brain_graph,
             config,
+            runtime_profiler: None,
         })
+    }
+    
+    /// Set runtime profiler for function tracing
+    pub fn set_runtime_profiler(&mut self, profiler: Arc<RuntimeProfiler>) {
+        self.runtime_profiler = Some(profiler);
     }
     
     /// Main reasoning entry point
@@ -117,6 +126,12 @@ impl CognitiveOrchestrator {
         context: Option<&str>,
         strategy: ReasoningStrategy,
     ) -> Result<ReasoningResult> {
+        let _trace = if let Some(profiler) = &self.runtime_profiler {
+            Some(trace_function!(profiler, "cognitive_reason", query.len(), context.map(|c| c.len()).unwrap_or(0)))
+        } else {
+            None
+        };
+        
         let start_time = std::time::Instant::now();
         
         let result = match strategy.clone() {

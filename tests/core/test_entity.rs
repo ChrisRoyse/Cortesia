@@ -16,7 +16,7 @@ fn create_test_keys(count: usize) -> Vec<EntityKey> {
         let key = sm.insert(EntityData::new(
             (i % 100) as u16,
             format!("test_entity_{}", i),
-            vec![0.0; 64]
+            vec![0.0; 96]
         ));
         keys.push(key);
     }
@@ -26,7 +26,7 @@ fn create_test_keys(count: usize) -> Vec<EntityKey> {
 
 /// Helper to create test entity data
 fn create_test_entity_data(type_id: u16, properties: &str) -> EntityData {
-    EntityData::new(type_id, properties.to_string(), vec![0.0; 64])
+    EntityData::new(type_id, properties.to_string(), vec![0.0; 96])
 }
 
 // ===== ENTITY LIFECYCLE INTEGRATION TESTS =====
@@ -478,12 +478,16 @@ fn test_edge_cases_property_sizes() {
     let keys = create_test_keys(5);
     
     // Test various property sizes
+    let test_case_1kb = "x".repeat(1000);
+    let test_case_10kb = "y".repeat(10000);
+    let test_case_100kb = "z".repeat(100000);
+    
     let test_cases = vec![
         "",                                    // Empty
         "a",                                   // Single char
-        "x".repeat(1000).as_str(),           // 1KB
-        "y".repeat(10000).as_str(),          // 10KB  
-        "z".repeat(100000).as_str(),         // 100KB
+        test_case_1kb.as_str(),               // 1KB
+        test_case_10kb.as_str(),              // 10KB  
+        test_case_100kb.as_str(),             // 100KB
     ];
     
     for (i, (key, props)) in keys.iter().zip(test_cases.iter()).enumerate() {
@@ -867,7 +871,7 @@ fn test_integration_with_slotmap_keys() {
         let data = EntityData::new(
             i,
             format!("slotmap_entity_{}", i),
-            vec![i as f32; 32]
+            vec![i as f32; 96]
         );
         
         let key = sm.insert(data.clone());

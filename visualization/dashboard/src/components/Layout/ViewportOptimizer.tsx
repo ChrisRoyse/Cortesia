@@ -200,15 +200,15 @@ export const ViewportOptimizer: React.FC<ViewportOptimizerProps> = ({
   }, [updatePerformanceMetrics]);
 
   // Observe elements for lazy loading
-  const observeElement = useCallback((element: Element) => {
-    if (observerRef.current && enableLazyLoading) {
+  const observeElement = useCallback((element: HTMLDivElement | null) => {
+    if (element && observerRef.current && enableLazyLoading) {
       observerRef.current.observe(element);
     }
   }, [enableLazyLoading]);
 
   // Unobserve elements
-  const unobserveElement = useCallback((element: Element) => {
-    if (observerRef.current && enableLazyLoading) {
+  const unobserveElement = useCallback((element: HTMLDivElement | null) => {
+    if (element && observerRef.current && enableLazyLoading) {
       observerRef.current.unobserve(element);
     }
   }, [enableLazyLoading]);
@@ -321,7 +321,7 @@ export const ViewportOptimizer: React.FC<ViewportOptimizerProps> = ({
       onScroll={handleScroll}
     >
       {/* Performance indicator (development only) */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div 
           style={{
             position: 'absolute',
@@ -368,7 +368,7 @@ export const ViewportOptimizer: React.FC<ViewportOptimizerProps> = ({
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .viewport-optimizer {
           contain: layout style paint;
         }

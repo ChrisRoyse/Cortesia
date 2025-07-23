@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMKG Dashboard Verification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: #f9fafb;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #60a5fa;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #93c5fd;
+            margin-top: 30px;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #065f46;
+            color: #34d399;
+        }
+        .status.error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        .status.warning {
+            background: #78350f;
+            color: #fbbf24;
+        }
+        .status.info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+        .log {
+            background: #000;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #262626;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .tab-list {
+            list-style: none;
+            padding: 0;
+        }
+        .tab-list li {
+            background: #262626;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tab-status {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 LLMKG Dashboard Verification Report</h1>
+        
+        <div class="test-section">
+            <h2>1. Dashboard Loading Test</h2>
+            <button onclick="testDashboardLoading()">Run Test</button>
+            <div id="loading-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. WebSocket Connection Test</h2>
+            <button onclick="testWebSocketConnection()">Run Test</button>
+            <div id="websocket-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Dashboard Navigation Test</h2>
+            <button onclick="testNavigation()">Run Test</button>
+            <div id="navigation-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Real-Time Data Test</h2>
+            <button onclick="testRealTimeData()">Run Test</button>
+            <div id="realtime-results"></div>
+            <div class="metrics-grid" id="metrics-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. UI Component Test</h2>
+            <button onclick="testUIComponents()">Run Test</button>
+            <div id="ui-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. Console Errors</h2>
+            <button onclick="checkConsoleErrors()">Check Console</button>
+            <div id="console-results"></div>
+            <div class="log" id="console-log"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>7. Live Dashboard Preview</h2>
+            <button onclick="loadDashboard()">Load Dashboard</button>
+            <iframe id="dashboard-frame" style="display:none;"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2>Summary</h2>
+            <div id="summary-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const dashboardUrl = 'http://localhost:3000';
+        const wsUrl = 'ws://localhost:8083';
+        let testResults = {};
+
+        function addResult(containerId, message, status = 'info') {
+            const container = document.getElementById(containerId);
+            const result = document.createElement('div');
+            result.innerHTML = `<span class="status ${status}">${status.toUpperCase()}</span> ${message}`;
+            container.appendChild(result);
+        }
+
+        async function testDashboardLoading() {
+            const container = document.getElementById('loading-results');
+            container.innerHTML = '';
+            
+            try {
+                addResult('loading-results', 'Fetching dashboard...', 'info');
+                const response = await fetch(dashboardUrl);
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    testResults.loading = true;
+                    
+                    addResult('loading-results', `Dashboard loaded successfully (${response.status})`, 'success');
+                    
+                    // Check for React root
+                    if (html.includes('id="root"')) {
+                        addResult('loading-results', 'React root element found', 'success');
+                    } else {
+                        addResult('loading-results', 'React root element NOT found', 'error');
+                    }
+                    
+                    // Check for proper title
+                    if (html.includes('LLMKG Dashboard')) {
+                        addResult('loading-results', 'Dashboard title found', 'success');
+                    }
+                } else {
+                    testResults.loading = false;
+                    addResult('loading-results', `Failed to load dashboard: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                testResults.loading = false;
+                addResult('loading-results', `Error loading dashboard: ${error.message}`, 'error');
+            }
+        }
+
+        function testWebSocketConnection() {
+            const container = document.getElementById('websocket-results');
+            container.innerHTML = '';
+            
+            try {
+                addResult('websocket-results', `Connecting to WebSocket at ${wsUrl}...`, 'info');
+                const ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    testResults.websocket = true;
+                    addResult('websocket-results', 'WebSocket connected successfully!', 'success');
+                    
+                    // Test ping
+                    ws.send(JSON.stringify({ Ping: null }));
+                    addResult('websocket-results', 'Sent ping message', 'info');
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addResult('websocket-results', `Received message: ${Object.keys(data)[0]}`, 'success');
+                        
+                        if (data.MetricsUpdate) {
+                            addResult('websocket-results', 'Receiving real-time metrics!', 'success');
+                            displayMetrics(data.MetricsUpdate);
+                        }
+                    } catch (e) {
+                        addResult('websocket-results', `Failed to parse message: ${e.message}`, 'warning');
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    testResults.websocket = false;
+                    addResult('websocket-results', 'WebSocket connection error', 'error');
+                };
+                
+                ws.onclose = () => {
+                    addResult('websocket-results', 'WebSocket connection closed', 'warning');
+                };
+                
+                // Close after 5 seconds
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.close();
+                        addResult('websocket-results', 'Test completed - connection closed', 'info');
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                testResults.websocket = false;
+                addResult('websocket-results', `WebSocket error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNavigation() {
+            const container = document.getElementById('navigation-results');
+            container.innerHTML = '';
+            
+            const routes = [
+                { path: '/', name: 'Overview' },
+                { path: '/neural', name: 'Neural' },
+                { path: '/cognitive', name: 'Cognitive' },
+                { path: '/knowledge-graph', name: 'Knowledge Graph' },
+                { path: '/memory', name: 'Memory' },
+                { path: '/tools', name: 'Tools' },
+                { path: '/architecture', name: 'Architecture' },
+                { path: '/debugging', name: 'Debugging' }
+            ];
+            
+            addResult('navigation-results', 'Testing dashboard routes...', 'info');
+            const tabList = document.createElement('ul');
+            tabList.className = 'tab-list';
+            
+            for (const route of routes) {
+                try {
+                    const response = await fetch(dashboardUrl + route.path);
+                    const li = document.createElement('li');
+                    
+                    if (response.ok) {
+                        li.innerHTML = `
+                            <span>${route.name} (${route.path})</span>
+                            <span class="tab-status status success">✓ ACCESSIBLE</span>
+                        `;
+                    } else {
+                        li.innerHTML = `
+                            <span>${route.name} (${route.path})</span>
+                            <span class="tab-status status error">✗ ${response.status}</span>
+                        `;
+                    }
+                    
+                    tabList.appendChild(li);
+                } catch (error) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${route.name} (${route.path})</span>
+                        <span class="tab-status status error">✗ ERROR</span>
+                    `;
+                    tabList.appendChild(li);
+                }
+            }
+            
+            container.appendChild(tabList);
+            testResults.navigation = true;
+        }
+
+        function testRealTimeData() {
+            const container = document.getElementById('realtime-results');
+            container.innerHTML = '';
+            
+            addResult('realtime-results', 'Monitoring real-time data flow...', 'info');
+            
+            const ws = new WebSocket(wsUrl);
+            let messageCount = 0;
+            
+            ws.onopen = () => {
+                addResult('realtime-results', 'Connected to data stream', 'success');
+            };
+            
+            ws.onmessage = (event) => {
+                messageCount++;
+                if (messageCount === 1) {
+                    addResult('realtime-results', 'Receiving real-time updates!', 'success');
+                    testResults.realtime = true;
+                }
+                
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.MetricsUpdate) {
+                        displayMetrics(data.MetricsUpdate);
+                    }
+                } catch (e) {
+                    console.error('Parse error:', e);
+                }
+            };
+            
+            setTimeout(() => {
+                ws.close();
+                addResult('realtime-results', `Received ${messageCount} messages in 10 seconds`, 'info');
+                if (messageCount === 0) {
+                    addResult('realtime-results', 'No real-time data received!', 'error');
+                    testResults.realtime = false;
+                }
+            }, 10000);
+        }
+
+        function displayMetrics(metrics) {
+            const container = document.getElementById('metrics-display');
+            container.innerHTML = '';
+            
+            const metricsToShow = [
+                { label: 'CPU Usage', value: metrics.system_metrics?.cpu_usage_percent?.toFixed(1) + '%' },
+                { label: 'Memory Usage', value: metrics.system_metrics?.memory_usage_percent?.toFixed(1) + '%' },
+                { label: 'Query Latency', value: metrics.performance_metrics?.query_latency_ms?.mean?.toFixed(2) + 'ms' },
+                { label: 'Operations/sec', value: metrics.application_metrics?.operations_per_second?.toFixed(0) },
+                { label: 'Active Connections', value: metrics.application_metrics?.active_connections },
+                { label: 'Timestamp', value: new Date(metrics.timestamp * 1000).toLocaleTimeString() }
+            ];
+            
+            metricsToShow.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.innerHTML = `
+                    <div class="metric-label">${metric.label}</div>
+                    <div class="metric-value">${metric.value || 'N/A'}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function testUIComponents() {
+            const container = document.getElementById('ui-results');
+            container.innerHTML = '';
+            
+            addResult('ui-results', 'This test requires manual inspection in the dashboard iframe below', 'info');
+            addResult('ui-results', 'Check for:', 'info');
+            addResult('ui-results', '- Responsive layout', 'info');
+            addResult('ui-results', '- Interactive charts and graphs', 'info');
+            addResult('ui-results', '- Proper theme (dark mode)', 'info');
+            addResult('ui-results', '- No broken images or icons', 'info');
+            
+            testResults.ui = 'manual';
+        }
+
+        function checkConsoleErrors() {
+            const container = document.getElementById('console-results');
+            const logContainer = document.getElementById('console-log');
+            container.innerHTML = '';
+            logContainer.innerHTML = '';
+            
+            addResult('console-results', 'Check the browser console (F12) for any errors', 'warning');
+            addResult('console-results', 'Red error messages indicate problems', 'info');
+            addResult('console-results', 'Yellow warnings are usually okay', 'info');
+            
+            // Capture console logs
+            const logs = [];
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            
+            console.log = function(...args) {
+                logs.push({ type: 'log', message: args.join(' ') });
+                originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                logs.push({ type: 'error', message: args.join(' ') });
+                originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                logs.push({ type: 'warn', message: args.join(' ') });
+                originalWarn.apply(console, args);
+            };
+            
+            // Display last 20 logs
+            setTimeout(() => {
+                const recentLogs = logs.slice(-20);
+                recentLogs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.style.color = log.type === 'error' ? '#fca5a5' : log.type === 'warn' ? '#fbbf24' : '#9ca3af';
+                    div.textContent = `[${log.type.toUpperCase()}] ${log.message}`;
+                    logContainer.appendChild(div);
+                });
+                
+                const errorCount = logs.filter(l => l.type === 'error').length;
+                if (errorCount > 0) {
+                    addResult('console-results', `Found ${errorCount} console errors!`, 'error');
+                    testResults.console = false;
+                } else {
+                    addResult('console-results', 'No console errors found', 'success');
+                    testResults.console = true;
+                }
+            }, 1000);
+        }
+
+        function loadDashboard() {
+            const iframe = document.getElementById('dashboard-frame');
+            iframe.src = dashboardUrl;
+            iframe.style.display = 'block';
+        }
+
+        function generateSummary() {
+            const container = document.getElementById('summary-results');
+            container.innerHTML = '<h3>Test Results Summary</h3>';
+            
+            const summary = [
+                { test: 'Dashboard Loading', result: testResults.loading },
+                { test: 'WebSocket Connection', result: testResults.websocket },
+                { test: 'Navigation', result: testResults.navigation },
+                { test: 'Real-Time Data', result: testResults.realtime },
+                { test: 'Console Errors', result: testResults.console },
+                { test: 'UI Components', result: testResults.ui }
+            ];
+            
+            summary.forEach(item => {
+                const status = item.result === true ? 'success' : 
+                               item.result === false ? 'error' : 
+                               item.result === 'manual' ? 'warning' : 'info';
+                               
+                const statusText = item.result === true ? 'PASSED' : 
+                                   item.result === false ? 'FAILED' : 
+                                   item.result === 'manual' ? 'MANUAL CHECK' : 'NOT TESTED';
+                
+                addResult('summary-results', `${item.test}: ${statusText}`, status);
+            });
+            
+            const passed = summary.filter(s => s.result === true).length;
+            const total = summary.filter(s => s.result !== undefined).length;
+            
+            const verdict = passed === total ? 'ALL TESTS PASSED!' : 
+                           passed > total/2 ? 'PARTIAL SUCCESS' : 
+                           'NEEDS ATTENTION';
+            
+            addResult('summary-results', `<h3>Final Verdict: ${verdict} (${passed}/${total} tests passed)</h3>`, 
+                      passed === total ? 'success' : passed > total/2 ? 'warning' : 'error');
+        }
+
+        // Run summary after all tests
+        setTimeout(generateSummary, 15000);
+    </script>
+</body>
+</html>

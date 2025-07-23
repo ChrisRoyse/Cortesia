@@ -26,7 +26,7 @@ fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
         let key = sm.insert(EntityData::new(
             1,
             format!("perf_test_entity_{}", i),
-            vec![0.0; 64],
+            vec![0.0; 96],
         ));
         keys.push(key);
     }
@@ -39,7 +39,7 @@ fn create_entity_data(type_id: u16, name: &str, description: &str) -> EntityData
     EntityData::new(
         type_id,
         format!("{}: {}", name, description),
-        vec![0.0; 64]
+        vec![0.0; 96]
     )
 }
 
@@ -47,7 +47,7 @@ fn create_entity_data(type_id: u16, name: &str, description: &str) -> EntityData
 fn create_entity_key(name: &str) -> EntityKey {
     use slotmap::SlotMap;
     let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
-    sm.insert(EntityData::new(1, name.to_string(), vec![0.0; 64]))
+    sm.insert(EntityData::new(1, name.to_string(), vec![0.0; 96]))
 }
 
 /// Creates a memory item for performance tests
@@ -102,7 +102,7 @@ impl PerformanceTimer {
 
 /// Creates a test graph with realistic size for performance testing
 fn create_performance_test_graph() -> Arc<BrainEnhancedKnowledgeGraph> {
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     // Note: In a real scenario, the graph would be populated with entities
     // For performance testing, we can use the graph even if it's mostly empty
@@ -2488,7 +2488,7 @@ async fn test_abstract_thinking_meta_analysis_performance() {
 
 /// Creates a test inhibitory system for performance testing
 async fn create_test_inhibitory_system() -> llmkg::cognitive::inhibitory::CompetitiveInhibitionSystem {
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(64).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     let activation_engine = Arc::new(ActivationPropagationEngine::new(Default::default()));
     let critical_thinking = Arc::new(llmkg::cognitive::critical::CriticalThinking::new(graph));
     
@@ -2823,7 +2823,7 @@ async fn test_unified_memory_coordination_performance() {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     let unified_memory = llmkg::cognitive::memory_integration::UnifiedMemorySystem::new(
         working_memory, sdr_storage, graph
@@ -2852,7 +2852,7 @@ async fn test_cross_backend_retrieval_performance() {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     let unified_memory = llmkg::cognitive::memory_integration::UnifiedMemorySystem::new(
         working_memory, sdr_storage, graph
@@ -2885,7 +2885,7 @@ async fn test_memory_consolidation_performance() {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     let unified_memory = llmkg::cognitive::memory_integration::UnifiedMemorySystem::new(
         working_memory, sdr_storage, graph
@@ -2929,7 +2929,7 @@ async fn test_unified_memory_optimization_performance() {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     let unified_memory = llmkg::cognitive::memory_integration::UnifiedMemorySystem::new(
         working_memory, sdr_storage, graph
@@ -2967,7 +2967,7 @@ async fn test_concurrent_unified_memory_performance() {
     let working_memory = Arc::new(
         WorkingMemorySystem::new(activation_engine, sdr_storage.clone()).await.unwrap()
     );
-    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new(128).unwrap());
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().unwrap());
     
     let unified_memory = Arc::new(llmkg::cognitive::memory_integration::UnifiedMemorySystem::new(
         working_memory, sdr_storage, graph
