@@ -14,6 +14,8 @@ export default defineConfig({
       '@pages': path.resolve(__dirname, './src/pages'),
       '@types': path.resolve(__dirname, './src/types'),
       '@utils': path.resolve(__dirname, './src/utils'),
+      '@services': path.resolve(__dirname, './src/services'),
+      '@providers': path.resolve(__dirname, './src/providers'),
     },
   },
   server: {
@@ -39,9 +41,12 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          visualization: ['d3', 'three', '@react-three/fiber', '@react-three/drei'],
-          ui: ['@mui/material', '@mui/icons-material'],
-          charts: ['recharts', '@mui/x-charts'],
+          antd: ['antd', '@ant-design/icons'],
+          three: ['three', '@react-three/fiber', '@react-three/drei'],
+          d3: ['d3'],
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          mui: ['@mui/material', '@mui/icons-material'],
+          utils: ['framer-motion', 'uuid', 'rxjs'],
         },
       },
     },

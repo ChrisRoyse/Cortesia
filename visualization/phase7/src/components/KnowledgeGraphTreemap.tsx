@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import * as d3 from 'd3';
-import { KnowledgeGraphMemory, MemoryBlock } from '../types/memory';
+import { KnowledgeGraphMemory, MemoryBlock, HierarchicalMemoryData } from '../types/memory';
 
 interface KnowledgeGraphTreemapProps {
   memory: KnowledgeGraphMemory;
@@ -17,15 +17,17 @@ export function KnowledgeGraphTreemap({
 }: KnowledgeGraphTreemapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const hierarchicalData = useMemo(() => {
+  const hierarchicalData = useMemo((): HierarchicalMemoryData => {
     return {
       name: 'Knowledge Graph',
+      size: 0,
+      value: Object.values(memory).reduce((sum, block) => sum + block.size, 0),
       children: [
-        { ...memory.entities, name: 'Entities' },
-        { ...memory.relations, name: 'Relations' },
-        { ...memory.embeddings, name: 'Embeddings' },
-        { ...memory.indexes, name: 'Indexes' },
-        { ...memory.cache, name: 'Cache' }
+        { name: 'Entities', size: memory.entities.size, value: memory.entities.size },
+        { name: 'Relations', size: memory.relations.size, value: memory.relations.size },
+        { name: 'Embeddings', size: memory.embeddings.size, value: memory.embeddings.size },
+        { name: 'Indexes', size: memory.indexes.size, value: memory.indexes.size },
+        { name: 'Cache', size: memory.cache.size, value: memory.cache.size }
       ]
     };
   }, [memory]);
@@ -37,7 +39,7 @@ export function KnowledgeGraphTreemap({
     svg.selectAll('*').remove();
 
     const root = d3.hierarchy(hierarchicalData)
-      .sum(d => d.size || 0)
+      .sum(d => d.value || d.size || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     const treemap = d3.treemap<any>()
@@ -47,6 +49,8 @@ export function KnowledgeGraphTreemap({
 
     treemap(root);
 
+    type TreemapNode = d3.HierarchyRectangularNode<any>;
+
     const colorScale = d3.scaleOrdinal()
       .domain(['Entities', 'Relations', 'Embeddings', 'Indexes', 'Cache'])
       .range(['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']);
@@ -54,7 +58,7 @@ export function KnowledgeGraphTreemap({
     const g = svg.append('g');
 
     const cells = g.selectAll('g')
-      .data(root.leaves())
+      .data(root.leaves() as TreemapNode[])
       .join('g')
       .attr('transform', d => `translate(${d.x0},${d.y0})`);
 

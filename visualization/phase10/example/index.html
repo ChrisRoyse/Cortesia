@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMKG Visualization System - Phase 10 Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 800px;
+            margin: 20px;
+        }
+        
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .phase-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .feature {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .feature-description {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .demo-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .demo-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .integration-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .status-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        
+        .status-icon.completed {
+            color: #22c55e;
+        }
+        
+        .status-icon.active {
+            color: #667eea;
+        }
+        
+        .status-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .status-description {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        .cta-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="logo">🧠</div>
+        <h1 class="title">LLMKG Visualization System</h1>
+        <p class="subtitle">Brain-Inspired Cognitive Architecture Visualization Platform</p>
+        <div class="phase-badge">Phase 10: Unified Integration System</div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Unified Dashboard</div>
+                <div class="feature-description">Cross-phase navigation with integrated components from all visualization phases</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Performance Monitor</div>
+                <div class="feature-description">Real-time performance metrics with automated optimization suggestions</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔧</div>
+                <div class="feature-title">Component Registry</div>
+                <div class="feature-description">Dynamic component management with metadata tracking and configuration</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📚</div>
+                <div class="feature-title">Documentation Hub</div>
+                <div class="feature-description">Interactive documentation with runnable examples and API reference</div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🚀 Quick Start Integration</div>
+            <p>Get started with the unified visualization system in just a few lines of code:</p>
+            <div class="code-block">
+import { 
+  LLMKGVisualizationProvider, 
+  UnifiedDashboard,
+  defaultConfig 
+} from '@llmkg/visualization-unified';
+
+function App() {
+  return (
+    &lt;LLMKGVisualizationProvider config={defaultConfig}&gt;
+      &lt;UnifiedDashboard /&gt;
+    &lt;/LLMKGVisualizationProvider&gt;
+  );
+}</div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">📈 Integration Status</div>
+            <p>All visualization phases successfully integrated into unified system:</p>
+            <div class="integration-status">
+                <div class="status-item">
+                    <div class="status-icon completed">✅</div>
+                    <div class="status-label">Phase 7</div>
+                    <div class="status-description">Memory Systems</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon completed">✅</div>
+                    <div class="status-label">Phase 8</div>
+                    <div class="status-description">Cognitive Patterns</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon completed">✅</div>
+                    <div class="status-label">Phase 9</div>
+                    <div class="status-description">Advanced Debugging</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon active">🔄</div>
+                    <div class="status-label">Phase 10</div>
+                    <div class="status-description">Unified Integration</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🔗 Real-time Data Integration</div>
+            <p>Connect to live LLMKG brain-inspired cognitive architecture:</p>
+            <div class="code-block">
+const config = {
+  mcp: {
+    endpoint: 'ws://localhost:8080',
+    protocol: 'ws',
+    reconnect: { enabled: true, maxAttempts: 5 }
+  },
+  visualization: {
+    theme: 'dark',
+    updateInterval: 1000,
+    enableAnimations: true
+  },
+  features: {
+    enabledPhases: ['phase7', 'phase8', 'phase9', 'phase10']
+  }
+};</div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🎛️ Advanced Features</div>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">State Management</div>
+                    <div class="feature-description">Redux-based state with cross-phase data sharing</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Performance Optimization</div>
+                    <div class="feature-description">Automated performance monitoring and suggestions</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">Version Control</div>
+                    <div class="feature-description">Git integration with deployment tracking</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📡</div>
+                    <div class="feature-title">Real-time Updates</div>
+                    <div class="feature-description">Live data synchronization across all components</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <p><strong>Ready to explore the unified LLMKG visualization system?</strong></p>
+            <a href="#" class="cta-button" onclick="startDemo()">🚀 Launch Demo</a>
+            <a href="#" class="cta-button" onclick="viewDocs()">📚 View Documentation</a>
+        </div>
+        
+        <div class="footer">
+            <p>LLMKG Visualization System - Phase 10: Unified Integration</p>
+            <p>Brain-Inspired Cognitive Architecture • Real-time Monitoring • Cross-Phase Integration</p>
+        </div>
+    </div>
+    
+    <script>
+        function startDemo() {
+            alert('🚀 Demo would launch the React application with UnifiedDashboard!\n\nTo run the actual demo:\n1. npm install\n2. npm run dev\n3. Open http://localhost:5173');
+        }
+        
+        function viewDocs() {
+            alert('📚 Documentation Hub includes:\n\n• Getting Started Guide\n• API Reference\n• Interactive Examples\n• Component Registry\n• Performance Guidelines\n\nAccess via the Documentation tab in the unified dashboard.');
+        }
+        
+        // Simulate live status updates
+        setInterval(() => {
+            const statusItems = document.querySelectorAll('.status-item');
+            statusItems.forEach(item => {
+                const icon = item.querySelector('.status-icon');
+                if (icon.textContent === '🔄') {
+                    // Simulate active processing
+                    icon.style.animation = 'pulse 1s infinite';
+                }
+            });
+        }, 1000);
+        
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

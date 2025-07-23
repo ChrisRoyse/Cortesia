@@ -543,3 +543,211 @@ pub struct SynchronizationResult {
     pub conflicts_resolved: usize,
     pub execution_time_ms: u64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::federation::registry::DatabaseDescriptor;
+    use std::collections::HashMap;
+
+    async fn create_test_registry() -> Arc<DatabaseRegistry> {
+        let mut registry = DatabaseRegistry::new().expect("Failed to create registry");
+        
+        let db_desc = DatabaseDescriptor {
+            id: DatabaseId::new("test_db".to_string()),
+            name: "Test Database".to_string(),
+            description: Some("Test database for coordinator tests".to_string()),
+            connection_string: "mock://localhost:5432/test".to_string(),
+            database_type: crate::federation::registry::DatabaseType::InMemory,
+            capabilities: crate::federation::types::DatabaseCapabilities::default(),
+            metadata: crate::federation::registry::DatabaseMetadata {
+                version: "1.0.0".to_string(),
+                created_at: std::time::SystemTime::now(),
+                last_updated: std::time::SystemTime::now(),
+                owner: Some("test".to_string()),
+                tags: vec!["test".to_string()],
+                entity_count: Some(0),
+                relationship_count: Some(0),
+                storage_size_bytes: Some(0),
+            },
+            status: crate::federation::registry::DatabaseStatus::Active,
+        };
+        
+        registry.register(db_desc).await.expect("Failed to register database");
+        Arc::new(registry)
+    }
+
+    #[tokio::test]
+    async fn test_send_prepare_request_not_implemented() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let db_id = DatabaseId::new("test_db".to_string());
+        let transaction_id = TransactionId::new();
+        
+        let result = coordinator.send_prepare_request(&db_id, &transaction_id).await;
+        assert!(result.is_err());
+        
+        if let Err(GraphError::NotImplemented(_)) = result {
+            // Expected behavior
+        } else {
+            panic!("Expected NotImplemented error");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_send_prepare_request_invalid_database() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let db_id = DatabaseId::new("nonexistent_db".to_string());
+        let transaction_id = TransactionId::new();
+        
+        let result = coordinator.send_prepare_request(&db_id, &transaction_id).await;
+        assert!(result.is_err());
+        
+        if let Err(GraphError::InvalidInput(msg)) = result {
+            assert!(msg.contains("Database not found"));
+        } else {
+            panic!("Expected InvalidInput error");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_send_commit_request_not_implemented() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let db_id = DatabaseId::new("test_db".to_string());
+        let transaction_id = TransactionId::new();
+        
+        let result = coordinator.send_commit_request(&db_id, &transaction_id).await;
+        assert!(result.is_err());
+        
+        if let Err(GraphError::NotImplemented(_)) = result {
+            // Expected behavior
+        } else {
+            panic!("Expected NotImplemented error");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_send_abort_request_success() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let db_id = DatabaseId::new("test_db".to_string());
+        let transaction_id = TransactionId::new();
+        
+        let result = coordinator.send_abort_request(&db_id, &transaction_id).await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[tokio::test]
+    async fn test_send_abort_request_invalid_database() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let db_id = DatabaseId::new("nonexistent_db".to_string());
+        let transaction_id = TransactionId::new();
+        
+        let result = coordinator.send_abort_request(&db_id, &transaction_id).await;
+        assert!(result.is_err());
+        
+        if let Err(GraphError::InvalidInput(msg)) = result {
+            assert!(msg.contains("Database not found"));
+        } else {
+            panic!("Expected InvalidInput error");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_abort_transaction_internal() {
+        let registry = create_test_registry().await;
+        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        
+        let databases = vec![DatabaseId::new("test_db".to_string())];
+        let metadata = TransactionMetadata {
+            initiator: Some("test".to_string()),
+            description: Some("test transaction".to_string()),
+            priority: TransactionPriority::Normal,
+            isolation_level: IsolationLevel::ReadCommitted,
+            consistency_mode: ConsistencyMode::Strong,
+        };
+        
+        let transaction_id = coordinator.begin_transaction(databases, metadata).await
+            .expect("Failed to begin transaction");
+        
+        let result = coordinator.abort_transaction_internal(&transaction_id).await;
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_transaction_id_new() {
+        let id1 = TransactionId::new();
+        let id2 = TransactionId::new();
+        
+        assert_ne!(id1, id2);
+        assert!(id1.as_str().starts_with("txn_"));
+        assert!(id2.as_str().starts_with("txn_"));
+    }
+
+    #[test]
+    fn test_transaction_status_serialization() {
+        use serde_json;
+        
+        let status = TransactionStatus::Committed;
+        let serialized = serde_json::to_string(&status).expect("Failed to serialize");
+        let deserialized: TransactionStatus = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize");
+        
+        assert_eq!(status, deserialized);
+    }
+
+    #[test]
+    fn test_operation_status_serialization() {
+        use serde_json;
+        
+        let status = OperationStatus::Prepared;
+        let serialized = serde_json::to_string(&status).expect("Failed to serialize");
+        let deserialized: OperationStatus = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize");
+        
+        assert_eq!(status, deserialized);
+    }
+
+    #[test]
+    fn test_transaction_priority_ordering() {
+        assert!(TransactionPriority::Critical > TransactionPriority::High);
+        assert!(TransactionPriority::High > TransactionPriority::Normal);
+        assert!(TransactionPriority::Normal > TransactionPriority::Low);
+    }
+
+    #[test]
+    fn test_isolation_level_ordering() {
+        assert!(IsolationLevel::Serializable > IsolationLevel::RepeatableRead);
+        assert!(IsolationLevel::RepeatableRead > IsolationLevel::ReadCommitted);
+        assert!(IsolationLevel::ReadCommitted > IsolationLevel::ReadUncommitted);
+    }
+
+    #[test]
+    fn test_operation_type_serialization() {
+        use serde_json;
+        
+        let op = OperationType::CreateEntity {
+            entity_id: "test".to_string(),
+            entity_data: HashMap::new(),
+        };
+        
+        let serialized = serde_json::to_string(&op).expect("Failed to serialize");
+        let deserialized: OperationType = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize");
+        
+        if let OperationType::CreateEntity { entity_id, .. } = deserialized {
+            assert_eq!(entity_id, "test");
+        } else {
+            panic!("Unexpected operation type after deserialization");
+        }
+    }
+}

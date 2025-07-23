@@ -14,6 +14,7 @@ const CognitivePage = React.lazy(() => import('./pages/CognitivePage'));
 const NeuralPage = React.lazy(() => import('./pages/NeuralPage'));
 const KnowledgeGraphPage = React.lazy(() => import('./pages/KnowledgeGraphPage'));
 const MemoryPage = React.lazy(() => import('./pages/MemoryPage'));
+const DebuggingPage = React.lazy(() => import('./pages/DebuggingPage'));
 const ToolsPage = React.lazy(() => import('./pages/ToolsPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const ArchitecturePage = React.lazy(() => import('./pages/Architecture/ArchitecturePage'));
@@ -235,6 +236,14 @@ const AppRoutes: React.FC = () => (
       element={
         <RouteErrorBoundary>
           <MemoryPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/debugging" 
+      element={
+        <RouteErrorBoundary>
+          <DebuggingPage />
         </RouteErrorBoundary>
       } 
     />

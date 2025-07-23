@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::cognitive::pattern_detector::NeuralPatternDetector;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-use crate::core::types::EntityKey;
+use crate::core::types::{EntityData, EntityKey};
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
 // Neural server dependency removed - using pure graph operations
 use crate::error::Result;

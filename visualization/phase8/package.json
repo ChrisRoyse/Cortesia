@@ -1,0 +1,49 @@
+{
+  "name": "@llmkg/cognitive-pattern-visualization",
+  "version": "1.0.0",
+  "description": "LLMKG Cognitive Pattern Visualization System - Phase 8",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "d3": "^7.8.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/d3": "^7.4.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.7"
+  },
+  "keywords": [
+    "llmkg",
+    "cognitive",
+    "pattern",
+    "visualization",
+    "brain-inspired",
+    "neural",
+    "activation",
+    "inhibition",
+    "excitation",
+    "temporal"
+  ],
+  "author": "LLMKG Team",
+  "license": "MIT"
+}

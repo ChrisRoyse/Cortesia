@@ -1,3 +1,12 @@
+// Memory types
+export * from './memory';
+
+// Cognitive types  
+export * from './cognitive';
+
+// Debugging types
+export * from './debugging';
+
 // Core LLMKG Dashboard Types
 export interface LLMKGData {
   cognitive: CognitiveData;

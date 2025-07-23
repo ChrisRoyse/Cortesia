@@ -4,6 +4,8 @@ use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::learning::types::ActivationEvent;
 use crate::neural::neural_server::NeuralProcessingServer;
 use crate::error::Result;
+use crate::cognitive::types::CognitivePatternType;
+use crate::learning::types::ActivationContext;
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};

@@ -532,3 +532,352 @@ mod simd {
         total.sqrt()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::types::EntityKey;
+
+    #[test]
+    fn test_encode_decode_cycle() {
+        let mut quantizer = ProductQuantizer::new(64, 8).unwrap();
+        
+        // Create test embeddings
+        let embeddings: Vec<Vec<f32>> = (0..100).map(|i| {
+            (0..64).map(|j| (i * j) as f32 * 0.01).collect()
+        }).collect();
+        
+        // Train the quantizer
+        quantizer.train(&embeddings, 10).unwrap();
+        
+        // Test encode-decode cycle
+        let test_embedding = embeddings[0].clone();
+        let codes = quantizer.encode(&test_embedding).unwrap();
+        let reconstructed = quantizer.decode(&codes).unwrap();
+        
+        assert_eq!(codes.len(), 8); // Should have 8 codes
+        assert_eq!(reconstructed.len(), 64); // Should reconstruct to original dimension
+        
+        // Verify that reconstruction preserves approximate values
+        let error: f32 = test_embedding.iter()
+            .zip(reconstructed.iter())
+            .map(|(a, b)| (a - b).abs())
+            .sum();
+        
+        // Error should be reasonable (this is lossy compression)
+        assert!(error < 100.0, "Reconstruction error too high: {}", error);
+    }
+
+    #[test]
+    fn test_asymmetric_distance() {
+        let mut quantizer = ProductQuantizer::new(32, 4).unwrap();
+        
+        let embeddings: Vec<Vec<f32>> = (0..50).map(|i| {
+            (0..32).map(|j| (i + j) as f32 * 0.1).collect()
+        }).collect();
+        
+        quantizer.train(&embeddings, 5).unwrap();
+        
+        let query = embeddings[0].clone();
+        let codes = quantizer.encode(&embeddings[10]).unwrap();
+        
+        let distance = quantizer.asymmetric_distance(&query, &codes).unwrap();
+        assert!(distance >= 0.0, "Distance should be non-negative");
+        assert!(distance.is_finite(), "Distance should be finite");
+    }
+
+    #[test]
+    fn test_encode_decode_cycle_accuracy() {
+        let mut quantizer = ProductQuantizer::new(16, 4).unwrap();
+        
+        // Use simple embeddings for predictable results
+        let embeddings = vec![
+            vec![1.0; 16],
+            vec![2.0; 16],
+            vec![3.0; 16],
+        ];
+        
+        quantizer.train(&embeddings, 10).unwrap();
+        
+        for embedding in &embeddings {
+            let codes = quantizer.encode(embedding).unwrap();
+            let reconstructed = quantizer.decode(&codes).unwrap();
+            
+            // Calculate reconstruction error
+            let mse: f32 = embedding.iter()
+                .zip(reconstructed.iter())
+                .map(|(a, b)| (a - b).powi(2))
+                .sum::<f32>() / embedding.len() as f32;
+            
+            // For simple constant embeddings, reconstruction should be quite accurate
+            assert!(mse < 1.0, "Mean squared error too high: {} for embedding {:?}", mse, embedding);
+        }
+    }
+
+    #[test]
+    fn test_compression_stats() {
+        let quantizer = ProductQuantizer::new(128, 16).unwrap();
+        let stats = quantizer.compression_stats(128);
+        
+        assert_eq!(stats.original_bytes, 128 * 4); // 128 floats * 4 bytes
+        assert_eq!(stats.compressed_bytes, 16); // 16 subvectors * 1 byte
+        assert_eq!(stats.compression_ratio, 32.0); // 512 / 16 = 32
+        assert_eq!(stats.subvector_count, 16);
+        assert_eq!(stats.cluster_count, 256);
+    }
+
+    #[test]
+    fn test_quantized_embedding_storage() {
+        let mut storage = QuantizedEmbeddingStorage::new();
+        
+        let entity1 = EntityKey::new(1);
+        let entity2 = EntityKey::new(2);
+        let codes1 = vec![1, 2, 3, 4];
+        let codes2 = vec![5, 6, 7, 8];
+        
+        storage.add_quantized(entity1, codes1.clone());
+        storage.add_quantized(entity2, codes2.clone());
+        
+        assert_eq!(storage.entity_count, 2);
+        assert_eq!(storage.get_quantized(&entity1), Some(&codes1));
+        assert_eq!(storage.get_quantized(&entity2), Some(&codes2));
+        
+        let compression_ratio = storage.compression_ratio(64); // Assume original dimension 64
+        assert!(compression_ratio > 1.0, "Should have compression");
+    }
+
+    #[test]
+    fn test_batch_operations() {
+        let mut quantizer = ProductQuantizer::new(32, 8).unwrap();
+        
+        let embeddings: Vec<Vec<f32>> = (0..20).map(|i| {
+            (0..32).map(|j| (i * j) as f32 * 0.05).collect()
+        }).collect();
+        
+        quantizer.train(&embeddings[0..10], 5).unwrap();
+        
+        // Test batch encode
+        let codes = quantizer.batch_encode(&embeddings[10..15]).unwrap();
+        assert_eq!(codes.len(), 5);
+        assert!(codes.iter().all(|c| c.len() == 8));
+        
+        // Test batch decode
+        let reconstructed = quantizer.batch_decode(&codes).unwrap();
+        assert_eq!(reconstructed.len(), 5);
+        assert!(reconstructed.iter().all(|r| r.len() == 32));
+    }
+
+    #[test]
+    fn test_batch_store_quantized() {
+        let mut quantizer = ProductQuantizer::new(16, 4).unwrap();
+        
+        let embeddings: Vec<Vec<f32>> = (0..10).map(|i| {
+            (0..16).map(|j| (i + j) as f32).collect()
+        }).collect();
+        
+        quantizer.train(&embeddings, 5).unwrap();
+        
+        let entities_embeddings: Vec<(EntityKey, Vec<f32>)> = embeddings.into_iter()
+            .enumerate()
+            .map(|(i, emb)| (EntityKey::new(i as u32), emb))
+            .collect();
+        
+        quantizer.batch_store_quantized(&entities_embeddings).unwrap();
+        
+        let (memory_usage, entity_count, compression_ratio) = quantizer.storage_stats();
+        assert_eq!(entity_count, 10);
+        assert!(memory_usage > 0);
+        assert!(compression_ratio > 1.0);
+    }
+
+    #[test]
+    fn test_quantized_similarity_search() {
+        let mut quantizer = ProductQuantizer::new(8, 2).unwrap();
+        
+        let embeddings: Vec<Vec<f32>> = vec![
+            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            vec![2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
+            vec![10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0],
+        ];
+        
+        quantizer.train(&embeddings, 5).unwrap();
+        
+        // Store embeddings
+        for (i, embedding) in embeddings.iter().enumerate() {
+            quantizer.store_quantized(EntityKey::new(i as u32), embedding).unwrap();
+        }
+        
+        // Search for similar embeddings
+        let query = vec![1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5];
+        let results = quantizer.quantized_similarity_search(&query, 2).unwrap();
+        
+        assert_eq!(results.len(), 2);
+        // Results should be sorted by similarity (highest first)
+        assert!(results[0].1 >= results[1].1);
+    }
+
+    #[test]
+    fn test_reconstruction_error() {
+        let mut quantizer = ProductQuantizer::new(16, 4).unwrap();
+        
+        let embeddings: Vec<Vec<f32>> = (0..20).map(|i| {
+            (0..16).map(|j| (i as f32 * 0.1) + (j as f32 * 0.01)).collect()
+        }).collect();
+        
+        quantizer.train(&embeddings[0..15], 10).unwrap();
+        
+        let error = quantizer.compute_reconstruction_error(&embeddings[15..20]).unwrap();
+        assert!(error >= 0.0, "Reconstruction error should be non-negative");
+        assert!(error.is_finite(), "Reconstruction error should be finite");
+    }
+
+    #[test]
+    fn test_new_optimized() {
+        // Test different compression targets
+        let optimized_8 = ProductQuantizer::new_optimized(128, 8.0).unwrap();
+        let optimized_16 = ProductQuantizer::new_optimized(128, 16.0).unwrap();
+        let optimized_32 = ProductQuantizer::new_optimized(128, 32.0).unwrap();
+        
+        // Higher compression targets should use fewer subvectors (more compression)
+        assert!(optimized_32.subvector_count <= optimized_16.subvector_count);
+        assert!(optimized_16.subvector_count <= optimized_8.subvector_count);
+    }
+
+    #[test]
+    fn test_train_adaptive() {
+        let mut quantizer = ProductQuantizer::new(32, 8).unwrap();
+        
+        // Create large dataset
+        let large_embeddings: Vec<Vec<f32>> = (0..5000).map(|i| {
+            (0..32).map(|j| (i + j) as f32 * 0.001).collect()
+        }).collect();
+        
+        // Adaptive training should handle large datasets efficiently
+        let start = std::time::Instant::now();
+        quantizer.train_adaptive(&large_embeddings).unwrap();
+        let elapsed = start.elapsed();
+        
+        assert!(quantizer.is_trained());
+        assert!(elapsed.as_secs() < 10, "Adaptive training took too long: {:?}", elapsed);
+    }
+
+    #[test]
+    fn test_invalid_dimensions() {
+        // Test dimension not divisible by subvector count
+        let result = ProductQuantizer::new(100, 7);
+        assert!(result.is_err());
+        
+        // Test encode with wrong dimension
+        let quantizer = ProductQuantizer::new(16, 4).unwrap();
+        let wrong_embedding = vec![1.0; 20]; // Wrong size
+        let result = quantizer.encode(&wrong_embedding);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_training_quality() {
+        let mut quantizer = ProductQuantizer::new(16, 4).unwrap();
+        
+        // Initially not trained
+        assert!(!quantizer.is_trained());
+        assert_eq!(quantizer.training_quality(), 0.0);
+        
+        let embeddings: Vec<Vec<f32>> = (0..50).map(|i| {
+            (0..16).map(|j| (i + j) as f32 * 0.1).collect()
+        }).collect();
+        
+        quantizer.train(&embeddings, 10).unwrap();
+        
+        assert!(quantizer.is_trained());
+        assert!(quantizer.training_quality() > 0.0);
+    }
+
+    #[test]
+    fn test_memory_usage() {
+        let quantizer = ProductQuantizer::new(64, 8).unwrap();
+        let memory_usage = quantizer.memory_usage();
+        
+        // Should have 8 codebooks * 256 clusters * 8 dimensions * 4 bytes
+        let expected = 8 * 256 * 8 * 4;
+        assert_eq!(memory_usage, expected);
+    }
+
+    #[test]
+    fn test_euclidean_distance_function() {
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![4.0, 6.0, 8.0];
+        
+        let distance = euclidean_distance(&a, &b);
+        // sqrt((4-1)^2 + (6-2)^2 + (8-3)^2) = sqrt(9 + 16 + 25) = sqrt(50)
+        let expected = (9.0 + 16.0 + 25.0_f32).sqrt();
+        assert!((distance - expected).abs() < 1e-6);
+        
+        // Distance to self should be 0
+        let self_distance = euclidean_distance(&a, &a);
+        assert_eq!(self_distance, 0.0);
+    }
+
+    #[test]
+    fn test_codebook_access() {
+        let quantizer = ProductQuantizer::new(32, 4).unwrap();
+        
+        assert_eq!(quantizer.num_subspaces(), 4);
+        
+        for i in 0..4 {
+            let codebook = quantizer.get_codebook(i);
+            // Each codebook should have 256 clusters * 8 dimensions
+            assert_eq!(codebook.len(), 256 * 8);
+        }
+    }
+
+    #[test]
+    fn test_quantized_embedding_storage_methods() {
+        let mut storage = QuantizedEmbeddingStorage::new();
+        
+        // Test initial state
+        assert_eq!(storage.entity_count, 0);
+        assert_eq!(storage.memory_usage(), 0);
+        
+        // Add some quantized embeddings
+        let entity1 = EntityKey::new(100);
+        let entity2 = EntityKey::new(200);
+        let codes1 = vec![1, 2, 3, 4, 5];
+        let codes2 = vec![6, 7, 8, 9, 10];
+        
+        storage.add_quantized(entity1, codes1.clone());
+        storage.add_quantized(entity2, codes2.clone());
+        
+        assert_eq!(storage.entity_count, 2);
+        assert!(storage.memory_usage() > 0);
+        
+        // Test retrieval
+        assert_eq!(storage.get_quantized(&entity1), Some(&codes1));
+        assert_eq!(storage.get_quantized(&entity2), Some(&codes2));
+        
+        let nonexistent = EntityKey::new(999);
+        assert_eq!(storage.get_quantized(&nonexistent), None);
+        
+        // Test building search index
+        storage.build_search_index();
+        assert!(storage.index.is_some());
+        
+        // Test compression ratio calculation
+        let ratio = storage.compression_ratio(64); // Original dimension 64
+        assert!(ratio > 1.0, "Should have compression ratio > 1.0");
+    }
+
+    #[test]
+    fn test_compression_stats_accuracy() {
+        let quantizer = ProductQuantizer::new(256, 32).unwrap();
+        let stats = quantizer.compression_stats(256);
+        
+        // Verify all fields are reasonable
+        assert_eq!(stats.original_bytes, 256 * 4); // 256 floats * 4 bytes each
+        assert_eq!(stats.compressed_bytes, 32); // 32 subvectors * 1 byte each
+        assert_eq!(stats.compression_ratio, 32.0); // 1024 / 32
+        assert!(stats.codebook_memory > 0);
+        assert_eq!(stats.subvector_count, 32);
+        assert_eq!(stats.cluster_count, 256);
+        assert_eq!(stats.memory_saved, 1024 - 32);
+    }
+}
