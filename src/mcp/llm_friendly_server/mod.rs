@@ -50,7 +50,10 @@ impl LLMFriendlyMCPServer {
         // Update request stats
         let start_time = std::time::Instant::now();
         
-        let result = match request.method.as_str() {
+        // Wrap in timeout to prevent hanging
+        let timeout_duration = tokio::time::Duration::from_secs(5);
+        let timeout_result = tokio::time::timeout(timeout_duration, async {
+            match request.method.as_str() {
             // Storage operations
             "store_fact" => {
                 handlers::storage::handle_store_fact(
@@ -133,6 +136,13 @@ impl LLMFriendlyMCPServer {
 
             // Unknown method
             _ => Err(format!("Unknown method: {}", request.method))
+        }
+        }).await;
+
+        // Handle timeout
+        let result = match timeout_result {
+            Ok(result) => result,
+            Err(_) => Err(format!("Request timed out after {} seconds", timeout_duration.as_secs()))
         };
 
         // Record response time

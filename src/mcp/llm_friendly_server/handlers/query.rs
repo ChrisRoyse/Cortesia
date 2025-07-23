@@ -15,17 +15,20 @@ pub async fn handle_find_facts(
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
-    let subject = params.get("subject").and_then(|v| v.as_str());
-    let predicate = params.get("predicate").and_then(|v| v.as_str());
-    let object = params.get("object").and_then(|v| v.as_str());
+    let query = params.get("query")
+        .ok_or_else(|| "Missing required 'query' parameter".to_string())?;
+    
+    let subject = query.get("subject").and_then(|v| v.as_str());
+    let predicate = query.get("predicate").and_then(|v| v.as_str());
+    let object = query.get("object").and_then(|v| v.as_str());
     let limit = params.get("limit")
         .and_then(|v| v.as_u64())
         .unwrap_or(10)
         .min(100) as usize;
     
-    // At least one field must be specified
+    // At least one field must be specified (enforced by minProperties in schema)
     if subject.is_none() && predicate.is_none() && object.is_none() {
-        return Err("At least one of subject, predicate, or object must be specified".to_string());
+        return Err("At least one of subject, predicate, or object must be specified in the query".to_string());
     }
     
     // Build query
@@ -43,7 +46,7 @@ pub async fn handle_find_facts(
         Ok(triples) => {
             let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 10).await;
             
-            let facts: Vec<_> = triples.iter().map(|t| {
+            let facts: Vec<_> = triples.triples.iter().map(|t| {
                 json!({
                     "subject": &t.subject,
                     "predicate": &t.predicate,
@@ -54,7 +57,7 @@ pub async fn handle_find_facts(
             
             let data = json!({
                 "facts": facts,
-                "count": triples.len(),
+                "count": triples.triples.len(),
                 "limit": limit,
                 "query": {
                     "subject": subject,
@@ -63,17 +66,17 @@ pub async fn handle_find_facts(
                 }
             });
             
-            let message = if triples.is_empty() {
+            let message = if triples.triples.is_empty() {
                 "No facts found matching your query".to_string()
             } else {
                 format!("Found {} fact{}:\n{}", 
-                    triples.len(),
-                    if triples.len() == 1 { "" } else { "s" },
+                    triples.triples.len(),
+                    if triples.triples.len() == 1 { "" } else { "s" },
                     format_facts_for_display(&triples.triples, 5)
                 )
             };
             
-            let suggestions = if triples.is_empty() {
+            let suggestions = if triples.triples.is_empty() {
                 vec![
                     "Try using fewer constraints in your query".to_string(),
                     "Check spelling and capitalization of entity names".to_string(),

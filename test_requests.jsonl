@@ -1,0 +1,3 @@
+{"jsonrpc":"2.0","method":"initialize","params":{},"id":0}
+{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_stats","arguments":{"include_details":false}},"id":2}

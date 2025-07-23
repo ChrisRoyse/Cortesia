@@ -87,19 +87,26 @@ impl LLMKGMCPServer {
                 input_schema: serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_id": {
-                            "type": "integer",
-                            "description": "Specific entity ID to look up"
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Natural language description of the entity to find"
+                        "lookup": {
+                            "type": "object",
+                            "description": "Lookup parameters - must provide either entity_id or description",
+                            "properties": {
+                                "entity_id": {
+                                    "type": "integer",
+                                    "description": "Specific entity ID to look up"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Natural language description of the entity to find"
+                                }
+                            },
+                            "minProperties": 1,
+                            "maxProperties": 1,
+                            "additionalProperties": false
                         }
                     },
-                    "oneOf": [
-                        {"required": ["entity_id"]},
-                        {"required": ["description"]}
-                    ]
+                    "required": ["lookup"],
+                    "additionalProperties": false
                 })
             },
             MCPTool {
@@ -246,7 +253,18 @@ impl LLMKGMCPServer {
     }
     
     async fn handle_entity_lookup(&self, params: serde_json::Value) -> MCPResponse {
-        if let Some(entity_id) = params.get("entity_id").and_then(|v| v.as_u64()) {
+        let lookup = match params.get("lookup") {
+            Some(l) => l,
+            None => return MCPResponse {
+                content: vec![MCPContent {
+                    type_: "text".to_string(),
+                    text: "Missing required 'lookup' parameter".to_string(),
+                }],
+                is_error: true,
+            }
+        };
+
+        if let Some(entity_id) = lookup.get("entity_id").and_then(|v| v.as_u64()) {
             // Look up by ID
             let _rag_engine = self.rag_engine.read().await;
             // Implementation would go here
@@ -257,7 +275,7 @@ impl LLMKGMCPServer {
                 }],
                 is_error: false,
             }
-        } else if let Some(description) = params.get("description").and_then(|v| v.as_str()) {
+        } else if let Some(description) = lookup.get("description").and_then(|v| v.as_str()) {
             // Look up by description using embedding similarity
             match self.get_embedding_for_text(description).await {
                 Ok(embedding) => {
@@ -298,7 +316,7 @@ impl LLMKGMCPServer {
             MCPResponse {
                 content: vec![MCPContent {
                     type_: "text".to_string(),
-                    text: "Either entity_id or description is required".to_string(),
+                    text: "Either entity_id or description must be provided in the lookup parameter".to_string(),
                 }],
                 is_error: true,
             }

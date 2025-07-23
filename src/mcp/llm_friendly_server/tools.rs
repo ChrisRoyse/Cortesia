@@ -115,21 +115,29 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         
         LLMMCPTool {
             name: "find_facts".to_string(),
-            description: "Find facts (triples) about a subject or matching a pattern. Returns Subject-Predicate-Object triples.".to_string(),
+            description: "Find facts (triples) about a subject or matching a pattern. Returns Subject-Predicate-Object triples. At least one of subject, predicate, or object must be provided.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
-                    "subject": {
-                        "type": "string",
-                        "description": "Find facts about this subject (optional)"
-                    },
-                    "predicate": {
-                        "type": "string",
-                        "description": "Find facts with this relationship type (optional)"
-                    },
-                    "object": {
-                        "type": "string",
-                        "description": "Find facts pointing to this object (optional)"
+                    "query": {
+                        "type": "object",
+                        "description": "Query parameters - must provide at least one of subject, predicate, or object",
+                        "properties": {
+                            "subject": {
+                                "type": "string",
+                                "description": "Find facts about this subject"
+                            },
+                            "predicate": {
+                                "type": "string",
+                                "description": "Find facts with this relationship type"
+                            },
+                            "object": {
+                                "type": "string",
+                                "description": "Find facts pointing to this object"
+                            }
+                        },
+                        "minProperties": 1,
+                        "additionalProperties": false
                     },
                     "limit": {
                         "type": "integer",
@@ -139,17 +147,16 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "default": 10
                     }
                 },
-                "anyOf": [
-                    {"required": ["subject"]},
-                    {"required": ["predicate"]},
-                    {"required": ["object"]}
-                ]
+                "required": ["query"],
+                "additionalProperties": false
             }),
             examples: vec![
                 LLMExample {
                     description: "Find all facts about Einstein".to_string(),
                     input: json!({
-                        "subject": "Einstein",
+                        "query": {
+                            "subject": "Einstein"
+                        },
                         "limit": 5
                     }),
                     expected_output: "Found 5 facts:\n1. Einstein is scientist\n2. Einstein invented relativity\n3. Einstein born_in Germany\n4. Einstein won Nobel_Prize\n5. Einstein died_in 1955".to_string(),
@@ -157,7 +164,9 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 LLMExample {
                     description: "Find who invented what".to_string(),
                     input: json!({
-                        "predicate": "invented",
+                        "query": {
+                            "predicate": "invented"
+                        },
                         "limit": 3
                     }),
                     expected_output: "Found 3 facts:\n1. Einstein invented relativity\n2. Edison invented light_bulb\n3. Tesla invented AC_motor".to_string(),

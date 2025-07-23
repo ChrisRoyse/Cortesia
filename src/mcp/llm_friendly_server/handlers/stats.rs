@@ -16,19 +16,56 @@ pub async fn handle_get_stats(
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
+    log::debug!("handle_get_stats: Starting");
     let include_details = params.get("include_details")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     
-    let engine = knowledge_engine.read().await;
-    let usage = usage_stats.read().await;
+    // Get basic statistics first (release lock between operations)
+    log::debug!("handle_get_stats: Getting basic stats");
+    let basic_stats = {
+        log::debug!("handle_get_stats: Acquiring engine read lock");
+        let engine = knowledge_engine.read().await;
+        log::debug!("handle_get_stats: Got engine lock, calling collect_basic_stats");
+        let stats = collect_basic_stats(&*engine)
+            .map_err(|e| format!("Failed to collect statistics: {}", e))?;
+        log::debug!("handle_get_stats: collect_basic_stats completed");
+        stats
+    };
     
-    // Get basic statistics
-    let basic_stats = collect_basic_stats(&*engine).await
-        .map_err(|e| format!("Failed to collect statistics: {}", e))?;
+    // Get memory stats separately to avoid holding multiple locks
+    log::debug!("handle_get_stats: Getting memory stats");
+    let memory_stats = {
+        log::debug!("handle_get_stats: Acquiring engine read lock for memory stats");
+        let engine = knowledge_engine.read().await;
+        log::debug!("handle_get_stats: Got engine lock, calling get_memory_stats");
+        let stats = get_memory_stats(&*engine);
+        log::debug!("handle_get_stats: get_memory_stats completed");
+        stats
+    };
     
-    let memory_stats = get_memory_stats(&*engine).await;
+    log::debug!("handle_get_stats: Acquiring usage stats lock");
+    let usage = {
+        let usage = usage_stats.read().await;
+        usage.clone()  // Clone to release the lock
+    };
+    log::debug!("handle_get_stats: Got usage stats");
     let efficiency_score = calculate_efficiency_score(&memory_stats);
+    log::debug!("handle_get_stats: Calculated efficiency score");
+    
+    log::debug!("handle_get_stats: Creating JSON data structure");
+    
+    log::debug!("handle_get_stats: Calculating storage optimization");
+    let storage_optimization = calculate_storage_optimization(&memory_stats);
+    log::debug!("handle_get_stats: Storage optimization calculated");
+    
+    log::debug!("handle_get_stats: Calculating query performance");
+    let query_performance = calculate_query_performance(&usage);
+    log::debug!("handle_get_stats: Query performance calculated");
+    
+    log::debug!("handle_get_stats: Calculating overall health");
+    let overall_health = calculate_overall_health(&basic_stats, &memory_stats, &usage);
+    log::debug!("handle_get_stats: Overall health calculated");
     
     let mut data = json!({
         "knowledge_graph": {
@@ -59,16 +96,20 @@ pub async fn handle_get_stats(
         },
         "performance": {
             "memory_efficiency_score": efficiency_score,
-            "storage_optimization": calculate_storage_optimization(&memory_stats),
-            "query_performance": calculate_query_performance(&usage),
-            "overall_health": calculate_overall_health(&basic_stats, &memory_stats, &usage)
+            "storage_optimization": storage_optimization,
+            "query_performance": query_performance,
+            "overall_health": overall_health
         }
     });
+    log::debug!("handle_get_stats: JSON data structure created");
     
     // Add detailed breakdown if requested
     if include_details {
-        let detailed_stats = collect_detailed_stats(&*engine).await
-            .map_err(|e| format!("Failed to collect detailed statistics: {}", e))?;
+        let detailed_stats = {
+            let engine = knowledge_engine.read().await;
+            collect_detailed_stats(&*engine)
+                .map_err(|e| format!("Failed to collect detailed statistics: {}", e))?
+        };
         
         data["details"] = json!({
             "entity_types": detailed_stats.entity_types,
@@ -77,9 +118,13 @@ pub async fn handle_get_stats(
             "relationship_distribution": detailed_stats.relationship_distribution
         });
     }
+    log::debug!("handle_get_stats: Skipped detailed stats");
     
+    log::debug!("handle_get_stats: Updating usage stats");
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 15).await;
+    log::debug!("handle_get_stats: Usage stats updated");
     
+    log::debug!("handle_get_stats: Formatting message");
     let message = format!(
         "Knowledge Graph Statistics:\n\n\
         📊 **Graph Overview:**\n\
@@ -127,12 +172,15 @@ pub async fn handle_get_stats(
         "Cache hit rate shows query optimization effectiveness".to_string(),
     ];
     
+    log::debug!("handle_get_stats: Returning response");
     Ok((data, message, suggestions))
 }
 
 /// Collect basic statistics about the knowledge graph
-async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
+fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
+    log::debug!("collect_basic_stats: Starting");
     // Get all triples to analyze
+    log::debug!("collect_basic_stats: Querying triples");
     let all_triples = engine.query_triples(
         TripleQuery {
             subject: None,
@@ -143,8 +191,9 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
             include_chunks: false,
         }
     )?;
+    log::debug!("collect_basic_stats: Got {} triples", all_triples.triples.len());
     
-    let total_triples = all_triples.len();
+    let total_triples = all_triples.triples.len();
     
     // Count unique entities (subjects and objects)
     let mut entities = std::collections::HashSet::new();
@@ -160,7 +209,7 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
     let unique_predicates = predicates.len();
     
     // Count knowledge chunks (simplified - count triples with 'is' -> 'knowledge_chunk')
-    let knowledge_chunks = all_triples.iter()
+    let knowledge_chunks = all_triples.triples.iter()
         .filter(|t| t.predicate == "is" && t.object == "knowledge_chunk")
         .count();
     
@@ -172,7 +221,11 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
     };
     
     // Calculate graph density (simplified)
-    let max_possible_edges = unique_entities * (unique_entities - 1);
+    let max_possible_edges = if unique_entities > 1 {
+        unique_entities * (unique_entities - 1)
+    } else {
+        0
+    };
     let graph_density = if max_possible_edges > 0 {
         total_triples as f64 / max_possible_edges as f64
     } else {
@@ -190,7 +243,7 @@ async fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
 }
 
 /// Collect detailed statistics for breakdown
-async fn collect_detailed_stats(engine: &KnowledgeEngine) -> Result<DetailedStats> {
+fn collect_detailed_stats(engine: &KnowledgeEngine) -> Result<DetailedStats> {
     let all_triples = engine.query_triples(
         TripleQuery {
             subject: None,
@@ -242,10 +295,12 @@ async fn collect_detailed_stats(engine: &KnowledgeEngine) -> Result<DetailedStat
 }
 
 /// Get memory statistics (simplified)
-async fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
+fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
+    log::debug!("get_memory_stats: Starting");
     // In a real implementation, this would get actual memory usage
     // For now, we'll estimate based on entity/relationship counts
     
+    log::debug!("get_memory_stats: Querying triples");
     let all_triples = engine.query_triples(
         TripleQuery {
             subject: None,
@@ -263,7 +318,7 @@ async fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
         total_found: 0,
     });
     
-    let estimated_bytes = all_triples.len() * 200; // Rough estimate: 200 bytes per triple
+    let estimated_bytes = all_triples.triples.len() * 200; // Rough estimate: 200 bytes per triple
     
     let mut entities = std::collections::HashSet::new();
     for triple in &all_triples.triples {
@@ -273,7 +328,7 @@ async fn get_memory_stats(engine: &KnowledgeEngine) -> MemoryStats {
     
     MemoryStats {
         total_nodes: entities.len(),
-        total_triples: all_triples.len(),
+        total_triples: all_triples.triples.len(),
         total_bytes: estimated_bytes,
         bytes_per_node: if entities.len() > 0 { estimated_bytes as f64 / entities.len() as f64 } else { 0.0 },
         cache_hits: 0,
