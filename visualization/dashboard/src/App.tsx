@@ -9,7 +9,7 @@ import { ThemeProvider } from './components/ThemeProvider/ThemeProvider';
 import './styles/globals.css';
 
 // Lazy load pages for code splitting
-const Dashboard = React.lazy(() => import('./pages/Dashboard/LLMKGDashboard'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const CognitivePage = React.lazy(() => import('./pages/CognitivePage'));
 const NeuralPage = React.lazy(() => import('./pages/NeuralPage'));
 const KnowledgeGraphPage = React.lazy(() => import('./pages/KnowledgeGraphPage'));

@@ -35,7 +35,9 @@ export class VisualizationErrorBoundary extends Component<Props, State> {
   override render() {
     if (this.state.hasError) {
       return (
-        <Box sx={{ 
+        <Box 
+          data-testid="error-boundary-message"
+          sx={{ 
           width: '100%', 
           height: '100%', 
           display: 'flex', 
@@ -83,6 +85,6 @@ export class VisualizationErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return <div data-testid="visualization-error-boundary">{this.props.children}</div>;
   }
 }

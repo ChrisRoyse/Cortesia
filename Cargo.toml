@@ -25,6 +25,10 @@ path = "src/bin/llmkg_api_server.rs"
 name = "test-brain-metrics"
 path = "src/bin/test_brain_metrics.rs"
 
+[[bin]]
+name = "llmkg_mcp_server"
+path = "src/bin/llmkg_mcp_server.rs"
+
 [dependencies]
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
@@ -60,6 +64,9 @@ anyhow = "1.0"
 # Logging
 log = "0.4"
 env_logger = "0.11"
+
+# Command line parsing
+clap = { version = "4.5", features = ["derive"] }
 
 # Concurrency
 parking_lot = "0.12"

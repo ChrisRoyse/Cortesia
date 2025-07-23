@@ -5,7 +5,7 @@ import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { DashboardLayout } from '../components/Layout/DashboardLayout';
 
 // Lazy load main dashboard page
-const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
+const DashboardPage = lazy(() => import('../pages/Dashboard'));
 
 interface RouteGuardProps {
   children: React.ReactNode;

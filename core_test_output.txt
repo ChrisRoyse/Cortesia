@@ -966,4 +966,8 @@ test core::knowledge_engine::tests::test_store_triple_large_batch ... ok
 test core::knowledge_engine::tests::test_store_triple_memory_limit ... ok
 test core::knowledge_engine::tests::test_store_triple_predicate_normalization ... ok
 test core::knowledge_engine::tests::test_store_triple_with_embedding ... ok
-test core::knowledge_engine::tests::test_track_pattern ... 
+test core::knowledge_engine::tests::test_track_pattern ... error: test failed, to rerun pass `--lib`
+
+Caused by:
+  process didn't exit successfully: `C:\code\LLMKG\target\debug\deps\llmkg-9a41daaf8719fb54.exe 'core::' --test-threads=1` (exit code: 0xffffffff)
+note: test exited abnormally; to see the full output pass --nocapture to the harness.

@@ -2,6 +2,9 @@
 //! Tests complete workflow including creating graph, adding entities/relationships, and querying
 //! Tests all components working together correctly through public APIs
 
+#[path = "../common/mod.rs"]
+mod common;
+
 use llmkg::core::brain_enhanced_graph::{BrainEnhancedKnowledgeGraph, BrainMemoryUsage};
 use llmkg::core::types::{EntityKey, EntityData, Relationship, ContextEntity, QueryResult};
 use llmkg::error::Result;
@@ -21,6 +24,8 @@ fn create_entity_data_with_properties(id: u32, embedding_len: usize, properties:
 
 #[tokio::test]
 async fn test_complete_graph_workflow() -> Result<()> {
+    let _env = common::TestEnvironment::new();
+    
     // Test 1: Create brain graph
     let brain_graph = BrainEnhancedKnowledgeGraph::new_for_test()?;
     

@@ -559,11 +559,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_new_creates_valid_brain_graph() {
-        let result = BrainEnhancedKnowledgeGraph::new(128);
+        let result = BrainEnhancedKnowledgeGraph::new(96);
         assert!(result.is_ok());
         
         let brain_graph = result.unwrap();
-        assert_eq!(brain_graph.embedding_dimension(), 128);
+        assert_eq!(brain_graph.embedding_dimension(), 96);
         assert_eq!(brain_graph.entity_count(), 0);
         assert_eq!(brain_graph.relationship_count(), 0);
         

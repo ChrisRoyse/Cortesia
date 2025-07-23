@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <Box className="dashboard-container" sx={{ p: 3, height: '100%', overflow: 'auto' }}>
+    <Box className="dashboard-container" data-testid="dashboard-container" sx={{ p: 3, height: '100%', overflow: 'auto' }}>
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
@@ -55,6 +55,7 @@ const Dashboard: React.FC = () => {
             label={connectionState}
             color={getConnectionColor()}
             variant="outlined"
+            data-testid="websocket-status"
           />
           <Tooltip title="Refresh dashboard">
             <IconButton onClick={handleRefresh} disabled={refreshing}>

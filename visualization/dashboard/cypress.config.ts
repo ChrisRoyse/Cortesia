@@ -2,8 +2,8 @@ import { defineConfig } from 'cypress'
 
 export default defineConfig({
   e2e: {
-    // Base URL for the application
-    baseUrl: 'http://localhost:5176',
+    // Base URL for the application - using backend dashboard
+    baseUrl: 'http://localhost:8090',
     
     // Browser configuration - prioritize Electron for headed testing
     browser: 'electron',
@@ -14,6 +14,7 @@ export default defineConfig({
     
     // Test file patterns
     specPattern: [
+      'cypress/e2e/backend-dashboard/**/*.cy.{js,jsx,ts,tsx}',
       'cypress/e2e/phase1-foundation/**/*.cy.{js,jsx,ts,tsx}',
       'cypress/e2e/phase2-components/**/*.cy.{js,jsx,ts,tsx}',
       'cypress/e2e/phase3-realtime/**/*.cy.{js,jsx,ts,tsx}',
@@ -31,6 +32,7 @@ export default defineConfig({
     requestTimeout: 15000,
     responseTimeout: 15000,
     pageLoadTimeout: 30000,
+    redirectionLimit: 50,
     
     // Video and screenshot settings for debugging
     video: true,

@@ -62,6 +62,65 @@ Cypress.Commands.add('teardownMockWebSocketServer', () => {
   })
 })
 
+// Commands required for Phase 2 tests
+Cypress.Commands.add('startMockWebSocketServer', () => {
+  cy.window().then((win) => {
+    console.log('Starting mock WebSocket server for tests...')
+    win.__mockWebSocketServer = {
+      start: () => console.log('Mock WebSocket server started'),
+      stop: () => console.log('Mock WebSocket server stopped'),
+      broadcast: (msg: any) => {
+        // Simulate WebSocket message broadcast to the application
+        win.postMessage({
+          type: 'MOCK_WEBSOCKET_MESSAGE',
+          data: msg
+        }, '*')
+      }
+    }
+    win.__mockWebSocketServer.start()
+  })
+})
+
+Cypress.Commands.add('stopMockWebSocketServer', () => {
+  cy.window().then((win) => {
+    if (win.__mockWebSocketServer) {
+      win.__mockWebSocketServer.stop()
+      delete win.__mockWebSocketServer
+    }
+  })
+})
+
+Cypress.Commands.add('mockWebSocketBroadcast', (message: any) => {
+  cy.window().then((win) => {
+    if (win.__mockWebSocketServer && win.__mockWebSocketServer.broadcast) {
+      win.__mockWebSocketServer.broadcast(message)
+    } else {
+      // Fallback: send message directly
+      win.postMessage({
+        type: 'MOCK_WEBSOCKET_MESSAGE',
+        data: message
+      }, '*')
+    }
+  })
+})
+
+Cypress.Commands.add('validateWebGLRendering', (canvasSelector: string) => {
+  cy.get(canvasSelector).then(($canvas) => {
+    const canvas = $canvas[0] as HTMLCanvasElement
+    expect(canvas.tagName.toLowerCase()).to.equal('canvas')
+    
+    // Try to get WebGL context
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    expect(gl).to.not.be.null
+    
+    // Check if context is working
+    if (gl) {
+      expect(gl.getParameter(gl.VERSION)).to.be.a('string')
+      expect(gl.getParameter(gl.RENDERER)).to.be.a('string')
+    }
+  })
+})
+
 // Utility Commands for Test Data Generation
 Cypress.Commands.add('generateTestBrainData', (entityCount: number = 100) => {
   return cy.wrap({
@@ -244,6 +303,12 @@ declare global {
       
       // Performance
       measureLoadTime(): Chainable<number>
+      
+      // WebSocket mocking for Phase 2 tests
+      startMockWebSocketServer(): Chainable<void>
+      stopMockWebSocketServer(): Chainable<void>
+      mockWebSocketBroadcast(message: any): Chainable<void>
+      validateWebGLRendering(canvasSelector: string): Chainable<void>
     }
   }
 }

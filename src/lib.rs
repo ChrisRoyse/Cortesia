@@ -29,6 +29,9 @@ pub mod api;
 
 pub mod test_support;
 
+#[cfg(test)]
+pub mod test_utils;
+
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
 

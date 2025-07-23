@@ -9,10 +9,10 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "dev": "node scripts/start-servers.js",
-    "dev:safe": "node scripts/start-servers-safe.js",
-    "dev:force": "node scripts/start-servers.js",
-    "dev:frontend-only": "vite",
+    "dev": "node scripts/start-backend-only.js",
+    "dev:backend": "node scripts/start-backend-only.js",
+    "dev:old": "node scripts/start-servers.js",
+    "dev:frontend-only": "echo 'Frontend dev server disabled - use http://localhost:8090 instead'",
     "dev:fix": "vite --config vite.config.dev.ts",
     "dev:with-concurrently": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgMagenta.bold\" --names \"BACKEND,FRONTEND\" \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "npm run build:backend && npm run serve:backend",
