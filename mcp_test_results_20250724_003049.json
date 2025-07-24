@@ -1,0 +1,1455 @@
+{
+  "timestamp": "20250724_003049",
+  "summary": {
+    "total_tests": 140,
+    "total_passed": 1,
+    "success_rate": 0.007142857142857143
+  },
+  "results": {
+    "store_fact": [
+      {
+        "test_name": "Basic fact storage",
+        "params": {
+          "subject": "TestEntity1",
+          "predicate": "is",
+          "object": "test_object"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6CF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "High confidence fact",
+        "params": {
+          "subject": "HighConfidence",
+          "predicate": "has",
+          "object": "certainty",
+          "confidence": 1.0
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7130>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Low confidence fact",
+        "params": {
+          "subject": "LowConfidence",
+          "predicate": "might_be",
+          "object": "uncertain",
+          "confidence": 0.1
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7240>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Unicode characters",
+        "params": {
+          "subject": "\u00dcn\u00efc\u00f8d\u00e9",
+          "predicate": "contains",
+          "object": "sp\u00ebc\u00ee\u00e5l_chars"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7570>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Maximum length strings",
+        "params": {
+          "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "predicate": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "object": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868AF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Numbers as strings",
+        "params": {
+          "subject": "2024",
+          "predicate": "equals",
+          "object": "2024"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858688D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex relationship",
+        "params": {
+          "subject": "ComplexEntity",
+          "predicate": "has_complex_relationship_with",
+          "object": "AnotherComplexEntity"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858686B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Duplicate fact storage",
+        "params": {
+          "subject": "Duplicate",
+          "predicate": "is",
+          "object": "duplicate"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858689E0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Special characters in predicate",
+        "params": {
+          "subject": "Entity",
+          "predicate": "has-special_chars.here",
+          "object": "value"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868D10>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Boundary confidence values",
+        "params": {
+          "subject": "Boundary",
+          "predicate": "tests",
+          "object": "confidence",
+          "confidence": 0.0
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_fact (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869040>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "store_knowledge": [
+      {
+        "test_name": "Simple knowledge chunk",
+        "params": {
+          "title": "Test Knowledge",
+          "content": "This is a simple test knowledge chunk."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7570>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Large knowledge chunk",
+        "params": {
+          "title": "Large Knowledge Test",
+          "content": "Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. ",
+          "category": "test"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7AC0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Knowledge with all fields",
+        "params": {
+          "title": "Complete Knowledge",
+          "content": "This knowledge chunk has all possible fields filled out.",
+          "category": "complete_test",
+          "source": "Test Suite"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7CE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Scientific knowledge",
+        "params": {
+          "title": "Photosynthesis Process",
+          "content": "Photosynthesis is the process by which plants convert light energy into chemical energy. It occurs in chloroplasts and involves light-dependent and light-independent reactions.",
+          "category": "biology",
+          "source": "Biology Textbook"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7BD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Historical knowledge",
+        "params": {
+          "title": "World War II Timeline",
+          "content": "World War II lasted from 1939 to 1945. Key events include the invasion of Poland, Pearl Harbor attack, D-Day landings, and the atomic bombings of Japan.",
+          "category": "history"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E78A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Technical knowledge",
+        "params": {
+          "title": "Machine Learning Basics",
+          "content": "Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed.",
+          "category": "technology",
+          "source": "AI Research Paper"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E69C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Mathematical knowledge",
+        "params": {
+          "title": "Calculus Fundamentals",
+          "content": "Calculus deals with derivatives and integrals. The derivative measures rate of change, while the integral measures accumulation.",
+          "category": "mathematics"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6580>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Empty category knowledge",
+        "params": {
+          "title": "No Category Test",
+          "content": "This knowledge chunk has no category specified."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E68B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Unicode knowledge",
+        "params": {
+          "title": "\u00dcn\u00efc\u00f8d\u00e9 T\u00e9st",
+          "content": "This contains special characters: \u00f1\u00e1\u00e9\u00ed\u00f3\u00fa \u00e0\u00e8\u00ec\u00f2\u00f9 \u00e4\u00eb\u00ef\u00f6\u00fc \u00e7\u00f1",
+          "category": "unicode_test"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6470>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "JSON-like content",
+        "params": {
+          "title": "Structured Data",
+          "content": "{\"name\": \"test\", \"value\": 123, \"nested\": {\"key\": \"value\"}}",
+          "category": "structured"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/store_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869370>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "find_facts": [
+      {
+        "test_name": "Find by subject",
+        "params": {
+          "query": {
+            "subject": "Einstein"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858698C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Find by predicate",
+        "params": {
+          "query": {
+            "predicate": "is"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869590>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Find by object",
+        "params": {
+          "query": {
+            "object": "physicist"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869260>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Combined query",
+        "params": {
+          "query": {
+            "subject": "Einstein",
+            "predicate": "is"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868F30>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Limit results",
+        "params": {
+          "query": {
+            "predicate": "is"
+          },
+          "limit": 3
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868C00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "No matches query",
+        "params": {
+          "query": {
+            "subject": "NonExistentEntity"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869150>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Case sensitive search",
+        "params": {
+          "query": {
+            "subject": "einstein"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6470>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Partial matching attempt",
+        "params": {
+          "query": {
+            "subject": "Ein"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E68B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Maximum limit",
+        "params": {
+          "query": {
+            "predicate": "is"
+          },
+          "limit": 100
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6580>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex predicate search",
+        "params": {
+          "query": {
+            "predicate": "discovered"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/find_facts (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E69C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "ask_question": [
+      {
+        "test_name": "Simple question",
+        "params": {
+          "question": "Who is Einstein?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E78A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Question with context",
+        "params": {
+          "question": "What did he discover?",
+          "context": "Einstein"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7350>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex question",
+        "params": {
+          "question": "How are quantum mechanics and relativity related?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6BE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Biographical question",
+        "params": {
+          "question": "When was Einstein born and where?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6CF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Comparative question",
+        "params": {
+          "question": "What is the difference between Newton and Einstein's physics?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7130>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Existence question",
+        "params": {
+          "question": "Does the knowledge base contain information about Tesla?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7240>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Counting question",
+        "params": {
+          "question": "How many physicists are in the database?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868490>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Unknown entity question",
+        "params": {
+          "question": "What do you know about Schr\u00f6dinger?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869480>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Relationship question",
+        "params": {
+          "question": "Which scientists worked at Princeton?"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858697B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Technical question",
+        "params": {
+          "question": "Explain the photoelectric effect",
+          "max_results": 10
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/ask_question (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869AE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "hybrid_search": [
+      {
+        "test_name": "Basic hybrid search",
+        "params": {
+          "query": "Einstein physics"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869BF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Semantic search",
+        "params": {
+          "query": "theory of relativity",
+          "search_type": "semantic"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858699D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Structural search",
+        "params": {
+          "query": "physicist",
+          "search_type": "structural"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7240>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Keyword search",
+        "params": {
+          "query": "quantum mechanics",
+          "search_type": "keyword"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7570>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Filtered search",
+        "params": {
+          "query": "science",
+          "filters": {
+            "entity_types": [
+              "person"
+            ],
+            "min_confidence": 0.8
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7AC0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "SIMD performance mode",
+        "params": {
+          "query": "physics discovery",
+          "performance_mode": "simd",
+          "simd_config": {
+            "distance_threshold": 0.7,
+            "use_simd": true
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7CE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "LSH performance mode",
+        "params": {
+          "query": "scientific breakthrough",
+          "performance_mode": "lsh",
+          "lsh_config": {
+            "hash_functions": 32,
+            "hash_tables": 8,
+            "similarity_threshold": 0.6
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7BD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Limited results",
+        "params": {
+          "query": "scientist",
+          "limit": 2
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E67A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex query",
+        "params": {
+          "query": "Nobel Prize winner theoretical physics",
+          "search_type": "hybrid",
+          "filters": {
+            "relationship_types": [
+              "won",
+              "is"
+            ],
+            "min_confidence": 0.9
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7460>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Empty query handling",
+        "params": {
+          "query": ""
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/hybrid_search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6F10>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": true
+      }
+    ],
+    "analyze_graph": [
+      {
+        "test_name": "Connections analysis",
+        "params": {
+          "analysis_type": "connections",
+          "config": {
+            "start_entity": "Einstein",
+            "end_entity": "physics",
+            "max_depth": 3
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E57B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Centrality analysis",
+        "params": {
+          "analysis_type": "centrality",
+          "config": {
+            "centrality_types": [
+              "pagerank",
+              "betweenness"
+            ],
+            "top_n": 5,
+            "include_scores": true
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6AD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Clustering analysis",
+        "params": {
+          "analysis_type": "clustering",
+          "config": {
+            "algorithm": "leiden",
+            "resolution": 1.0,
+            "min_cluster_size": 3
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858698C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Prediction analysis",
+        "params": {
+          "analysis_type": "prediction",
+          "config": {
+            "prediction_type": "missing_links",
+            "confidence_threshold": 0.7,
+            "max_predictions": 5
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869590>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Deep connections",
+        "params": {
+          "analysis_type": "connections",
+          "config": {
+            "start_entity": "Newton",
+            "end_entity": "Einstein",
+            "max_depth": 5
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869260>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Multiple centrality measures",
+        "params": {
+          "analysis_type": "centrality",
+          "config": {
+            "centrality_types": [
+              "pagerank",
+              "betweenness",
+              "closeness",
+              "eigenvector"
+            ],
+            "top_n": 10
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868F30>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Alternative clustering",
+        "params": {
+          "analysis_type": "clustering",
+          "config": {
+            "algorithm": "louvain",
+            "resolution": 0.8
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868C00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Node prediction",
+        "params": {
+          "analysis_type": "prediction",
+          "config": {
+            "prediction_type": "node_classification",
+            "target_entity": "Hawking"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858696A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Shortest paths",
+        "params": {
+          "analysis_type": "connections",
+          "config": {
+            "start_entity": "Tesla",
+            "end_entity": "MIT",
+            "max_depth": 4,
+            "find_all_paths": false
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E5BF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Community detection",
+        "params": {
+          "analysis_type": "clustering",
+          "config": {
+            "algorithm": "walktrap",
+            "min_cluster_size": 2
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/analyze_graph (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6690>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "get_suggestions": {
+      "error": "[Errno 22] Invalid argument"
+    },
+    "get_stats": [
+      {
+        "test_name": "Basic stats",
+        "params": {},
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858688D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Detailed stats",
+        "params": {
+          "include_details": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858698C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Simple stats check",
+        "params": {
+          "include_details": false
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869AE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Stats after data loading",
+        "params": {},
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7F00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Detailed breakdown",
+        "params": {
+          "include_details": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7DF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Repeated stats call",
+        "params": {},
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6CF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Stats with details toggle",
+        "params": {
+          "include_details": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7570>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Quick stats",
+        "params": {
+          "include_details": false
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7790>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Full analysis stats",
+        "params": {
+          "include_details": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7350>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Final stats check",
+        "params": {},
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/get_stats (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7CE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "generate_graph_query": [
+      {
+        "test_name": "Simple Cypher query",
+        "params": {
+          "natural_query": "Find all physicists"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7020>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "SPARQL query generation",
+        "params": {
+          "natural_query": "Who discovered relativity?",
+          "query_language": "sparql"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6E00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Gremlin query",
+        "params": {
+          "natural_query": "Show connections between Einstein and physics",
+          "query_language": "gremlin"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6690>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex relationship query",
+        "params": {
+          "natural_query": "Find scientists who won Nobel Prizes and their discoveries",
+          "query_language": "cypher",
+          "include_explanation": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E5BF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "No explanation query",
+        "params": {
+          "natural_query": "List all universities",
+          "include_explanation": false
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E57B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Temporal query",
+        "params": {
+          "natural_query": "Find discoveries made before 1900",
+          "query_language": "cypher"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858689E0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Path finding query",
+        "params": {
+          "natural_query": "Find the shortest path between Newton and Einstein",
+          "query_language": "gremlin",
+          "include_explanation": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858688D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Aggregation query",
+        "params": {
+          "natural_query": "Count how many scientists are from each country",
+          "query_language": "sparql"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869590>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Pattern matching",
+        "params": {
+          "natural_query": "Find all entities that have a 'type' relationship",
+          "query_language": "cypher"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869260>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex filtering",
+        "params": {
+          "natural_query": "Show physicists born after 1900 who made discoveries",
+          "query_language": "gremlin",
+          "include_explanation": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/generate_graph_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E57B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "validate_knowledge": [
+      {
+        "test_name": "Basic validation",
+        "params": {},
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6470>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Consistency check",
+        "params": {
+          "validation_type": "consistency"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E68B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Conflict detection",
+        "params": {
+          "validation_type": "conflicts"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6580>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Quality assessment",
+        "params": {
+          "validation_type": "quality"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E69C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Completeness check",
+        "params": {
+          "validation_type": "completeness"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E78A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Entity specific validation",
+        "params": {
+          "entity": "Einstein",
+          "validation_type": "all"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7790>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Comprehensive validation",
+        "params": {
+          "scope": "comprehensive",
+          "include_metrics": true
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6BE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Neural features validation",
+        "params": {
+          "neural_features": true,
+          "quality_threshold": 0.8
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7DF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "High threshold validation",
+        "params": {
+          "quality_threshold": 0.9,
+          "importance_threshold": 0.8
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7130>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Auto-fix validation",
+        "params": {
+          "fix_issues": true,
+          "validation_type": "quality"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/validate_knowledge (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868490>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "neural_importance_scoring": [
+      {
+        "test_name": "Scientific text scoring",
+        "params": {
+          "text": "The theory of relativity changed our understanding of space and time."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585869480>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Complex scientific content",
+        "params": {
+          "text": "Quantum entanglement is a phenomenon where particles become correlated in such a way that the quantum state of each particle cannot be described independently.",
+          "context": "quantum physics"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858697B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Simple factual statement",
+        "params": {
+          "text": "The sky is blue."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858686B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Historical content",
+        "params": {
+          "text": "World War II ended in 1945 after the atomic bombings of Hiroshima and Nagasaki led to Japan's surrender.",
+          "context": "historical facts"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868F30>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Technical documentation",
+        "params": {
+          "text": "Machine learning models require training data to learn patterns and make predictions on new, unseen data."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868C00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Biographical information",
+        "params": {
+          "text": "Marie Curie was the first woman to win a Nobel Prize and remains the only person to win Nobel Prizes in two different scientific fields."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7130>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Mathematical concept",
+        "params": {
+          "text": "The derivative of a function represents the rate of change at any given point.",
+          "context": "mathematics education"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7F00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Trivial information",
+        "params": {
+          "text": "This is just a random sentence with no particular meaning or importance."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6BE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Long form content",
+        "params": {
+          "text": "Artificial intelligence has evolved significantly over the past decades. From rule-based systems to machine learning and now deep learning, AI has transformed numerous industries. The development of neural networks, particularly deep neural networks, has enabled breakthroughs in computer vision, natural language processing, and robotics."
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7790>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Context-dependent scoring",
+        "params": {
+          "text": "The process involves heating the solution to 100 degrees Celsius.",
+          "context": "chemistry laboratory procedures"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/neural_importance_scoring (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7AC0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "divergent_thinking_engine": [
+      {
+        "test_name": "Scientific concept exploration",
+        "params": {
+          "seed_concept": "quantum mechanics"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7680>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Creative exploration",
+        "params": {
+          "seed_concept": "artificial intelligence",
+          "creativity_level": 0.9,
+          "exploration_depth": 4
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7CE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Conservative exploration",
+        "params": {
+          "seed_concept": "gravity",
+          "creativity_level": 0.3,
+          "exploration_depth": 2
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7020>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Deep exploration",
+        "params": {
+          "seed_concept": "consciousness",
+          "exploration_depth": 5,
+          "max_branches": 15
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6E00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Historical concept",
+        "params": {
+          "seed_concept": "renaissance",
+          "creativity_level": 0.7
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6690>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Technology exploration",
+        "params": {
+          "seed_concept": "blockchain",
+          "exploration_depth": 3,
+          "max_branches": 8
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E5BF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Biological concept",
+        "params": {
+          "seed_concept": "evolution",
+          "creativity_level": 0.8,
+          "exploration_depth": 4
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858696A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Abstract concept",
+        "params": {
+          "seed_concept": "time",
+          "creativity_level": 0.6,
+          "max_branches": 12
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858686B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Limited branches",
+        "params": {
+          "seed_concept": "energy",
+          "max_branches": 3,
+          "exploration_depth": 2
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205858697B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Maximum creativity",
+        "params": {
+          "seed_concept": "reality",
+          "creativity_level": 1.0,
+          "exploration_depth": 5,
+          "max_branches": 20
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/divergent_thinking_engine (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868AF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "time_travel_query": [
+      {
+        "test_name": "Point in time query",
+        "params": {
+          "query_type": "point_in_time",
+          "timestamp": "2025-07-24T00:29:28.046174"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000020585868E20>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Evolution tracking",
+        "params": {
+          "query_type": "evolution_tracking",
+          "entity": "Einstein",
+          "time_range": {
+            "start": "2024-07-24T00:29:28.046203",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E5BF0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Temporal comparison",
+        "params": {
+          "query_type": "temporal_comparison",
+          "time_range": {
+            "start": "2024-07-24T00:29:28.046203",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E57B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Change detection",
+        "params": {
+          "query_type": "change_detection",
+          "entity": "physics",
+          "time_range": {
+            "start": "2024-07-24T00:29:28.046203",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6470>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Specific entity evolution",
+        "params": {
+          "query_type": "evolution_tracking",
+          "entity": "quantum_mechanics"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E68B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Historical point query",
+        "params": {
+          "query_type": "point_in_time",
+          "timestamp": "2024-07-24T00:29:28.046203",
+          "entity": "Tesla"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6580>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Recent changes",
+        "params": {
+          "query_type": "change_detection",
+          "time_range": {
+            "start": "2025-07-23T23:29:28.046217",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E69C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Long term evolution",
+        "params": {
+          "query_type": "evolution_tracking",
+          "entity": "relativity",
+          "time_range": {
+            "start": "2022-10-28T00:29:28.046221",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E78A0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Future projection query",
+        "params": {
+          "query_type": "point_in_time",
+          "timestamp": "2025-08-23T00:29:28.046211"
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E6BE0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      },
+      {
+        "test_name": "Multi-entity comparison",
+        "params": {
+          "query_type": "temporal_comparison",
+          "entity": "Newton",
+          "time_range": {
+            "start": "2024-07-24T00:29:28.046203",
+            "end": "2025-07-24T00:29:28.046174"
+          }
+        },
+        "result": {
+          "error": "HTTPConnectionPool(host='localhost', port=3000): Max retries exceeded with url: /mcp/tools/time_travel_query (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000205857E7F00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+        },
+        "passed": false
+      }
+    ],
+    "cognitive_reasoning_chains": {
+      "error": "[Errno 22] Invalid argument"
+    }
+  }
+}
