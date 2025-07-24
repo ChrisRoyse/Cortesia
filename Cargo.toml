@@ -29,6 +29,10 @@ path = "src/bin/test_brain_metrics.rs"
 name = "llmkg_mcp_server"
 path = "src/bin/llmkg_mcp_server.rs"
 
+[[bin]]
+name = "test_4_tools_basic"
+path = "test_4_tools_basic.rs"
+
 [dependencies]
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
@@ -61,6 +65,9 @@ rand = "0.8"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# Lazy initialization
+lazy_static = "1.4"
+
 # Logging
 log = "0.4"
 env_logger = "0.11"
@@ -72,6 +79,7 @@ clap = { version = "4.5", features = ["derive"] }
 parking_lot = "0.12"
 crossbeam = "0.8"
 rayon = "1.8"
+dashmap = "5.5"
 
 # System monitoring
 sysinfo = "0.30"
@@ -162,6 +170,11 @@ path = "tests/cognitive/performance_tests.rs"
 [[test]]
 name = "property_tests"
 path = "tests/cognitive/property_tests.rs"
+
+# Comprehensive integration test for the 4 fixed tools
+[[test]]
+name = "comprehensive_integration_tests"
+path = "integration_tests_comprehensive.rs"
 
 # Other disabled test targets
 # [[test]]

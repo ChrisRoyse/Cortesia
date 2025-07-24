@@ -806,6 +806,143 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 "Enable alternatives for comprehensive analysis".to_string(),
             ],
         },
+        
+        // ========= BRANCHING & VERSIONING TOOLS =========
+        
+        LLMMCPTool {
+            name: "create_branch".to_string(),
+            description: "Create a new branch of the knowledge graph database. Works like git branches - allows you to experiment with changes without affecting the main database.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "source_db_id": {
+                        "type": "string",
+                        "description": "The database ID to branch from (use 'main' for the main database)"
+                    },
+                    "branch_name": {
+                        "type": "string",
+                        "description": "Name for the new branch (e.g., 'experiment-1', 'feature-xyz')"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description of what this branch is for"
+                    }
+                },
+                "required": ["source_db_id", "branch_name"]
+            }),
+            examples: vec![
+                LLMExample {
+                    description: "Create a branch for experimenting".to_string(),
+                    input: json!({
+                        "source_db_id": "main",
+                        "branch_name": "quantum-physics-exploration",
+                        "description": "Testing new quantum physics relationships"
+                    }),
+                    expected_output: "Branch Created Successfully:\n🌿 Branch Name: quantum-physics-exploration\n📁 New Database ID: main_quantum-physics-exploration\n🔗 Created from: main".to_string(),
+                }
+            ],
+            tips: vec![
+                "Create branches for experiments or major changes".to_string(),
+                "Branch names should be descriptive".to_string(),
+                "Always document the purpose in description".to_string(),
+            ],
+        },
+        
+        LLMMCPTool {
+            name: "list_branches".to_string(),
+            description: "List all available branches of the knowledge graph. Shows branch names, creation dates, and descriptions.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {}
+            }),
+            examples: vec![
+                LLMExample {
+                    description: "List all branches".to_string(),
+                    input: json!({}),
+                    expected_output: "Found 3 branches:\n\n🌿 main (main)\n🌿 quantum-physics-exploration (main_quantum-physics-exploration)\n🌿 historical-data-import (main_historical-data-import)".to_string(),
+                }
+            ],
+            tips: vec![
+                "Check branches before creating new ones".to_string(),
+                "Inactive branches can be deleted to clean up".to_string(),
+                "Each branch has its own database ID".to_string(),
+            ],
+        },
+        
+        LLMMCPTool {
+            name: "compare_branches".to_string(),
+            description: "Compare two branches to see differences. Shows what's unique to each branch and what they have in common.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "branch1": {
+                        "type": "string",
+                        "description": "First branch name to compare"
+                    },
+                    "branch2": {
+                        "type": "string",
+                        "description": "Second branch name to compare"
+                    }
+                },
+                "required": ["branch1", "branch2"]
+            }),
+            examples: vec![
+                LLMExample {
+                    description: "Compare main with experiment branch".to_string(),
+                    input: json!({
+                        "branch1": "main",
+                        "branch2": "quantum-physics-exploration"
+                    }),
+                    expected_output: "Branch Comparison:\n🌿 main vs quantum-physics-exploration\n📊 Branch 1: 1247 triples, 523 nodes\n📊 Branch 2: 1289 triples, 541 nodes\n🔍 Unique to main: 15\n🔍 Unique to quantum-physics-exploration: 57\n🤝 Common: 1232".to_string(),
+                }
+            ],
+            tips: vec![
+                "Compare before merging to understand changes".to_string(),
+                "Large differences might need careful merging".to_string(),
+                "Use sample_differences to inspect specific changes".to_string(),
+            ],
+        },
+        
+        LLMMCPTool {
+            name: "merge_branches".to_string(),
+            description: "Merge changes from one branch into another. Supports different merge strategies for handling conflicts.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "source_branch": {
+                        "type": "string",
+                        "description": "Branch to merge FROM (contains new changes)"
+                    },
+                    "target_branch": {
+                        "type": "string",
+                        "description": "Branch to merge INTO (will receive changes)"
+                    },
+                    "merge_strategy": {
+                        "type": "string",
+                        "description": "How to handle conflicts",
+                        "enum": ["accept_source", "accept_target", "manual"],
+                        "default": "accept_source"
+                    }
+                },
+                "required": ["source_branch", "target_branch"]
+            }),
+            examples: vec![
+                LLMExample {
+                    description: "Merge experiment branch back to main".to_string(),
+                    input: json!({
+                        "source_branch": "quantum-physics-exploration",
+                        "target_branch": "main",
+                        "merge_strategy": "accept_source"
+                    }),
+                    expected_output: "Merge Results:\n✅ Status: Success\n🔀 quantum-physics-exploration → main\n📝 Strategy: accept_source\n➕ Triples Added: 57\n➖ Triples Removed: 0\n🔧 Conflicts Resolved: 3".to_string(),
+                }
+            ],
+            tips: vec![
+                "Use 'accept_source' to take all changes from source branch".to_string(),
+                "Use 'accept_target' to keep target unchanged".to_string(),
+                "Compare branches first to understand the impact".to_string(),
+            ],
+        },
     ]
 }
 

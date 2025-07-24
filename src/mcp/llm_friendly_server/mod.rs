@@ -8,14 +8,21 @@ pub mod types;
 pub mod tools;
 pub mod validation;
 pub mod query_generation;
+pub mod query_generation_enhanced;
+pub mod query_generation_native;
+pub mod divergent_graph_traversal;
 pub mod search_fusion;
 pub mod utils;
 pub mod handlers;
 pub mod migration;
+pub mod temporal_tracking;
+pub mod database_branching;
+pub mod reasoning_engine;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};
 use crate::error::Result;
+use crate::versioning::MultiDatabaseVersionManager;
 use types::UsageStats;
 use tools::get_tools;
 use std::sync::Arc;
@@ -30,15 +37,25 @@ use std::collections::HashMap;
 pub struct LLMFriendlyMCPServer {
     knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
     usage_stats: Arc<RwLock<UsageStats>>,
+    version_manager: Arc<MultiDatabaseVersionManager>,
 }
 
 impl LLMFriendlyMCPServer {
     /// Create a new LLM-friendly MCP server
-    pub fn new(knowledge_engine: Arc<RwLock<KnowledgeEngine>>) -> Self {
-        Self {
+    pub fn new(knowledge_engine: Arc<RwLock<KnowledgeEngine>>) -> Result<Self> {
+        let version_manager = Arc::new(MultiDatabaseVersionManager::new()?);
+        
+        // Initialize the branch manager
+        let branch_manager_clone = version_manager.clone();
+        tokio::spawn(async move {
+            database_branching::initialize_branch_manager(branch_manager_clone).await;
+        });
+        
+        Ok(Self {
             knowledge_engine,
             usage_stats: Arc::new(RwLock::new(UsageStats::default())),
-        }
+            version_manager,
+        })
     }
 
     /// Get all available tools
@@ -151,7 +168,7 @@ impl LLMFriendlyMCPServer {
                 ).await
             }
             "time_travel_query" => {
-                handlers::cognitive::handle_time_travel_query(
+                handlers::temporal::handle_time_travel_query(
                     &self.knowledge_engine,
                     &self.usage_stats,
                     params.clone(),
@@ -179,6 +196,37 @@ impl LLMFriendlyMCPServer {
             // Statistics operations
             "get_stats" => {
                 handlers::stats::handle_get_stats(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            
+            // Branching operations
+            "create_branch" => {
+                handlers::temporal::handle_create_branch(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                    self.version_manager.clone(),
+                ).await
+            }
+            "list_branches" => {
+                handlers::temporal::handle_list_branches(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "compare_branches" => {
+                handlers::temporal::handle_compare_branches(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "merge_branches" => {
+                handlers::temporal::handle_merge_branches(
                     &self.knowledge_engine,
                     &self.usage_stats,
                     params.clone(),
@@ -273,7 +321,7 @@ mod tests {
     #[tokio::test]
     async fn test_server_creation() {
         let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
-        let server = LLMFriendlyMCPServer::new(engine);
+        let server = LLMFriendlyMCPServer::new(engine).unwrap();
         
         let tools = server.get_available_tools();
         assert!(!tools.is_empty());
@@ -284,7 +332,7 @@ mod tests {
     #[tokio::test]
     async fn test_health_check() {
         let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
-        let server = LLMFriendlyMCPServer::new(engine);
+        let server = LLMFriendlyMCPServer::new(engine).unwrap();
         
         let health = server.get_health().await;
         assert_eq!(health.get("status").unwrap(), &json!("healthy"));
@@ -294,7 +342,7 @@ mod tests {
     #[tokio::test]
     async fn test_unknown_method() {
         let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
-        let server = LLMFriendlyMCPServer::new(engine);
+        let server = LLMFriendlyMCPServer::new(engine).unwrap();
         
         let request = LLMMCPRequest {
             method: "unknown_method".to_string(),

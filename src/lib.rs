@@ -27,6 +27,9 @@ pub mod graph;
 pub mod api;
 // pub mod agents; // Removed as requested
 
+#[cfg(feature = "native")]
+pub mod production;
+
 pub mod test_support;
 
 #[cfg(test)]
@@ -58,6 +61,18 @@ pub use crate::validation::{HumanValidationInterface, ValidationItem, Validation
 pub use crate::monitoring::{PerformanceMonitor, ObservabilityEngine, AlertManager};
 // pub use crate::agents::{Agent, ConstructionAgent, CoordinationAgent, AgentId, Request, Response, Task, TaskResult, TaskType, Complexity};
 
+// Production system exports
+#[cfg(feature = "native")]
+pub use crate::production::{
+    ProductionSystem, ProductionConfig, OperationConfig,
+    ErrorRecoveryManager, RetryConfig, CircuitBreakerConfig, CircuitState,
+    ProductionMonitor, MonitoringConfig, LogLevel, MetricType, AlertSeverity,
+    RateLimitingManager, RateLimitConfig, ResourceLimits, OperationPermit, DatabaseConnection,
+    HealthCheckSystem, HealthCheckConfig, HealthStatus, SystemHealthReport,
+    GracefulShutdownManager, ShutdownConfig, ShutdownPhase, ActiveRequestGuard,
+    create_production_system, create_production_system_with_config
+};
+
 // Phase 1 Brain-Inspired Exports
 pub use crate::core::brain_types::{
     BrainInspiredEntity, EntityDirection, LogicGate, LogicGateType,
@@ -71,6 +86,8 @@ pub use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, Tempo
 
 #[cfg(feature = "native")]
 pub use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
+#[cfg(feature = "native")]
+pub use crate::mcp::production_server::ProductionMCPServer;
 #[cfg(feature = "native")]
 pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent};
 

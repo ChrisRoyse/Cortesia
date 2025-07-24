@@ -1,11 +1,10 @@
 //! Unified graph analysis handler
 
 use crate::core::knowledge_engine::KnowledgeEngine;
-use crate::core::knowledge_types::{TripleQuery, KnowledgeResult};
+use crate::core::knowledge_types::TripleQuery;
 use crate::core::triple::Triple;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
-use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
@@ -590,7 +589,7 @@ fn calculate_degree_centrality(triples: &[Triple], _entity_filter: Option<&str>)
 }
 
 fn execute_clustering(
-    algorithm: &str,
+    _algorithm: &str,
     triples: &[Triple],
     _resolution: f32,
     min_cluster_size: usize,

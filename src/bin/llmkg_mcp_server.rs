@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     ));
     
     // Create MCP server
-    let mcp_server = LLMFriendlyMCPServer::new(knowledge_engine);
+    let mcp_server = LLMFriendlyMCPServer::new(knowledge_engine)?;
     
     // Set up stdio communication
     let stdin = tokio::io::stdin();

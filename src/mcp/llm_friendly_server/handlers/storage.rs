@@ -2,8 +2,10 @@
 
 use crate::core::triple::Triple;
 use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::core::knowledge_types::TripleQuery;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
+use crate::mcp::llm_friendly_server::temporal_tracking::{TEMPORAL_INDEX, TemporalOperation};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
@@ -37,7 +39,7 @@ pub async fn handle_store_fact(
         return Err("Predicate must be 64 characters or less".to_string());
     }
     
-    // Create and store the triple
+    // Create the triple
     let triple = Triple::with_metadata(
         subject.to_string(),
         predicate.to_string(),
@@ -46,10 +48,42 @@ pub async fn handle_store_fact(
         Some("user_input".to_string()),
     ).map_err(|e| format!("Failed to create triple: {}", e))?;
     
+    // Check if this triple already exists (for update vs create detection)
+    let existing_query = TripleQuery {
+        subject: Some(subject.to_string()),
+        predicate: Some(predicate.to_string()),
+        object: None,
+        limit: 1,
+        min_confidence: 0.0,
+        include_chunks: false,
+    };
+    
+    let existing_result = {
+        let engine = knowledge_engine.read().await;
+        engine.query_triples(existing_query).ok()
+    };
+    
+    let (operation, previous_value) = if let Some(result) = existing_result {
+        if let Some(existing_triple) = result.triples.first() {
+            // This is an update - capture the previous value
+            (TemporalOperation::Update, Some(existing_triple.object.clone()))
+        } else {
+            // This is a new creation
+            (TemporalOperation::Create, None)
+        }
+    } else {
+        // Query failed or no results - treat as create
+        (TemporalOperation::Create, None)
+    };
+    
+    // Store the triple
     let engine = knowledge_engine.write().await;
-    let node_id = engine.store_triple(triple, None)
+    let node_id = engine.store_triple(triple.clone(), None)
         .map_err(|e| format!("Failed to store triple: {}", e))?;
     drop(engine);
+    
+    // Record in temporal index
+    TEMPORAL_INDEX.record_operation(triple, operation, previous_value);
     
     // Update usage stats
     let _ = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 10).await;
@@ -122,8 +156,11 @@ pub async fn handle_store_knowledge(
         "knowledge_chunk".to_string(),
     ).map_err(|e| format!("Failed to create chunk triple: {}", e))?;
     
-    match engine.store_triple(chunk_triple, None) {
+    match engine.store_triple(chunk_triple.clone(), None) {
         Ok(_) => {
+            // Record the chunk creation in temporal index
+            TEMPORAL_INDEX.record_operation(chunk_triple, TemporalOperation::Create, None);
+            
             // Store extracted entities and relationships
             let mut stored_count = 0;
             
@@ -133,8 +170,25 @@ pub async fn handle_store_knowledge(
                     "mentioned_in".to_string(),
                     chunk_id.clone(),
                 ) {
-                    if engine.store_triple(entity_triple, None).is_ok() {
+                    // Check if this entity relation already exists
+                    let existing_query = TripleQuery {
+                        subject: Some(entity.clone()),
+                        predicate: Some("mentioned_in".to_string()),
+                        object: Some(chunk_id.clone()),
+                        limit: 1,
+                        min_confidence: 0.0,
+                        include_chunks: false,
+                    };
+                    
+                    let exists = engine.query_triples(existing_query)
+                        .map(|r| !r.triples.is_empty())
+                        .unwrap_or(false);
+                    
+                    if engine.store_triple(entity_triple.clone(), None).is_ok() {
                         stored_count += 1;
+                        // Record temporal operation
+                        let operation = if exists { TemporalOperation::Update } else { TemporalOperation::Create };
+                        TEMPORAL_INDEX.record_operation(entity_triple, operation, None);
                     }
                 }
             }
@@ -145,8 +199,32 @@ pub async fn handle_store_knowledge(
                     pred.clone(),
                     obj.clone(),
                 ) {
-                    if engine.store_triple(rel_triple, None).is_ok() {
+                    // Check if this relationship already exists
+                    let existing_query = TripleQuery {
+                        subject: Some(subj.clone()),
+                        predicate: Some(pred.clone()),
+                        object: Some(obj.clone()),
+                        limit: 1,
+                        min_confidence: 0.0,
+                        include_chunks: false,
+                    };
+                    
+                    let existing_result = engine.query_triples(existing_query).ok();
+                    let (operation, previous_value) = if let Some(result) = existing_result {
+                        if let Some(existing) = result.triples.first() {
+                            // For exact matches, this would be a duplicate, but we might be updating confidence
+                            (TemporalOperation::Update, Some(existing.confidence.to_string()))
+                        } else {
+                            (TemporalOperation::Create, None)
+                        }
+                    } else {
+                        (TemporalOperation::Create, None)
+                    };
+                    
+                    if engine.store_triple(rel_triple.clone(), None).is_ok() {
                         stored_count += 1;
+                        // Record temporal operation
+                        TEMPORAL_INDEX.record_operation(rel_triple, operation, previous_value);
                     }
                 }
             }

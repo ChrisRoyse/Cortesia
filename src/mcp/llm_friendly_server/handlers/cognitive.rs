@@ -4,6 +4,7 @@ use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::{TripleQuery, KnowledgeResult};
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
+use crate::mcp::llm_friendly_server::divergent_graph_traversal::explore_divergent_paths;
 use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -12,7 +13,7 @@ use std::collections::HashMap;
 
 /// Handle neural importance scoring request
 pub async fn handle_neural_importance_scoring(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
@@ -106,22 +107,10 @@ pub async fn handle_divergent_thinking_engine(
         .and_then(|v| v.as_u64())
         .unwrap_or(10) as usize;
     
-    // Get existing knowledge for exploration
-    let engine = knowledge_engine.read().await;
-    let related_facts = engine.query_triples(TripleQuery {
-        subject: Some(seed_concept.to_string()),
-        predicate: None,
-        object: None,
-        limit: 50,
-        min_confidence: 0.0,
-        include_chunks: true,
-    }).map_err(|e| format!("Failed to query related facts: {}", e))?;
-    drop(engine);
-    
-    // Generate divergent exploration paths
-    let exploration_result = generate_divergent_paths(
+    // Use the real graph traversal implementation
+    let exploration_result = explore_divergent_paths(
+        knowledge_engine,
         seed_concept,
-        &related_facts,
         exploration_depth,
         creativity_level,
         max_branches
@@ -130,15 +119,10 @@ pub async fn handle_divergent_thinking_engine(
     let data = json!({
         "seed_concept": seed_concept,
         "exploration_paths": exploration_result.paths,
-        "creative_connections": exploration_result.creative_connections,
-        "novel_ideas": exploration_result.novel_ideas,
-        "cross_domain_links": exploration_result.cross_domain_links,
-        "metrics": {
-            "total_paths": exploration_result.paths.len(),
-            "average_creativity": exploration_result.average_creativity,
-            "exploration_breadth": exploration_result.breadth_score,
-            "novelty_score": exploration_result.novelty_score
-        },
+        "discovered_entities": exploration_result.discovered_entities,
+        "discovered_relationships": exploration_result.discovered_relationships,
+        "cross_domain_connections": exploration_result.cross_domain_connections,
+        "stats": exploration_result.exploration_stats,
         "parameters": {
             "exploration_depth": exploration_depth,
             "creativity_level": creativity_level,
@@ -149,17 +133,19 @@ pub async fn handle_divergent_thinking_engine(
     let message = format!(
         "Divergent Thinking Exploration:\n\
         🧠 Seed Concept: {}\n\
-        🌟 Generated {} creative paths\n\
-        🔗 Found {} novel connections\n\
-        💡 {} cross-domain ideas\n\
-        📊 Creativity Score: {:.2}/1.0\n\
-        🎯 Novelty Score: {:.2}/1.0",
+        🌟 Generated {} exploration paths\n\
+        🔍 Discovered {} unique entities\n\
+        🔗 Found {} relationship types\n\
+        💡 {} cross-domain connections\n\
+        📊 Average path length: {:.1}\n\
+        🎯 Max depth reached: {}",
         seed_concept,
         exploration_result.paths.len(),
-        exploration_result.creative_connections.len(),
-        exploration_result.cross_domain_links.len(),
-        exploration_result.average_creativity,
-        exploration_result.novelty_score
+        exploration_result.discovered_entities.len(),
+        exploration_result.discovered_relationships.len(),
+        exploration_result.cross_domain_connections.len(),
+        exploration_result.exploration_stats.average_path_length,
+        exploration_result.exploration_stats.max_depth_reached
     );
     
     let suggestions = vec![
@@ -175,7 +161,7 @@ pub async fn handle_divergent_thinking_engine(
 
 /// Handle time travel query request
 pub async fn handle_time_travel_query(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
@@ -253,7 +239,7 @@ pub async fn handle_time_travel_query(
 
 /// Handle SIMD ultra fast search request
 pub async fn handle_simd_ultra_fast_search(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
@@ -516,7 +502,7 @@ fn estimate_relationship_count(text: &str) -> usize {
         .count()
 }
 
-fn generate_storage_recommendations(score: f32, quality: &str) -> Vec<String> {
+fn generate_storage_recommendations(score: f32, _quality: &str) -> Vec<String> {
     match score {
         s if s >= 0.8 => vec![
             "High priority storage - excellent content".to_string(),

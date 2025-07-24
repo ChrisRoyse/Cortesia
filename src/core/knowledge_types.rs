@@ -24,7 +24,7 @@ pub struct TripleQuery {
 }
 
 /// LLM-friendly search results
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct KnowledgeResult {
     pub nodes: Vec<crate::core::triple::KnowledgeNode>,
     pub triples: Vec<Triple>,

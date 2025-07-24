@@ -10,8 +10,10 @@ pub mod llm_friendly_server;
 pub mod federated_server;
 pub mod brain_inspired_server;
 pub mod shared_types;
+pub mod production_server;
 
 pub use federated_server::FederatedMCPServer;
+pub use production_server::ProductionMCPServer;
 pub use shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent, LLMMCPTool, LLMExample, LLMMCPRequest, LLMMCPResponse, ResponseMetadata, PerformanceInfo};
 
 pub struct LLMKGMCPServer {

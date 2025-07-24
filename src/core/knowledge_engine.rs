@@ -581,6 +581,30 @@ impl KnowledgeEngine {
             confidence_score: 1.0,
         });
     }
+    
+    /// Convenience method for tests - add a triple with basic parameters
+    pub fn add_triple(&self, subject: &str, predicate: &str, object: &str, confidence: f32) -> Result<String> {
+        let triple = Triple {
+            subject: subject.to_string(),
+            predicate: predicate.to_string(),
+            object: object.to_string(),
+            confidence,
+            source: None,
+        };
+        self.store_triple(triple, None)
+    }
+    
+    /// Convenience method for tests - add a knowledge chunk with basic parameters
+    pub fn add_knowledge_chunk(&self, title: &str, content: &str, category: Option<&str>, source: Option<&str>) -> Result<String> {
+        // For now, just store the content as text
+        // In a full implementation, we might want to add metadata handling
+        let text = if let Some(title_str) = Some(title) {
+            format!("{}: {}", title_str, content)
+        } else {
+            content.to_string()
+        };
+        self.store_chunk(text, None)
+    }
 }
 
 #[cfg(test)]

@@ -3,21 +3,24 @@
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::{TripleQuery, KnowledgeResult};
 use crate::core::triple::Triple;
-use crate::mcp::llm_friendly_server::query_generation::{
-    generate_cypher_query, generate_sparql_query, generate_gremlin_query,
-    extract_entities_from_query, estimate_query_complexity
+// Removed unused import: estimate_query_complexity
+use crate::mcp::llm_friendly_server::query_generation_enhanced::{
+    extract_entities_advanced
+    // Removed unused imports: generate_cypher_query_enhanced, generate_sparql_query_enhanced, generate_gremlin_query_enhanced
 };
 use crate::mcp::llm_friendly_server::search_fusion::{fuse_search_results, get_fusion_weights};
 use crate::mcp::llm_friendly_server::validation::{
     validate_consistency, validate_completeness, validate_triple
 };
+use crate::mcp::llm_friendly_server::reasoning_engine::ReasoningResult;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+// Removed unused import: HashSet
 
 /// Handle hierarchical clustering request using Leiden algorithm
 pub async fn handle_hierarchical_clustering(
@@ -325,7 +328,7 @@ pub async fn handle_cognitive_reasoning_chains(
 
 /// Handle approximate similarity search using LSH
 pub async fn handle_approximate_similarity_search(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
@@ -537,74 +540,54 @@ pub async fn handle_generate_graph_query(
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
+    use crate::mcp::llm_friendly_server::query_generation_native::generate_native_query;
+    
     let natural_query = params.get("natural_query").and_then(|v| v.as_str())
         .ok_or("Missing required field: natural_query")?;
-    let query_language = params.get("query_language").and_then(|v| v.as_str())
-        .unwrap_or("cypher");
-    let include_explanation = params.get("include_explanation")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
     
     if natural_query.is_empty() {
         return Err("natural_query cannot be empty".to_string());
     }
     
-    // Validate query language
-    if !["cypher", "sparql", "gremlin"].contains(&query_language) {
-        return Err("Invalid query_language. Must be one of: cypher, sparql, gremlin".to_string());
-    }
-    
-    // Generate the query
-    let (query, explanation) = match query_language {
-        "cypher" => generate_cypher_query(natural_query, include_explanation)?,
-        "sparql" => generate_sparql_query(natural_query, include_explanation)?,
-        "gremlin" => generate_gremlin_query(natural_query, include_explanation)?,
-        _ => unreachable!(),
-    };
+    // Generate native LLMKG query
+    let query_result = generate_native_query(natural_query)
+        .map_err(|e| format!("Failed to generate query: {}", e))?;
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 5).await;
     
-    // Extract entities for additional context
-    let entities = extract_entities_from_query(natural_query);
-    let complexity = estimate_query_complexity(&query);
+    let query_type = query_result["query_type"].as_str().unwrap_or("unknown");
+    let params = &query_result["params"];
     
     let data = json!({
         "natural_query": natural_query,
-        "query_language": query_language,
-        "generated_query": query,
-        "explanation": explanation,
-        "extracted_entities": entities,
-        "complexity_score": complexity,
+        "query_type": query_type,
+        "query_params": params,
         "executable": true
     });
     
     let message = format!(
-        "{} Query:\n```{}\n{}\n```{}",
-        match query_language {
-            "cypher" => "Cypher",
-            "sparql" => "SPARQL",
-            "gremlin" => "Gremlin",
-            _ => "Unknown",
-        },
-        query_language,
-        query,
-        if let Some(exp) = &explanation {
-            format!("\n\nExplanation: {}", exp)
-        } else {
-            String::new()
-        }
+        "Native LLMKG Query Generated:\n\nType: {}\nParameters:\n{}",
+        query_type,
+        serde_json::to_string_pretty(params).unwrap_or_default()
     );
     
-    let suggestions = vec![
-        format!("This query can be executed in {} databases", match query_language {
-            "cypher" => "Neo4j",
-            "sparql" => "RDF/SPARQL endpoints like Blazegraph",
-            "gremlin" => "TinkerPop-compatible databases",
-            _ => "compatible",
-        }),
-        "Start with simple queries and gradually increase complexity".to_string(),
-        "Use the generated query as a template for similar queries".to_string(),
-    ];
+    let suggestions = match query_type {
+        "triple_query" => vec![
+            "This will search for triples matching the pattern".to_string(),
+            "Results include facts stored as subject-predicate-object".to_string(),
+        ],
+        "path_query" => vec![
+            "This will find paths between two entities".to_string(),
+            "Adjust max_depth to control search distance".to_string(),
+        ],
+        "hybrid_search" => vec![
+            "This searches across triples, chunks, and entities".to_string(),
+            "Best for open-ended queries".to_string(),
+        ],
+        _ => vec![
+            "Query ready to execute against LLMKG".to_string(),
+        ]
+    };
     
     Ok((data, message, suggestions))
 }
@@ -880,7 +863,7 @@ async fn perform_semantic_search(
     limit: usize,
 ) -> Result<Vec<KnowledgeResult>> {
     // Simplified semantic search - in practice would use embeddings
-    let keywords = extract_entities_from_query(query);
+    let keywords = extract_entities_advanced(query);
     let mut results = Vec::new();
     
     for keyword in keywords {
@@ -1014,14 +997,6 @@ struct PredictionResult {
     insights: Vec<String>,
 }
 
-struct ReasoningResult {
-    chains: Vec<serde_json::Value>,
-    primary_conclusion: String,
-    logical_validity: f32,
-    confidence_scores: Vec<f32>,
-    supporting_evidence: Vec<String>,
-    counterarguments: Vec<String>,
-}
 
 struct LshSearchResult {
     candidates: Vec<serde_json::Value>,
@@ -1134,56 +1109,38 @@ fn calculate_average_confidence(_predictions: &[serde_json::Value]) -> f32 {
     0.75
 }
 
-async fn execute_deductive_reasoning(_premise: &str, _knowledge: &KnowledgeResult, _max_length: usize, _threshold: f32) -> ReasoningResult {
-    ReasoningResult {
-        chains: vec![],
-        primary_conclusion: "Deductive conclusion".to_string(),
-        logical_validity: 0.9,
-        confidence_scores: vec![],
-        supporting_evidence: vec![],
-        counterarguments: vec![],
-    }
+async fn execute_deductive_reasoning(premise: &str, knowledge: &KnowledgeResult, max_length: usize, threshold: f32) -> ReasoningResult {
+    crate::mcp::llm_friendly_server::reasoning_engine::execute_deductive_reasoning(
+        premise, knowledge, max_length, threshold
+    ).await
 }
 
-async fn execute_inductive_reasoning(_premise: &str, _knowledge: &KnowledgeResult, _max_length: usize, _threshold: f32) -> ReasoningResult {
-    ReasoningResult {
-        chains: vec![],
-        primary_conclusion: "Inductive conclusion".to_string(),
-        logical_validity: 0.75,
-        confidence_scores: vec![],
-        supporting_evidence: vec![],
-        counterarguments: vec![],
-    }
+async fn execute_inductive_reasoning(premise: &str, knowledge: &KnowledgeResult, max_length: usize, threshold: f32) -> ReasoningResult {
+    crate::mcp::llm_friendly_server::reasoning_engine::execute_inductive_reasoning(
+        premise, knowledge, max_length, threshold
+    ).await
 }
 
-async fn execute_abductive_reasoning(_premise: &str, _knowledge: &KnowledgeResult, _max_length: usize, _threshold: f32) -> ReasoningResult {
-    ReasoningResult {
-        chains: vec![],
-        primary_conclusion: "Abductive conclusion".to_string(),
-        logical_validity: 0.65,
-        confidence_scores: vec![],
-        supporting_evidence: vec![],
-        counterarguments: vec![],
-    }
+async fn execute_abductive_reasoning(premise: &str, knowledge: &KnowledgeResult, max_length: usize, threshold: f32) -> ReasoningResult {
+    crate::mcp::llm_friendly_server::reasoning_engine::execute_abductive_reasoning(
+        premise, knowledge, max_length, threshold
+    ).await
 }
 
-async fn execute_analogical_reasoning(_premise: &str, _knowledge: &KnowledgeResult, _max_length: usize, _threshold: f32) -> ReasoningResult {
-    ReasoningResult {
-        chains: vec![],
-        primary_conclusion: "Analogical conclusion".to_string(),
-        logical_validity: 0.7,
-        confidence_scores: vec![],
-        supporting_evidence: vec![],
-        counterarguments: vec![],
-    }
+async fn execute_analogical_reasoning(premise: &str, knowledge: &KnowledgeResult, max_length: usize, threshold: f32) -> ReasoningResult {
+    crate::mcp::llm_friendly_server::reasoning_engine::execute_analogical_reasoning(
+        premise, knowledge, max_length, threshold
+    ).await
 }
 
-async fn generate_alternative_reasoning_chains(_premise: &str, _knowledge: &KnowledgeResult, _primary: &ReasoningResult, _max_length: usize) -> Vec<serde_json::Value> {
-    vec![]
+async fn generate_alternative_reasoning_chains(premise: &str, knowledge: &KnowledgeResult, primary: &ReasoningResult, max_length: usize) -> Vec<serde_json::Value> {
+    crate::mcp::llm_friendly_server::reasoning_engine::generate_alternative_reasoning_chains(
+        premise, knowledge, primary, max_length
+    ).await
 }
 
-fn calculate_chain_confidence(_chains: &[serde_json::Value]) -> f32 {
-    0.8
+fn calculate_chain_confidence(chains: &[serde_json::Value]) -> f32 {
+    crate::mcp::llm_friendly_server::reasoning_engine::calculate_chain_confidence(chains)
 }
 
 async fn generate_text_embedding(_text: &str) -> Result<Vec<f32>> {
@@ -1201,7 +1158,7 @@ async fn execute_lsh_search(_vector: &[f32], _threshold: f32, _max_results: usiz
 async fn generate_quality_metrics(
     triples: &[Triple],
     quality_threshold: f32,
-    importance_threshold: f32,
+    _importance_threshold: f32,
     neural_features: bool,
     _engine: &KnowledgeEngine,
 ) -> std::result::Result<Value, String> {
@@ -1388,52 +1345,97 @@ fn combine_lsh_and_exact_results(_lsh: LshSearchResult, _exact: Vec<f32>, _max_r
     }
 }
 
-async fn execute_comprehensive_quality_assessment(_knowledge: &KnowledgeResult, _entities: bool, _relationships: bool, _content: bool) -> QualityAssessmentResult {
+async fn execute_comprehensive_quality_assessment(knowledge: &KnowledgeResult, entities: bool, relationships: bool, content: bool) -> QualityAssessmentResult {
+    let mut quality_breakdown = HashMap::new();
+    let mut entity_quality = HashMap::new();
+    let mut relationship_quality = HashMap::new();  
+    let mut content_quality = HashMap::new();
+    let mut recommendations = Vec::new();
+    
+    // Entity quality assessment
+    if entities {
+        let mut entity_scores = HashMap::new();
+        let mut entity_connections = HashMap::new();
+        
+        // Count connections per entity
+        for triple in &knowledge.triples {
+            *entity_connections.entry(triple.subject.clone()).or_insert(0) += 1;
+            *entity_connections.entry(triple.object.clone()).or_insert(0) += 1;
+        }
+        
+        // Score entities based on connections
+        for (entity, connections) in &entity_connections {
+            let connection_score = ((*connections as f32) / 10.0).min(1.0);
+            entity_scores.insert(entity.clone(), connection_score);
+        }
+        
+        let avg_entity_score = entity_scores.values().sum::<f32>() / entity_scores.len().max(1) as f32;
+        quality_breakdown.insert("entities".to_string(), avg_entity_score);
+        entity_quality = entity_scores;
+        
+        if avg_entity_score < 0.5 {
+            recommendations.push("Many entities have low connectivity - consider adding more relationships".to_string());
+        }
+    }
+    
+    // Relationship quality assessment  
+    if relationships {
+        let mut rel_scores = HashMap::new();
+        let mut predicate_counts = HashMap::new();
+        
+        // Count predicate usage
+        for triple in &knowledge.triples {
+            *predicate_counts.entry(triple.predicate.clone()).or_insert(0) += 1;
+        }
+        
+        // Score relationships based on frequency
+        for (predicate, count) in &predicate_counts {
+            let frequency_score = ((*count as f32) / knowledge.triples.len().max(1) as f32).min(1.0);
+            rel_scores.insert(predicate.clone(), frequency_score);
+        }
+        
+        let avg_rel_score = rel_scores.values().sum::<f32>() / rel_scores.len().max(1) as f32;
+        quality_breakdown.insert("relationships".to_string(), avg_rel_score);
+        relationship_quality = rel_scores;
+    }
+    
+    // Content quality assessment
+    if content {
+        let mut content_scores = HashMap::new();
+        
+        // Simple content quality metrics
+        let avg_confidence = knowledge.triples.iter().map(|t| t.confidence).sum::<f32>() / knowledge.triples.len().max(1) as f32;
+        
+        content_scores.insert("confidence".to_string(), avg_confidence);
+        
+        let avg_content_score = content_scores.values().sum::<f32>() / content_scores.len().max(1) as f32;
+        quality_breakdown.insert("content".to_string(), avg_content_score);
+        content_quality = content_scores;
+    }
+    
+    let overall_score = quality_breakdown.values().sum::<f32>() / quality_breakdown.len().max(1) as f32;
+    
     QualityAssessmentResult {
-        overall_score: 0.75,
-        quality_breakdown: json!({}),
-        entity_quality: json!({}),
-        relationship_quality: json!({}),
-        content_quality: json!({}),
-        quality_trends: json!({}),
+        overall_score,
+        quality_breakdown: json!(quality_breakdown),
+        entity_quality: json!(entity_quality),
+        relationship_quality: json!(relationship_quality), 
+        content_quality: json!(content_quality),
+        quality_trends: json!({"recommendations": recommendations}),
         comparative_metrics: json!({}),
     }
 }
 
-async fn execute_entity_quality_assessment(_knowledge: &KnowledgeResult) -> QualityAssessmentResult {
-    QualityAssessmentResult {
-        overall_score: 0.8,
-        quality_breakdown: json!({}),
-        entity_quality: json!({}),
-        relationship_quality: json!({}),
-        content_quality: json!({}),
-        quality_trends: json!({}),
-        comparative_metrics: json!({}),
-    }
+async fn execute_entity_quality_assessment(knowledge: &KnowledgeResult) -> QualityAssessmentResult {
+    execute_comprehensive_quality_assessment(knowledge, true, false, false).await
 }
 
-async fn execute_relationship_quality_assessment(_knowledge: &KnowledgeResult) -> QualityAssessmentResult {
-    QualityAssessmentResult {
-        overall_score: 0.7,
-        quality_breakdown: json!({}),
-        entity_quality: json!({}),
-        relationship_quality: json!({}),
-        content_quality: json!({}),
-        quality_trends: json!({}),
-        comparative_metrics: json!({}),
-    }
+async fn execute_relationship_quality_assessment(knowledge: &KnowledgeResult) -> QualityAssessmentResult {
+    execute_comprehensive_quality_assessment(knowledge, false, true, false).await
 }
 
-async fn execute_content_quality_assessment(_knowledge: &KnowledgeResult) -> QualityAssessmentResult {
-    QualityAssessmentResult {
-        overall_score: 0.72,
-        quality_breakdown: json!({}),
-        entity_quality: json!({}),
-        relationship_quality: json!({}),
-        content_quality: json!({}),
-        quality_trends: json!({}),
-        comparative_metrics: json!({}),
-    }
+async fn execute_content_quality_assessment(knowledge: &KnowledgeResult) -> QualityAssessmentResult {
+    execute_comprehensive_quality_assessment(knowledge, false, false, true).await
 }
 
 fn identify_quality_issues(_result: &QualityAssessmentResult, _threshold: f32) -> Vec<String> {
@@ -1498,3 +1500,12 @@ fn format_validation_results(results: &HashMap<String, Value>) -> String {
     
     output
 }
+
+// ========= REASONING ENGINE IMPLEMENTATIONS =========
+// The actual implementations are earlier in this file
+
+// Duplicate function removed - using the one defined earlier
+
+// ========= QUALITY ASSESSMENT IMPLEMENTATIONS =========
+
+// Brain-like cognitive implementations completed - updating placeholder functions in their original locations

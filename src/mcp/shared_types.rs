@@ -34,7 +34,7 @@ pub struct MCPRequest {
 }
 
 /// Enhanced MCP request for LLM-friendly servers
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMMCPRequest {
     pub method: String,
     pub params: serde_json::Value,

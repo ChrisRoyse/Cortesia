@@ -15,10 +15,10 @@ async fn test_enhanced_validate_knowledge_comprehensive() {
     
     // Add test data
     let ke = engine.write().await;
-    ke.store_triple(Triple::new("Einstein", "is", "physicist", 1.0, None), None).unwrap();
-    ke.store_triple(Triple::new("Einstein", "developed", "relativity", 0.9, None), None).unwrap();
-    ke.store_triple(Triple::new("Einstein", "born_in", "1879", 0.8, None), None).unwrap();
-    ke.store_triple(Triple::new("Einstein", "born_in", "1878", 0.7, None), None).unwrap(); // Conflict
+    ke.store_triple(Triple::with_metadata("Einstein".to_string(), "is".to_string(), "physicist".to_string(), 1.0, None).unwrap(), None).unwrap();
+    ke.store_triple(Triple::with_metadata("Einstein".to_string(), "developed".to_string(), "relativity".to_string(), 0.9, None).unwrap(), None).unwrap();
+    ke.store_triple(Triple::with_metadata("Einstein".to_string(), "born_in".to_string(), "1879".to_string(), 0.8, None).unwrap(), None).unwrap();
+    ke.store_triple(Triple::with_metadata("Einstein".to_string(), "born_in".to_string(), "1878".to_string(), 0.7, None).unwrap(), None).unwrap(); // Conflict
     drop(ke);
     
     // Test comprehensive validation (includes quality metrics)
@@ -95,11 +95,11 @@ async fn test_validate_knowledge_density() {
     
     // High density around Einstein
     for i in 0..10 {
-        ke.store_triple(Triple::new("Einstein", &format!("fact_{}", i), &format!("value_{}", i), 0.9, None), None).unwrap();
+        ke.store_triple(Triple::with_metadata("Einstein".to_string(), format!("fact_{}", i), format!("value_{}", i), 0.9, None).unwrap(), None).unwrap();
     }
     
     // Low density around Newton
-    ke.store_triple(Triple::new("Newton", "discovered", "gravity", 0.9, None), None).unwrap();
+    ke.store_triple(Triple::with_metadata("Newton".to_string(), "discovered".to_string(), "gravity".to_string(), 0.9, None).unwrap(), None).unwrap();
     
     drop(ke);
     
@@ -193,8 +193,8 @@ async fn test_quality_thresholds() {
     
     // Add mixed quality data
     let ke = engine.write().await;
-    ke.store_triple(Triple::new("GoodEntity", "has", "quality", 0.95, None), None).unwrap();
-    ke.store_triple(Triple::new("BadEntity", "has", "issues", 0.3, None), None).unwrap();
+    ke.store_triple(Triple::with_metadata("GoodEntity".to_string(), "has".to_string(), "quality".to_string(), 0.95, None).unwrap(), None).unwrap();
+    ke.store_triple(Triple::with_metadata("BadEntity".to_string(), "has".to_string(), "issues".to_string(), 0.3, None).unwrap(), None).unwrap();
     drop(ke);
     
     // Test with quality threshold
