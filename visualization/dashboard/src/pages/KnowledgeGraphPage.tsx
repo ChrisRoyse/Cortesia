@@ -1,70 +1,117 @@
-import React from 'react';
-import { useRealtimeData } from '../providers/WebSocketProvider';
+import React, { useState, useMemo } from 'react';
+import { Box, Typography, Grid, Paper, Alert, CircularProgress, Button } from '@mui/material';
+import { Refresh } from '@mui/icons-material';
+import { LLMKGVisualization } from '../components/visualizations/LLMKGVisualization';
+import { useRealKnowledgeGraph } from '../hooks/useRealKnowledgeGraph';
+import { RealEntity, RealRelationship } from '../services/KnowledgeGraphDataService';
 
 const KnowledgeGraphPage: React.FC = () => {
-  const knowledgeData = useRealtimeData(data => data?.knowledgeGraph);
+  const [selectedEntity, setSelectedEntity] = useState<RealEntity | null>(null);
+  const [selectedRelationship, setSelectedRelationship] = useState<RealRelationship | null>(null);
+  
+  // Get real LLMKG data with auto-refresh and WebSocket
+  const {
+    data,
+    loading,
+    error,
+    refreshData,
+    connectionStatus,
+    lastUpdated
+  } = useRealKnowledgeGraph({
+    autoRefresh: true,
+    refreshInterval: 30000,
+    enableWebSocket: true
+  });
+
+  const handleEntitySelect = (entity: RealEntity) => {
+    setSelectedEntity(entity);
+    setSelectedRelationship(null);
+  };
+
+  const handleRelationshipSelect = (relationship: RealRelationship) => {
+    setSelectedRelationship(relationship);
+    setSelectedEntity(null);
+  };
 
   return (
-    <div className="knowledge-page">
-      <h1>Knowledge Graph Visualization</h1>
-      <p>Interactive knowledge graph visualization and exploration.</p>
-      
-      {knowledgeData && (
-        <div className="knowledge-metrics">
-          <div className="metric-card">
-            <h3>Nodes</h3>
-            <div className="metric-value">{knowledgeData.nodes?.length || 0}</div>
-          </div>
-          
-          <div className="metric-card">
-            <h3>Edges</h3>
-            <div className="metric-value">{knowledgeData.edges?.length || 0}</div>
-          </div>
-          
-          <div className="metric-card">
-            <h3>Clusters</h3>
-            <div className="metric-value">{knowledgeData.clusters?.length || 0}</div>
-          </div>
-          
-          <div className="metric-card">
-            <h3>Density</h3>
-            <div className="metric-value">{knowledgeData.metrics?.density?.toFixed(3) || 'N/A'}</div>
-          </div>
-        </div>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', p: 2 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            LLMKG Knowledge Graph Visualization
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Interactive 3D visualization of entities, relationships, and semantic connections.
+            {lastUpdated && (
+              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                Last updated: {new Date(lastUpdated).toLocaleTimeString()}
+              </Typography>
+            )}
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={refreshData}
+          disabled={loading}
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      {/* Loading State */}
+      {loading && (
+        <Paper sx={{ p: 3, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <CircularProgress size={24} />
+            <Typography>Loading LLMKG data...</Typography>
+          </Box>
+        </Paper>
       )}
 
-      <style jsx>{`
-        .knowledge-page {
-          padding: 2rem;
-        }
-        
-        .knowledge-metrics {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 1rem;
-          margin-top: 2rem;
-        }
-        
-        .metric-card {
-          background: var(--bg-secondary, #2d2d2d);
-          border: 1px solid var(--border-color, #404040);
-          border-radius: 8px;
-          padding: 1.5rem;
-          text-align: center;
-        }
-        
-        .metric-card h3 {
-          margin: 0 0 1rem 0;
-          color: var(--text-primary, #ffffff);
-        }
-        
-        .metric-value {
-          font-size: 2rem;
-          font-weight: 600;
-          color: var(--accent-color, #007acc);
-        }
-      `}</style>
-    </div>
+      {/* Error State */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} action={
+          <Button onClick={refreshData} startIcon={<Refresh />}>
+            Retry
+          </Button>
+        }>
+          <strong>Error loading knowledge graph:</strong> {error}
+        </Alert>
+      )}
+
+      {/* Connection Status */}
+      {connectionStatus !== 'connected' && !loading && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Connection status: {connectionStatus}. Some features may not work properly.
+        </Alert>
+      )}
+
+      {/* Main Visualization */}
+      {data && (
+        <Paper sx={{ flexGrow: 1, minHeight: 0 }}>
+          <LLMKGVisualization
+            data={data}
+            height="100%"
+            onEntitySelect={handleEntitySelect}
+            onRelationshipSelect={handleRelationshipSelect}
+          />
+        </Paper>
+      )}
+
+      {/* Summary Stats when no data */}
+      {!data && !loading && !error && (
+        <Paper sx={{ p: 3, mt: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            No Knowledge Graph Data Available
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Make sure the LLMKG backend is running and contains data. You can add data using the MCP tools.
+          </Typography>
+        </Paper>
+      )}
+    </Box>
   );
 };
 

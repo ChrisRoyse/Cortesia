@@ -330,85 +330,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         },
         
         LLMMCPTool {
-            name: "analyze_graph".to_string(),
-            description: "Comprehensive graph analysis suite supporting connections exploration, centrality analysis, clustering, and structure prediction.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "analysis_type": {
-                        "type": "string",
-                        "description": "Type of graph analysis to perform",
-                        "enum": ["connections", "centrality", "clustering", "prediction"]
-                    },
-                    "config": {
-                        "type": "object",
-                        "description": "Analysis-specific configuration",
-                        "properties": {
-                            // Dynamic based on analysis_type
-                        }
-                    }
-                },
-                "required": ["analysis_type", "config"]
-            }),
-            examples: vec![
-                LLMExample {
-                    description: "Find connections between entities".to_string(),
-                    input: json!({
-                        "analysis_type": "connections",
-                        "config": {
-                            "start_entity": "Einstein",
-                            "end_entity": "Nobel_Prize",
-                            "max_depth": 3
-                        }
-                    }),
-                    expected_output: "Graph Analysis Complete (connections): Found 2 paths from Einstein to Nobel_Prize".to_string(),
-                },
-                LLMExample {
-                    description: "Analyze graph centrality".to_string(),
-                    input: json!({
-                        "analysis_type": "centrality",
-                        "config": {
-                            "centrality_types": ["pagerank", "betweenness"],
-                            "top_n": 10,
-                            "include_scores": true
-                        }
-                    }),
-                    expected_output: "Graph Analysis Complete (centrality): Analyzed 2 centrality measures for top 10 entities".to_string(),
-                },
-                LLMExample {
-                    description: "Find communities with clustering".to_string(),
-                    input: json!({
-                        "analysis_type": "clustering",
-                        "config": {
-                            "algorithm": "leiden",
-                            "resolution": 1.2,
-                            "min_cluster_size": 5
-                        }
-                    }),
-                    expected_output: "Graph Analysis Complete (clustering): Found 12 clusters using leiden algorithm (modularity: 0.847)".to_string(),
-                },
-                LLMExample {
-                    description: "Predict missing links".to_string(),
-                    input: json!({
-                        "analysis_type": "prediction",
-                        "config": {
-                            "prediction_type": "missing_links",
-                            "confidence_threshold": 0.8,
-                            "max_predictions": 10
-                        }
-                    }),
-                    expected_output: "Graph Analysis Complete (prediction): Generated 10 missing links predictions (validation score: 0.85)".to_string(),
-                }
-            ],
-            tips: vec![
-                "Use 'connections' to explore paths between entities".to_string(),
-                "Use 'centrality' to find important nodes in the graph".to_string(),
-                "Use 'clustering' to discover communities".to_string(),
-                "Use 'prediction' to find missing links or gaps".to_string(),
-            ],
-        },
-        
-        LLMMCPTool {
             name: "get_suggestions".to_string(),
             description: "Get intelligent suggestions for what knowledge to add next, what questions to ask, or what connections to explore. Helps you build a comprehensive knowledge graph.".to_string(),
             input_schema: json!({
@@ -524,7 +445,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         
         LLMMCPTool {
             name: "validate_knowledge".to_string(),
-            description: "Validate stored knowledge for consistency, conflicts, and quality. Supports comprehensive mode with importance scoring and neural assessment.".to_string(),
+            description: "Validate stored knowledge for consistency, conflicts, and quality. Helps maintain a high-quality knowledge graph.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -543,65 +464,23 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "type": "boolean",
                         "description": "Attempt to automatically fix found issues (default: false)",
                         "default": false
-                    },
-                    "scope": {
-                        "type": "string",
-                        "description": "Validation scope - 'standard' or 'comprehensive' (includes quality metrics)",
-                        "enum": ["standard", "comprehensive"],
-                        "default": "standard"
-                    },
-                    "include_metrics": {
-                        "type": "boolean",
-                        "description": "Include detailed quality metrics (importance scores, density analysis)",
-                        "default": false
-                    },
-                    "quality_threshold": {
-                        "type": "number",
-                        "description": "Minimum confidence threshold for quality assessment (0.0-1.0)",
-                        "default": 0.7,
-                        "minimum": 0.0,
-                        "maximum": 1.0
-                    },
-                    "importance_threshold": {
-                        "type": "number",
-                        "description": "Minimum importance score threshold (0.0-1.0)",
-                        "default": 0.6,
-                        "minimum": 0.0,
-                        "maximum": 1.0
-                    },
-                    "neural_features": {
-                        "type": "boolean",
-                        "description": "Enable neural assessment features (salience, coherence)",
-                        "default": true
                     }
                 },
                 "additionalProperties": false
             }),
             examples: vec![
                 LLMExample {
-                    description: "Standard validation".to_string(),
+                    description: "Validate all knowledge".to_string(),
                     input: json!({
                         "validation_type": "all"
                     }),
                     expected_output: "Validation Results:\n\n**Consistency**: ✓ Passed\n- All entity references valid\n- No orphaned relationships\n\n**Conflicts**: ⚠ 2 issues found\n1. Einstein birth date: '1879' vs '1878' (different sources)\n2. Python creation date: '1989' vs '1991'\n\n**Quality**: ✓ Good (score: 8.7/10)\n- Average confidence: 0.87\n- Most facts have sources\n\n**Completeness**: ⚠ Could improve\n- 15 entities missing descriptions\n- 23 relationships lack confidence scores".to_string(),
-                },
-                LLMExample {
-                    description: "Comprehensive validation with quality metrics".to_string(),
-                    input: json!({
-                        "validation_type": "quality",
-                        "scope": "comprehensive",
-                        "include_metrics": true,
-                        "quality_threshold": 0.8
-                    }),
-                    expected_output: "Validation Results:\n\n**Quality Metrics**:\n- Overall Quality: Excellent\n- Importance Scores: Top entities identified\n  1. Einstein (importance: 0.92, connections: 45)\n  2. Physics (importance: 0.89, connections: 38)\n- Knowledge Density: Good (avg connections: 6.3)\n- Neural Assessment:\n  - Salience: High (0.85)\n  - Coherence: Strong (0.78)\n- Entities below threshold: 3 found\n  - BadEntity (confidence: 0.3, below by: 0.5)".to_string(),
                 }
             ],
             tips: vec![
                 "Run validation periodically to maintain quality".to_string(),
                 "Use fix_issues=true carefully, review changes".to_string(),
                 "Focus validation on specific entities when debugging".to_string(),
-                "Use scope='comprehensive' for detailed quality analysis".to_string(),
-                "Enable include_metrics=true to get importance scoring and density analysis".to_string(),
             ],
         },
         

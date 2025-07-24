@@ -918,6 +918,8 @@ impl PerformanceDashboard {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -1001,6 +1003,63 @@ impl PerformanceDashboard {
         .alert-critical {{ border-color: #dc3545; background-color: #f8d7da; }}
         .alert-warning {{ border-color: #ffc107; background-color: #fff3cd; }}
         .alert-info {{ border-color: #17a2b8; background-color: #d1ecf1; }}
+        
+        /* Knowledge Graph Styles */
+        .knowledge-graph-container {{
+            position: relative;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+        }}
+        
+        .graph-controls {{
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+        }}
+        
+        .graph-info {{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.9em;
+        }}
+        
+        .graph-search {{
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 100;
+        }}
+        
+        .graph-search input {{
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.9);
+        }}
+        
+        .entity-tooltip {{
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            pointer-events: none;
+            z-index: 200;
+        }}
     </style>
 </head>
 <body>
@@ -1059,6 +1118,33 @@ impl PerformanceDashboard {
         </div>
         
         <div class="metric-card" style="grid-column: 1 / -1;">
+            <div class="metric-title">LLMKG Knowledge Graph Visualization</div>
+            <div class="knowledge-graph-container" id="knowledgeGraphContainer">
+                <div class="graph-controls">
+                    <label>
+                        <input type="checkbox" id="showRelationships" checked> Show Relationships
+                    </label><br>
+                    <label>
+                        <input type="checkbox" id="animateGraph" checked> Animate
+                    </label><br>
+                    <button onclick="knowledgeGraph.resetView()" style="margin-top: 5px; padding: 5px 10px; background: #667eea; border: none; color: white; border-radius: 3px;">Reset View</button>
+                </div>
+                
+                <div class="graph-info" id="graphInfo">
+                    <div>Entities: <span id="entityCount">0</span></div>
+                    <div>Relationships: <span id="relationshipCount">0</span></div>
+                    <div>Selected: <span id="selectedEntity">None</span></div>
+                </div>
+                
+                <div class="graph-search">
+                    <input type="text" id="graphSearch" placeholder="Search entities..." onkeyup="knowledgeGraph.searchEntities(this.value)">
+                </div>
+                
+                <div id="entityTooltip" class="entity-tooltip" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <div class="metric-card" style="grid-column: 1 / -1;">
             <div class="metric-title">Real-Time API Endpoints</div>
             <div id="apiEndpointsContainer">
                 <p>Loading real API endpoints...</p>
@@ -1082,10 +1168,424 @@ impl PerformanceDashboard {
                 
                 this.initWebSocket();
                 this.initCharts();
+                this.initKnowledgeGraph();
                 this.loadApiEndpoints();
+                this.loadKnowledgeGraphData();
                 
                 // Refresh API endpoints every 30 seconds
                 setInterval(() => this.loadApiEndpoints(), 30000);
+                
+                // Refresh knowledge graph data every 10 seconds
+                setInterval(() => this.loadKnowledgeGraphData(), 10000);
+            }}
+            
+            initKnowledgeGraph() {{
+                console.log('🎬 Initializing knowledge graph 3D scene...');
+                // Initialize Three.js scene for knowledge graph
+                const container = document.getElementById('knowledgeGraphContainer');
+                if (!container) {{
+                    console.error('❌ Knowledge graph container not found!');
+                    return;
+                }}
+                
+                console.log('📦 Container dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+                
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({{ antialias: true }});
+                
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                renderer.setClearColor(0x1a1a1a);
+                container.appendChild(renderer.domElement);
+                
+                console.log('✅ Three.js renderer initialized');
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                scene.add(directionalLight);
+                
+                // Camera position
+                camera.position.set(0, 5, 20);
+                
+                // Store references
+                this.knowledgeGraph = {{
+                    scene,
+                    camera,
+                    renderer,
+                    entities: [],
+                    relationships: [],
+                    entityMeshes: new Map(),
+                    relationshipLines: new Map(),
+                    selectedEntity: null,
+                    searchTerm: '',
+                    showRelationships: true,
+                    animate: true
+                }};
+                
+                // Add mouse controls
+                this.initGraphControls();
+                
+                // Start render loop
+                this.renderKnowledgeGraph();
+            }}
+            
+            initGraphControls() {{
+                const kg = this.knowledgeGraph;
+                let mouse = new THREE.Vector2();
+                let raycaster = new THREE.Raycaster();
+                let isDragging = false;
+                let previousMousePosition = {{ x: 0, y: 0 }};
+                
+                // Mouse events for interaction
+                kg.renderer.domElement.addEventListener('mousemove', (event) => {{
+                    const rect = kg.renderer.domElement.getBoundingClientRect();
+                    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    if (isDragging) {{
+                        const deltaMove = {{
+                            x: event.offsetX - previousMousePosition.x,
+                            y: event.offsetY - previousMousePosition.y
+                        }};
+                        
+                        kg.camera.position.x -= deltaMove.x * 0.01;
+                        kg.camera.position.y += deltaMove.y * 0.01;
+                    }} else {{
+                        // Check for entity hover
+                        this.checkEntityHover(mouse);
+                    }}
+                    
+                    previousMousePosition = {{ x: event.offsetX, y: event.offsetY }};
+                }});
+                
+                kg.renderer.domElement.addEventListener('mousedown', () => {{
+                    isDragging = true;
+                }});
+                
+                kg.renderer.domElement.addEventListener('mouseup', () => {{
+                    isDragging = false;
+                }});
+                
+                kg.renderer.domElement.addEventListener('click', (event) => {{
+                    this.handleEntityClick(mouse);
+                }});
+                
+                // Scroll for zoom
+                kg.renderer.domElement.addEventListener('wheel', (event) => {{
+                    const scale = event.deltaY > 0 ? 1.1 : 0.9;
+                    kg.camera.position.multiplyScalar(scale);
+                    event.preventDefault();
+                }});
+                
+                // Control event listeners
+                document.getElementById('showRelationships').addEventListener('change', (e) => {{
+                    kg.showRelationships = e.target.checked;
+                    this.updateGraphVisibility();
+                }});
+                
+                document.getElementById('animateGraph').addEventListener('change', (e) => {{
+                    kg.animate = e.target.checked;
+                }});
+            }}
+            
+            async loadKnowledgeGraphData() {{
+                console.log('🔄 Loading knowledge graph data...');
+                try {{
+                    // Load entities
+                    const entitiesResponse = await fetch('http://localhost:3001/api/v1/query', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ limit: 100 }})
+                    }});
+                    
+                    console.log('📡 API Response status:', entitiesResponse.status);
+                    
+                    if (entitiesResponse.ok) {{
+                        const entitiesData = await entitiesResponse.json();
+                        console.log('📊 Received data:', entitiesData);
+                        
+                        // Load metrics for additional entity info
+                        const metricsResponse = await fetch('http://localhost:3001/api/v1/metrics');
+                        const metricsData = metricsResponse.ok ? await metricsResponse.json() : null;
+                        console.log('📊 Metrics data:', metricsData);
+                        
+                        this.updateKnowledgeGraph(entitiesData, metricsData);
+                    }} else {{
+                        console.error('❌ Failed to fetch data, status:', entitiesResponse.status);
+                    }}
+                }} catch (error) {{
+                    console.error('❌ Failed to load knowledge graph data:', error);
+                }}
+            }}
+            
+            updateKnowledgeGraph(entitiesData, metricsData) {{
+                console.log('🔄 Updating knowledge graph visualization...');
+                const kg = this.knowledgeGraph;
+                
+                // Clear existing meshes
+                kg.entityMeshes.forEach(mesh => kg.scene.remove(mesh));
+                kg.relationshipLines.forEach(line => kg.scene.remove(line));
+                kg.entityMeshes.clear();
+                kg.relationshipLines.clear();
+                
+                if (!entitiesData.data || !entitiesData.data.triples) {{
+                    console.warn('⚠️ No triples data found:', entitiesData);
+                    return;
+                }}
+                
+                const triples = entitiesData.data.triples;
+                console.log('📊 Processing', triples.length, 'triples');
+                
+                // Extract unique entities from triples
+                const entities = new Map();
+                const relationships = [];
+                
+                triples.forEach((triple, index) => {{
+                    // Add subject entity
+                    if (!entities.has(triple.subject)) {{
+                        entities.set(triple.subject, {{
+                            id: triple.subject,
+                            name: triple.subject,
+                            type: this.inferEntityType(triple.subject),
+                            connections: 0
+                        }});
+                    }}
+                    entities.get(triple.subject).connections++;
+                    
+                    // Add object entity
+                    if (!entities.has(triple.object)) {{
+                        entities.set(triple.object, {{
+                            id: triple.object,
+                            name: triple.object,
+                            type: this.inferEntityType(triple.object),
+                            connections: 0
+                        }});
+                    }}
+                    entities.get(triple.object).connections++;
+                    
+                    // Add relationship
+                    relationships.push({{
+                        source: triple.subject,
+                        target: triple.object,
+                        type: triple.predicate,
+                        confidence: triple.confidence || 1.0
+                    }});
+                }});
+                
+                // Create 3D visualization
+                const entityArray = Array.from(entities.values());
+                console.log('🎨 Creating visualization for', entityArray.length, 'entities and', relationships.length, 'relationships');
+                
+                this.createEntityMeshes(entityArray);
+                this.createRelationshipLines(relationships);
+                
+                // Update info display
+                document.getElementById('entityCount').textContent = entities.size;
+                document.getElementById('relationshipCount').textContent = relationships.length;
+                
+                kg.entities = entityArray;
+                kg.relationships = relationships;
+                
+                console.log('✅ Knowledge graph updated successfully');
+            }}
+            
+            inferEntityType(entityName) {{
+                const name = entityName.toLowerCase();
+                if (name.includes('claude') || name.includes('ai') || name.includes('assistant')) return 'AI';
+                if (name.includes('anthropic') || name.includes('google') || name.includes('company')) return 'Company';
+                if (name.includes('san francisco') || name.includes('california') || name.includes('location')) return 'Location';
+                if (name.includes('transformer') || name.includes('neural') || name.includes('architecture')) return 'Technology';
+                if (name.includes('protocol') || name.includes('mcp') || name.includes('system')) return 'System';
+                return 'Concept';
+            }}
+            
+            getEntityColor(type) {{
+                const colors = {{
+                    'AI': 0x00ff88,
+                    'Company': 0x4285f4,
+                    'Location': 0xff9800,
+                    'Technology': 0x9c27b0,
+                    'System': 0xf44336,
+                    'Concept': 0x607d8b
+                }};
+                return colors[type] || 0x888888;
+            }}
+            
+            createEntityMeshes(entities) {{
+                const kg = this.knowledgeGraph;
+                const radius = 8;
+                
+                entities.forEach((entity, index) => {{
+                    // Position entities in a circle
+                    const angle = (index / entities.length) * Math.PI * 2;
+                    const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 2;
+                    const z = Math.sin(angle) * radius + (Math.random() - 0.5) * 2;
+                    const y = (Math.random() - 0.5) * 4;
+                    
+                    // Create sphere geometry
+                    const size = Math.max(0.2, 0.1 + entity.connections * 0.05);
+                    const geometry = new THREE.SphereGeometry(size, 16, 16);
+                    const material = new THREE.MeshLambertMaterial({{
+                        color: this.getEntityColor(entity.type),
+                        transparent: true,
+                        opacity: 0.8
+                    }});
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(x, y, z);
+                    mesh.userData = {{ entity }};
+                    
+                    kg.scene.add(mesh);
+                    kg.entityMeshes.set(entity.id, mesh);
+                }});
+            }}
+            
+            createRelationshipLines(relationships) {{
+                const kg = this.knowledgeGraph;
+                
+                relationships.forEach(rel => {{
+                    const sourceMesh = kg.entityMeshes.get(rel.source);
+                    const targetMesh = kg.entityMeshes.get(rel.target);
+                    
+                    if (sourceMesh && targetMesh) {{
+                        const geometry = new THREE.BufferGeometry().setFromPoints([
+                            sourceMesh.position,
+                            targetMesh.position
+                        ]);
+                        
+                        const material = new THREE.LineBasicMaterial({{
+                            color: 0x444444,
+                            transparent: true,
+                            opacity: 0.6
+                        }});
+                        
+                        const line = new THREE.Line(geometry, material);
+                        line.userData = {{ relationship: rel }};
+                        
+                        kg.scene.add(line);
+                        kg.relationshipLines.set(`${{rel.source}}-${{rel.target}}`, line);
+                    }}
+                }});
+            }}
+            
+            checkEntityHover(mouse) {{
+                const kg = this.knowledgeGraph;
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, kg.camera);
+                
+                const meshes = Array.from(kg.entityMeshes.values());
+                const intersects = raycaster.intersectObjects(meshes);
+                
+                const tooltip = document.getElementById('entityTooltip');
+                
+                if (intersects.length > 0) {{
+                    const entity = intersects[0].object.userData.entity;
+                    tooltip.innerHTML = `
+                        <strong>${{entity.name}}</strong><br>
+                        Type: ${{entity.type}}<br>
+                        Connections: ${{entity.connections}}
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.clientX + 10) + 'px';
+                    tooltip.style.top = (event.clientY - 10) + 'px';
+                }} else {{
+                    tooltip.style.display = 'none';
+                }}
+            }}
+            
+            handleEntityClick(mouse) {{
+                const kg = this.knowledgeGraph;
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, kg.camera);
+                
+                const meshes = Array.from(kg.entityMeshes.values());
+                const intersects = raycaster.intersectObjects(meshes);
+                
+                if (intersects.length > 0) {{
+                    const entity = intersects[0].object.userData.entity;
+                    this.selectEntity(entity);
+                }}
+            }}
+            
+            selectEntity(entity) {{
+                const kg = this.knowledgeGraph;
+                
+                // Reset previous selection
+                if (kg.selectedEntity) {{
+                    const prevMesh = kg.entityMeshes.get(kg.selectedEntity.id);
+                    if (prevMesh) {{
+                        prevMesh.material.emissive = new THREE.Color(0x000000);
+                        prevMesh.scale.set(1, 1, 1);
+                    }}
+                }}
+                
+                // Highlight new selection
+                kg.selectedEntity = entity;
+                const mesh = kg.entityMeshes.get(entity.id);
+                if (mesh) {{
+                    mesh.material.emissive = new THREE.Color(0x444444);
+                    mesh.scale.set(1.5, 1.5, 1.5);
+                }}
+                
+                document.getElementById('selectedEntity').textContent = entity.name;
+            }}
+            
+            searchEntities(searchTerm) {{
+                const kg = this.knowledgeGraph;
+                kg.searchTerm = searchTerm.toLowerCase();
+                
+                kg.entityMeshes.forEach((mesh, entityId) => {{
+                    const entity = mesh.userData.entity;
+                    const matches = !searchTerm || entity.name.toLowerCase().includes(kg.searchTerm);
+                    mesh.visible = matches;
+                }});
+                
+                this.updateGraphVisibility();
+            }}
+            
+            updateGraphVisibility() {{
+                const kg = this.knowledgeGraph;
+                
+                // Update relationship visibility
+                kg.relationshipLines.forEach(line => {{
+                    const rel = line.userData.relationship;
+                    const sourceMesh = kg.entityMeshes.get(rel.source);
+                    const targetMesh = kg.entityMeshes.get(rel.target);
+                    
+                    line.visible = kg.showRelationships && 
+                                   sourceMesh.visible && 
+                                   targetMesh.visible;
+                }});
+            }}
+            
+            renderKnowledgeGraph() {{
+                const kg = this.knowledgeGraph;
+                
+                if (kg.animate) {{
+                    // Rotate entities slightly
+                    kg.entityMeshes.forEach(mesh => {{
+                        mesh.rotation.y += 0.01;
+                        
+                        // Gentle floating animation
+                        mesh.position.y += Math.sin(Date.now() * 0.001 + mesh.position.x) * 0.002;
+                    }});
+                    
+                    // Look at center
+                    kg.camera.lookAt(0, 0, 0);
+                }}
+                
+                kg.renderer.render(kg.scene, kg.camera);
+                requestAnimationFrame(() => this.renderKnowledgeGraph());
+            }}
+            
+            resetView() {{
+                const kg = this.knowledgeGraph;
+                kg.camera.position.set(0, 5, 20);
+                kg.camera.lookAt(0, 0, 0);
             }}
             
             async loadApiEndpoints() {{
@@ -1410,7 +1910,11 @@ impl PerformanceDashboard {
         
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', () => {{
-            new PerformanceDashboard();
+            window.dashboard = new PerformanceDashboard();
+            window.knowledgeGraph = {{
+                resetView: () => window.dashboard.resetView(),
+                searchEntities: (term) => window.dashboard.searchEntities(term)
+            }};
         }});
     </script>
 </body>

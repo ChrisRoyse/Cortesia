@@ -11,6 +11,7 @@ pub mod query_generation;
 pub mod search_fusion;
 pub mod utils;
 pub mod handlers;
+pub mod migration;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};
@@ -50,23 +51,31 @@ impl LLMFriendlyMCPServer {
         // Update request stats
         let start_time = std::time::Instant::now();
         
+        // Determine actual method and params (handle migration)
+        let (method, params) = if let Some((new_method, new_params)) = migration::migrate_tool_call(&request.method, request.params.clone()) {
+            log::warn!("{}", migration::deprecation_warning(&request.method));
+            (new_method, new_params)
+        } else {
+            (request.method.clone(), request.params.clone())
+        };
+        
         // Wrap in timeout to prevent hanging
         let timeout_duration = tokio::time::Duration::from_secs(5);
         let timeout_result = tokio::time::timeout(timeout_duration, async {
-            match request.method.as_str() {
+            match method.as_str() {
             // Storage operations
             "store_fact" => {
                 handlers::storage::handle_store_fact(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
             "store_knowledge" => {
                 handlers::storage::handle_store_knowledge(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
 
@@ -75,30 +84,24 @@ impl LLMFriendlyMCPServer {
                 handlers::query::handle_find_facts(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
             "ask_question" => {
                 handlers::query::handle_ask_question(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
 
             // Exploration operations
-            "explore_connections" => {
-                handlers::exploration::handle_explore_connections(
-                    &self.knowledge_engine,
-                    &self.usage_stats,
-                    request.params,
-                ).await
-            }
+            // "explore_connections" => migration (now part of analyze_graph)
             "get_suggestions" => {
                 handlers::exploration::handle_get_suggestions(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
 
@@ -107,35 +110,85 @@ impl LLMFriendlyMCPServer {
                 handlers::advanced::handle_generate_graph_query(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
             "hybrid_search" => {
                 handlers::advanced::handle_hybrid_search(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
             "validate_knowledge" => {
                 handlers::advanced::handle_validate_knowledge(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
+            "analyze_graph" => {
+                handlers::graph_analysis::handle_analyze_graph(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+
+            // Tier 1 Advanced Cognitive Tools
+            "neural_importance_scoring" => {
+                handlers::cognitive::handle_neural_importance_scoring(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "divergent_thinking_engine" => {
+                handlers::cognitive::handle_divergent_thinking_engine(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "time_travel_query" => {
+                handlers::cognitive::handle_time_travel_query(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            // Deprecated - handled by migration
+            // "simd_ultra_fast_search" => migration
+            // "analyze_graph_centrality" => migration
+
+            // Tier 2 Advanced Tools
+            // Deprecated - handled by migration
+            // "hierarchical_clustering" => migration
+            // "predict_graph_structure" => migration
+            "cognitive_reasoning_chains" => {
+                handlers::advanced::handle_cognitive_reasoning_chains(
+                    &self.knowledge_engine,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            // Deprecated - handled by migration
+            // "approximate_similarity_search" => migration
+            // "knowledge_quality_metrics" => migration
 
             // Statistics operations
             "get_stats" => {
                 handlers::stats::handle_get_stats(
                     &self.knowledge_engine,
                     &self.usage_stats,
-                    request.params,
+                    params.clone(),
                 ).await
             }
 
             // Unknown method
-            _ => Err(format!("Unknown method: {}", request.method))
+            _ => {
+                Err(format!("Unknown method: {}", method))
+            }
         }
         }).await;
 

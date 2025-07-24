@@ -442,7 +442,7 @@ export const BrainKnowledgeGraph: React.FC<BrainKnowledgeGraphProps> = ({
                 </Typography>
                 <Slider
                   value={activationThreshold}
-                  onChange={(_, value) => setActivationThreshold(value as number)}
+                  onChange={(_, value: number | number[]) => setActivationThreshold(value as number)}
                   min={0}
                   max={1}
                   step={0.1}

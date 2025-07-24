@@ -116,9 +116,24 @@ const navigationItems: NavigationItem[] = [
   {
     id: 'knowledge-graph',
     title: 'Knowledge Graph',
-    path: '/knowledge-graph',
     icon: ShareIcon,
-    description: '3D knowledge graph visualization',
+    description: 'Knowledge graph exploration and visualization',
+    children: [
+      {
+        id: 'kg-3d-viz',
+        title: '3D Visualization',
+        path: '/knowledge-graph',
+        icon: ShareIcon,
+        description: 'Brain-enhanced 3D knowledge graph',
+      },
+      {
+        id: 'kg-real-data',
+        title: 'Real Data Explorer',
+        path: '/real-knowledge-graph',
+        icon: ShareIcon,
+        description: 'Explore ALL real knowledge graph data',
+      },
+    ],
   },
   {
     id: 'memory',

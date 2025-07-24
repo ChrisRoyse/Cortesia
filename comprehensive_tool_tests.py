@@ -463,7 +463,7 @@ class ComprehensiveToolTester:
         passed_tests = sum(1 for r in self.test_results if r['success'])
         failed_tests = total_tests - passed_tests
         
-        print(f"\n📊 OVERALL RESULTS:")
+        print(f"\n[RESULTS] OVERALL RESULTS:")
         print(f"   Total Tests: {total_tests}")
         print(f"   Passed: {passed_tests}")
         print(f"   Failed: {failed_tests}")
@@ -476,7 +476,7 @@ class ComprehensiveToolTester:
             max_time = max(response_times)
             min_time = min(response_times)
             
-            print(f"\n⚡ PERFORMANCE METRICS:")
+            print(f"\n[PERFORMANCE] PERFORMANCE METRICS:")
             print(f"   Average Response Time: {avg_time:.0f}ms")
             print(f"   Fastest Response: {min_time:.0f}ms")
             print(f"   Slowest Response: {max_time:.0f}ms")
@@ -492,38 +492,38 @@ class ComprehensiveToolTester:
                 tools[tool]['passed'] += 1
                 tools[tool]['times'].append(result['elapsed_ms'])
         
-        print(f"\n🔧 TOOL-BY-TOOL RESULTS:")
+        print(f"\n[TOOLS] TOOL-BY-TOOL RESULTS:")
         for i, (tool, stats) in enumerate(tools.items(), 1):
             success_rate = (stats['passed'] / stats['total']) * 100
             avg_time = sum(stats['times']) / len(stats['times']) if stats['times'] else 0
-            status = "✅" if success_rate == 100 else "❌" if success_rate == 0 else "⚠️"
+            status = "PASS" if success_rate == 100 else "FAIL" if success_rate == 0 else "WARN"
             print(f"   {status} {tool}: {stats['passed']}/{stats['total']} ({success_rate:.0f}%) - {avg_time:.0f}ms avg")
         
         # Failed tests details
         failed = [r for r in self.test_results if not r['success']]
         if failed:
-            print(f"\n❌ FAILED TESTS:")
+            print(f"\n[FAILED] FAILED TESTS:")
             for result in failed:
                 print(f"   • {result['tool']} - {result['test']}: {result.get('error', 'Unknown error')}")
         else:
-            print(f"\n🎉 ALL TESTS PASSED!")
+            print(f"\n[SUCCESS] ALL TESTS PASSED!")
         
         # Quality assessment
         tools_100_percent = sum(1 for stats in tools.values() if stats['passed'] == stats['total'])
         quality_score = (tools_100_percent / len(tools)) * 100
         
-        print(f"\n📈 QUALITY ASSESSMENT:")
+        print(f"\n[QUALITY] QUALITY ASSESSMENT:")
         print(f"   Tools with 100% pass rate: {tools_100_percent}/{len(tools)}")
         print(f"   Overall quality score: {quality_score:.0f}%")
         
         if quality_score >= 90:
-            verdict = "🏆 EXCELLENT - Production ready"
+            verdict = "EXCELLENT - Production ready"
         elif quality_score >= 75:
-            verdict = "✅ GOOD - Minor issues to address"
+            verdict = "GOOD - Minor issues to address"
         elif quality_score >= 50:
-            verdict = "⚠️ FAIR - Significant issues need fixing"
+            verdict = "FAIR - Significant issues need fixing"
         else:
-            verdict = "❌ POOR - Major fixes required"
+            verdict = "POOR - Major fixes required"
             
         print(f"   Verdict: {verdict}")
         
@@ -541,13 +541,13 @@ def main():
     # Check if binary exists
     exe_path = 'target/debug/llmkg_mcp_server_test.exe'
     if not os.path.exists(exe_path):
-        print(f"❌ Error: MCP server binary not found at {exe_path}")
+        print(f"ERROR: MCP server binary not found at {exe_path}")
         print("Please build the project first: cargo build --bin llmkg_mcp_server_test")
         sys.exit(1)
         
     # Create and run comprehensive test
-    print("🚀 Starting comprehensive LLMKG MCP Server testing...")
-    print("📋 Testing 10 tools with 5 scenarios each (50 total tests)")
+    print("Starting comprehensive LLMKG MCP Server testing...")
+    print("Testing 10 tools with 5 scenarios each (50 total tests)")
     
     tester = ComprehensiveToolTester(exe_path)
     
@@ -557,17 +557,17 @@ def main():
         success = tester.generate_comprehensive_report()
         
         if success:
-            print(f"\n🎯 TEST SUITE COMPLETED SUCCESSFULLY!")
+            print(f"\n[COMPLETE] TEST SUITE COMPLETED SUCCESSFULLY!")
             return True
         else:
-            print(f"\n⚠️ TEST SUITE COMPLETED WITH ISSUES!")
+            print(f"\n[WARNING] TEST SUITE COMPLETED WITH ISSUES!")
             return False
         
     except KeyboardInterrupt:
-        print(f"\n🛑 Testing interrupted by user")
+        print(f"\n[INTERRUPT] Testing interrupted by user")
         return False
     except Exception as e:
-        print(f"\n💥 Test suite failed with error: {e}")
+        print(f"\n[ERROR] Test suite failed with error: {e}")
         return False
     finally:
         tester.stop_server()

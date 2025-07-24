@@ -38,42 +38,38 @@ pub async fn handle_store_fact(
     }
     
     // Create and store the triple
-    let triple = Triple::new(
+    let triple = Triple::with_metadata(
         subject.to_string(),
         predicate.to_string(),
         object.to_string(),
+        confidence,
+        Some("user_input".to_string()),
     ).map_err(|e| format!("Failed to create triple: {}", e))?;
     
     let engine = knowledge_engine.write().await;
-    match engine.store_triple(triple, None) {
-        Ok(_) => {
-            // Update stats
-            let _ = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 5).await;
-            
-            let data = json!({
-                "stored": true,
-                "triple": {
-                    "subject": subject,
-                    "predicate": predicate,
-                    "object": object,
-                    "confidence": confidence
-                }
-            });
-            
-            let message = format!(
-                "✓ Stored fact: {} {} {} (confidence: {:.2})",
-                subject, predicate, object, confidence
-            );
-            
-            let suggestions = vec![
-                format!("You can now query this fact with: find_facts(subject=\"{}\")", subject),
-                "Consider adding related facts to build a knowledge network".to_string(),
-            ];
-            
-            Ok((data, message, suggestions))
-        }
-        Err(e) => Err(format!("Failed to store fact: {}", e))
-    }
+    let node_id = engine.store_triple(triple, None)
+        .map_err(|e| format!("Failed to store triple: {}", e))?;
+    drop(engine);
+    
+    // Update usage stats
+    let _ = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 10).await;
+    
+    let data = json!({
+        "success": true,
+        "node_id": node_id,
+        "subject": subject,
+        "predicate": predicate,
+        "object": object,
+        "confidence": confidence
+    });
+    
+    let message = format!("Stored fact: {} {} {}", subject, predicate, object);
+    let suggestions = vec![
+        format!("Explore connections with: explore_connections(start_entity=\"{}\")", subject),
+        format!("Find related facts with: find_facts(subject=\"{}\")", subject),
+    ];
+    
+    Ok((data, message, suggestions))
 }
 
 /// Handle store_knowledge request

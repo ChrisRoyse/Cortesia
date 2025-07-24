@@ -13,6 +13,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const CognitivePage = React.lazy(() => import('./pages/CognitivePage'));
 const NeuralPage = React.lazy(() => import('./pages/NeuralPage'));
 const KnowledgeGraphPage = React.lazy(() => import('./pages/KnowledgeGraphPage'));
+const RealKnowledgeGraphPage = React.lazy(() => import('./pages/RealKnowledgeGraphPage'));
 const MemoryPage = React.lazy(() => import('./pages/MemoryPage'));
 const DebuggingPage = React.lazy(() => import('./pages/DebuggingPage'));
 const ToolsPage = React.lazy(() => import('./pages/ToolsPage'));
@@ -132,6 +133,14 @@ const AppRoutes: React.FC = () => (
       element={
         <RouteErrorBoundary>
           <KnowledgeGraphPage />
+        </RouteErrorBoundary>
+      } 
+    />
+    <Route 
+      path="/real-knowledge-graph" 
+      element={
+        <RouteErrorBoundary>
+          <RealKnowledgeGraphPage />
         </RouteErrorBoundary>
       } 
     />
