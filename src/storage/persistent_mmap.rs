@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
@@ -56,7 +56,7 @@ impl Default for MMapHeader {
 }
 
 // Compact entity representation for memory-mapped storage
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct MMapEntity {
     pub entity_key: u64,          // EntityKey hash
     pub embedding_offset: u32,    // Offset in quantized embedding section
@@ -80,12 +80,12 @@ impl Default for MMapEntity {
 /// Persistent memory-mapped storage with Product Quantization integration
 pub struct PersistentMMapStorage {
     file_path: PathBuf,
-    file: Option<File>,
+    file: RwLock<Option<File>>,
     
-    // Memory-mapped regions
-    header: MMapHeader,
-    entities: Vec<MMapEntity>,
-    quantized_embeddings: Vec<u8>,
+    // Memory-mapped regions with interior mutability
+    header: RwLock<MMapHeader>,
+    entities: RwLock<Vec<MMapEntity>>,
+    quantized_embeddings: RwLock<Vec<u8>>,
     
     // Integrated quantizer
     quantizer: Arc<RwLock<ProductQuantizer>>,
@@ -100,8 +100,8 @@ pub struct PersistentMMapStorage {
     write_count: AtomicU64,
     
     // Configuration
-    auto_sync: bool,
-    compression_enabled: bool,
+    auto_sync: AtomicBool,
+    compression_enabled: AtomicBool,
 }
 
 impl PersistentMMapStorage {
@@ -116,24 +116,25 @@ impl PersistentMMapStorage {
             ProductQuantizer::new(embedding_dim, quantizer_subvectors)?
         ));
         
-        let mut storage = Self {
+        let mut header = MMapHeader::default();
+        header.embedding_dim = embedding_dim as u32;
+        header.quantizer_subvectors = quantizer_subvectors as u32;
+        
+        let storage = Self {
             file_path,
-            file: None,
-            header: MMapHeader::default(),
-            entities: Vec::new(),
-            quantized_embeddings: Vec::new(),
+            file: RwLock::new(None),
+            header: RwLock::new(header),
+            entities: RwLock::new(Vec::new()),
+            quantized_embeddings: RwLock::new(Vec::new()),
             quantizer,
             entity_index: RwLock::new(HashMap::new()),
             memory_usage: AtomicU64::new(0),
             file_size: AtomicU64::new(0),
             read_count: AtomicU64::new(0),
             write_count: AtomicU64::new(0),
-            auto_sync: true,
-            compression_enabled: true,
+            auto_sync: AtomicBool::new(true),
+            compression_enabled: AtomicBool::new(true),
         };
-        
-        storage.header.embedding_dim = embedding_dim as u32;
-        storage.header.quantizer_subvectors = quantizer_subvectors as u32;
         
         Ok(storage)
     }
@@ -169,18 +170,18 @@ impl PersistentMMapStorage {
         
         let mut storage = Self {
             file_path,
-            file: Some(file),
-            header,
-            entities: Vec::new(),
-            quantized_embeddings: Vec::new(),
+            file: RwLock::new(Some(file)),
+            header: RwLock::new(header),
+            entities: RwLock::new(Vec::new()),
+            quantized_embeddings: RwLock::new(Vec::new()),
             quantizer,
             entity_index: RwLock::new(HashMap::new()),
             memory_usage: AtomicU64::new(0),
             file_size: AtomicU64::new(file_size),
             read_count: AtomicU64::new(0),
             write_count: AtomicU64::new(0),
-            auto_sync: true,
-            compression_enabled: true,
+            auto_sync: AtomicBool::new(true),
+            compression_enabled: AtomicBool::new(true),
         };
         
         // Load sections from file
@@ -191,42 +192,52 @@ impl PersistentMMapStorage {
     
     /// Load all data sections from file
     fn load_sections(&mut self) -> Result<()> {
-        let file = self.file.as_mut().ok_or(GraphError::IndexCorruption)?;
+        let mut file_guard = self.file.write();
+        let file = file_guard.as_mut().ok_or(GraphError::IndexCorruption)?;
         
         // Load entities - they're right after the header
-        if self.header.entity_count > 0 {
+        let entity_count = self.header.read().entity_count;
+        if entity_count > 0 {
             
-            for _i in 0..self.header.entity_count {
+            let mut entities_guard = self.entities.write();
+            for _i in 0..entity_count {
                 let entity: MMapEntity = bincode::deserialize_from(&mut *file)
                     .map_err(|_| GraphError::IndexCorruption)?;
-                self.entities.push(entity);
+                entities_guard.push(entity);
             }
             
             // Build entity index
             let mut index = self.entity_index.write();
-            for (i, entity) in self.entities.iter().enumerate() {
+            for (i, entity) in entities_guard.iter().enumerate() {
                 index.insert(EntityKey::from_raw(entity.entity_key), i as u32);
             }
+            drop(entities_guard);
         }
         
         // Load quantized embeddings - they're right after the entities
-        if self.header.embedding_section_size > 0 {
-            self.quantized_embeddings = vec![0u8; self.header.embedding_section_size as usize];
-            file.read_exact(&mut self.quantized_embeddings)?;
+        let embedding_section_size = self.header.read().embedding_section_size;
+        if embedding_section_size > 0 {
+            let mut embeddings_guard = self.quantized_embeddings.write();
+            *embeddings_guard = vec![0u8; embedding_section_size as usize];
+            file.read_exact(&mut *embeddings_guard)?;
         }
         
         // Load quantizer data
-        if self.header.quantizer_section_size > 0 {
-            file.seek(SeekFrom::Start(self.header.quantizer_section_offset))?;
-            let mut quantizer_data = vec![0u8; self.header.quantizer_section_size as usize];
+        let header_guard = self.header.read();
+        if header_guard.quantizer_section_size > 0 {
+            file.seek(SeekFrom::Start(header_guard.quantizer_section_offset))?;
+            let mut quantizer_data = vec![0u8; header_guard.quantizer_section_size as usize];
             file.read_exact(&mut quantizer_data)?;
             
             // Deserialize quantizer (simplified - in real implementation use proper serialization)
             // For now, we'll retrain the quantizer if needed
         }
+        drop(header_guard);
         
+        let entities_len = self.entities.read().len();
+        let embeddings_len = self.quantized_embeddings.read().len();
         self.memory_usage.store(
-            (self.entities.len() * std::mem::size_of::<MMapEntity>() + self.quantized_embeddings.len()) as u64,
+            (entities_len * std::mem::size_of::<MMapEntity>() + embeddings_len) as u64,
             Ordering::Relaxed
         );
         
@@ -395,7 +406,7 @@ impl PersistentMMapStorage {
         for entity in &self.entities {
             let entity_key = EntityKey::from_raw(entity.entity_key);
             if let Some(quantized) = self.get_quantized_embedding(entity_key) {
-                if let Ok(distance) = quantizer.asymmetric_distance(query, quantized) {
+                if let Ok(distance) = quantizer.asymmetric_distance(query, &quantized) {
                     let similarity = 1.0 / (1.0 + distance);
                     results.push((entity_key, similarity));
                 }

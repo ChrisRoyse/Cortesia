@@ -6,6 +6,9 @@ pub mod router;
 pub mod merger;
 pub mod coordinator;
 pub mod types;
+pub mod database_connection;
+pub mod transaction_log;
+pub mod two_phase_commit;
 
 pub use registry::{DatabaseRegistry, DatabaseDescriptor};
 pub use router::{QueryRouter, QueryPlan};
@@ -34,11 +37,11 @@ pub struct FederationManager {
 }
 
 impl FederationManager {
-    pub fn new() -> Result<Self> {
+    pub async fn new() -> Result<Self> {
         let registry = Arc::new(DatabaseRegistry::new()?);
         let router = QueryRouter::new(registry.clone())?;
         let merger = ResultMerger::new();
-        let coordinator = FederationCoordinator::new(registry.clone())?;
+        let coordinator = FederationCoordinator::new(registry.clone()).await?;
 
         Ok(Self {
             registry,

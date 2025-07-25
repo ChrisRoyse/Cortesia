@@ -590,6 +590,7 @@ impl KnowledgeEngine {
             object: object.to_string(),
             confidence,
             source: None,
+            enhanced_metadata: None,
         };
         self.store_triple(triple, None)
     }

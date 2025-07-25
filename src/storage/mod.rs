@@ -13,3 +13,4 @@ pub mod lsh;
 pub mod quantized_index;
 pub mod semantic_store;
 pub mod zero_copy;
+pub mod integration_test;

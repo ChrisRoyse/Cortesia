@@ -4,6 +4,7 @@
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::llm_friendly_server::handlers::advanced::handle_hybrid_search;
 use crate::mcp::llm_friendly_server::types::UsageStats;
+use crate::test_support::test_utils::{create_test_engine, create_test_stats};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::json;
@@ -12,21 +13,12 @@ use serde_json::json;
 mod search_consolidation_tests {
     use super::*;
 
-    /// Helper to create test knowledge engine
-    async fn create_test_engine() -> Arc<RwLock<KnowledgeEngine>> {
-        let engine = KnowledgeEngine::new(384, 100_000).unwrap();
-        Arc::new(RwLock::new(engine))
-    }
-
-    /// Helper to create test usage stats
-    fn create_test_stats() -> Arc<RwLock<UsageStats>> {
-        Arc::new(RwLock::new(UsageStats::default()))
-    }
+    // Test helper functions are now imported from test_utils
 
     #[tokio::test]
     async fn test_hybrid_search_with_standard_performance_mode() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -48,7 +40,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_hybrid_search_with_simd_performance_mode() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -72,7 +64,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_hybrid_search_with_lsh_performance_mode() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -100,7 +92,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_hybrid_search_defaults_to_standard_mode() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -119,7 +111,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_hybrid_search_with_invalid_performance_mode() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -138,7 +130,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_simd_mode_configuration_passthrough() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -162,7 +154,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_lsh_mode_configuration_validation() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "query": "test query",
@@ -185,7 +177,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_performance_metrics_tracking() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         
         // Test all modes
@@ -215,7 +207,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_backwards_compatibility_for_old_simd_tool() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         
         // Old simd_ultra_fast_search parameters
@@ -251,7 +243,7 @@ mod search_consolidation_tests {
     #[tokio::test]
     async fn test_performance_mode_with_different_search_types() {
         // Arrange
-        let engine = create_test_engine().await;
+        let engine = create_test_engine(false).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let search_types = vec!["semantic", "structural", "keyword", "hybrid"];
         

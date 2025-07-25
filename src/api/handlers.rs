@@ -124,6 +124,7 @@ pub async fn store_triple(
         object: req.object,
         confidence: req.confidence.unwrap_or(1.0),
         source: None,
+        enhanced_metadata: None,
     };
     
     match engine.write().store_triple(triple, None) {

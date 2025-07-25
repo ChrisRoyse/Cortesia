@@ -6,7 +6,7 @@ use crate::core::types::EntityKey;
 use crate::core::brain_types::ActivationStep;
 use crate::core::brain_types::RelationType;
 use crate::error::Result;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// Context for query processing
 #[derive(Debug, Clone, Default)]
@@ -73,6 +73,12 @@ pub enum CognitivePatternType {
     Adaptive,
     ChainOfThought,
     TreeOfThoughts,
+    Analytical,
+    PatternRecognition,
+    Linguistic,
+    Creative,
+    Ensemble,
+    Unknown,
 }
 
 /// Parameters for cognitive pattern execution
@@ -856,3 +862,29 @@ pub struct Synthesis {
     pub confidence: f32,
     pub explanation: String,
 }
+
+// Memory-related types for cognitive processing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryIndex {
+    pub buffer_type: String,
+    pub item_id: uuid::Uuid,
+    pub importance_score: f32,
+    #[serde(skip)]
+    pub last_accessed: Option<std::time::Instant>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AttentionGuidance {
+    pub focus_entities: Vec<EntityKey>,
+    pub attention_weights: Vec<f32>,
+    pub focus_strength: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryConsolidationResult {
+    pub items_consolidated: usize,
+    pub items_evicted: usize,
+    pub average_importance: f32,
+    pub consolidation_time_ms: u64,
+}
+

@@ -27,6 +27,7 @@ pub mod phase1_types;
 pub mod phase1_helpers;
 pub mod phase1_integration;
 pub mod entity_extractor;
+// pub mod ai_entity_extractor;
 pub mod relationship_extractor;
 pub mod question_parser;
 pub mod answer_generator;

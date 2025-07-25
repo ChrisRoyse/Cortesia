@@ -462,6 +462,25 @@ impl AdaptiveThinking {
             CognitivePatternType::TreeOfThoughts => {
                 analysis.creative_requirement * 0.7 + analysis.complexity_score * 0.8
             }
+            // New pattern types
+            CognitivePatternType::Analytical => {
+                analysis.factual_focus * 0.85 + analysis.complexity_score * 0.7
+            }
+            CognitivePatternType::PatternRecognition => {
+                analysis.domain_specificity * 0.8 + (1.0 - analysis.ambiguity_level) * 0.7
+            }
+            CognitivePatternType::Linguistic => {
+                analysis.abstraction_level * 0.6 + analysis.creative_requirement * 0.5
+            }
+            CognitivePatternType::Creative => {
+                analysis.creative_requirement * 0.95 + analysis.abstraction_level * 0.8
+            }
+            CognitivePatternType::Ensemble => {
+                analysis.complexity_score * 0.8 + analysis.abstraction_level * 0.6
+            }
+            CognitivePatternType::Unknown => {
+                0.2 // Low score for unknown pattern
+            }
         }
     }
     
@@ -550,6 +569,12 @@ impl AdaptiveThinking {
             CognitivePatternType::Adaptive => 0.7,
             CognitivePatternType::ChainOfThought => 0.72,
             CognitivePatternType::TreeOfThoughts => 0.73,
+            CognitivePatternType::Analytical => 0.82,
+            CognitivePatternType::PatternRecognition => 0.78,
+            CognitivePatternType::Linguistic => 0.68,
+            CognitivePatternType::Creative => 0.71,
+            CognitivePatternType::Ensemble => 0.77,
+            CognitivePatternType::Unknown => 0.3,
         };
         
         Ok(PatternResult {

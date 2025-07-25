@@ -4,6 +4,7 @@
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::llm_friendly_server::handlers::graph_analysis::handle_analyze_graph;
 use crate::mcp::llm_friendly_server::types::UsageStats;
+use crate::test_support::test_utils::{create_test_engine, create_test_stats};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::json;
@@ -12,26 +13,12 @@ use serde_json::json;
 mod graph_analysis_tests {
     use super::*;
 
-    /// Helper to create test knowledge engine with sample data
-    async fn create_test_engine_with_data() -> Arc<RwLock<KnowledgeEngine>> {
-        let engine = KnowledgeEngine::new(384, 100_000).unwrap();
-        
-        // Add some test data
-        // This would normally be done through the proper API
-        // For testing purposes, we'll assume the engine has data
-        
-        Arc::new(RwLock::new(engine))
-    }
-
-    /// Helper to create test usage stats
-    fn create_test_stats() -> Arc<RwLock<UsageStats>> {
-        Arc::new(RwLock::new(UsageStats::default()))
-    }
+    // Test helper functions are now imported from test_utils
 
     #[tokio::test]
     async fn test_analyze_graph_connections_mode() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "connections",
@@ -58,7 +45,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_analyze_graph_centrality_mode() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "centrality",
@@ -86,7 +73,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_analyze_graph_clustering_mode() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "clustering",
@@ -115,7 +102,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_analyze_graph_prediction_mode() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "prediction",
@@ -144,7 +131,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_analyze_graph_invalid_analysis_type() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "invalid_type",
@@ -163,7 +150,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_analyze_graph_missing_required_config() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "connections",
@@ -185,7 +172,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_backwards_compatibility_explore_connections() {
         // This test ensures the migration from explore_connections works
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         
         // Old explore_connections parameters
@@ -209,7 +196,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_performance_metrics_tracking() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "centrality",
@@ -233,7 +220,7 @@ mod graph_analysis_tests {
     #[tokio::test]
     async fn test_connections_with_no_path_found() {
         // Arrange
-        let engine = create_test_engine_with_data().await;
+        let engine = create_test_engine(true).await.expect("Failed to create test engine");
         let stats = create_test_stats();
         let params = json!({
             "analysis_type": "connections",
@@ -260,7 +247,7 @@ mod graph_analysis_tests {
         let algorithms = vec!["leiden", "louvain", "hierarchical"];
         
         for algorithm in algorithms {
-            let engine = create_test_engine_with_data().await;
+            let engine = create_test_engine(true).await.expect("Failed to create test engine");
             let stats = create_test_stats();
             let params = json!({
                 "analysis_type": "clustering",

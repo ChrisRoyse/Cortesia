@@ -2,18 +2,25 @@
 
 use crate::federation::types::DatabaseId;
 use crate::federation::registry::DatabaseRegistry;
+use crate::federation::database_connection::{DatabaseConfig, DatabaseType, DatabaseConnectionPool};
+use crate::federation::transaction_log::{DistributedTransactionLog, TransactionDecision};
+use crate::federation::two_phase_commit::{TwoPhaseCommitCoordinator, TwoPhaseCommitConfig};
 use crate::error::{GraphError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::time::{SystemTime, Duration};
+use std::path::PathBuf;
 
 /// Transaction coordinator for cross-database operations
 pub struct FederationCoordinator {
     registry: Arc<DatabaseRegistry>,
     active_transactions: Arc<RwLock<HashMap<TransactionId, CrossDatabaseTransaction>>>,
     transaction_timeout: Duration,
+    two_phase_coordinator: Arc<TwoPhaseCommitCoordinator>,
+    transaction_log: Arc<DistributedTransactionLog>,
+    connection_pools: Arc<RwLock<HashMap<DatabaseId, Arc<DatabaseConnectionPool>>>>,
 }
 
 /// Unique identifier for cross-database transactions
@@ -162,11 +169,35 @@ pub struct TransactionResult {
 }
 
 impl FederationCoordinator {
-    pub fn new(registry: Arc<DatabaseRegistry>) -> Result<Self> {
+    pub async fn new(registry: Arc<DatabaseRegistry>) -> Result<Self> {
+        // Create transaction log directory
+        let log_dir = PathBuf::from("federation_logs");
+        tokio::fs::create_dir_all(&log_dir).await
+            .map_err(|e| GraphError::StorageError(format!("Failed to create log directory: {}", e)))?;
+        
+        // Initialize transaction log
+        let transaction_log = Arc::new(DistributedTransactionLog::new(log_dir).await?);
+        
+        // Initialize 2PC coordinator
+        let two_phase_config = TwoPhaseCommitConfig {
+            prepare_timeout: Duration::from_secs(30),
+            commit_timeout: Duration::from_secs(60),
+            max_retry_attempts: 3,
+            retry_delay: Duration::from_millis(100),
+            enable_logging: true,
+            enable_recovery: true,
+        };
+        let two_phase_coordinator = Arc::new(
+            TwoPhaseCommitCoordinator::new(transaction_log.clone(), two_phase_config).await?
+        );
+        
         Ok(Self {
             registry,
             active_transactions: Arc::new(RwLock::new(HashMap::new())),
             transaction_timeout: Duration::from_secs(300), // 5 minutes
+            two_phase_coordinator,
+            transaction_log,
+            connection_pools: Arc::new(RwLock::new(HashMap::new())),
         })
     }
 
@@ -179,15 +210,45 @@ impl FederationCoordinator {
         let transaction_id = TransactionId::new();
         let timeout_at = SystemTime::now() + self.transaction_timeout;
         
+        // Verify all databases are registered and create connection pools if needed
+        for db_id in &databases {
+            let registered_dbs = self.registry.list_databases().await;
+            if !registered_dbs.iter().any(|db| db.id == *db_id) {
+                return Err(GraphError::InvalidInput(format!("Database not registered: {}", db_id.as_str())));
+            }
+            
+            // Create connection pool if it doesn't exist
+            let mut pools = self.connection_pools.write().await;
+            if !pools.contains_key(db_id) {
+                let db_config = DatabaseConfig {
+                    id: db_id.clone(),
+                    connection_string: format!("federation_{}.db", db_id.as_str()),
+                    database_type: DatabaseType::InMemory, // Default to in-memory for testing
+                    max_connections: 10,
+                    connection_timeout: Duration::from_secs(5),
+                    query_timeout: Duration::from_secs(30),
+                };
+                
+                // Register with 2PC coordinator
+                self.two_phase_coordinator.register_database(db_config.clone()).await?;
+                
+                let pool = Arc::new(DatabaseConnectionPool::new(db_config).await?);
+                pools.insert(db_id.clone(), pool);
+            }
+        }
+        
         let transaction = CrossDatabaseTransaction {
             transaction_id: transaction_id.clone(),
-            involved_databases: databases,
+            involved_databases: databases.clone(),
             operations: Vec::new(),
             status: TransactionStatus::Preparing,
             created_at: SystemTime::now(),
             timeout_at,
             metadata,
         };
+        
+        // Log transaction begin
+        self.transaction_log.log_begin(transaction_id.clone(), databases).await?;
         
         let mut active_transactions = self.active_transactions.write().await;
         active_transactions.insert(transaction_id.clone(), transaction);
@@ -217,83 +278,74 @@ impl FederationCoordinator {
 
     /// Prepare a transaction (2-phase commit phase 1)
     pub async fn prepare_transaction(&self, transaction_id: &TransactionId) -> Result<bool> {
-        let mut active_transactions = self.active_transactions.write().await;
+        let active_transactions = self.active_transactions.read().await;
         
-        if let Some(transaction) = active_transactions.get_mut(transaction_id) {
-            transaction.status = TransactionStatus::Preparing;
+        if let Some(transaction) = active_transactions.get(transaction_id) {
+            // Use real 2PC coordinator
+            let operations = transaction.operations.clone();
+            let databases = transaction.involved_databases.clone();
+            let metadata = transaction.metadata.clone();
             
-            // Phase 1: Send prepare requests to all involved databases
-            let mut prepare_results = Vec::new();
-            let timeout = tokio::time::Duration::from_millis(5000); // 5 second timeout
+            drop(active_transactions); // Release lock before 2PC
             
-            for database_id in &transaction.involved_databases {
-                let result = tokio::time::timeout(timeout, self.send_prepare_request(database_id, transaction_id)).await;
-                
-                match result {
-                    Ok(Ok(prepared)) => {
-                        prepare_results.push((database_id.clone(), prepared));
-                    }
-                    Ok(Err(e)) => {
-                        transaction.status = TransactionStatus::Failed;
-                        return Err(e);
-                    }
-                    Err(_) => {
-                        transaction.status = TransactionStatus::Failed;
-                        return Err(GraphError::OperationTimeout("Prepare phase timeout".to_string()));
-                    }
+            let result = self.two_phase_coordinator.execute_transaction(
+                transaction_id.clone(),
+                databases,
+                operations,
+                metadata,
+            ).await?;
+            
+            // Update transaction status based on result
+            let mut active_transactions = self.active_transactions.write().await;
+            if let Some(transaction) = active_transactions.get_mut(transaction_id) {
+                if result.success && result.phase_completed == crate::federation::two_phase_commit::CommitPhase::Commit {
+                    transaction.status = TransactionStatus::Committed;
+                    Ok(true)
+                } else {
+                    transaction.status = TransactionStatus::Aborted;
+                    Ok(false)
                 }
-            }
-            
-            // Check if all databases are prepared
-            let all_prepared = prepare_results.iter().all(|(_, prepared)| *prepared);
-            
-            if all_prepared {
-                transaction.status = TransactionStatus::Prepared;
-                Ok(true)
             } else {
-                // Some databases couldn't prepare, abort the transaction
-                transaction.status = TransactionStatus::Failed;
-                self.abort_transaction_internal(transaction_id).await?;
-                Ok(false)
+                Ok(result.success)
             }
         } else {
             Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
         }
     }
     
-    /// Send prepare request to a specific database
-    async fn send_prepare_request(&self, database_id: &DatabaseId, _transaction_id: &TransactionId) -> Result<bool> {
-        // This would require actual database connections to implement
-        // For now, return an error indicating this is not implemented
+    /// Send prepare request to a specific database (legacy method for compatibility)
+    async fn send_prepare_request(&self, database_id: &DatabaseId, transaction_id: &TransactionId) -> Result<bool> {
+        // This method is now handled by the 2PC coordinator
+        // Keep for backward compatibility but delegate to connection pool
         
-        let databases = self.registry.list_databases().await;
-        let database_exists = databases.iter().any(|db| db.id == *database_id);
-        
-        if database_exists {
-            Err(GraphError::NotImplemented(
-                "Database prepare requests require actual database connections. \
-                 This functionality needs a database driver implementation.".into()
-            ))
+        let pools = self.connection_pools.read().await;
+        if let Some(pool) = pools.get(database_id) {
+            let conn = pool.get_connection().await?;
+            let mut conn_guard = conn.lock().await;
+            let result = conn_guard.prepare(transaction_id).await;
+            drop(conn_guard);
+            pool.return_connection(conn).await;
+            result
         } else {
-            Err(GraphError::InvalidInput(format!("Database not found: {}", database_id.as_str())))
+            Err(GraphError::InvalidInput(format!("Database connection pool not found: {}", database_id.as_str())))
         }
     }
     
-    /// Send commit request to a specific database
-    async fn send_commit_request(&self, database_id: &DatabaseId, _transaction_id: &TransactionId) -> Result<bool> {
-        // This would require actual database connections to implement
-        // For now, return an error indicating this is not implemented
+    /// Send commit request to a specific database (legacy method for compatibility)
+    async fn send_commit_request(&self, database_id: &DatabaseId, transaction_id: &TransactionId) -> Result<bool> {
+        // This method is now handled by the 2PC coordinator
+        // Keep for backward compatibility but delegate to connection pool
         
-        let databases = self.registry.list_databases().await;
-        let database_exists = databases.iter().any(|db| db.id == *database_id);
-        
-        if database_exists {
-            Err(GraphError::NotImplemented(
-                "Database commit requests require actual database connections. \
-                 This functionality needs a database driver implementation.".into()
-            ))
+        let pools = self.connection_pools.read().await;
+        if let Some(pool) = pools.get(database_id) {
+            let conn = pool.get_connection().await?;
+            let mut conn_guard = conn.lock().await;
+            conn_guard.commit(transaction_id).await?;
+            drop(conn_guard);
+            pool.return_connection(conn).await;
+            Ok(true)
         } else {
-            Err(GraphError::InvalidInput(format!("Database not found: {}", database_id.as_str())))
+            Err(GraphError::InvalidInput(format!("Database connection pool not found: {}", database_id.as_str())))
         }
     }
     
@@ -337,52 +389,56 @@ impl FederationCoordinator {
     /// Commit a transaction (2-phase commit phase 2)
     pub async fn commit_transaction(&self, transaction_id: &TransactionId) -> Result<TransactionResult> {
         let start_time = std::time::Instant::now();
-        let mut active_transactions = self.active_transactions.write().await;
         
-        if let Some(mut transaction) = active_transactions.remove(transaction_id) {
-            // Ensure transaction is in prepared state
-            if transaction.status != TransactionStatus::Prepared {
-                return Err(GraphError::InvalidInput(format!("Transaction not prepared: {}", transaction_id.as_str())));
-            }
+        // Note: The actual 2PC is handled in prepare_transaction
+        // This method is for explicit commit after prepare
+        
+        let active_transactions = self.active_transactions.read().await;
+        if let Some(transaction) = active_transactions.get(transaction_id) {
+            let status = transaction.status.clone();
+            let operations_count = transaction.operations.len();
+            drop(active_transactions);
             
-            transaction.status = TransactionStatus::Committing;
-            
-            // Phase 2: Send commit requests to all involved databases
-            let mut commit_results = Vec::new();
-            let timeout = tokio::time::Duration::from_millis(10000); // 10 second timeout
-            
-            for database_id in &transaction.involved_databases {
-                let result = tokio::time::timeout(timeout, self.send_commit_request(database_id, transaction_id)).await;
-                
-                match result {
-                    Ok(Ok(committed)) => {
-                        commit_results.push((database_id.clone(), committed));
-                    }
-                    Ok(Err(e)) => {
-                        transaction.status = TransactionStatus::Failed;
-                        // In a real system, this would trigger cleanup/rollback
-                        return Err(e);
-                    }
-                    Err(_) => {
-                        transaction.status = TransactionStatus::Failed;
-                        return Err(GraphError::OperationTimeout("Commit phase timeout".to_string()));
+            match status {
+                TransactionStatus::Committed => {
+                    // Already committed
+                    Ok(TransactionResult {
+                        transaction_id: transaction_id.clone(),
+                        success: true,
+                        committed_operations: operations_count,
+                        failed_operations: 0,
+                        execution_time_ms: start_time.elapsed().as_millis() as u64,
+                        error_details: None,
+                    })
+                }
+                TransactionStatus::Prepared => {
+                    // Need to complete commit phase
+                    let mut active_transactions = self.active_transactions.write().await;
+                    if let Some(transaction) = active_transactions.get_mut(transaction_id) {
+                        // Log final commit
+                        self.transaction_log.log_decision(transaction_id, TransactionDecision::Commit).await?;
+                        
+                        transaction.status = TransactionStatus::Committed;
+                        let result = TransactionResult {
+                            transaction_id: transaction_id.clone(),
+                            success: true,
+                            committed_operations: transaction.operations.len(),
+                            failed_operations: 0,
+                            execution_time_ms: start_time.elapsed().as_millis() as u64,
+                            error_details: None,
+                        };
+                        
+                        // Remove from active transactions
+                        active_transactions.remove(transaction_id);
+                        Ok(result)
+                    } else {
+                        Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
                     }
                 }
+                _ => {
+                    Err(GraphError::InvalidInput(format!("Transaction not in committable state: {:?}", status)))
+                }
             }
-            
-            let execution_time = start_time.elapsed().as_millis() as u64;
-            
-            // Mock successful commit
-            transaction.status = TransactionStatus::Committed;
-            
-            Ok(TransactionResult {
-                transaction_id: transaction_id.clone(),
-                success: true,
-                committed_operations: transaction.operations.len(),
-                failed_operations: 0,
-                execution_time_ms: execution_time,
-                error_details: None,
-            })
         } else {
             Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
         }
@@ -494,6 +550,73 @@ impl FederationCoordinator {
             execution_time_ms: 0,
         })
     }
+
+    /// Begin cross-database transaction (test compatibility method)
+    pub async fn begin_cross_database_transaction(
+        &self,
+        transaction_id: TransactionId,
+        databases: Vec<&str>,
+    ) -> Result<CrossDatabaseTransaction> {
+        // Convert string database names to DatabaseId
+        let database_ids: Vec<DatabaseId> = databases.iter()
+            .map(|&db| DatabaseId(db.to_string()))
+            .collect();
+        
+        // Create default metadata
+        let metadata = TransactionMetadata {
+            initiator: Some("test".to_string()),
+            description: Some("Test transaction".to_string()),
+            priority: TransactionPriority::Normal,
+            isolation_level: IsolationLevel::ReadCommitted,
+            consistency_mode: ConsistencyMode::Eventual,
+        };
+        
+        // Begin the transaction using existing method
+        let _returned_id = self.begin_transaction(database_ids.clone(), metadata.clone()).await?;
+        
+        // Return the transaction object for test compatibility
+        Ok(CrossDatabaseTransaction {
+            transaction_id,
+            involved_databases: database_ids,
+            operations: Vec::new(),
+            status: TransactionStatus::Preparing,
+            created_at: SystemTime::now(),
+            timeout_at: SystemTime::now() + Duration::from_secs(300),
+            metadata,
+        })
+    }
+
+    /// Add entity to transaction (test compatibility method)
+    pub async fn add_entity_to_transaction(
+        &self,
+        transaction_id: &TransactionId,
+        entity_id: &str,
+        entity_data: serde_json::Value,
+    ) -> Result<()> {
+        // Convert JSON value to HashMap
+        let mut data_map = HashMap::new();
+        if let serde_json::Value::Object(obj) = entity_data {
+            for (key, value) in obj {
+                data_map.insert(key, value);
+            }
+        }
+        
+        // Create operation
+        let operation = TransactionOperation {
+            operation_id: format!("op_{}", uuid::Uuid::new_v4()),
+            database_id: DatabaseId("default".to_string()), // Default database
+            operation_type: OperationType::CreateEntity {
+                entity_id: entity_id.to_string(),
+                entity_data: data_map,
+            },
+            parameters: HashMap::new(),
+            dependencies: vec![],
+            status: OperationStatus::Pending,
+        };
+        
+        // Add to transaction
+        self.add_operation(transaction_id, operation).await
+    }
 }
 
 /// Report on database consistency
@@ -557,7 +680,7 @@ mod tests {
             id: DatabaseId::new("test_db".to_string()),
             name: "Test Database".to_string(),
             description: Some("Test database for coordinator tests".to_string()),
-            connection_string: "mock://localhost:5432/test".to_string(),
+            connection_string: ":memory:".to_string(),
             database_type: crate::federation::registry::DatabaseType::InMemory,
             capabilities: crate::federation::types::DatabaseCapabilities::default(),
             metadata: crate::federation::registry::DatabaseMetadata {
@@ -578,27 +701,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_send_prepare_request_not_implemented() {
+    async fn test_send_prepare_request_no_pool() {
         let registry = create_test_registry().await;
-        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        let coordinator = FederationCoordinator::new(registry).await.expect("Failed to create coordinator");
         
         let db_id = DatabaseId::new("test_db".to_string());
         let transaction_id = TransactionId::new();
         
+        // Without creating a connection pool, this should fail
         let result = coordinator.send_prepare_request(&db_id, &transaction_id).await;
         assert!(result.is_err());
         
-        if let Err(GraphError::NotImplemented(_)) = result {
-            // Expected behavior
+        if let Err(GraphError::InvalidInput(msg)) = result {
+            assert!(msg.contains("connection pool not found"));
         } else {
-            panic!("Expected NotImplemented error");
+            panic!("Expected InvalidInput error for missing connection pool");
         }
     }
 
     #[tokio::test]
     async fn test_send_prepare_request_invalid_database() {
         let registry = create_test_registry().await;
-        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        let coordinator = FederationCoordinator::new(registry).await.expect("Failed to create coordinator");
         
         let db_id = DatabaseId::new("nonexistent_db".to_string());
         let transaction_id = TransactionId::new();
@@ -607,38 +731,40 @@ mod tests {
         assert!(result.is_err());
         
         if let Err(GraphError::InvalidInput(msg)) = result {
-            assert!(msg.contains("Database not found"));
+            assert!(msg.contains("connection pool not found"));
         } else {
             panic!("Expected InvalidInput error");
         }
     }
 
     #[tokio::test]
-    async fn test_send_commit_request_not_implemented() {
+    async fn test_send_commit_request_no_pool() {
         let registry = create_test_registry().await;
-        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        let coordinator = FederationCoordinator::new(registry).await.expect("Failed to create coordinator");
         
         let db_id = DatabaseId::new("test_db".to_string());
         let transaction_id = TransactionId::new();
         
+        // Without creating a connection pool, this should fail
         let result = coordinator.send_commit_request(&db_id, &transaction_id).await;
         assert!(result.is_err());
         
-        if let Err(GraphError::NotImplemented(_)) = result {
-            // Expected behavior
+        if let Err(GraphError::InvalidInput(msg)) = result {
+            assert!(msg.contains("connection pool not found"));
         } else {
-            panic!("Expected NotImplemented error");
+            panic!("Expected InvalidInput error for missing connection pool");
         }
     }
 
     #[tokio::test]
     async fn test_send_abort_request_success() {
         let registry = create_test_registry().await;
-        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        let coordinator = FederationCoordinator::new(registry).await.expect("Failed to create coordinator");
         
         let db_id = DatabaseId::new("test_db".to_string());
         let transaction_id = TransactionId::new();
         
+        // Note: abort still uses the old implementation for now
         let result = coordinator.send_abort_request(&db_id, &transaction_id).await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
@@ -665,7 +791,7 @@ mod tests {
     #[tokio::test]
     async fn test_abort_transaction_internal() {
         let registry = create_test_registry().await;
-        let coordinator = FederationCoordinator::new(registry).expect("Failed to create coordinator");
+        let coordinator = FederationCoordinator::new(registry).await.expect("Failed to create coordinator");
         
         let databases = vec![DatabaseId::new("test_db".to_string())];
         let metadata = TransactionMetadata {

@@ -849,6 +849,274 @@ impl WorkingMemorySystem {
         })
     }
 
+    /// Store content in buffer (test compatibility method)
+    pub async fn store_in_buffer(
+        &self,
+        content: MemoryContent,
+        buffer_type: BufferType,
+        importance: f32,
+    ) -> Result<()> {
+        // Use existing store_in_working_memory method
+        self.store_in_working_memory(content, importance, buffer_type).await?;
+        Ok(())
+    }
+
+    /// Retrieve memories with attention guidance (test compatibility method)
+    pub async fn retrieve_with_attention_guidance(
+        &self,
+        query: &str,
+        attention_state: crate::cognitive::attention_manager::AttentionState,
+        max_results: usize,
+    ) -> Result<Vec<MemoryContent>> {
+        // Create memory query with attention guidance
+        let memory_query = MemoryQuery {
+            query_text: query.to_string(),
+            search_buffers: vec![BufferType::Phonological, BufferType::Visuospatial, BufferType::Episodic],
+            apply_attention: true,
+            importance_threshold: 0.3,
+            recency_weight: 0.4,
+        };
+        
+        let retrieval_result = self.retrieve_from_working_memory(&memory_query).await?;
+        
+        // Apply attention weights to retrieved items
+        let mut weighted_items: Vec<(MemoryContent, f32)> = Vec::new();
+        
+        for item in retrieval_result.items {
+            let attention_weight = if attention_state.current_focus.target_entities.is_empty() {
+                item.importance_score
+            } else {
+                // Use attention focus to weight retrieval
+                let focus_weight = attention_state.current_focus.focus_strength;
+                item.importance_score * focus_weight
+            };
+            
+            weighted_items.push((item.content, attention_weight));
+        }
+        
+        // Sort by weighted score and take top results
+        weighted_items.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        
+        let results: Vec<MemoryContent> = weighted_items
+            .into_iter()
+            .take(max_results)
+            .map(|(content, _)| content)
+            .collect();
+        
+        Ok(results)
+    }
+
+    // Real working memory operations
+    pub async fn store_entities(&self, entities: &[crate::core::entity_extractor::CognitiveEntity]) -> Result<()> {
+        let mut buffers = self.memory_buffers.write().await;
+        
+        // Apply decay first
+        self.apply_decay_to_buffers(&mut buffers).await;
+        
+        for entity in entities {
+            // Determine buffer based on entity type and characteristics
+            let buffer_type = self.determine_buffer_for_entity(entity);
+            
+            // Calculate importance based on confidence and attention
+            let importance = entity.confidence_score * entity.attention_weight();
+            
+            // Create memory content
+            let content = MemoryContent::Concept(entity.name.clone());
+            
+            // Store in determined buffer
+            let target_buffer = buffers.get_buffer_mut(buffer_type.clone());
+            
+            // Check capacity and apply forgetting if needed
+            if target_buffer.len() >= self.get_capacity_for_buffer(&buffer_type) {
+                let evicted = self.apply_forgetting_strategy(
+                    target_buffer,
+                    importance,
+                    &buffer_type
+                ).await?;
+                
+                // Optionally consolidate important evicted items
+                for evicted_item in evicted {
+                    if evicted_item.importance_score > 0.7 {
+                        // Would consolidate to long-term storage
+                    }
+                }
+            }
+            
+            // Create and store memory item
+            let memory_item = MemoryItem {
+                content,
+                activation_level: importance,
+                timestamp: Instant::now(),
+                importance_score: importance,
+                access_count: 1,
+                decay_factor: 1.0,
+            };
+            
+            target_buffer.push_back(memory_item);
+        }
+        
+        // Update central executive
+        buffers.central_executive.update_memory_load();
+        
+        // Trigger consolidation if needed
+        if buffers.central_executive.current_memory_load > 0.8 {
+            self.consolidate_to_long_term().await?;
+        }
+        
+        Ok(())
+    }
+
+    pub async fn retrieve_with_attention_guidance_full(
+        &self,
+        query: &str,
+        attention_weights: &[f32],
+    ) -> Result<Vec<MemoryItem>> {
+        let mut buffers = self.memory_buffers.write().await;
+        
+        // Apply decay first
+        self.apply_decay_to_buffers(&mut buffers).await;
+        
+        let mut all_items = Vec::new();
+        
+        // Search all buffers
+        for buffer_type in &[BufferType::Phonological, BufferType::Visuospatial, BufferType::Episodic] {
+            let buffer = buffers.get_buffer(buffer_type.clone());
+            
+            for (idx, item) in buffer.iter().enumerate() {
+                // Calculate relevance with attention boost
+                let base_relevance = self.calculate_item_relevance(item, query);
+                
+                // Apply attention weight if available
+                let attention_boost = if idx < attention_weights.len() {
+                    attention_weights[idx]
+                } else {
+                    0.5
+                };
+                
+                let final_relevance = base_relevance * (1.0 + attention_boost);
+                
+                if final_relevance > 0.3 {
+                    let mut retrieved_item = item.clone();
+                    retrieved_item.importance_score = final_relevance;
+                    all_items.push(retrieved_item);
+                }
+            }
+        }
+        
+        // Sort by relevance
+        all_items.sort_by(|a, b| b.importance_score.partial_cmp(&a.importance_score).unwrap());
+        
+        // Update access patterns
+        for item in &all_items {
+            // In real implementation, would update access count and timestamp
+        }
+        
+        Ok(all_items)
+    }
+
+    pub async fn consolidate_memory(&self) -> Result<()> {
+        let mut buffers = self.memory_buffers.write().await;
+        
+        // Identify items for consolidation
+        let mut consolidation_candidates = Vec::new();
+        
+        // Check episodic buffer (primary source for consolidation)
+        let episodic_buffer = &buffers.episodic_buffer;
+        for item in episodic_buffer.iter() {
+            if self.should_consolidate(item) {
+                consolidation_candidates.push(item.clone());
+            }
+        }
+        
+        // Sort by importance and recency
+        consolidation_candidates.sort_by(|a, b| {
+            let score_a = a.importance_score * 0.7 + (1.0 / a.timestamp.elapsed().as_secs_f32()) * 0.3;
+            let score_b = b.importance_score * 0.7 + (1.0 / b.timestamp.elapsed().as_secs_f32()) * 0.3;
+            score_b.partial_cmp(&score_a).unwrap()
+        });
+        
+        // Consolidate top items
+        let items_to_consolidate: Vec<_> = consolidation_candidates
+            .into_iter()
+            .take(5)
+            .collect();
+        
+        for item in items_to_consolidate {
+            // Store in long-term memory (SDR storage)
+            match &item.content {
+                MemoryContent::Concept(concept) => {
+                    if concept.len() < 100 {
+                        let sdr = self.sdr_storage.encode_text(concept).await?;
+                        self.sdr_storage.store_with_metadata(
+                            &sdr,
+                            concept.clone(),
+                            item.importance_score,
+                        ).await?;
+                    }
+                }
+                MemoryContent::Entity(entity) => {
+                    let sdr = self.sdr_storage.encode_text(&entity.concept_id).await?;
+                    self.sdr_storage.store_with_metadata(
+                        &sdr,
+                        entity.concept_id.clone(),
+                        item.importance_score,
+                    ).await?;
+                }
+                _ => {}
+            }
+        }
+        
+        // Remove consolidated items from working memory
+        buffers.episodic_buffer.retain(|item| {
+            !items_to_consolidate.iter().any(|consolidated| {
+                std::ptr::eq(item, consolidated)
+            })
+        });
+        
+        Ok(())
+    }
+
+    // Helper methods for real implementation
+    fn determine_buffer_for_entity(&self, entity: &crate::core::entity_extractor::CognitiveEntity) -> BufferType {
+        use crate::core::entity_extractor::EntityType;
+        
+        match entity.entity_type {
+            EntityType::Person | EntityType::Organization => BufferType::Phonological,
+            EntityType::Place => BufferType::Visuospatial,
+            EntityType::Concept | EntityType::Event => BufferType::Episodic,
+            _ => BufferType::Phonological,
+        }
+    }
+
+    fn calculate_item_relevance(&self, item: &MemoryItem, query: &str) -> f32 {
+        match &item.content {
+            MemoryContent::Concept(concept) => {
+                self.calculate_string_similarity(concept, query)
+            }
+            MemoryContent::Entity(entity) => {
+                self.calculate_string_similarity(&entity.concept_id, query)
+            }
+            MemoryContent::Relationship(subj, obj, strength) => {
+                let subj_sim = self.calculate_string_similarity(subj, query);
+                let obj_sim = self.calculate_string_similarity(obj, query);
+                (subj_sim.max(obj_sim)) * strength
+            }
+            _ => 0.3,
+        }
+    }
+
+    fn should_consolidate(&self, item: &MemoryItem) -> bool {
+        // Consolidate if:
+        // 1. High importance
+        // 2. Accessed multiple times
+        // 3. Been in memory for some time
+        // 4. Still maintaining good activation
+        
+        item.importance_score > 0.7 &&
+        item.access_count > 1 &&
+        item.timestamp.elapsed() > Duration::from_secs(30) &&
+        item.activation_level > 0.5
+    }
 }
 
 impl MemoryStorageResult {

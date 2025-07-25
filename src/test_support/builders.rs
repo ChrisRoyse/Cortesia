@@ -6,6 +6,10 @@ use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::core::activation_engine::ActivationPropagationEngine;
 use crate::core::activation_config::ActivationConfig;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use crate::neural::neural_server::NeuralProcessingServer;
+use crate::monitoring::brain_metrics_collector::BrainMetricsCollector;
+use crate::monitoring::performance::PerformanceMonitor;
+use crate::federation::coordinator::FederationCoordinator;
 use crate::error::Result;
 use std::sync::Arc;
 
@@ -380,4 +384,66 @@ impl Default for PatternParametersBuilder {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Test builder functions for benchmarking and cognitive system testing
+/// 
+/// These functions create simplified test instances for performance benchmarking
+/// while maintaining compatibility with the cognitive architecture.
+
+/// Create a test cognitive orchestrator for benchmarking
+pub async fn build_test_cognitive_orchestrator() -> CognitiveOrchestrator {
+    let graph = Arc::new(BrainEnhancedKnowledgeGraph::new_for_test().expect("Failed to create test graph"));
+    CognitiveOrchestrator::new(graph, CognitiveOrchestratorConfig::default())
+        .await
+        .expect("Failed to create test cognitive orchestrator")
+}
+
+/// Create a test attention manager for benchmarking
+pub async fn build_test_attention_manager() -> AttentionManager {
+    AttentionManagerBuilder::new()
+        .build()
+        .await
+        .expect("Failed to create test attention manager")
+}
+
+/// Create a test working memory system for benchmarking
+pub async fn build_test_working_memory() -> WorkingMemorySystem {
+    WorkingMemoryBuilder::new()
+        .build()
+        .await
+        .expect("Failed to create test working memory")
+}
+
+/// Create a test brain metrics collector for benchmarking
+pub async fn build_test_brain_metrics_collector() -> BrainMetricsCollector {
+    use tokio::sync::RwLock;
+    let brain_graph = Arc::new(RwLock::new(BrainEnhancedKnowledgeGraph::new_for_test()
+        .expect("Failed to create test graph")));
+    BrainMetricsCollector::new(brain_graph)
+}
+
+/// Create a test performance monitor for benchmarking
+pub async fn build_test_performance_monitor() -> PerformanceMonitor {
+    PerformanceMonitor::new_with_defaults()
+        .await
+        .expect("Failed to create test performance monitor")
+}
+
+/// Create a test neural server for benchmarking
+pub async fn build_test_neural_server() -> NeuralProcessingServer {
+    NeuralProcessingServer::new_mock()
+}
+
+/// Create a test federation coordinator for benchmarking
+pub async fn build_test_federation_coordinator() -> FederationCoordinator {
+    use crate::federation::registry::DatabaseRegistry;
+    let registry = Arc::new(DatabaseRegistry::new().expect("Failed to create registry"));
+    FederationCoordinator::new(registry).expect("Failed to create federation coordinator")
+}
+
+/// Create a lightweight brain enhanced knowledge graph for benchmarking
+pub fn build_test_brain_graph() -> BrainEnhancedKnowledgeGraph {
+    BrainEnhancedKnowledgeGraph::new_for_test()
+        .expect("Failed to create test brain graph")
 }

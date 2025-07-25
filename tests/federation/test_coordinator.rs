@@ -24,37 +24,53 @@ use tokio::time::timeout;
 
 /// Create a test federation coordinator with mock database registry
 async fn create_test_coordinator() -> FederationCoordinator {
-    let mut registry = DatabaseRegistry::new().expect("Failed to create registry");
+    let registry = DatabaseRegistry::new().expect("Failed to create registry");
     
     // Register test databases
     let db1 = DatabaseDescriptor {
         id: DatabaseId::new("test_db_1".to_string()),
         name: "Test Database 1".to_string(),
+        description: Some("Test database 1".to_string()),
         connection_string: "mock://localhost:5432/test1".to_string(),
+        database_type: llmkg::federation::registry::DatabaseType::InMemory,
         capabilities: DatabaseCapabilities::default(),
-        priority: 1,
-        max_connections: 10,
-        timeout_ms: 5000,
-        health_check_interval_ms: 30000,
-        metadata: HashMap::new(),
+        metadata: llmkg::federation::registry::DatabaseMetadata {
+            version: "1.0.0".to_string(),
+            created_at: SystemTime::now(),
+            last_updated: SystemTime::now(),
+            owner: Some("test".to_string()),
+            tags: vec![],
+            entity_count: Some(0),
+            relationship_count: Some(0),
+            storage_size_bytes: Some(0),
+        },
+        status: llmkg::federation::registry::DatabaseStatus::Online,
     };
     
     let db2 = DatabaseDescriptor {
         id: DatabaseId::new("test_db_2".to_string()),
-        name: "Test Database 2".to_string(),
-        connection_string: "mock://localhost:5433/test2".to_string(),
+        name: "Test Database 2".to_string()),
+        description: Some("Test database 2".to_string()),
+        connection_string: "mock://localhost:5433/test2".to_string()),
+        database_type: llmkg::federation::registry::DatabaseType::InMemory,
         capabilities: DatabaseCapabilities::default(),
-        priority: 2,
-        max_connections: 10,
-        timeout_ms: 5000,
-        health_check_interval_ms: 30000,
-        metadata: HashMap::new(),
+        metadata: llmkg::federation::registry::DatabaseMetadata {
+            version: "1.0.0".to_string(),
+            created_at: SystemTime::now(),
+            last_updated: SystemTime::now(),
+            owner: Some("test".to_string()),
+            tags: vec![],
+            entity_count: Some(0),
+            relationship_count: Some(0),
+            storage_size_bytes: Some(0),
+        },
+        status: llmkg::federation::registry::DatabaseStatus::Online,
     };
     
     registry.register(db1).await.expect("Failed to register db1");
     registry.register(db2).await.expect("Failed to register db2");
     
-    FederationCoordinator::new(Arc::new(registry)).expect("Failed to create coordinator")
+    FederationCoordinator::new(Arc::new(registry)).await.expect("Failed to create coordinator")
 }
 
 /// Create test transaction metadata
@@ -330,7 +346,7 @@ async fn test_cleanup_expired_transactions() {
     
     // Create a coordinator with very short timeout for testing
     let registry = Arc::new(DatabaseRegistry::new().unwrap());
-    let mut short_timeout_coordinator = FederationCoordinator::new(registry).unwrap();
+    let short_timeout_coordinator = FederationCoordinator::new(registry).await.unwrap();
     
     // Manually set a short timeout (this would require exposing the field or a setter)
     // For this test, we'll use the default coordinator and verify the cleanup method exists

@@ -1,10 +1,46 @@
-You are an expert AI coding assistant tasked with delivering high-quality, production-ready code that precisely meets the user's requirements. Your goal is to produce flawless solutions by leveraging parallel subagent delegation, iterative improvement, and rigorous quality assurance. Follow these instructions for every task:
+# LLMKG (LLM Knowledge Graph) - Phase 1 Foundation Fixes
 
-### Core Objectives
+## Project Overview
+A sophisticated Large Language Model Knowledge Graph system implementing cognitive-enhanced AI processing with federation support, neural processing, and advanced storage optimization. This project builds upon extensive existing infrastructure including CognitiveOrchestrator, FederationCoordinator, NeuralProcessingServer, and 28 MCP tools.
 
-*   **Understand Intent**: Fully grasp the user's requirements, asking clarifying questions if needed to ensure alignment with their intent.
-*   **Deliver Excellence**: Produce code that is functional, efficient, maintainable, and adheres to best practices for the specified language or framework.
-*   **Achieve 100/100 Quality**: For every task, self-assess and iterate until the work scores 100/100 against the user's intent.
+## Phase 1 Mission Statement
+**Goal**: Fix critical foundation issues preventing basic functionality while establishing cognitive-enhanced event store foundation with full MCP tool integration.
+
+**Duration**: 4 weeks  
+**Priority**: CRITICAL  
+**Target Performance**: <10ms per operation on Intel i9 processor with cognitive orchestration
+
+## Core Objectives
+
+### Primary Objectives (Phase 1)
+1. **Cognitive-Enhanced Entity Extraction**: Implement AI-powered entity recognition with neural server integration, attention management, and working memory
+2. **Neural-Federation Relationship Extraction**: Build relationship extraction with cross-database coordination and cognitive pattern selection  
+3. **Orchestrated Question Answering**: Develop cognitive reasoning-guided question parsing and answer generation
+4. **Enhanced MCP Tool Integration**: Upgrade 28 existing MCP tools with cognitive metadata and federation support
+5. **Cognitive-Federation Migration**: Complete data migration with neural embeddings and attention weight preservation
+
+### Success Criteria (Measurable)
+- **Entity Extraction**: >95% accuracy with cognitive orchestration and neural processing
+- **Relationship Extraction**: 30+ relationship types, 90% accuracy via federation
+- **Question Answering**: >90% relevance with cognitive reasoning patterns
+- **Performance Targets**:
+  - Entity extraction: <8ms per sentence with neural processing
+  - Relationship extraction: <12ms per sentence with federation
+  - Question answering: <20ms total with cognitive reasoning
+  - Federation storage: <3ms with cross-database coordination
+- **Test Coverage**: >90% including cognitive integration and federation tests
+- **Migration**: Complete with cognitive metadata and working memory preservation
+
+### Technical Infrastructure (Existing)
+**Discovered Advanced Systems**:
+- **CognitiveOrchestrator**: Complete cognitive pattern orchestration with 7 thinking patterns
+- **Neural Processing Server**: Advanced neural model execution with training/prediction capabilities  
+- **Federation Coordinator**: Cross-database transaction management with 2-phase commit
+- **28 MCP Tools**: Comprehensive knowledge storage, neural processing, cognitive reasoning suite
+- **15+ Pre-trained Models**: DistilBERT, TinyBERT, T5, MiniLM, dependency parsers, classifiers
+- **Advanced Storage**: Zero-copy MMAP, string interning, HNSW indexing, product quantization
+- **Comprehensive Monitoring**: ObservabilityEngine, BrainMetricsCollector, PerformanceMonitor
+- **Working Memory Systems**: AttentionManager, CompetitiveInhibitionSystem, HebbianLearning
 
 ### Process for Task Execution
 

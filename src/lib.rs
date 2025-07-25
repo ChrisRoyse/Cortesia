@@ -27,6 +27,7 @@ pub mod graph;
 pub mod api;
 pub mod tools;
 // pub mod agents; // Removed as requested
+pub mod models;
 
 #[cfg(feature = "native")]
 pub mod production;
@@ -49,6 +50,8 @@ pub use crate::embedding::store_compat::EmbeddingStore;
 pub use crate::embedding::quantizer::ProductQuantizer;
 pub use crate::storage::persistent_mmap::{PersistentMMapStorage, StorageStats};
 pub use crate::storage::string_interner::{StringInterner, InternedString, InternedProperties, InternerStats, GlobalStringInterner, intern_string, get_string, interner_stats, clear_interner};
+pub use crate::storage::hnsw::HnswIndex;
+pub use crate::storage::quantized_index::QuantizedIndex;
 pub use crate::core::interned_entity::{InternedEntityData, InternedRelationship, InternedEntityCollection, InternedDataStats};
 pub use crate::error::{GraphError, Result};
 pub use crate::federation::{FederationManager, DatabaseRegistry, FederatedQuery};
@@ -81,7 +84,7 @@ pub use crate::core::brain_types::{
 };
 pub use crate::core::{Phase1IntegrationLayer, Phase1Config, QueryResult as Phase1QueryResult, CognitiveQueryResult, Phase1Statistics};
 pub use crate::versioning::temporal_graph::{TemporalKnowledgeGraph, TimeRange, TemporalEntity, TemporalRelationship};
-pub use crate::neural::neural_server::{NeuralProcessingServer, NeuralOperation, NeuralParameters, NeuralRequest, NeuralResponse, TrainingResult, PredictionResult, ModelMetadata, ModelType};
+pub use crate::neural::neural_server::{NeuralProcessingServer, NeuralOperation, NeuralParameters, NeuralRequest, NeuralResponse, TrainingResult, PredictionResult, ModelMetadata, NeuralModelType};
 pub use crate::neural::structure_predictor::GraphStructurePredictor;
 pub use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, TemporalUpdate, UpdateOperation, UpdateSource, UpdateStatistics, TemporalUpdateBuilder};
 
@@ -95,10 +98,25 @@ pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent}
 // Text processing exports
 pub use crate::text::{TextCompressor, utils as text_utils, TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker};
 
-// Migration tools exports
+// Migration tools exports - Cognitive-Federation Enhanced
 pub use crate::tools::{
-    MigrationTool, MigrationReport, ValidationReport, MigrationError,
-    BackupSnapshot, MigrationProgress, MigrationConfig, ValidationLevel as MigrationValidationLevel
+    // Primary cognitive-federation migration system
+    CognitiveFederationMigrator, CognitiveMigrationReport, CognitiveMigrationStats,
+    
+    // Cognitive entity types
+    CognitiveEntity, CognitiveRelationship, CognitiveMetadata,
+    
+    // Legacy storage interface for migration compatibility
+    LegacyStorage, LegacyEntity, LegacyRelationship, KnowledgeEngineLegacyAdapter,
+    
+    // Enhanced configuration and validation
+    MigrationConfig, ValidationLevel as MigrationValidationLevel, ValidationReport,
+    
+    // Shared migration types
+    MigrationError, BackupSnapshot, MigrationProgress,
+    
+    // Legacy aliases for backward compatibility
+    MigrationTool, MigrationReport,
 };
 
 // Brain-Enhanced Knowledge Graph Exports

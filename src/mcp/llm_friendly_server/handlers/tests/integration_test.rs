@@ -8,55 +8,17 @@ use crate::mcp::llm_friendly_server::handlers::{
     handle_neural_importance_scoring,
 };
 use crate::mcp::llm_friendly_server::types::UsageStats;
+use crate::test_support::test_utils::{create_test_engine, create_test_stats};
 use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// Helper function to create a test engine with sample data
-async fn create_test_engine() -> Arc<RwLock<KnowledgeEngine>> {
-    let engine = Arc::new(RwLock::new(
-        KnowledgeEngine::new(384, 1000).expect("Failed to create engine")
-    ));
-    
-    // Add some test data
-    {
-        let mut engine_write = engine.write().await;
-        
-        // Add test triples
-        engine_write.add_triple("Einstein", "is", "scientist", 1.0)
-            .expect("Failed to add triple");
-        engine_write.add_triple("Einstein", "invented", "relativity", 1.0)
-            .expect("Failed to add triple");
-        engine_write.add_triple("relativity", "is", "theory", 1.0)
-            .expect("Failed to add triple");
-        engine_write.add_triple("Newton", "is", "scientist", 1.0)
-            .expect("Failed to add triple");
-        engine_write.add_triple("Newton", "discovered", "gravity", 1.0)
-            .expect("Failed to add triple");
-        
-        // Add test chunks
-        engine_write.add_knowledge_chunk(
-            "Einstein's Theory",
-            "Albert Einstein developed the theory of relativity, which revolutionized physics.",
-            Some("physics"),
-            Some("test source")
-        ).expect("Failed to add chunk");
-        
-        engine_write.add_knowledge_chunk(
-            "Newton's Laws",
-            "Isaac Newton formulated the laws of motion and universal gravitation.",
-            Some("physics"),
-            Some("test source")
-        ).expect("Failed to add chunk");
-    }
-    
-    engine
-}
+// Test helper functions are now imported from test_utils
 
 #[tokio::test]
 async fn test_generate_graph_query_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Test 1: Basic query generation
     let params = json!({
@@ -97,8 +59,8 @@ async fn test_generate_graph_query_integration() {
 
 #[tokio::test]
 async fn test_get_stats_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Test 1: Basic stats without details
     let params = json!({
@@ -152,8 +114,8 @@ async fn test_get_stats_integration() {
 
 #[tokio::test]
 async fn test_validate_knowledge_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Test 1: Validate all knowledge (standard mode)
     let params = json!({
@@ -210,8 +172,8 @@ async fn test_validate_knowledge_integration() {
 
 #[tokio::test]
 async fn test_neural_importance_scoring_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Test 1: Score important content
     let params = json!({
@@ -277,8 +239,8 @@ async fn test_neural_importance_scoring_integration() {
 
 #[tokio::test]
 async fn test_full_workflow_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Step 1: Check initial stats
     let params = json!({ "include_details": true });
@@ -334,8 +296,8 @@ async fn test_full_workflow_integration() {
 
 #[tokio::test]
 async fn test_error_handling_integration() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Test various error conditions
     
@@ -373,8 +335,8 @@ async fn test_error_handling_integration() {
 
 #[tokio::test]
 async fn test_concurrent_operations() {
-    let engine = create_test_engine().await;
-    let usage_stats = Arc::new(RwLock::new(UsageStats::default()));
+    let engine = create_test_engine(true).await.expect("Failed to create test engine");
+    let usage_stats = create_test_stats();
     
     // Run multiple operations concurrently
     let engine_clone1 = engine.clone();

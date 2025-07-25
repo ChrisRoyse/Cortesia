@@ -23,6 +23,9 @@ pub enum GraphError {
     #[error("Storage error: {0}")]
     StorageError(String),
     
+    #[error("Model error: {0}")]
+    ModelError(String),
+    
     #[error("Invalid entity type: {type_id}")]
     InvalidEntityType { type_id: u16 },
     

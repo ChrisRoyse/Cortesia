@@ -9,11 +9,13 @@ pub mod stats;
 pub mod enhanced_search;
 pub mod graph_analysis;
 pub mod temporal;
+pub mod cognitive_preview;
 
 #[cfg(test)]
 pub mod tests;
 
-pub use storage::*;
+pub use storage::{handle_store_fact, handle_store_knowledge};
+pub use cognitive_preview::{handle_store_fact_cognitive_preview, handle_cognitive_reasoning_preview, handle_neural_train_model_preview};
 pub use query::*;
 pub use exploration::*;
 pub use advanced::*;

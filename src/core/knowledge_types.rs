@@ -83,6 +83,17 @@ pub struct Entity {
     pub entity_type: EntityType,
     pub aliases: Vec<String>,
     pub context: Option<String>,
+    // AI-enhanced fields
+    pub embedding: Option<Vec<f32>>,        // Pre-computed embedding
+    pub confidence_score: f32,              // Model confidence
+    pub extraction_model: ExtractionModel,  // Which model extracted this
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ExtractionModel {
+    DistilBERT,
+    TinyBERT,
+    RuleBased,  // Fallback
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -118,7 +129,7 @@ pub enum QuestionType {
     Is,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AnswerType {
     Entity,
     Fact,

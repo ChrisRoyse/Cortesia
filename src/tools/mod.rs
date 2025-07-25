@@ -1,12 +1,33 @@
 pub mod migration;
 
 pub use migration::{
-    MigrationTool, 
-    MigrationReport, 
-    ValidationReport, 
+    // Primary cognitive-federation migration system
+    CognitiveFederationMigrator,
+    CognitiveMigrationReport,
+    CognitiveMigrationStats,
+    
+    // Cognitive entity types
+    CognitiveEntity,
+    CognitiveRelationship,
+    CognitiveMetadata,
+    
+    // Legacy storage interface
+    LegacyStorage,
+    LegacyEntity,
+    LegacyRelationship,
+    KnowledgeEngineLegacyAdapter,
+    
+    // Enhanced configuration
+    MigrationConfig,
+    ValidationLevel,
+    
+    // Shared types
+    ValidationReport,
     MigrationError,
     BackupSnapshot,
     MigrationProgress,
-    MigrationConfig,
-    ValidationLevel
+    
+    // Legacy aliases for backward compatibility
+    MigrationTool,
+    MigrationReport,
 };

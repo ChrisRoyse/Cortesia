@@ -30,6 +30,9 @@ pub struct Triple {
     
     /// Optional source/provenance information
     pub source: Option<String>,
+    
+    /// Enhanced metadata for cognitive features
+    pub enhanced_metadata: Option<HashMap<String, String>>,
 }
 
 // Manual Hash implementation to handle f32 confidence field
@@ -41,6 +44,13 @@ impl Hash for Triple {
         // Convert f32 to bits for consistent hashing
         self.confidence.to_bits().hash(state);
         self.source.hash(state);
+        // Hash enhanced metadata if present
+        if let Some(ref metadata) = self.enhanced_metadata {
+            for (k, v) in metadata {
+                k.hash(state);
+                v.hash(state);
+            }
+        }
     }
 }
 
@@ -173,6 +183,7 @@ impl Triple {
             object: object.trim().to_string(),
             confidence: 1.0,
             source: None,
+            enhanced_metadata: None,
         })
     }
     
@@ -187,6 +198,20 @@ impl Triple {
         let mut triple = Self::new(subject, predicate, object)?;
         triple.confidence = confidence.clamp(0.0, 1.0);
         triple.source = source;
+        Ok(triple)
+    }
+    
+    /// Create triple with enhanced metadata for cognitive features
+    pub fn with_enhanced_metadata(
+        subject: String,
+        predicate: String,
+        object: String,
+        confidence: f32,
+        source: Option<String>,
+        enhanced_metadata: HashMap<String, String>,
+    ) -> Result<Self> {
+        let mut triple = Self::with_metadata(subject, predicate, object, confidence, source)?;
+        triple.enhanced_metadata = Some(enhanced_metadata);
         Ok(triple)
     }
     
@@ -215,11 +240,17 @@ impl Triple {
     
     /// Estimate memory footprint for anti-bloat monitoring
     pub fn memory_footprint(&self) -> usize {
-        self.subject.len() + 
-        self.predicate.len() + 
-        self.object.len() + 
-        self.source.as_ref().map(|s| s.len()).unwrap_or(0) +
-        std::mem::size_of::<f32>() // confidence
+        let base_size = self.subject.len() + 
+                       self.predicate.len() + 
+                       self.object.len() + 
+                       self.source.as_ref().map(|s| s.len()).unwrap_or(0) +
+                       std::mem::size_of::<f32>(); // confidence
+        
+        let metadata_size = self.enhanced_metadata.as_ref()
+            .map(|meta| meta.iter().map(|(k, v)| k.len() + v.len()).sum::<usize>())
+            .unwrap_or(0);
+        
+        base_size + metadata_size
     }
 }
 
