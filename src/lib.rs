@@ -25,6 +25,7 @@ pub mod cognitive;
 pub mod learning;
 pub mod graph;
 pub mod api;
+pub mod tools;
 // pub mod agents; // Removed as requested
 
 #[cfg(feature = "native")]
@@ -93,6 +94,12 @@ pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent}
 
 // Text processing exports
 pub use crate::text::{TextCompressor, utils as text_utils, TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker};
+
+// Migration tools exports
+pub use crate::tools::{
+    MigrationTool, MigrationReport, ValidationReport, MigrationError,
+    BackupSnapshot, MigrationProgress, MigrationConfig, ValidationLevel as MigrationValidationLevel
+};
 
 // Brain-Enhanced Knowledge Graph Exports
 pub use crate::core::brain_enhanced_graph::{

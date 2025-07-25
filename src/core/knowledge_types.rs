@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::core::triple::Triple;
+use uuid::Uuid;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryStats {
     pub total_nodes: usize,
     pub total_triples: usize,
@@ -72,4 +73,74 @@ pub struct EntityContext {
     pub description: String,
     pub related_triples: Vec<Triple>,
     pub confidence_score: f32,
+}
+
+// Enhanced entity structure for Phase 1
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Entity {
+    pub id: Uuid,
+    pub name: String,
+    pub entity_type: EntityType,
+    pub aliases: Vec<String>,
+    pub context: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum EntityType {
+    Person,
+    Place,
+    Organization,
+    Concept,
+    Event,
+    Time,
+    Quantity,
+    Unknown,
+}
+
+// Question parsing types
+#[derive(Debug, Clone)]
+pub struct QuestionIntent {
+    pub question_type: QuestionType,
+    pub entities: Vec<String>,
+    pub expected_answer_type: AnswerType,
+    pub temporal_context: Option<TimeRange>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum QuestionType {
+    What,
+    Who,
+    When,
+    Where,
+    Why,
+    How,
+    Which,
+    Is,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum AnswerType {
+    Entity,
+    Fact,
+    List,
+    Boolean,
+    Number,
+    Text,
+    Time,
+    Location,
+}
+
+#[derive(Debug, Clone)]
+pub struct TimeRange {
+    pub start: Option<String>,
+    pub end: Option<String>,
+}
+
+// Answer generation types
+#[derive(Debug, Clone)]
+pub struct Answer {
+    pub text: String,
+    pub confidence: f32,
+    pub facts: Vec<Triple>,
+    pub entities: Vec<String>,
 }

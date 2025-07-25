@@ -26,6 +26,10 @@ pub use zero_copy_types::BenchmarkResult;
 pub mod phase1_types;
 pub mod phase1_helpers;
 pub mod phase1_integration;
+pub mod entity_extractor;
+pub mod relationship_extractor;
+pub mod question_parser;
+pub mod answer_generator;
 
 pub use phase1_integration::Phase1IntegrationLayer;
 pub use phase1_types::{Phase1Config, QueryResult, CognitiveQueryResult, Phase1Statistics};

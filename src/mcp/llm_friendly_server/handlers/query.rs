@@ -3,6 +3,8 @@
 use crate::core::triple::Triple;
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::TripleQuery;
+use crate::core::question_parser::QuestionParser;
+use crate::core::answer_generator::AnswerGenerator;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use std::sync::Arc;
@@ -113,26 +115,26 @@ pub async fn handle_ask_question(
         return Err("Question cannot be empty".to_string());
     }
     
-    // Extract key terms from question (simplified)
-    let key_terms = extract_key_terms(question);
+    // Parse the question using enhanced parser
+    let intent = QuestionParser::parse(question);
     
-    if key_terms.is_empty() {
-        return Err("Could not extract meaningful terms from the question".to_string());
+    if intent.entities.is_empty() {
+        return Err("Could not extract meaningful entities from the question".to_string());
     }
     
     let engine = knowledge_engine.read().await;
     let mut all_results = Vec::new();
     
-    // Search for facts containing key terms
-    for term in &key_terms {
+    // Search for facts containing entities from the question
+    for entity in &intent.entities {
         // Search as subject
         let subject_query = TripleQuery {
-            subject: Some(term.clone()),
+            subject: Some(entity.clone()),
             predicate: None,
             object: None,
             limit: 100,
-        min_confidence: 0.0,
-        include_chunks: false,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(results) = engine.query_triples(subject_query) {
@@ -143,10 +145,10 @@ pub async fn handle_ask_question(
         let object_query = TripleQuery {
             subject: None,
             predicate: None,
-            object: Some(term.clone()),
+            object: Some(entity.clone()),
             limit: 100,
-        min_confidence: 0.0,
-        include_chunks: false,
+            min_confidence: 0.0,
+            include_chunks: false,
         };
         
         if let Ok(results) = engine.query_triples(object_query) {
@@ -154,38 +156,39 @@ pub async fn handle_ask_question(
         }
     }
     
-    // Deduplicate and limit results
+    // Deduplicate results
     all_results.sort_by(|a, b| a.subject.cmp(&b.subject));
     all_results.dedup();
-    all_results.truncate(max_results);
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 15).await;
     
-    let relevant_facts: Vec<_> = all_results.iter().map(|t| {
+    // Generate answer using enhanced answer generator
+    let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+    
+    let relevant_facts: Vec<_> = answer.facts.iter().take(max_results).map(|t| {
         json!({
             "subject": &t.subject,
             "predicate": &t.predicate,
             "object": &t.object,
-            "relevance": calculate_relevance(t, question)
+            "confidence": t.confidence
         })
     }).collect();
     
     let data = json!({
         "question": question,
         "context": context,
-        "key_terms": key_terms,
+        "entities": answer.entities,
+        "question_type": format!("{:?}", intent.question_type),
+        "expected_answer_type": format!("{:?}", intent.expected_answer_type),
         "relevant_facts": relevant_facts,
-        "answer": generate_answer(&all_results, question)
+        "answer": answer.text,
+        "confidence": answer.confidence
     });
     
-    let message = if all_results.is_empty() {
-        "No relevant information found for your question".to_string()
+    let message = if answer.facts.is_empty() {
+        answer.text.clone()
     } else {
-        format!("Based on the knowledge graph:\n\n{}\n\nFound {} relevant fact{}",
-            generate_answer(&all_results, question),
-            all_results.len(),
-            if all_results.len() == 1 { "" } else { "s" }
-        )
+        format!("{}\n\nConfidence: {:.0}%", answer.text, answer.confidence * 100.0)
     };
     
     let suggestions = vec![
@@ -212,120 +215,4 @@ fn format_facts_for_display(triples: &[Triple], max_display: usize) -> String {
     }
     
     result
-}
-
-/// Extract key terms from a question
-fn extract_key_terms(question: &str) -> Vec<String> {
-    let mut terms = Vec::new();
-    let words: Vec<&str> = question.split_whitespace().collect();
-    
-    // Extract capitalized words (likely entities)
-    for word in &words {
-        let clean_word = word.trim_matches(|c: char| !c.is_alphanumeric());
-        if clean_word.chars().next().map_or(false, |c| c.is_uppercase()) {
-            terms.push(clean_word.to_string());
-        }
-    }
-    
-    // Extract quoted phrases
-    let mut in_quotes = false;
-    let mut current_phrase = String::new();
-    
-    for char in question.chars() {
-        if char == '"' || char == '\'' {
-            if in_quotes && !current_phrase.is_empty() {
-                terms.push(current_phrase.clone());
-                current_phrase.clear();
-            }
-            in_quotes = !in_quotes;
-        } else if in_quotes {
-            current_phrase.push(char);
-        }
-    }
-    
-    // Look for question keywords and extract following terms
-    let _question_lower = question.to_lowercase();
-    for (i, word) in words.iter().enumerate() {
-        if matches!(word.to_lowercase().as_str(), "who" | "what" | "where" | "when" | "which") {
-            if i + 1 < words.len() {
-                let next_word = words[i + 1].trim_matches(|c: char| !c.is_alphanumeric());
-                if !next_word.is_empty() && !is_stop_word(next_word) {
-                    terms.push(next_word.to_string());
-                }
-            }
-        }
-    }
-    
-    // Deduplicate
-    terms.sort();
-    terms.dedup();
-    
-    terms
-}
-
-/// Check if a word is a stop word
-fn is_stop_word(word: &str) -> bool {
-    matches!(
-        word.to_lowercase().as_str(),
-        "is" | "are" | "was" | "were" | "the" | "a" | "an" | "and" | "or" | "but" |
-        "in" | "on" | "at" | "to" | "for" | "of" | "with" | "by" | "from" | "about"
-    )
-}
-
-/// Calculate relevance of a triple to a question
-fn calculate_relevance(triple: &Triple, question: &str) -> f32 {
-    let question_lower = question.to_lowercase();
-    let mut score = 0.0;
-    
-    // Check if triple components appear in question
-    if question_lower.contains(&triple.subject.to_lowercase()) {
-        score += 0.4;
-    }
-    if question_lower.contains(&triple.predicate.to_lowercase()) {
-        score += 0.2;
-    }
-    if question_lower.contains(&triple.object.to_lowercase()) {
-        score += 0.4;
-    }
-    
-    f32::min(score, 1.0)
-}
-
-/// Generate an answer from relevant facts
-fn generate_answer(facts: &[Triple], question: &str) -> String {
-    if facts.is_empty() {
-        return "I don't have enough information to answer this question.".to_string();
-    }
-    
-    // Simple answer generation based on question type
-    let question_lower = question.to_lowercase();
-    
-    if question_lower.starts_with("what") {
-        // Look for "is" relationships
-        if let Some(fact) = facts.iter().find(|f| f.predicate == "is") {
-            return format!("{} is {}", fact.subject, fact.object);
-        }
-    } else if question_lower.starts_with("who") {
-        // Look for person-related facts
-        if let Some(fact) = facts.iter().find(|f| 
-            f.predicate == "created" || f.predicate == "invented" || f.predicate == "wrote"
-        ) {
-            return format!("{} {} {}", fact.subject, fact.predicate, fact.object);
-        }
-    } else if question_lower.starts_with("where") {
-        // Look for location relationships
-        if let Some(fact) = facts.iter().find(|f| 
-            f.predicate == "located_in" || f.predicate == "from" || f.predicate == "in"
-        ) {
-            return format!("{} is {} {}", fact.subject, fact.predicate, fact.object);
-        }
-    }
-    
-    // Default: return the most relevant facts
-    let relevant_facts: Vec<String> = facts.iter()
-        .take(3)
-        .map(|f| format!("{} {} {}", f.subject, f.predicate, f.object))
-        .collect();
-    
-    relevant_facts.join("; ")
 }

@@ -154,8 +154,8 @@ async fn analyze_connections(
     
     let message = if total_paths == 0 {
         "No paths found".to_string()
-    } else if end_entity.is_some() {
-        format!("Found {} paths from {} to {}", total_paths, start_entity, end_entity.unwrap())
+    } else if let Some(end_ent) = end_entity {
+        format!("Found {} paths from {} to {}", total_paths, start_entity, end_ent)
     } else {
         format!("Found {} connections from {}", total_paths, start_entity)
     };
@@ -215,7 +215,7 @@ async fn analyze_centrality(
         
         // Get top N
         let mut scored_entities: Vec<(String, f64)> = scores.into_iter().collect();
-        scored_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        scored_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         scored_entities.truncate(top_n);
         
         let formatted_results: Vec<Value> = if include_scores {
@@ -560,8 +560,12 @@ fn calculate_betweenness_centrality(triples: &[Triple], _entity_filter: Option<&
     
     // Simplified: count how many times an entity appears in triples
     for triple in triples {
-        *scores.get_mut(&triple.subject).unwrap() += 1.0;
-        *scores.get_mut(&triple.object).unwrap() += 0.5;
+        if let Some(score) = scores.get_mut(&triple.subject) {
+            *score += 1.0;
+        }
+        if let Some(score) = scores.get_mut(&triple.object) {
+            *score += 0.5;
+        }
     }
     
     scores
@@ -604,27 +608,31 @@ fn execute_clustering(
     // Create simple clusters based on connectivity
     while !entities.is_empty() && clusters.len() < max_clusters {
         let mut cluster = Vec::new();
-        let start = entities.iter().next().unwrap().clone();
-        cluster.push(start.clone());
-        entities.remove(&start);
-        
-        // Add connected entities
-        for triple in triples {
-            if cluster.contains(&triple.subject) && entities.contains(&triple.object) {
-                cluster.push(triple.object.clone());
-                entities.remove(&triple.object);
-            } else if cluster.contains(&triple.object) && entities.contains(&triple.subject) {
-                cluster.push(triple.subject.clone());
-                entities.remove(&triple.subject);
+        if let Some(start) = entities.iter().next().cloned() {
+            cluster.push(start.clone());
+            entities.remove(&start);
+            
+            // Add connected entities
+            for triple in triples {
+                if cluster.contains(&triple.subject) && entities.contains(&triple.object) {
+                    cluster.push(triple.object.clone());
+                    entities.remove(&triple.object);
+                } else if cluster.contains(&triple.object) && entities.contains(&triple.subject) {
+                    cluster.push(triple.subject.clone());
+                    entities.remove(&triple.subject);
+                }
+                
+                if cluster.len() >= min_cluster_size * 2 {
+                    break;
+                }
             }
             
-            if cluster.len() >= min_cluster_size * 2 {
-                break;
+            if cluster.len() >= min_cluster_size {
+                clusters.push(cluster);
             }
-        }
-        
-        if cluster.len() >= min_cluster_size {
-            clusters.push(cluster);
+        } else {
+            // If no entities left, break to avoid infinite loop
+            break;
         }
     }
     

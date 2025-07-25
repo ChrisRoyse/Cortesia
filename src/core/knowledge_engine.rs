@@ -595,7 +595,7 @@ impl KnowledgeEngine {
     }
     
     /// Convenience method for tests - add a knowledge chunk with basic parameters
-    pub fn add_knowledge_chunk(&self, title: &str, content: &str, category: Option<&str>, source: Option<&str>) -> Result<String> {
+    pub fn add_knowledge_chunk(&self, title: &str, content: &str, _category: Option<&str>, _source: Option<&str>) -> Result<String> {
         // For now, just store the content as text
         // In a full implementation, we might want to add metadata handling
         let text = if let Some(title_str) = Some(title) {

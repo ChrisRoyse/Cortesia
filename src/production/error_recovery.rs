@@ -381,7 +381,7 @@ impl ErrorRecoveryManager {
             let stats = item.value();
             let total = stats.total_attempts.load(Ordering::Relaxed);
             let successful = stats.successful_attempts.load(Ordering::Relaxed);
-            let failed = stats.failed_attempts.load(Ordering::Relaxed);
+            let _failed = stats.failed_attempts.load(Ordering::Relaxed);
             
             if total == 0 {
                 continue;

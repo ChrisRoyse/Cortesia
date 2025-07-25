@@ -209,7 +209,10 @@ async fn find_paths_between(
             continue;
         }
         
-        let current_entity = &path.last().unwrap().0;
+        let current_entity = match path.last() {
+            Some((entity, _)) => entity,
+            None => continue, // Skip empty paths
+        };
         
         if current_entity == end && depth > 0 {
             paths.push(path);

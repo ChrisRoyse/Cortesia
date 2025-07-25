@@ -18,6 +18,7 @@ pub mod migration;
 pub mod temporal_tracking;
 pub mod database_branching;
 pub mod reasoning_engine;
+pub mod error_handling;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};

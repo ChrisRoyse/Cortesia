@@ -73,7 +73,7 @@ pub async fn handle_time_travel_query(
         "evolution_tracking" => {
             let entity = entity.ok_or("Entity required for evolution_tracking query")?;
             let (start, end) = time_range.unwrap_or((
-                DateTime::from_timestamp(0, 0).unwrap(),
+                DateTime::from_timestamp(0, 0).unwrap_or_else(|| Utc::now() - chrono::Duration::days(365)),
                 Utc::now()
             ));
             track_entity_evolution(&*TEMPORAL_INDEX, entity, Some(start), Some(end)).await

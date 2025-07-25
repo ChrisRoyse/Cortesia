@@ -801,13 +801,15 @@ pub async fn handle_validate_knowledge(
         }));
     }
     
-    if ["completeness", "all"].contains(&validation_type) && entity.is_some() {
-        let missing = validate_completeness(entity.unwrap(), &triples.triples).await
-            .map_err(|e| format!("Completeness validation failed: {}", e))?;
-        validation_results.insert("completeness".to_string(), json!({
-            "missing_info": missing,
-            "is_complete": missing.is_empty()
-        }));
+    if ["completeness", "all"].contains(&validation_type) {
+        if let Some(entity_name) = entity {
+            let missing = validate_completeness(entity_name, &triples.triples).await
+                .map_err(|e| format!("Completeness validation failed: {}", e))?;
+            validation_results.insert("completeness".to_string(), json!({
+                "missing_info": missing,
+                "is_complete": missing.is_empty()
+            }));
+        }
     }
     
     // Add comprehensive quality metrics if requested
@@ -1164,8 +1166,6 @@ async fn generate_quality_metrics(
 ) -> std::result::Result<Value, String> {
     let mut importance_scores = Vec::new();
     let mut below_threshold_entities = Vec::new();
-    let mut content_quality = json!({});
-    let mut knowledge_density = json!({});
     let mut neural_assessment = json!({});
     
     // Calculate importance scores for entities
@@ -1215,7 +1215,7 @@ async fn generate_quality_metrics(
     importance_scores.sort_by(|a, b| {
         let a_imp = a["importance"].as_f64().unwrap_or(0.0);
         let b_imp = b["importance"].as_f64().unwrap_or(0.0);
-        b_imp.partial_cmp(&a_imp).unwrap()
+        b_imp.partial_cmp(&a_imp).unwrap_or(std::cmp::Ordering::Equal)
     });
     
     // Calculate content quality
@@ -1227,7 +1227,7 @@ async fn generate_quality_metrics(
         0.0
     };
     
-    content_quality = json!({
+    let content_quality = json!({
         "total_facts": total_triples,
         "high_quality_facts": high_confidence_triples,
         "average_confidence": avg_confidence,
@@ -1259,7 +1259,7 @@ async fn generate_quality_metrics(
         }))
         .collect::<Vec<_>>();
     
-    knowledge_density = json!({
+    let knowledge_density = json!({
         "average_connections": avg_connections,
         "total_entities": entity_connections.len(),
         "density_score": (avg_connections / 10.0).min(1.0),

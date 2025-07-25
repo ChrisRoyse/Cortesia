@@ -1,0 +1,1658 @@
+{
+  "metadata": {
+    "name": "LLMKG Comprehensive Test Corpus",
+    "version": "1.0.0",
+    "description": "Comprehensive test corpus with ground truth annotations for entity and relationship extraction",
+    "total_samples": 120,
+    "domains": ["science", "history", "technology", "literature", "geography", "business", "medicine", "sports"],
+    "entity_types": ["Person", "Place", "Organization", "Concept", "Event", "Time", "Quantity", "Unknown"],
+    "relationship_types": ["Created", "Discovered", "Invented", "Developed", "Founded", "Built", "Wrote", "Designed", "LocatedIn", "From", "WorksWith", "MarriedTo", "ChildOf", "ParentOf", "Is", "Has", "PartOf", "Contains", "BelongsTo", "RelatedTo", "Causes", "During", "Before", "After"]
+  },
+  "samples": [
+    {
+      "id": 1,
+      "text": "Albert Einstein developed the Theory of Relativity in 1905.",
+      "domain": "science",
+      "entities": [
+        {"text": "Albert Einstein", "type": "Person", "start": 0, "end": 15},
+        {"text": "Theory of Relativity", "type": "Concept", "start": 30, "end": 50},
+        {"text": "1905", "type": "Time", "start": 54, "end": 58}
+      ],
+      "relationships": [
+        {"subject": "Albert Einstein", "predicate": "developed", "object": "Theory of Relativity", "type": "Developed"}
+      ]
+    },
+    {
+      "id": 2,
+      "text": "Marie Curie, born in Poland, discovered polonium and radium. She won the Nobel Prize in Physics.",
+      "domain": "science",
+      "entities": [
+        {"text": "Marie Curie", "type": "Person", "start": 0, "end": 11},
+        {"text": "Poland", "type": "Place", "start": 21, "end": 27},
+        {"text": "polonium", "type": "Concept", "start": 39, "end": 47},
+        {"text": "radium", "type": "Concept", "start": 52, "end": 58},
+        {"text": "Nobel Prize", "type": "Concept", "start": 72, "end": 83},
+        {"text": "Physics", "type": "Concept", "start": 87, "end": 94}
+      ],
+      "relationships": [
+        {"subject": "Marie Curie", "predicate": "born in", "object": "Poland", "type": "From"},
+        {"subject": "Marie Curie", "predicate": "discovered", "object": "polonium", "type": "Discovered"},
+        {"subject": "Marie Curie", "predicate": "discovered", "object": "radium", "type": "Discovered"}
+      ]
+    },
+    {
+      "id": 3,
+      "text": "Microsoft Corporation was founded by Bill Gates and Paul Allen in 1975.",
+      "domain": "business",
+      "entities": [
+        {"text": "Microsoft Corporation", "type": "Organization", "start": 0, "end": 21},
+        {"text": "Bill Gates", "type": "Person", "start": 36, "end": 46},
+        {"text": "Paul Allen", "type": "Person", "start": 51, "end": 61},
+        {"text": "1975", "type": "Time", "start": 65, "end": 69}
+      ],
+      "relationships": [
+        {"subject": "Bill Gates", "predicate": "founded", "object": "Microsoft Corporation", "type": "Founded"},
+        {"subject": "Paul Allen", "predicate": "founded", "object": "Microsoft Corporation", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 4,
+      "text": "The Eiffel Tower is located in Paris, France.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Eiffel Tower", "type": "Place", "start": 4, "end": 16},
+        {"text": "Paris", "type": "Place", "start": 31, "end": 36},
+        {"text": "France", "type": "Place", "start": 38, "end": 44}
+      ],
+      "relationships": [
+        {"subject": "Eiffel Tower", "predicate": "located in", "object": "Paris", "type": "LocatedIn"},
+        {"subject": "Paris", "predicate": "located in", "object": "France", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 5,
+      "text": "Shakespeare wrote Hamlet in approximately 1600.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Shakespeare", "type": "Person", "start": 0, "end": 11},
+        {"text": "Hamlet", "type": "Concept", "start": 18, "end": 24},
+        {"text": "1600", "type": "Time", "start": 42, "end": 46}
+      ],
+      "relationships": [
+        {"subject": "Shakespeare", "predicate": "wrote", "object": "Hamlet", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 6,
+      "text": "DNA was discovered by James Watson and Francis Crick at Cambridge University.",
+      "domain": "science",
+      "entities": [
+        {"text": "DNA", "type": "Concept", "start": 0, "end": 3},
+        {"text": "James Watson", "type": "Person", "start": 22, "end": 34},
+        {"text": "Francis Crick", "type": "Person", "start": 39, "end": 52},
+        {"text": "Cambridge University", "type": "Organization", "start": 56, "end": 76}
+      ],
+      "relationships": [
+        {"subject": "James Watson", "predicate": "discovered", "object": "DNA", "type": "Discovered"},
+        {"subject": "Francis Crick", "predicate": "discovered", "object": "DNA", "type": "Discovered"}
+      ]
+    },
+    {
+      "id": 7,
+      "text": "The iPhone was designed by Apple Inc in Cupertino, California.",
+      "domain": "technology",
+      "entities": [
+        {"text": "iPhone", "type": "Concept", "start": 4, "end": 10},
+        {"text": "Apple Inc", "type": "Organization", "start": 27, "end": 36},
+        {"text": "Cupertino", "type": "Place", "start": 40, "end": 49},
+        {"text": "California", "type": "Place", "start": 51, "end": 61}
+      ],
+      "relationships": [
+        {"subject": "Apple Inc", "predicate": "designed", "object": "iPhone", "type": "Designed"},
+        {"subject": "Apple Inc", "predicate": "located in", "object": "Cupertino", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 8,
+      "text": "Leonardo da Vinci painted the Mona Lisa during the Renaissance.",
+      "domain": "history",
+      "entities": [
+        {"text": "Leonardo da Vinci", "type": "Person", "start": 0, "end": 17},
+        {"text": "Mona Lisa", "type": "Concept", "start": 30, "end": 39},
+        {"text": "Renaissance", "type": "Event", "start": 51, "end": 62}
+      ],
+      "relationships": [
+        {"subject": "Leonardo da Vinci", "predicate": "painted", "object": "Mona Lisa", "type": "Created"},
+        {"subject": "Leonardo da Vinci", "predicate": "lived during", "object": "Renaissance", "type": "During"}
+      ]
+    },
+    {
+      "id": 9,
+      "text": "Google was founded in 1998 by Larry Page and Sergey Brin.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Google", "type": "Organization", "start": 0, "end": 6},
+        {"text": "1998", "type": "Time", "start": 22, "end": 26},
+        {"text": "Larry Page", "type": "Person", "start": 30, "end": 40},
+        {"text": "Sergey Brin", "type": "Person", "start": 45, "end": 56}
+      ],
+      "relationships": [
+        {"subject": "Larry Page", "predicate": "founded", "object": "Google", "type": "Founded"},
+        {"subject": "Sergey Brin", "predicate": "founded", "object": "Google", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 10,
+      "text": "The Great Wall of China is located in China and was built during the Ming Dynasty.",
+      "domain": "history",
+      "entities": [
+        {"text": "Great Wall of China", "type": "Place", "start": 4, "end": 23},
+        {"text": "China", "type": "Place", "start": 39, "end": 44},
+        {"text": "Ming Dynasty", "type": "Event", "start": 70, "end": 82}
+      ],
+      "relationships": [
+        {"subject": "Great Wall of China", "predicate": "located in", "object": "China", "type": "LocatedIn"},
+        {"subject": "Great Wall of China", "predicate": "built during", "object": "Ming Dynasty", "type": "During"}
+      ]
+    },
+    {
+      "id": 11,
+      "text": "IBM developed the first personal computer in 1975.",
+      "domain": "technology",
+      "entities": [
+        {"text": "IBM", "type": "Organization", "start": 0, "end": 3},
+        {"text": "personal computer", "type": "Concept", "start": 25, "end": 42},
+        {"text": "1975", "type": "Time", "start": 46, "end": 50}
+      ],
+      "relationships": [
+        {"subject": "IBM", "predicate": "developed", "object": "personal computer", "type": "Developed"}
+      ]
+    },
+    {
+      "id": 12,
+      "text": "Penicillin was discovered by Alexander Fleming in 1928.",
+      "domain": "medicine",
+      "entities": [
+        {"text": "Penicillin", "type": "Concept", "start": 0, "end": 10},
+        {"text": "Alexander Fleming", "type": "Person", "start": 29, "end": 46},
+        {"text": "1928", "type": "Time", "start": 50, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Alexander Fleming", "predicate": "discovered", "object": "Penicillin", "type": "Discovered"}
+      ]
+    },
+    {
+      "id": 13,
+      "text": "The Amazon River flows through Brazil and is 6,400 kilometers long.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Amazon River", "type": "Place", "start": 4, "end": 16},
+        {"text": "Brazil", "type": "Place", "start": 30, "end": 36},
+        {"text": "6,400 kilometers", "type": "Quantity", "start": 44, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Amazon River", "predicate": "flows through", "object": "Brazil", "type": "LocatedIn"},
+        {"subject": "Amazon River", "predicate": "has length", "object": "6,400 kilometers", "type": "Has"}
+      ]
+    },
+    {
+      "id": 14,
+      "text": "Tesla Inc was founded by Elon Musk in 2003.",
+      "domain": "business",
+      "entities": [
+        {"text": "Tesla Inc", "type": "Organization", "start": 0, "end": 9},
+        {"text": "Elon Musk", "type": "Person", "start": 25, "end": 34},
+        {"text": "2003", "type": "Time", "start": 38, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "Elon Musk", "predicate": "founded", "object": "Tesla Inc", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 15,
+      "text": "Charles Darwin wrote 'On the Origin of Species' in 1859.",
+      "domain": "science",
+      "entities": [
+        {"text": "Charles Darwin", "type": "Person", "start": 0, "end": 14},
+        {"text": "On the Origin of Species", "type": "Concept", "start": 22, "end": 46},
+        {"text": "1859", "type": "Time", "start": 51, "end": 55}
+      ],
+      "relationships": [
+        {"subject": "Charles Darwin", "predicate": "wrote", "object": "On the Origin of Species", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 16,
+      "text": "Mount Everest is located in Nepal and Tibet.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Mount Everest", "type": "Place", "start": 0, "end": 13},
+        {"text": "Nepal", "type": "Place", "start": 28, "end": 33},
+        {"text": "Tibet", "type": "Place", "start": 38, "end": 43}
+      ],
+      "relationships": [
+        {"subject": "Mount Everest", "predicate": "located in", "object": "Nepal", "type": "LocatedIn"},
+        {"subject": "Mount Everest", "predicate": "located in", "object": "Tibet", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 17,
+      "text": "Nikola Tesla invented the AC motor in 1887.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Nikola Tesla", "type": "Person", "start": 0, "end": 12},
+        {"text": "AC motor", "type": "Concept", "start": 26, "end": 34},
+        {"text": "1887", "type": "Time", "start": 38, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "Nikola Tesla", "predicate": "invented", "object": "AC motor", "type": "Invented"}
+      ]
+    },
+    {
+      "id": 18,
+      "text": "The Statue of Liberty is located in New York Harbor.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Statue of Liberty", "type": "Place", "start": 4, "end": 21},
+        {"text": "New York Harbor", "type": "Place", "start": 37, "end": 52}
+      ],
+      "relationships": [
+        {"subject": "Statue of Liberty", "predicate": "located in", "object": "New York Harbor", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 19,
+      "text": "J.K. Rowling wrote the Harry Potter series.",
+      "domain": "literature",
+      "entities": [
+        {"text": "J.K. Rowling", "type": "Person", "start": 0, "end": 12},
+        {"text": "Harry Potter", "type": "Concept", "start": 23, "end": 35}
+      ],
+      "relationships": [
+        {"subject": "J.K. Rowling", "predicate": "wrote", "object": "Harry Potter", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 20,
+      "text": "Facebook was founded by Mark Zuckerberg at Harvard University in 2004.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Facebook", "type": "Organization", "start": 0, "end": 8},
+        {"text": "Mark Zuckerberg", "type": "Person", "start": 24, "end": 39},
+        {"text": "Harvard University", "type": "Organization", "start": 43, "end": 61},
+        {"text": "2004", "type": "Time", "start": 65, "end": 69}
+      ],
+      "relationships": [
+        {"subject": "Mark Zuckerberg", "predicate": "founded", "object": "Facebook", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 21,
+      "text": "The Wright Brothers invented the airplane in 1903.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Wright Brothers", "type": "Person", "start": 4, "end": 19},
+        {"text": "airplane", "type": "Concept", "start": 33, "end": 41},
+        {"text": "1903", "type": "Time", "start": 45, "end": 49}
+      ],
+      "relationships": [
+        {"subject": "Wright Brothers", "predicate": "invented", "object": "airplane", "type": "Invented"}
+      ]
+    },
+    {
+      "id": 22,
+      "text": "Paris is the capital of France.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Paris", "type": "Place", "start": 0, "end": 5},
+        {"text": "France", "type": "Place", "start": 24, "end": 30}
+      ],
+      "relationships": [
+        {"subject": "Paris", "predicate": "is capital of", "object": "France", "type": "Is"}
+      ]
+    },
+    {
+      "id": 23,
+      "text": "COVID-19 was first identified in Wuhan, China in December 2019.",
+      "domain": "medicine",
+      "entities": [
+        {"text": "COVID-19", "type": "Concept", "start": 0, "end": 8},
+        {"text": "Wuhan", "type": "Place", "start": 33, "end": 38},
+        {"text": "China", "type": "Place", "start": 40, "end": 45},
+        {"text": "December 2019", "type": "Time", "start": 49, "end": 62}
+      ],
+      "relationships": [
+        {"subject": "COVID-19", "predicate": "first identified in", "object": "Wuhan", "type": "From"}
+      ]
+    },
+    {
+      "id": 24,
+      "text": "The Pacific Ocean is the largest ocean on Earth.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Pacific Ocean", "type": "Place", "start": 4, "end": 17},
+        {"text": "Earth", "type": "Place", "start": 43, "end": 48}
+      ],
+      "relationships": [
+        {"subject": "Pacific Ocean", "predicate": "is largest ocean on", "object": "Earth", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 25,
+      "text": "Adobe was founded by John Warnock and Chuck Geschke in 1982.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Adobe", "type": "Organization", "start": 0, "end": 5},
+        {"text": "John Warnock", "type": "Person", "start": 21, "end": 33},
+        {"text": "Chuck Geschke", "type": "Person", "start": 38, "end": 51},
+        {"text": "1982", "type": "Time", "start": 55, "end": 59}
+      ],
+      "relationships": [
+        {"subject": "John Warnock", "predicate": "founded", "object": "Adobe", "type": "Founded"},
+        {"subject": "Chuck Geschke", "predicate": "founded", "object": "Adobe", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 26,
+      "text": "The Sun is a star located at the center of our Solar System.",
+      "domain": "science",
+      "entities": [
+        {"text": "Sun", "type": "Concept", "start": 4, "end": 7},
+        {"text": "star", "type": "Concept", "start": 13, "end": 17},
+        {"text": "Solar System", "type": "Concept", "start": 48, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Sun", "predicate": "is", "object": "star", "type": "Is"},
+        {"subject": "Sun", "predicate": "located at center of", "object": "Solar System", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 27,
+      "text": "Stephen King wrote the novel 'IT' published in 1986.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Stephen King", "type": "Person", "start": 0, "end": 12},
+        {"text": "IT", "type": "Concept", "start": 30, "end": 32},
+        {"text": "1986", "type": "Time", "start": 47, "end": 51}
+      ],
+      "relationships": [
+        {"subject": "Stephen King", "predicate": "wrote", "object": "IT", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 28,
+      "text": "NASA was established in 1958 in Washington, D.C.",
+      "domain": "science",
+      "entities": [
+        {"text": "NASA", "type": "Organization", "start": 0, "end": 4},
+        {"text": "1958", "type": "Time", "start": 24, "end": 28},
+        {"text": "Washington", "type": "Place", "start": 32, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "NASA", "predicate": "established in", "object": "Washington", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 29,
+      "text": "The Sahara Desert is located in North Africa.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Sahara Desert", "type": "Place", "start": 4, "end": 17},
+        {"text": "North Africa", "type": "Place", "start": 32, "end": 44}
+      ],
+      "relationships": [
+        {"subject": "Sahara Desert", "predicate": "located in", "object": "North Africa", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 30,
+      "text": "Mozart composed over 600 musical works during his lifetime.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Mozart", "type": "Person", "start": 0, "end": 6},
+        {"text": "600", "type": "Quantity", "start": 21, "end": 24},
+        {"text": "musical works", "type": "Concept", "start": 25, "end": 38}
+      ],
+      "relationships": [
+        {"subject": "Mozart", "predicate": "composed", "object": "musical works", "type": "Created"}
+      ]
+    },
+    {
+      "id": 31,
+      "text": "The Great Pyramid of Giza was built in Egypt around 2580 BC.",
+      "domain": "history",
+      "entities": [
+        {"text": "Great Pyramid of Giza", "type": "Place", "start": 4, "end": 25},
+        {"text": "Egypt", "type": "Place", "start": 40, "end": 45},
+        {"text": "2580 BC", "type": "Time", "start": 53, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Great Pyramid of Giza", "predicate": "built in", "object": "Egypt", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 32,
+      "text": "Linux was created by Linus Torvalds in 1991.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Linux", "type": "Concept", "start": 0, "end": 5},
+        {"text": "Linus Torvalds", "type": "Person", "start": 21, "end": 35},
+        {"text": "1991", "type": "Time", "start": 39, "end": 43}
+      ],
+      "relationships": [
+        {"subject": "Linus Torvalds", "predicate": "created", "object": "Linux", "type": "Created"}
+      ]
+    },
+    {
+      "id": 33,
+      "text": "The Renaissance began in Italy during the 14th century.",
+      "domain": "history",
+      "entities": [
+        {"text": "Renaissance", "type": "Event", "start": 4, "end": 15},
+        {"text": "Italy", "type": "Place", "start": 25, "end": 30},
+        {"text": "14th century", "type": "Time", "start": 42, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Renaissance", "predicate": "began in", "object": "Italy", "type": "From"}
+      ]
+    },
+    {
+      "id": 34,
+      "text": "Amazon.com was founded by Jeff Bezos in 1994.",
+      "domain": "business",
+      "entities": [
+        {"text": "Amazon.com", "type": "Organization", "start": 0, "end": 10},
+        {"text": "Jeff Bezos", "type": "Person", "start": 27, "end": 37},
+        {"text": "1994", "type": "Time", "start": 41, "end": 45}
+      ],
+      "relationships": [
+        {"subject": "Jeff Bezos", "predicate": "founded", "object": "Amazon.com", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 35,
+      "text": "The Internet was developed by ARPANET in the 1960s.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Internet", "type": "Concept", "start": 4, "end": 12},
+        {"text": "ARPANET", "type": "Organization", "start": 30, "end": 37},
+        {"text": "1960s", "type": "Time", "start": 45, "end": 50}
+      ],
+      "relationships": [
+        {"subject": "ARPANET", "predicate": "developed", "object": "Internet", "type": "Developed"}
+      ]
+    },
+    {
+      "id": 36,
+      "text": "Vincent van Gogh painted Starry Night in 1889.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Vincent van Gogh", "type": "Person", "start": 0, "end": 16},
+        {"text": "Starry Night", "type": "Concept", "start": 25, "end": 37},
+        {"text": "1889", "type": "Time", "start": 41, "end": 45}
+      ],
+      "relationships": [
+        {"subject": "Vincent van Gogh", "predicate": "painted", "object": "Starry Night", "type": "Created"}
+      ]
+    },
+    {
+      "id": 37,
+      "text": "The human brain contains approximately 86 billion neurons.",
+      "domain": "science",
+      "entities": [
+        {"text": "human brain", "type": "Concept", "start": 4, "end": 15},
+        {"text": "86 billion", "type": "Quantity", "start": 39, "end": 49},
+        {"text": "neurons", "type": "Concept", "start": 50, "end": 57}
+      ],
+      "relationships": [
+        {"subject": "human brain", "predicate": "contains", "object": "neurons", "type": "Contains"}
+      ]
+    },
+    {
+      "id": 38,
+      "text": "The Taj Mahal was built in Agra, India by Emperor Shah Jahan.",
+      "domain": "history",
+      "entities": [
+        {"text": "Taj Mahal", "type": "Place", "start": 4, "end": 13},
+        {"text": "Agra", "type": "Place", "start": 27, "end": 31},
+        {"text": "India", "type": "Place", "start": 33, "end": 38},
+        {"text": "Shah Jahan", "type": "Person", "start": 51, "end": 61}
+      ],
+      "relationships": [
+        {"subject": "Taj Mahal", "predicate": "located in", "object": "Agra", "type": "LocatedIn"},
+        {"subject": "Shah Jahan", "predicate": "built", "object": "Taj Mahal", "type": "Built"}
+      ]
+    },
+    {
+      "id": 39,
+      "text": "Twitter was founded by Jack Dorsey in 2006.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Twitter", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Jack Dorsey", "type": "Person", "start": 23, "end": 34},
+        {"text": "2006", "type": "Time", "start": 38, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "Jack Dorsey", "predicate": "founded", "object": "Twitter", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 40,
+      "text": "The speed of light is approximately 299,792,458 meters per second.",
+      "domain": "science",
+      "entities": [
+        {"text": "speed of light", "type": "Concept", "start": 4, "end": 18},
+        {"text": "299,792,458 meters per second", "type": "Quantity", "start": 36, "end": 65}
+      ],
+      "relationships": [
+        {"subject": "speed of light", "predicate": "is", "object": "299,792,458 meters per second", "type": "Is"}
+      ]
+    },
+    {
+      "id": 41,
+      "text": "Ernest Hemingway wrote 'The Old Man and the Sea' in 1952.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Ernest Hemingway", "type": "Person", "start": 0, "end": 16},
+        {"text": "The Old Man and the Sea", "type": "Concept", "start": 24, "end": 47},
+        {"text": "1952", "type": "Time", "start": 52, "end": 56}
+      ],
+      "relationships": [
+        {"subject": "Ernest Hemingway", "predicate": "wrote", "object": "The Old Man and the Sea", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 42,
+      "text": "The London Bridge spans the River Thames in England.",
+      "domain": "geography",
+      "entities": [
+        {"text": "London Bridge", "type": "Place", "start": 4, "end": 17},
+        {"text": "River Thames", "type": "Place", "start": 28, "end": 40},
+        {"text": "England", "type": "Place", "start": 44, "end": 51}
+      ],
+      "relationships": [
+        {"subject": "London Bridge", "predicate": "spans", "object": "River Thames", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 43,
+      "text": "Netflix was founded by Reed Hastings and Marc Randolph in 1997.",
+      "domain": "business",
+      "entities": [
+        {"text": "Netflix", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Reed Hastings", "type": "Person", "start": 23, "end": 36},
+        {"text": "Marc Randolph", "type": "Person", "start": 41, "end": 54},
+        {"text": "1997", "type": "Time", "start": 58, "end": 62}
+      ],
+      "relationships": [
+        {"subject": "Reed Hastings", "predicate": "founded", "object": "Netflix", "type": "Founded"},
+        {"subject": "Marc Randolph", "predicate": "founded", "object": "Netflix", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 44,
+      "text": "Mars is the fourth planet from the Sun in our Solar System.",
+      "domain": "science",
+      "entities": [
+        {"text": "Mars", "type": "Concept", "start": 0, "end": 4},
+        {"text": "fourth planet", "type": "Concept", "start": 12, "end": 25},
+        {"text": "Sun", "type": "Concept", "start": 35, "end": 38},
+        {"text": "Solar System", "type": "Concept", "start": 46, "end": 58}
+      ],
+      "relationships": [
+        {"subject": "Mars", "predicate": "is", "object": "fourth planet", "type": "Is"},
+        {"subject": "Mars", "predicate": "in", "object": "Solar System", "type": "PartOf"}
+      ]
+    },
+    {
+      "id": 45,
+      "text": "The Berlin Wall was built in 1961 and demolished in 1989.",
+      "domain": "history",
+      "entities": [
+        {"text": "Berlin Wall", "type": "Place", "start": 4, "end": 15},
+        {"text": "1961", "type": "Time", "start": 29, "end": 33},
+        {"text": "1989", "type": "Time", "start": 52, "end": 56}
+      ],
+      "relationships": [
+        {"subject": "Berlin Wall", "predicate": "built in", "object": "1961", "type": "Built"},
+        {"subject": "Berlin Wall", "predicate": "demolished in", "object": "1989", "type": "Event"}
+      ]
+    },
+    {
+      "id": 46,
+      "text": "Uber was founded by Travis Kalanick and Garrett Camp in 2009.",
+      "domain": "business",
+      "entities": [
+        {"text": "Uber", "type": "Organization", "start": 0, "end": 4},
+        {"text": "Travis Kalanick", "type": "Person", "start": 20, "end": 35},
+        {"text": "Garrett Camp", "type": "Person", "start": 40, "end": 52},
+        {"text": "2009", "type": "Time", "start": 56, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Travis Kalanick", "predicate": "founded", "object": "Uber", "type": "Founded"},
+        {"subject": "Garrett Camp", "predicate": "founded", "object": "Uber", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 47,
+      "text": "The Great Barrier Reef is located off the coast of Australia.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Great Barrier Reef", "type": "Place", "start": 4, "end": 22},
+        {"text": "Australia", "type": "Place", "start": 52, "end": 61}
+      ],
+      "relationships": [
+        {"subject": "Great Barrier Reef", "predicate": "located off coast of", "object": "Australia", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 48,
+      "text": "Aristotle was born in Stagira, Greece in 384 BC.",
+      "domain": "history",
+      "entities": [
+        {"text": "Aristotle", "type": "Person", "start": 0, "end": 9},
+        {"text": "Stagira", "type": "Place", "start": 22, "end": 29},
+        {"text": "Greece", "type": "Place", "start": 31, "end": 37},
+        {"text": "384 BC", "type": "Time", "start": 41, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Aristotle", "predicate": "born in", "object": "Stagira", "type": "From"}
+      ]
+    },
+    {
+      "id": 49,
+      "text": "The FIFA World Cup is held every 4 years.",
+      "domain": "sports",
+      "entities": [
+        {"text": "FIFA World Cup", "type": "Event", "start": 4, "end": 18},
+        {"text": "4 years", "type": "Time", "start": 33, "end": 40}
+      ],
+      "relationships": [
+        {"subject": "FIFA World Cup", "predicate": "held every", "object": "4 years", "type": "During"}
+      ]
+    },
+    {
+      "id": 50,
+      "text": "YouTube was founded by Chad Hurley, Steve Chen, and Jawed Karim in 2005.",
+      "domain": "technology",
+      "entities": [
+        {"text": "YouTube", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Chad Hurley", "type": "Person", "start": 23, "end": 34},
+        {"text": "Steve Chen", "type": "Person", "start": 36, "end": 46},
+        {"text": "Jawed Karim", "type": "Person", "start": 52, "end": 63},
+        {"text": "2005", "type": "Time", "start": 67, "end": 71}
+      ],
+      "relationships": [
+        {"subject": "Chad Hurley", "predicate": "founded", "object": "YouTube", "type": "Founded"},
+        {"subject": "Steve Chen", "predicate": "founded", "object": "YouTube", "type": "Founded"},
+        {"subject": "Jawed Karim", "predicate": "founded", "object": "YouTube", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 51,
+      "text": "The atomic number of carbon is 6.",
+      "domain": "science",
+      "entities": [
+        {"text": "atomic number", "type": "Concept", "start": 4, "end": 17},
+        {"text": "carbon", "type": "Concept", "start": 21, "end": 27},
+        {"text": "6", "type": "Quantity", "start": 31, "end": 32}
+      ],
+      "relationships": [
+        {"subject": "carbon", "predicate": "has atomic number", "object": "6", "type": "Has"}
+      ]
+    },
+    {
+      "id": 52,
+      "text": "The Sydney Opera House is located in Sydney, Australia.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Sydney Opera House", "type": "Place", "start": 4, "end": 22},
+        {"text": "Sydney", "type": "Place", "start": 37, "end": 43},
+        {"text": "Australia", "type": "Place", "start": 45, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Sydney Opera House", "predicate": "located in", "object": "Sydney", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 53,
+      "text": "Instagram was founded by Kevin Systrom and Mike Krieger in 2010.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Instagram", "type": "Organization", "start": 0, "end": 9},
+        {"text": "Kevin Systrom", "type": "Person", "start": 25, "end": 38},
+        {"text": "Mike Krieger", "type": "Person", "start": 43, "end": 55},
+        {"text": "2010", "type": "Time", "start": 59, "end": 63}
+      ],
+      "relationships": [
+        {"subject": "Kevin Systrom", "predicate": "founded", "object": "Instagram", "type": "Founded"},
+        {"subject": "Mike Krieger", "predicate": "founded", "object": "Instagram", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 54,
+      "text": "World War II ended in 1945.",
+      "domain": "history",
+      "entities": [
+        {"text": "World War II", "type": "Event", "start": 0, "end": 12},
+        {"text": "1945", "type": "Time", "start": 22, "end": 26}
+      ],
+      "relationships": [
+        {"subject": "World War II", "predicate": "ended in", "object": "1945", "type": "During"}
+      ]
+    },
+    {
+      "id": 55,
+      "text": "The Moon orbits Earth at an average distance of 384,400 kilometers.",
+      "domain": "science",
+      "entities": [
+        {"text": "Moon", "type": "Concept", "start": 4, "end": 8},
+        {"text": "Earth", "type": "Concept", "start": 16, "end": 21},
+        {"text": "384,400 kilometers", "type": "Quantity", "start": 48, "end": 66}
+      ],
+      "relationships": [
+        {"subject": "Moon", "predicate": "orbits", "object": "Earth", "type": "RelatedTo"},
+        {"subject": "Moon", "predicate": "at distance", "object": "384,400 kilometers", "type": "Has"}
+      ]
+    },
+    {
+      "id": 56,
+      "text": "George Orwell wrote '1984' published in 1949.",
+      "domain": "literature",
+      "entities": [
+        {"text": "George Orwell", "type": "Person", "start": 0, "end": 13},
+        {"text": "1984", "type": "Concept", "start": 21, "end": 25},
+        {"text": "1949", "type": "Time", "start": 40, "end": 44}
+      ],
+      "relationships": [
+        {"subject": "George Orwell", "predicate": "wrote", "object": "1984", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 57,
+      "text": "The Nile River is 6,650 kilometers long and flows through Egypt.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Nile River", "type": "Place", "start": 4, "end": 14},
+        {"text": "6,650 kilometers", "type": "Quantity", "start": 18, "end": 34},
+        {"text": "Egypt", "type": "Place", "start": 59, "end": 64}
+      ],
+      "relationships": [
+        {"subject": "Nile River", "predicate": "has length", "object": "6,650 kilometers", "type": "Has"},
+        {"subject": "Nile River", "predicate": "flows through", "object": "Egypt", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 58,
+      "text": "Spotify was founded by Daniel Ek and Martin Lorentzon in 2006.",
+      "domain": "business",
+      "entities": [
+        {"text": "Spotify", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Daniel Ek", "type": "Person", "start": 23, "end": 32},
+        {"text": "Martin Lorentzon", "type": "Person", "start": 37, "end": 53},
+        {"text": "2006", "type": "Time", "start": 57, "end": 61}
+      ],
+      "relationships": [
+        {"subject": "Daniel Ek", "predicate": "founded", "object": "Spotify", "type": "Founded"},
+        {"subject": "Martin Lorentzon", "predicate": "founded", "object": "Spotify", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 59,
+      "text": "The periodic table was developed by Dmitri Mendeleev in 1869.",
+      "domain": "science",
+      "entities": [
+        {"text": "periodic table", "type": "Concept", "start": 4, "end": 18},
+        {"text": "Dmitri Mendeleev", "type": "Person", "start": 36, "end": 52},
+        {"text": "1869", "type": "Time", "start": 56, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Dmitri Mendeleev", "predicate": "developed", "object": "periodic table", "type": "Developed"}
+      ]
+    },
+    {
+      "id": 60,
+      "text": "The Colosseum is located in Rome, Italy.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Colosseum", "type": "Place", "start": 4, "end": 13},
+        {"text": "Rome", "type": "Place", "start": 28, "end": 32},
+        {"text": "Italy", "type": "Place", "start": 34, "end": 39}
+      ],
+      "relationships": [
+        {"subject": "Colosseum", "predicate": "located in", "object": "Rome", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 61,
+      "text": "Slack was founded by Stewart Butterfield in 2013.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Slack", "type": "Organization", "start": 0, "end": 5},
+        {"text": "Stewart Butterfield", "type": "Person", "start": 21, "end": 40},
+        {"text": "2013", "type": "Time", "start": 44, "end": 48}
+      ],
+      "relationships": [
+        {"subject": "Stewart Butterfield", "predicate": "founded", "object": "Slack", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 62,
+      "text": "Water boils at 100 degrees Celsius at sea level.",
+      "domain": "science",
+      "entities": [
+        {"text": "Water", "type": "Concept", "start": 0, "end": 5},
+        {"text": "100 degrees Celsius", "type": "Quantity", "start": 15, "end": 34},
+        {"text": "sea level", "type": "Concept", "start": 38, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Water", "predicate": "boils at", "object": "100 degrees Celsius", "type": "Has"}
+      ]
+    },
+    {
+      "id": 63,
+      "text": "Jane Austen wrote 'Pride and Prejudice' in 1813.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Jane Austen", "type": "Person", "start": 0, "end": 11},
+        {"text": "Pride and Prejudice", "type": "Concept", "start": 19, "end": 38},
+        {"text": "1813", "type": "Time", "start": 43, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Jane Austen", "predicate": "wrote", "object": "Pride and Prejudice", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 64,
+      "text": "The Himalayas are located between India and Tibet.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Himalayas", "type": "Place", "start": 4, "end": 13},
+        {"text": "India", "type": "Place", "start": 34, "end": 39},
+        {"text": "Tibet", "type": "Place", "start": 44, "end": 49}
+      ],
+      "relationships": [
+        {"subject": "Himalayas", "predicate": "located between", "object": "India", "type": "LocatedIn"},
+        {"subject": "Himalayas", "predicate": "located between", "object": "Tibet", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 65,
+      "text": "Airbnb was founded by Brian Chesky and Joe Gebbia in 2008.",
+      "domain": "business",
+      "entities": [
+        {"text": "Airbnb", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Brian Chesky", "type": "Person", "start": 22, "end": 34},
+        {"text": "Joe Gebbia", "type": "Person", "start": 39, "end": 49},
+        {"text": "2008", "type": "Time", "start": 53, "end": 57}
+      ],
+      "relationships": [
+        {"subject": "Brian Chesky", "predicate": "founded", "object": "Airbnb", "type": "Founded"},
+        {"subject": "Joe Gebbia", "predicate": "founded", "object": "Airbnb", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 66,
+      "text": "The human heart has 4 chambers.",
+      "domain": "science",
+      "entities": [
+        {"text": "human heart", "type": "Concept", "start": 4, "end": 15},
+        {"text": "4", "type": "Quantity", "start": 20, "end": 21},
+        {"text": "chambers", "type": "Concept", "start": 22, "end": 30}
+      ],
+      "relationships": [
+        {"subject": "human heart", "predicate": "has", "object": "chambers", "type": "Has"}
+      ]
+    },
+    {
+      "id": 67,
+      "text": "The Panama Canal connects the Atlantic and Pacific Oceans.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Panama Canal", "type": "Place", "start": 4, "end": 16},
+        {"text": "Atlantic", "type": "Place", "start": 30, "end": 38},
+        {"text": "Pacific Oceans", "type": "Place", "start": 43, "end": 57}
+      ],
+      "relationships": [
+        {"subject": "Panama Canal", "predicate": "connects", "object": "Atlantic", "type": "RelatedTo"},
+        {"subject": "Panama Canal", "predicate": "connects", "object": "Pacific Oceans", "type": "RelatedTo"}
+      ]
+    },
+    {
+      "id": 68,
+      "text": "WhatsApp was founded by Jan Koum and Brian Acton in 2009.",
+      "domain": "technology",
+      "entities": [
+        {"text": "WhatsApp", "type": "Organization", "start": 0, "end": 8},
+        {"text": "Jan Koum", "type": "Person", "start": 24, "end": 32},
+        {"text": "Brian Acton", "type": "Person", "start": 37, "end": 48},
+        {"text": "2009", "type": "Time", "start": 52, "end": 56}
+      ],
+      "relationships": [
+        {"subject": "Jan Koum", "predicate": "founded", "object": "WhatsApp", "type": "Founded"},
+        {"subject": "Brian Acton", "predicate": "founded", "object": "WhatsApp", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 69,
+      "text": "Sir Isaac Newton formulated the laws of motion in the 17th century.",
+      "domain": "science",
+      "entities": [
+        {"text": "Isaac Newton", "type": "Person", "start": 4, "end": 16},
+        {"text": "laws of motion", "type": "Concept", "start": 32, "end": 46},
+        {"text": "17th century", "type": "Time", "start": 54, "end": 66}
+      ],
+      "relationships": [
+        {"subject": "Isaac Newton", "predicate": "formulated", "object": "laws of motion", "type": "Developed"}
+      ]
+    },
+    {
+      "id": 70,
+      "text": "The Matterhorn is located on the border between Switzerland and Italy.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Matterhorn", "type": "Place", "start": 4, "end": 14},
+        {"text": "Switzerland", "type": "Place", "start": 48, "end": 59},
+        {"text": "Italy", "type": "Place", "start": 64, "end": 69}
+      ],
+      "relationships": [
+        {"subject": "Matterhorn", "predicate": "located on border between", "object": "Switzerland", "type": "LocatedIn"},
+        {"subject": "Matterhorn", "predicate": "located on border between", "object": "Italy", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 71,
+      "text": "Pinterest was founded by Ben Silbermann in 2010.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Pinterest", "type": "Organization", "start": 0, "end": 9},
+        {"text": "Ben Silbermann", "type": "Person", "start": 25, "end": 39},
+        {"text": "2010", "type": "Time", "start": 43, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Ben Silbermann", "predicate": "founded", "object": "Pinterest", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 72,
+      "text": "Hydrogen is the lightest element with atomic number 1.",
+      "domain": "science",
+      "entities": [
+        {"text": "Hydrogen", "type": "Concept", "start": 0, "end": 8},
+        {"text": "lightest element", "type": "Concept", "start": 16, "end": 32},
+        {"text": "atomic number", "type": "Concept", "start": 38, "end": 51},
+        {"text": "1", "type": "Quantity", "start": 52, "end": 53}
+      ],
+      "relationships": [
+        {"subject": "Hydrogen", "predicate": "is", "object": "lightest element", "type": "Is"},
+        {"subject": "Hydrogen", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 73,
+      "text": "Harper Lee wrote 'To Kill a Mockingbird' in 1960.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Harper Lee", "type": "Person", "start": 0, "end": 10},
+        {"text": "To Kill a Mockingbird", "type": "Concept", "start": 18, "end": 39},
+        {"text": "1960", "type": "Time", "start": 44, "end": 48}
+      ],
+      "relationships": [
+        {"subject": "Harper Lee", "predicate": "wrote", "object": "To Kill a Mockingbird", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 74,
+      "text": "The Suez Canal connects the Mediterranean Sea and the Red Sea.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Suez Canal", "type": "Place", "start": 4, "end": 14},
+        {"text": "Mediterranean Sea", "type": "Place", "start": 28, "end": 45},
+        {"text": "Red Sea", "type": "Place", "start": 54, "end": 61}
+      ],
+      "relationships": [
+        {"subject": "Suez Canal", "predicate": "connects", "object": "Mediterranean Sea", "type": "RelatedTo"},
+        {"subject": "Suez Canal", "predicate": "connects", "object": "Red Sea", "type": "RelatedTo"}
+      ]
+    },
+    {
+      "id": 75,
+      "text": "Dropbox was founded by Drew Houston and Arash Ferdowsi in 2007.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Dropbox", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Drew Houston", "type": "Person", "start": 23, "end": 35},
+        {"text": "Arash Ferdowsi", "type": "Person", "start": 40, "end": 54},
+        {"text": "2007", "type": "Time", "start": 58, "end": 62}
+      ],
+      "relationships": [
+        {"subject": "Drew Houston", "predicate": "founded", "object": "Dropbox", "type": "Founded"},
+        {"subject": "Arash Ferdowsi", "predicate": "founded", "object": "Dropbox", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 76,
+      "text": "The Earth's diameter is approximately 12,742 kilometers.",
+      "domain": "science",
+      "entities": [
+        {"text": "Earth", "type": "Concept", "start": 4, "end": 9},
+        {"text": "diameter", "type": "Concept", "start": 12, "end": 20},
+        {"text": "12,742 kilometers", "type": "Quantity", "start": 38, "end": 55}
+      ],
+      "relationships": [
+        {"subject": "Earth", "predicate": "has diameter", "object": "12,742 kilometers", "type": "Has"}
+      ]
+    },
+    {
+      "id": 77,
+      "text": "F. Scott Fitzgerald wrote 'The Great Gatsby' in 1925.",
+      "domain": "literature",
+      "entities": [
+        {"text": "F. Scott Fitzgerald", "type": "Person", "start": 0, "end": 19},
+        {"text": "The Great Gatsby", "type": "Concept", "start": 27, "end": 43},
+        {"text": "1925", "type": "Time", "start": 48, "end": 52}
+      ],
+      "relationships": [
+        {"subject": "F. Scott Fitzgerald", "predicate": "wrote", "object": "The Great Gatsby", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 78,
+      "text": "Mount Kilimanjaro is located in Tanzania, Africa.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Mount Kilimanjaro", "type": "Place", "start": 0, "end": 17},
+        {"text": "Tanzania", "type": "Place", "start": 32, "end": 40},
+        {"text": "Africa", "type": "Place", "start": 42, "end": 48}
+      ],
+      "relationships": [
+        {"subject": "Mount Kilimanjaro", "predicate": "located in", "object": "Tanzania", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 79,
+      "text": "Zoom was founded by Eric Yuan in 2011.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Zoom", "type": "Organization", "start": 0, "end": 4},
+        {"text": "Eric Yuan", "type": "Person", "start": 20, "end": 29},
+        {"text": "2011", "type": "Time", "start": 33, "end": 37}
+      ],
+      "relationships": [
+        {"subject": "Eric Yuan", "predicate": "founded", "object": "Zoom", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 80,
+      "text": "Gold has the chemical symbol Au and atomic number 79.",
+      "domain": "science",
+      "entities": [
+        {"text": "Gold", "type": "Concept", "start": 0, "end": 4},
+        {"text": "chemical symbol", "type": "Concept", "start": 13, "end": 28},
+        {"text": "Au", "type": "Concept", "start": 29, "end": 31},
+        {"text": "atomic number", "type": "Concept", "start": 36, "end": 49},
+        {"text": "79", "type": "Quantity", "start": 50, "end": 52}
+      ],
+      "relationships": [
+        {"subject": "Gold", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Gold", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 81,
+      "text": "J.R.R. Tolkien wrote 'The Lord of the Rings' trilogy.",
+      "domain": "literature",
+      "entities": [
+        {"text": "J.R.R. Tolkien", "type": "Person", "start": 0, "end": 14},
+        {"text": "The Lord of the Rings", "type": "Concept", "start": 22, "end": 43}
+      ],
+      "relationships": [
+        {"subject": "J.R.R. Tolkien", "predicate": "wrote", "object": "The Lord of the Rings", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 82,
+      "text": "The Andes Mountains extend along the western coast of South America.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Andes Mountains", "type": "Place", "start": 4, "end": 19},
+        {"text": "western coast", "type": "Place", "start": 41, "end": 54},
+        {"text": "South America", "type": "Place", "start": 58, "end": 71}
+      ],
+      "relationships": [
+        {"subject": "Andes Mountains", "predicate": "extend along", "object": "western coast", "type": "LocatedIn"},
+        {"subject": "western coast", "predicate": "part of", "object": "South America", "type": "PartOf"}
+      ]
+    },
+    {
+      "id": 83,
+      "text": "TikTok was founded by Zhang Yiming in 2016.",
+      "domain": "technology",
+      "entities": [
+        {"text": "TikTok", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Zhang Yiming", "type": "Person", "start": 22, "end": 34},
+        {"text": "2016", "type": "Time", "start": 38, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "Zhang Yiming", "predicate": "founded", "object": "TikTok", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 84,
+      "text": "Oxygen makes up approximately 21% of Earth's atmosphere.",
+      "domain": "science",
+      "entities": [
+        {"text": "Oxygen", "type": "Concept", "start": 0, "end": 6},
+        {"text": "21%", "type": "Quantity", "start": 30, "end": 33},
+        {"text": "Earth's atmosphere", "type": "Concept", "start": 37, "end": 55}
+      ],
+      "relationships": [
+        {"subject": "Oxygen", "predicate": "makes up", "object": "21%", "type": "Has"},
+        {"subject": "Oxygen", "predicate": "part of", "object": "Earth's atmosphere", "type": "PartOf"}
+      ]
+    },
+    {
+      "id": 85,
+      "text": "Agatha Christie wrote 'Murder on the Orient Express' in 1934.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Agatha Christie", "type": "Person", "start": 0, "end": 15},
+        {"text": "Murder on the Orient Express", "type": "Concept", "start": 23, "end": 51},
+        {"text": "1934", "type": "Time", "start": 56, "end": 60}
+      ],
+      "relationships": [
+        {"subject": "Agatha Christie", "predicate": "wrote", "object": "Murder on the Orient Express", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 86,
+      "text": "The Grand Canyon is located in Arizona, United States.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Grand Canyon", "type": "Place", "start": 4, "end": 16},
+        {"text": "Arizona", "type": "Place", "start": 31, "end": 38},
+        {"text": "United States", "type": "Place", "start": 40, "end": 53}
+      ],
+      "relationships": [
+        {"subject": "Grand Canyon", "predicate": "located in", "object": "Arizona", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 87,
+      "text": "Reddit was founded by Steve Huffman and Alexis Ohanian in 2005.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Reddit", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Steve Huffman", "type": "Person", "start": 22, "end": 35},
+        {"text": "Alexis Ohanian", "type": "Person", "start": 40, "end": 54},
+        {"text": "2005", "type": "Time", "start": 58, "end": 62}
+      ],
+      "relationships": [
+        {"subject": "Steve Huffman", "predicate": "founded", "object": "Reddit", "type": "Founded"},
+        {"subject": "Alexis Ohanian", "predicate": "founded", "object": "Reddit", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 88,
+      "text": "The speed of sound in air is approximately 343 meters per second.",
+      "domain": "science",
+      "entities": [
+        {"text": "speed of sound", "type": "Concept", "start": 4, "end": 18},
+        {"text": "air", "type": "Concept", "start": 22, "end": 25},
+        {"text": "343 meters per second", "type": "Quantity", "start": 43, "end": 64}
+      ],
+      "relationships": [
+        {"subject": "speed of sound", "predicate": "in", "object": "air", "type": "LocatedIn"},
+        {"subject": "speed of sound", "predicate": "is", "object": "343 meters per second", "type": "Is"}
+      ]
+    },
+    {
+      "id": 89,
+      "text": "Ray Kroc founded McDonald's Corporation in 1955.",
+      "domain": "business",
+      "entities": [
+        {"text": "Ray Kroc", "type": "Person", "start": 0, "end": 8},
+        {"text": "McDonald's Corporation", "type": "Organization", "start": 17, "end": 39},
+        {"text": "1955", "type": "Time", "start": 43, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Ray Kroc", "predicate": "founded", "object": "McDonald's Corporation", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 90,
+      "text": "The Louvre Museum is located in Paris, France.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Louvre Museum", "type": "Place", "start": 4, "end": 17},
+        {"text": "Paris", "type": "Place", "start": 32, "end": 37},
+        {"text": "France", "type": "Place", "start": 39, "end": 45}
+      ],
+      "relationships": [
+        {"subject": "Louvre Museum", "predicate": "located in", "object": "Paris", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 91,
+      "text": "Salesforce was founded by Marc Benioff in 1999.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Salesforce", "type": "Organization", "start": 0, "end": 10},
+        {"text": "Marc Benioff", "type": "Person", "start": 27, "end": 39},
+        {"text": "1999", "type": "Time", "start": 43, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Marc Benioff", "predicate": "founded", "object": "Salesforce", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 92,
+      "text": "Iron has the chemical symbol Fe and atomic number 26.",
+      "domain": "science",
+      "entities": [
+        {"text": "Iron", "type": "Concept", "start": 0, "end": 4},
+        {"text": "chemical symbol", "type": "Concept", "start": 13, "end": 28},
+        {"text": "Fe", "type": "Concept", "start": 29, "end": 31},
+        {"text": "atomic number", "type": "Concept", "start": 36, "end": 49},
+        {"text": "26", "type": "Quantity", "start": 50, "end": 52}
+      ],
+      "relationships": [
+        {"subject": "Iron", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Iron", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 93,
+      "text": "Edgar Allan Poe wrote 'The Raven' in 1845.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Edgar Allan Poe", "type": "Person", "start": 0, "end": 15},
+        {"text": "The Raven", "type": "Concept", "start": 23, "end": 32},
+        {"text": "1845", "type": "Time", "start": 37, "end": 41}
+      ],
+      "relationships": [
+        {"subject": "Edgar Allan Poe", "predicate": "wrote", "object": "The Raven", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 94,
+      "text": "Lake Superior is the largest of the Great Lakes.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Lake Superior", "type": "Place", "start": 0, "end": 13},
+        {"text": "Great Lakes", "type": "Place", "start": 36, "end": 47}
+      ],
+      "relationships": [
+        {"subject": "Lake Superior", "predicate": "is largest of", "object": "Great Lakes", "type": "PartOf"}
+      ]
+    },
+    {
+      "id": 95,
+      "text": "Oracle was founded by Larry Ellison in 1977.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Oracle", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Larry Ellison", "type": "Person", "start": 22, "end": 35},
+        {"text": "1977", "type": "Time", "start": 39, "end": 43}
+      ],
+      "relationships": [
+        {"subject": "Larry Ellison", "predicate": "founded", "object": "Oracle", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 96,
+      "text": "Silver has the chemical symbol Ag and atomic number 47.",
+      "domain": "science",
+      "entities": [
+        {"text": "Silver", "type": "Concept", "start": 0, "end": 6},
+        {"text": "chemical symbol", "type": "Concept", "start": 15, "end": 30},
+        {"text": "Ag", "type": "Concept", "start": 31, "end": 33},
+        {"text": "atomic number", "type": "Concept", "start": 38, "end": 51},
+        {"text": "47", "type": "Quantity", "start": 52, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Silver", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Silver", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 97,
+      "text": "Mark Twain wrote 'The Adventures of Tom Sawyer' in 1876.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Mark Twain", "type": "Person", "start": 0, "end": 10},
+        {"text": "The Adventures of Tom Sawyer", "type": "Concept", "start": 18, "end": 46},
+        {"text": "1876", "type": "Time", "start": 51, "end": 55}
+      ],
+      "relationships": [
+        {"subject": "Mark Twain", "predicate": "wrote", "object": "The Adventures of Tom Sawyer", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 98,
+      "text": "Niagara Falls is located on the border between Canada and the United States.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Niagara Falls", "type": "Place", "start": 0, "end": 13},
+        {"text": "Canada", "type": "Place", "start": 48, "end": 54},
+        {"text": "United States", "type": "Place", "start": 63, "end": 76}
+      ],
+      "relationships": [
+        {"subject": "Niagara Falls", "predicate": "located on border between", "object": "Canada", "type": "LocatedIn"},
+        {"subject": "Niagara Falls", "predicate": "located on border between", "object": "United States", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 99,
+      "text": "PayPal was founded by Peter Thiel and Max Levchin in 1998.",
+      "domain": "technology",
+      "entities": [
+        {"text": "PayPal", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Peter Thiel", "type": "Person", "start": 22, "end": 33},
+        {"text": "Max Levchin", "type": "Person", "start": 38, "end": 49},
+        {"text": "1998", "type": "Time", "start": 53, "end": 57}
+      ],
+      "relationships": [
+        {"subject": "Peter Thiel", "predicate": "founded", "object": "PayPal", "type": "Founded"},
+        {"subject": "Max Levchin", "predicate": "founded", "object": "PayPal", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 100,
+      "text": "Copper has the chemical symbol Cu and atomic number 29.",
+      "domain": "science",
+      "entities": [
+        {"text": "Copper", "type": "Concept", "start": 0, "end": 6},
+        {"text": "chemical symbol", "type": "Concept", "start": 15, "end": 30},
+        {"text": "Cu", "type": "Concept", "start": 31, "end": 33},
+        {"text": "atomic number", "type": "Concept", "start": 38, "end": 51},
+        {"text": "29", "type": "Quantity", "start": 52, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Copper", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Copper", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 101,
+      "text": "Leo Tolstoy wrote 'War and Peace' in 1869.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Leo Tolstoy", "type": "Person", "start": 0, "end": 11},
+        {"text": "War and Peace", "type": "Concept", "start": 19, "end": 32},
+        {"text": "1869", "type": "Time", "start": 37, "end": 41}
+      ],
+      "relationships": [
+        {"subject": "Leo Tolstoy", "predicate": "wrote", "object": "War and Peace", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 102,
+      "text": "Victoria Falls is located on the Zambezi River between Zambia and Zimbabwe.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Victoria Falls", "type": "Place", "start": 0, "end": 14},
+        {"text": "Zambezi River", "type": "Place", "start": 34, "end": 47},
+        {"text": "Zambia", "type": "Place", "start": 56, "end": 62},
+        {"text": "Zimbabwe", "type": "Place", "start": 67, "end": 75}
+      ],
+      "relationships": [
+        {"subject": "Victoria Falls", "predicate": "located on", "object": "Zambezi River", "type": "LocatedIn"},
+        {"subject": "Victoria Falls", "predicate": "between", "object": "Zambia", "type": "LocatedIn"},
+        {"subject": "Victoria Falls", "predicate": "between", "object": "Zimbabwe", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 103,
+      "text": "Adobe Photoshop was created by Thomas Knoll and John Knoll in 1987.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Adobe Photoshop", "type": "Concept", "start": 0, "end": 15},
+        {"text": "Thomas Knoll", "type": "Person", "start": 31, "end": 43},
+        {"text": "John Knoll", "type": "Person", "start": 48, "end": 58},
+        {"text": "1987", "type": "Time", "start": 62, "end": 66}
+      ],
+      "relationships": [
+        {"subject": "Thomas Knoll", "predicate": "created", "object": "Adobe Photoshop", "type": "Created"},
+        {"subject": "John Knoll", "predicate": "created", "object": "Adobe Photoshop", "type": "Created"}
+      ]
+    },
+    {
+      "id": 104,
+      "text": "Helium has the chemical symbol He and atomic number 2.",
+      "domain": "science",
+      "entities": [
+        {"text": "Helium", "type": "Concept", "start": 0, "end": 6},
+        {"text": "chemical symbol", "type": "Concept", "start": 15, "end": 30},
+        {"text": "He", "type": "Concept", "start": 31, "end": 33},
+        {"text": "atomic number", "type": "Concept", "start": 38, "end": 51},
+        {"text": "2", "type": "Quantity", "start": 52, "end": 53}
+      ],
+      "relationships": [
+        {"subject": "Helium", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Helium", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 105,
+      "text": "Herman Melville wrote 'Moby Dick' in 1851.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Herman Melville", "type": "Person", "start": 0, "end": 15},
+        {"text": "Moby Dick", "type": "Concept", "start": 23, "end": 32},
+        {"text": "1851", "type": "Time", "start": 37, "end": 41}
+      ],
+      "relationships": [
+        {"subject": "Herman Melville", "predicate": "wrote", "object": "Moby Dick", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 106,
+      "text": "The Rocky Mountains extend from Canada to New Mexico.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Rocky Mountains", "type": "Place", "start": 4, "end": 19},
+        {"text": "Canada", "type": "Place", "start": 32, "end": 38},
+        {"text": "New Mexico", "type": "Place", "start": 42, "end": 52}
+      ],
+      "relationships": [
+        {"subject": "Rocky Mountains", "predicate": "extend from", "object": "Canada", "type": "LocatedIn"},
+        {"subject": "Rocky Mountains", "predicate": "extend to", "object": "New Mexico", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 107,
+      "text": "GitHub was founded by Tom Preston-Werner in 2008.",
+      "domain": "technology",
+      "entities": [
+        {"text": "GitHub", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Tom Preston-Werner", "type": "Person", "start": 22, "end": 40},
+        {"text": "2008", "type": "Time", "start": 44, "end": 48}
+      ],
+      "relationships": [
+        {"subject": "Tom Preston-Werner", "predicate": "founded", "object": "GitHub", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 108,
+      "text": "Nitrogen makes up approximately 78% of Earth's atmosphere.",
+      "domain": "science",
+      "entities": [
+        {"text": "Nitrogen", "type": "Concept", "start": 0, "end": 8},
+        {"text": "78%", "type": "Quantity", "start": 32, "end": 35},
+        {"text": "Earth's atmosphere", "type": "Concept", "start": 39, "end": 57}
+      ],
+      "relationships": [
+        {"subject": "Nitrogen", "predicate": "makes up", "object": "78%", "type": "Has"},
+        {"subject": "Nitrogen", "predicate": "part of", "object": "Earth's atmosphere", "type": "PartOf"}
+      ]
+    },
+    {
+      "id": 109,
+      "text": "Charlotte Brontë wrote 'Jane Eyre' in 1847.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Charlotte Brontë", "type": "Person", "start": 0, "end": 16},
+        {"text": "Jane Eyre", "type": "Concept", "start": 24, "end": 33},
+        {"text": "1847", "type": "Time", "start": 38, "end": 42}
+      ],
+      "relationships": [
+        {"subject": "Charlotte Brontë", "predicate": "wrote", "object": "Jane Eyre", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 110,
+      "text": "Machu Picchu is located in Peru, South America.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Machu Picchu", "type": "Place", "start": 0, "end": 12},
+        {"text": "Peru", "type": "Place", "start": 27, "end": 31},
+        {"text": "South America", "type": "Place", "start": 33, "end": 46}
+      ],
+      "relationships": [
+        {"subject": "Machu Picchu", "predicate": "located in", "object": "Peru", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 111,
+      "text": "Shopify was founded by Tobias Lütke in 2006.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Shopify", "type": "Organization", "start": 0, "end": 7},
+        {"text": "Tobias Lütke", "type": "Person", "start": 23, "end": 35},
+        {"text": "2006", "type": "Time", "start": 39, "end": 43}
+      ],
+      "relationships": [
+        {"subject": "Tobias Lütke", "predicate": "founded", "object": "Shopify", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 112,
+      "text": "The human body has 206 bones in an adult skeleton.",
+      "domain": "science",
+      "entities": [
+        {"text": "human body", "type": "Concept", "start": 4, "end": 14},
+        {"text": "206", "type": "Quantity", "start": 19, "end": 22},
+        {"text": "bones", "type": "Concept", "start": 23, "end": 28},
+        {"text": "adult skeleton", "type": "Concept", "start": 35, "end": 49}
+      ],
+      "relationships": [
+        {"subject": "human body", "predicate": "has", "object": "bones", "type": "Has"},
+        {"subject": "adult skeleton", "predicate": "has", "object": "206", "type": "Has"}
+      ]
+    },
+    {
+      "id": 113,
+      "text": "Emily Dickinson wrote over 1,800 poems during her lifetime.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Emily Dickinson", "type": "Person", "start": 0, "end": 15},
+        {"text": "1,800", "type": "Quantity", "start": 27, "end": 32},
+        {"text": "poems", "type": "Concept", "start": 33, "end": 38}
+      ],
+      "relationships": [
+        {"subject": "Emily Dickinson", "predicate": "wrote", "object": "poems", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 114,
+      "text": "The Dead Sea is located between Israel and Jordan.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Dead Sea", "type": "Place", "start": 4, "end": 12},
+        {"text": "Israel", "type": "Place", "start": 33, "end": 39},
+        {"text": "Jordan", "type": "Place", "start": 44, "end": 50}
+      ],
+      "relationships": [
+        {"subject": "Dead Sea", "predicate": "located between", "object": "Israel", "type": "LocatedIn"},
+        {"subject": "Dead Sea", "predicate": "located between", "object": "Jordan", "type": "LocatedIn"}
+      ]
+    },
+    {
+      "id": 115,
+      "text": "Square was founded by Jack Dorsey and Jim McKelvey in 2009.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Square", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Jack Dorsey", "type": "Person", "start": 22, "end": 33},
+        {"text": "Jim McKelvey", "type": "Person", "start": 38, "end": 50},
+        {"text": "2009", "type": "Time", "start": 54, "end": 58}
+      ],
+      "relationships": [
+        {"subject": "Jack Dorsey", "predicate": "founded", "object": "Square", "type": "Founded"},
+        {"subject": "Jim McKelvey", "predicate": "founded", "object": "Square", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 116,
+      "text": "Lithium has the chemical symbol Li and atomic number 3.",
+      "domain": "science",
+      "entities": [
+        {"text": "Lithium", "type": "Concept", "start": 0, "end": 7},
+        {"text": "chemical symbol", "type": "Concept", "start": 16, "end": 31},
+        {"text": "Li", "type": "Concept", "start": 32, "end": 34},
+        {"text": "atomic number", "type": "Concept", "start": 39, "end": 52},
+        {"text": "3", "type": "Quantity", "start": 53, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Lithium", "predicate": "has", "object": "chemical symbol", "type": "Has"},
+        {"subject": "Lithium", "predicate": "has", "object": "atomic number", "type": "Has"}
+      ]
+    },
+    {
+      "id": 117,
+      "text": "Fyodor Dostoevsky wrote 'Crime and Punishment' in 1866.",
+      "domain": "literature",
+      "entities": [
+        {"text": "Fyodor Dostoevsky", "type": "Person", "start": 0, "end": 17},
+        {"text": "Crime and Punishment", "type": "Concept", "start": 25, "end": 45},
+        {"text": "1866", "type": "Time", "start": 50, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Fyodor Dostoevsky", "predicate": "wrote", "object": "Crime and Punishment", "type": "Wrote"}
+      ]
+    },
+    {
+      "id": 118,
+      "text": "Angel Falls is located in Venezuela and is 979 meters tall.",
+      "domain": "geography",
+      "entities": [
+        {"text": "Angel Falls", "type": "Place", "start": 0, "end": 11},
+        {"text": "Venezuela", "type": "Place", "start": 27, "end": 36},
+        {"text": "979 meters", "type": "Quantity", "start": 44, "end": 54}
+      ],
+      "relationships": [
+        {"subject": "Angel Falls", "predicate": "located in", "object": "Venezuela", "type": "LocatedIn"},
+        {"subject": "Angel Falls", "predicate": "has height", "object": "979 meters", "type": "Has"}
+      ]
+    },
+    {
+      "id": 119,
+      "text": "Twilio was founded by Jeff Lawson in 2008.",
+      "domain": "technology",
+      "entities": [
+        {"text": "Twilio", "type": "Organization", "start": 0, "end": 6},
+        {"text": "Jeff Lawson", "type": "Person", "start": 22, "end": 33},
+        {"text": "2008", "type": "Time", "start": 37, "end": 41}
+      ],
+      "relationships": [
+        {"subject": "Jeff Lawson", "predicate": "founded", "object": "Twilio", "type": "Founded"}
+      ]
+    },
+    {
+      "id": 120,
+      "text": "The boiling point of water is 100°C at standard atmospheric pressure.",
+      "domain": "science",
+      "entities": [
+        {"text": "boiling point", "type": "Concept", "start": 4, "end": 17},
+        {"text": "water", "type": "Concept", "start": 21, "end": 26},
+        {"text": "100°C", "type": "Quantity", "start": 30, "end": 35},
+        {"text": "standard atmospheric pressure", "type": "Concept", "start": 39, "end": 68}
+      ],
+      "relationships": [
+        {"subject": "water", "predicate": "has boiling point", "object": "100°C", "type": "Has"},
+        {"subject": "boiling point", "predicate": "at", "object": "standard atmospheric pressure", "type": "During"}
+      ]
+    }
+  ]
+}

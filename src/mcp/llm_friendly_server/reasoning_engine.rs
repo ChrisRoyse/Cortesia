@@ -402,7 +402,7 @@ pub async fn execute_abductive_reasoning(
 pub async fn execute_analogical_reasoning(
     premise: &str,
     knowledge: &KnowledgeResult,
-    max_chain_length: usize,
+    _max_chain_length: usize,
     confidence_threshold: f32,
 ) -> ReasoningResult {
     // Handle empty knowledge base
@@ -531,7 +531,7 @@ pub async fn generate_alternative_reasoning_chains(
     premise: &str,
     knowledge: &KnowledgeResult,
     primary_result: &ReasoningResult,
-    max_chain_length: usize,
+    _max_chain_length: usize,
 ) -> Vec<Value> {
     // Handle empty knowledge base
     if knowledge.triples.is_empty() {
@@ -646,8 +646,8 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
                 ("possible", "impossible"),
             ];
             
-            for (prop1, obj1) in &properties {
-                for (prop2, obj2) in &properties {
+            for (_prop1, obj1) in &properties {
+                for (_prop2, obj2) in &properties {
                     for (ex1, ex2) in &exclusive_pairs {
                         if (obj1.contains(ex1) && obj2.contains(ex2)) || 
                            (obj1.contains(ex2) && obj2.contains(ex1)) {

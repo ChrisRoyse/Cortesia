@@ -1,52 +1,88 @@
-//! Storage-related request handlers
+//! Storage-related request handlers with comprehensive error handling
 
 use crate::core::triple::Triple;
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::TripleQuery;
+use crate::core::entity_extractor::EntityExtractor;
+use crate::core::relationship_extractor::RelationshipExtractor;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::mcp::llm_friendly_server::temporal_tracking::{TEMPORAL_INDEX, TemporalOperation};
+use crate::mcp::llm_friendly_server::error_handling::{
+    LlmkgError, LlmkgResult, HandlerResult,
+    validation::{validate_string_field, validate_numeric_field, sanitize_input},
+    graceful::with_fallback
+};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde_json::{json, Value};
 
-/// Handle store_fact request
+/// Handle store_fact request with comprehensive error handling and validation
 pub async fn handle_store_fact(
     knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
-    let subject = params.get("subject").and_then(|v| v.as_str())
-        .ok_or("Missing required field: subject")?;
-    let predicate = params.get("predicate").and_then(|v| v.as_str())
-        .ok_or("Missing required field: predicate")?;
-    let object = params.get("object").and_then(|v| v.as_str())
-        .ok_or("Missing required field: object")?;
-    let confidence = params.get("confidence")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(1.0) as f32;
-    
-    // Validate inputs
-    if subject.is_empty() || predicate.is_empty() || object.is_empty() {
-        return Err("Subject, predicate, and object cannot be empty".to_string());
+    match handle_store_fact_internal(knowledge_engine, usage_stats, params).await {
+        Ok(result) => Ok(result),
+        Err(error) => {
+            log::error!("Storage error: {}", error);
+            Err(error.to_string())
+        }
     }
+}
+
+/// Internal implementation with proper error types
+async fn handle_store_fact_internal(
+    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    usage_stats: &Arc<RwLock<UsageStats>>,
+    params: Value,
+) -> HandlerResult {
+    // Validate and sanitize inputs with comprehensive error handling
+    let subject = validate_string_field(
+        "subject", 
+        params.get("subject").and_then(|v| v.as_str()),
+        true, // required
+        Some(128), // max_length
+        Some(1) // min_length
+    ).map(|s| sanitize_input(&s))?;
     
-    if subject.len() > 128 || object.len() > 128 {
-        return Err("Subject and object must be 128 characters or less".to_string());
-    }
+    let predicate = validate_string_field(
+        "predicate",
+        params.get("predicate").and_then(|v| v.as_str()),
+        true, // required
+        Some(64), // max_length  
+        Some(1) // min_length
+    ).map(|s| sanitize_input(&s))?;
     
-    if predicate.len() > 64 {
-        return Err("Predicate must be 64 characters or less".to_string());
-    }
+    let object = validate_string_field(
+        "object",
+        params.get("object").and_then(|v| v.as_str()),
+        true, // required
+        Some(128), // max_length
+        Some(1) // min_length
+    ).map(|s| sanitize_input(&s))?;
     
-    // Create the triple
+    let confidence = validate_numeric_field(
+        "confidence",
+        params.get("confidence").and_then(|v| v.as_f64()).map(|f| f as f32),
+        false, // not required
+        Some(0.0), // min_value
+        Some(1.0) // max_value
+    )?.unwrap_or(1.0);
+    
+    // Create the triple with error handling
     let triple = Triple::with_metadata(
-        subject.to_string(),
-        predicate.to_string(),
-        object.to_string(),
+        subject.clone(),
+        predicate.clone(),
+        object.clone(),
         confidence,
         Some("user_input".to_string()),
-    ).map_err(|e| format!("Failed to create triple: {}", e))?;
+    ).map_err(|e| LlmkgError::StorageError {
+        operation: "create_triple".to_string(),
+        entity_id: Some(format!("{}-{}-{}", subject, predicate, object)),
+        cause: format!("Failed to create triple: {}", e),
+    })?;
     
     // Check if this triple already exists (for update vs create detection)
     let existing_query = TripleQuery {
@@ -60,7 +96,15 @@ pub async fn handle_store_fact(
     
     let existing_result = {
         let engine = knowledge_engine.read().await;
-        engine.query_triples(existing_query).ok()
+        engine.query_triples(existing_query)
+            .map_err(|e| LlmkgError::QueryError {
+                query_type: "existence_check".to_string(),
+                parameters: json!({
+                    "subject": subject,
+                    "predicate": predicate
+                }),
+                cause: format!("Failed to check existing triples: {}", e),
+            }).ok()
     };
     
     let (operation, previous_value) = if let Some(result) = existing_result {
@@ -76,17 +120,30 @@ pub async fn handle_store_fact(
         (TemporalOperation::Create, None)
     };
     
-    // Store the triple
-    let engine = knowledge_engine.write().await;
-    let node_id = engine.store_triple(triple.clone(), None)
-        .map_err(|e| format!("Failed to store triple: {}", e))?;
-    drop(engine);
+    // Store the triple with graceful error handling
+    let node_id = {
+        let engine = knowledge_engine.write().await;
+        engine.store_triple(triple.clone(), None)
+            .map_err(|e| LlmkgError::StorageError {
+                operation: "store_triple".to_string(),
+                entity_id: Some(format!("{}-{}-{}", subject, predicate, object)),
+                cause: format!("Failed to store triple: {}", e),
+            })?
+    };
     
-    // Record in temporal index
-    TEMPORAL_INDEX.record_operation(triple, operation, previous_value);
+    // Record in temporal index with error handling
+    if let Err(e) = std::panic::catch_unwind(|| {
+        TEMPORAL_INDEX.record_operation(triple.clone(), operation, previous_value.clone());
+    }) {
+        log::warn!("Failed to record temporal operation: {:?}", e);
+        // Continue execution - temporal tracking is not critical for core functionality
+    }
     
-    // Update usage stats
-    let _ = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 10).await;
+    // Update usage stats (non-critical operation)
+    if let Err(e) = update_usage_stats(usage_stats, StatsOperation::StoreTriple, 10).await {
+        log::warn!("Failed to update usage stats: {}", e);
+        // Continue execution - stats are not critical
+    }
     
     let data = json!({
         "success": true,
@@ -106,32 +163,146 @@ pub async fn handle_store_fact(
     Ok((data, message, suggestions))
 }
 
-/// Handle store_knowledge request
+/// Primary entity and relationship extraction with enhanced methods
+async fn extract_entities_and_relationships_primary(content: &str) -> LlmkgResult<(Vec<String>, Vec<(String, String, String)>)> {
+    let entity_extractor = EntityExtractor::new();
+    let relationship_extractor = RelationshipExtractor::new();
+    
+    // Extract entities
+    let entities = entity_extractor.extract_entities(content);
+    let extracted_entities: Vec<String> = entities.iter().map(|e| e.name.clone()).collect();
+    
+    // Extract relationships
+    let relationships = relationship_extractor.extract_relationships(content, &entities);
+    let extracted_relationships: Vec<(String, String, String)> = relationships.iter()
+        .map(|r| (r.subject.clone(), r.predicate.clone(), r.object.clone()))
+        .collect();
+    
+    if extracted_entities.is_empty() && extracted_relationships.is_empty() {
+        return Err(LlmkgError::ExtractionError {
+            extraction_type: "primary".to_string(),
+            input_sample: content.chars().take(100).collect(),
+            cause: "No entities or relationships extracted".to_string(),
+        });
+    }
+    
+    Ok((extracted_entities, extracted_relationships))
+}
+
+/// Fallback entity and relationship extraction using simple methods
+async fn extract_entities_and_relationships_fallback(content: &str) -> LlmkgResult<(Vec<String>, Vec<(String, String, String)>)> {
+    log::info!("Using fallback extraction methods for content analysis");
+    
+    // Simple keyword-based entity extraction
+    let words: Vec<&str> = content.split_whitespace().collect();
+    let mut entities = Vec::new();
+    
+    // Look for capitalized words as potential entities (simple heuristic)
+    for word in &words {
+        if word.len() > 2 {
+            if let Some(first_char) = word.chars().next() {
+                if first_char.is_uppercase() {
+                    let clean_word = word.trim_matches(|c: char| !c.is_alphabetic());
+                    if !clean_word.is_empty() && clean_word.len() > 2 {
+                        entities.push(clean_word.to_string());
+                    }
+                }
+            }
+        }
+    }
+    
+    // Remove duplicates
+    entities.sort();
+    entities.dedup();
+    
+    // Simple relationship extraction based on common patterns
+    let mut relationships = Vec::new();
+    let content_lower = content.to_lowercase();
+    
+    // Look for "is a", "has", "contains" patterns
+    for entity in &entities {
+        if content_lower.contains(&format!("{} is a", entity.to_lowercase())) {
+            relationships.push((entity.clone(), "is_a".to_string(), "concept".to_string()));
+        }
+        if content_lower.contains(&format!("{} has", entity.to_lowercase())) {
+            relationships.push((entity.clone(), "has".to_string(), "property".to_string()));
+        }
+    }
+    
+    // Ensure we have at least something to return
+    if entities.is_empty() {
+        // Extract any reasonable-length words as entities
+        entities = words.iter()
+            .filter(|w| w.len() > 3 && w.len() < 20)
+            .take(5)
+            .map(|w| w.trim_matches(|c: char| !c.is_alphabetic()).to_string())
+            .filter(|w| !w.is_empty())
+            .collect();
+    }
+    
+    log::info!("Fallback extraction found {} entities and {} relationships", 
+        entities.len(), relationships.len());
+    
+    Ok((entities, relationships))
+}
+
+/// Handle store_knowledge request with comprehensive error handling
 pub async fn handle_store_knowledge(
     knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
-    let content = params.get("content").and_then(|v| v.as_str())
-        .ok_or("Missing required field: content")?;
-    let title = params.get("title").and_then(|v| v.as_str())
-        .ok_or("Missing required field: title")?;
-    let category = params.get("category").and_then(|v| v.as_str())
-        .unwrap_or("general");
-    let source = params.get("source").and_then(|v| v.as_str());
-    
-    // Validate inputs
-    if content.is_empty() || title.is_empty() {
-        return Err("Content and title cannot be empty".to_string());
+    match handle_store_knowledge_internal(knowledge_engine, usage_stats, params).await {
+        Ok(result) => Ok(result),
+        Err(error) => {
+            log::error!("Storage error: {}", error);
+            Err(error.to_string())
+        }
     }
+}
+
+/// Internal implementation with proper error types  
+async fn handle_store_knowledge_internal(
+    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
+    usage_stats: &Arc<RwLock<UsageStats>>,
+    params: Value,
+) -> HandlerResult {
+    // Validate and sanitize inputs
+    let content = validate_string_field(
+        "content",
+        params.get("content").and_then(|v| v.as_str()),
+        true, // required
+        Some(50000), // max_length
+        Some(1) // min_length
+    ).map(|s| sanitize_input(&s))?;
     
-    if content.len() > 50000 {
-        return Err("Content exceeds maximum length of 50,000 characters".to_string());
-    }
+    let title = validate_string_field(
+        "title",
+        params.get("title").and_then(|v| v.as_str()),
+        true, // required
+        Some(200), // max_length
+        Some(1) // min_length
+    ).map(|s| sanitize_input(&s))?;
     
-    // Extract entities and relationships (simplified)
-    let extracted_entities = extract_entities_from_text(content);
-    let extracted_relationships = extract_relationships_from_text(content, &extracted_entities);
+    let category = validate_string_field(
+        "category",
+        params.get("category").and_then(|v| v.as_str()),
+        false, // not required
+        Some(50), // max_length
+        None // no min_length
+    ).map(|s| sanitize_input(&s)).unwrap_or_else(|_| "general".to_string());
+    
+    let source = params.get("source").and_then(|v| v.as_str())
+        .map(|s| sanitize_input(s));
+    
+    // Extract entities and relationships with fallback mechanisms
+    let extraction_result = with_fallback(
+        extract_entities_and_relationships_primary(&content),
+        extract_entities_and_relationships_fallback(&content),
+        "entity_relationship_extraction"
+    ).await?;
+    
+    let (extracted_entities, extracted_relationships) = extraction_result;
     
     let engine = knowledge_engine.write().await;
     
@@ -149,12 +320,16 @@ pub async fn handle_store_knowledge(
         chunk_metadata["source"] = json!(src);
     }
     
-    // Store the chunk (simplified - in real implementation would use proper chunk storage)
+    // Store the chunk with error handling
     let chunk_triple = Triple::new(
         chunk_id.clone(),
         "is".to_string(),
         "knowledge_chunk".to_string(),
-    ).map_err(|e| format!("Failed to create chunk triple: {}", e))?;
+    ).map_err(|e| LlmkgError::StorageError {
+        operation: "create_chunk_triple".to_string(),
+        entity_id: Some(chunk_id.clone()),
+        cause: format!("Failed to create chunk triple: {}", e),
+    })?;
     
     match engine.store_triple(chunk_triple.clone(), None) {
         Ok(_) => {
@@ -257,69 +432,11 @@ pub async fn handle_store_knowledge(
             
             Ok((data, message, suggestions))
         }
-        Err(e) => Err(format!("Failed to store knowledge: {}", e))
+        Err(e) => Err(LlmkgError::StorageError {
+            operation: "store_knowledge_chunk".to_string(),
+            entity_id: Some(chunk_id),
+            cause: format!("Failed to store knowledge: {}", e),
+        })
     }
 }
 
-/// Extract entities from text (simplified)
-fn extract_entities_from_text(text: &str) -> Vec<String> {
-    let mut entities = Vec::new();
-    
-    // Simple extraction: capitalized words likely to be entities
-    for word in text.split_whitespace() {
-        if word.len() > 2 && word.chars().next().map_or(false, |c| c.is_uppercase()) {
-            let clean_word = word.trim_matches(|c: char| !c.is_alphanumeric());
-            if !clean_word.is_empty() && !is_common_word(clean_word) {
-                entities.push(clean_word.to_string());
-            }
-        }
-    }
-    
-    // Deduplicate
-    entities.sort();
-    entities.dedup();
-    
-    entities
-}
-
-/// Extract relationships from text (very simplified)
-fn extract_relationships_from_text(text: &str, entities: &[String]) -> Vec<(String, String, String)> {
-    let mut relationships = Vec::new();
-    
-    // Very simple pattern matching
-    let text_lower = text.to_lowercase();
-    
-    for i in 0..entities.len() {
-        for j in 0..entities.len() {
-            if i != j {
-                let entity1 = &entities[i];
-                let entity2 = &entities[j];
-                
-                // Check for common relationship patterns
-                if text_lower.contains(&format!("{} is", entity1.to_lowercase())) {
-                    relationships.push((entity1.clone(), "is".to_string(), entity2.clone()));
-                }
-                
-                if text_lower.contains(&format!("{} created", entity1.to_lowercase())) {
-                    relationships.push((entity1.clone(), "created".to_string(), entity2.clone()));
-                }
-                
-                // Add more patterns as needed
-            }
-        }
-    }
-    
-    relationships
-}
-
-/// Check if a word is too common to be an entity
-fn is_common_word(word: &str) -> bool {
-    matches!(
-        word.to_lowercase().as_str(),
-        "the" | "and" | "or" | "but" | "in" | "on" | "at" | "to" | "for" |
-        "of" | "with" | "by" | "from" | "as" | "is" | "was" | "are" | "were" |
-        "been" | "being" | "have" | "has" | "had" | "do" | "does" | "did" |
-        "will" | "would" | "could" | "should" | "may" | "might" | "must" |
-        "can" | "this" | "that" | "these" | "those" | "a" | "an"
-    )
-}

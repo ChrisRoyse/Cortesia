@@ -1,5 +1,6 @@
 mod cognitive;
 mod core;
+mod corpus;
 mod extraction;
 mod gpu;
 mod integration;

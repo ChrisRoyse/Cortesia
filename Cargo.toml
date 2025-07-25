@@ -30,8 +30,12 @@ name = "llmkg_mcp_server"
 path = "src/bin/llmkg_mcp_server.rs"
 
 [[bin]]
-name = "test_4_tools_basic"
-path = "test_4_tools_basic.rs"
+name = "validate_accuracy"
+path = "tests/corpus/validate_accuracy.rs"
+
+# [[bin]]
+# name = "test_4_tools_basic"
+# path = "test_4_tools_basic.rs"
 
 [dependencies]
 # Core dependencies
@@ -133,6 +137,7 @@ bincode = "1.3"
 dotenv = "0.15"
 mockall = "0.12"
 test-case = "3.3"
+fastrand = "2.0"
 
 [profile.release]
 lto = true
@@ -176,6 +181,20 @@ path = "tests/cognitive/property_tests.rs"
 name = "comprehensive_integration_tests"
 path = "integration_tests_comprehensive.rs"
 
+# Phase 1 foundation tests
+[[test]]
+name = "phase1_foundation_tests"
+path = "tests/phase1_foundation_tests.rs"
+
+# Corpus accuracy tests
+[[test]]
+name = "corpus_accuracy_tests"
+path = "tests/corpus/accuracy_tests.rs"
+
+[[test]]
+name = "corpus_generation_tests"
+path = "tests/corpus/corpus_generator.rs"
+
 # Other disabled test targets
 # [[test]]
 # name = "phase4_realistic_tests"
@@ -210,6 +229,10 @@ opt-level = 2  # Optimize tests for better performance
 
 [profile.bench]
 debug = true  # Include debug info in benchmarks
+
+[[bench]]
+name = "phase1_benchmarks"
+harness = false
 
 # [[bench]]
 # name = "cognitive_benchmarks"
