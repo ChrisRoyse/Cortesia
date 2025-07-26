@@ -118,50 +118,43 @@ impl LLMFriendlyMCPServer {
                 ).await
             }
 
-            // Query operations (COGNITIVE ENHANCED)
+            // Query operations (using regular handlers - no enhanced versions exist)
             "find_facts" => {
-                handlers::query::handle_find_facts_enhanced(
+                handlers::query::handle_find_facts(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "ask_question" => {
-                handlers::query::handle_ask_question_enhanced(
+                handlers::query::handle_ask_question(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Exploration operations (COGNITIVE ENHANCED)
+            // Exploration operations (using regular handler - no enhanced version exists)
             // "explore_connections" => migration (now part of analyze_graph)
             "get_suggestions" => {
-                handlers::exploration::handle_get_suggestions_enhanced(
+                handlers::exploration::handle_get_suggestions(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Advanced operations (COGNITIVE ENHANCED)
+            // Advanced operations (mixed - some have enhanced versions)
             "generate_graph_query" => {
-                handlers::advanced::handle_generate_graph_query_enhanced(
+                handlers::advanced::handle_generate_graph_query(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "hybrid_search" => {
-                handlers::advanced::handle_hybrid_search_enhanced(
+                // This one has an enhanced version
+                handlers::enhanced_search::handle_hybrid_search_enhanced(
                     &self.knowledge_engine,
                     &self.cognitive_orchestrator,
                     &self.neural_server,
@@ -170,48 +163,39 @@ impl LLMFriendlyMCPServer {
                 ).await
             }
             "validate_knowledge" => {
-                handlers::advanced::handle_validate_knowledge_enhanced(
+                handlers::advanced::handle_validate_knowledge(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "analyze_graph" => {
-                handlers::graph_analysis::handle_analyze_graph_enhanced(
+                handlers::graph_analysis::handle_analyze_graph(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Tier 1 Advanced Cognitive Tools (COGNITIVE ENHANCED)
+            // Tier 1 Advanced Cognitive Tools (using regular handlers - no enhanced versions exist)
             "neural_importance_scoring" => {
-                handlers::advanced::handle_neural_importance_scoring_enhanced(
+                handlers::cognitive::handle_neural_importance_scoring(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "divergent_thinking_engine" => {
-                handlers::advanced::handle_divergent_thinking_engine_enhanced(
+                handlers::cognitive::handle_divergent_thinking_engine(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "time_travel_query" => {
-                handlers::temporal::handle_time_travel_query_enhanced(
+                // Using temporal version instead of cognitive
+                handlers::temporal::handle_time_travel_query(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -225,10 +209,8 @@ impl LLMFriendlyMCPServer {
             // "hierarchical_clustering" => migration
             // "predict_graph_structure" => migration
             "cognitive_reasoning_chains" => {
-                handlers::advanced::handle_cognitive_reasoning_chains_enhanced(
+                handlers::advanced::handle_cognitive_reasoning_chains(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -237,12 +219,10 @@ impl LLMFriendlyMCPServer {
             // "approximate_similarity_search" => migration
             // "knowledge_quality_metrics" => migration
 
-            // Statistics operations (COGNITIVE ENHANCED)
+            // Statistics operations (using regular handler - no enhanced version exists)
             "get_stats" => {
-                handlers::stats::handle_get_stats_enhanced(
+                handlers::stats::handle_get_stats(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
