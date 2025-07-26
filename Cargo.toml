@@ -7,7 +7,7 @@ description = "Lightning-fast knowledge graph optimized for LLM integration"
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [[bin]]
 name = "llmkg-server"
@@ -33,7 +33,7 @@ path = "src/bin/llmkg_mcp_server.rs"
 name = "validate_accuracy"
 path = "tests/corpus/validate_accuracy.rs"
 
-[[bin]]
+[[example]]
 name = "federation_demo"
 path = "examples/federation_demo.rs"
 
@@ -129,7 +129,7 @@ wasm-bindgen-futures = { version = "0.4", optional = true }
 console_error_panic_hook = { version = "0.1", optional = true }
 wee_alloc = { version = "0.4", optional = true }
 js-sys = { version = "0.3", optional = true }
-getrandom = { version = "0.2", features = ["js"], optional = true }
+getrandom = { version = "0.3", features = ["std"], optional = true }
 
 # Additional dependencies needed by tests
 sha2 = "0.10"
@@ -171,12 +171,14 @@ test-case = "3.3"
 fastrand = "2.0"
 
 [profile.release]
-lto = true
-opt-level = "s"
-strip = true
+lto = false  # Disable LTO to prevent Windows linker issues
+opt-level = 0  # Disable all optimizations to prevent crashes
+strip = false  # Keep debug info for better error reporting
+debug = false  # Disable debug info to reduce memory usage
+codegen-units = 1  # Use single codegen unit for stability
 
 [profile.release.package."*"]
-opt-level = "s"
+opt-level = 0  # Disable optimizations for all dependencies
 
 [features]
 default = ["native"]
@@ -257,7 +259,7 @@ path = "tests/corpus/corpus_generator.rs"
 # path = "tests/phase1_simple_cognitive_tests.rs"
 
 [profile.test]
-opt-level = 2  # Optimize tests for better performance
+opt-level = 0  # Disable optimization for tests to avoid crashes
 
 [profile.bench]
 debug = true  # Include debug info in benchmarks

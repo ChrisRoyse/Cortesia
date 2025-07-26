@@ -561,6 +561,288 @@ pub struct EmotionalSchema {
 }
 ```
 
+### Task 21.4: Emotional Contagion System
+**File**: `src/emotional/emotional_contagion.rs` (new file)
+```rust
+use crate::storage::PersistentMMapStorage;
+use crate::monitoring::PerformanceMonitor;
+use crate::social::SocialNetwork;
+use std::sync::Arc;
+use std::collections::HashMap;
+
+pub struct EmotionalContagion {
+    contagion_model: Arc<dyn crate::models::ModelInterface>, // 30M params
+    spread_predictor: EmotionSpreadPredictor,
+    social_influence_calculator: SocialInfluenceCalculator,
+    contagion_resistance: ContagionResistance,
+    // Integration with existing systems
+    social_network: Arc<SocialNetwork>,
+    storage: Arc<PersistentMMapStorage>,
+    monitor: Arc<PerformanceMonitor>,
+    device: Device,
+}
+
+impl EmotionalContagion {
+    pub fn new(
+        social_network: Arc<SocialNetwork>,
+        storage: Arc<PersistentMMapStorage>,
+        monitor: Arc<PerformanceMonitor>
+    ) -> Result<Self, crate::error::GraphError> {
+        let device = Device::Cpu;
+        
+        let contagion_model = crate::models::load_model(
+            "src/models/pretrained/emotion_contagion_int8.safetensors",
+            ModelType::EmotionContagion,
+            &device,
+        )?;
+        
+        Ok(Self {
+            contagion_model,
+            spread_predictor: EmotionSpreadPredictor::new(),
+            social_influence_calculator: SocialInfluenceCalculator::new(),
+            contagion_resistance: ContagionResistance::new(),
+            social_network,
+            storage,
+            monitor,
+            device,
+        })
+    }
+    
+    pub async fn predict_emotion_spread(&self,
+        source_entity: &EntityKey,
+        source_emotion: &EmotionalTag,
+        network_context: &NetworkContext
+    ) -> Result<EmotionSpreadPrediction, crate::error::GraphError> {
+        let _timer = self.monitor.start_timer("emotion_spread_prediction");
+        
+        // Get connected entities from social network
+        let connected_entities = self.social_network.get_connections(source_entity)?;
+        
+        // Predict spread to each connected entity
+        let spread_predictions: Vec<(EntityKey, f32, EmotionalTag)> = 
+            connected_entities.iter()
+                .map(|target| {
+                    let influence = self.calculate_influence(source_entity, target);
+                    let resistance = self.contagion_resistance.calculate(target);
+                    let predicted_emotion = self.predict_contagion_effect(
+                        source_emotion,
+                        influence,
+                        resistance
+                    );
+                    (target.clone(), influence * (1.0 - resistance), predicted_emotion)
+                })
+                .filter(|(_, probability, _)| *probability > 0.1)
+                .collect();
+        
+        let prediction = EmotionSpreadPrediction {
+            source: source_entity.clone(),
+            source_emotion: source_emotion.clone(),
+            predicted_spreads: spread_predictions,
+            total_affected: spread_predictions.len(),
+            average_intensity: spread_predictions.iter()
+                .map(|(_, _, emotion)| emotion.intensity)
+                .sum::<f32>() / spread_predictions.len().max(1) as f32,
+        };
+        
+        self.monitor.record_metric("emotion_spread_predictions", 1.0);
+        
+        Ok(prediction)
+    }
+    
+    fn calculate_influence(&self, source: &EntityKey, target: &EntityKey) -> f32 {
+        // Social influence based on relationship strength, status, etc.
+        self.social_influence_calculator.calculate(source, target)
+    }
+    
+    fn predict_contagion_effect(&self,
+        source_emotion: &EmotionalTag,
+        influence: f32,
+        resistance: f32
+    ) -> EmotionalTag {
+        let mut contagion_emotion = source_emotion.clone();
+        contagion_emotion.intensity *= influence * (1.0 - resistance);
+        contagion_emotion.valence *= 0.8; // Some dampening
+        contagion_emotion.arousal *= 0.7; // Arousal dampens more
+        contagion_emotion
+    }
+}
+
+pub struct EmotionSpreadPrediction {
+    source: EntityKey,
+    source_emotion: EmotionalTag,
+    predicted_spreads: Vec<(EntityKey, f32, EmotionalTag)>,
+    total_affected: usize,
+    average_intensity: f32,
+}
+
+// Performance metrics:
+// - Emotion spread prediction accuracy: >85% (validated on labeled dataset)
+// - Processing time: <3ms per spread calculation
+// - Test dataset: 1000+ labeled emotion spread examples
+```
+
+### Task 21.5: Self-Referential Processing
+**File**: `src/emotional/self_referential.rs` (new file)
+```rust
+use crate::storage::PersistentMMapStorage;
+use crate::monitoring::PerformanceMonitor;
+use crate::cognitive::SelfModel;
+use std::sync::Arc;
+use dashmap::DashMap;
+
+pub struct SelfReferentialProcessing {
+    self_relevance_model: Arc<dyn crate::models::ModelInterface>, // 25M params
+    self_schema: SelfSchema,
+    self_concept_matcher: SelfConceptMatcher,
+    autobiographical_linker: AutobiographicalLinker,
+    // Integration with existing systems
+    self_model: Arc<SelfModel>,
+    storage: Arc<PersistentMMapStorage>,
+    monitor: Arc<PerformanceMonitor>,
+    device: Device,
+    // Performance optimization
+    relevance_cache: DashMap<ContentHash, SelfRelevanceScore>,
+}
+
+impl SelfReferentialProcessing {
+    pub fn new(
+        self_model: Arc<SelfModel>,
+        storage: Arc<PersistentMMapStorage>,
+        monitor: Arc<PerformanceMonitor>
+    ) -> Result<Self, crate::error::GraphError> {
+        let device = Device::Cpu;
+        
+        let self_relevance_model = crate::models::load_model(
+            "src/models/pretrained/self_relevance_classifier_int8.safetensors",
+            ModelType::SelfRelevanceClassifier,
+            &device,
+        )?;
+        
+        Ok(Self {
+            self_relevance_model,
+            self_schema: SelfSchema::load_from_storage(&storage)?,
+            self_concept_matcher: SelfConceptMatcher::new(),
+            autobiographical_linker: AutobiographicalLinker::new(),
+            self_model,
+            storage,
+            monitor,
+            device,
+            relevance_cache: DashMap::with_capacity(5000),
+        })
+    }
+    
+    pub async fn classify_self_relevance(&self,
+        content: &str,
+        context: &ProcessingContext
+    ) -> Result<SelfRelevanceClassification, crate::error::GraphError> {
+        let _timer = self.monitor.start_timer("self_relevance_classification");
+        
+        // Check cache first
+        let content_hash = hash_content(content);
+        if let Some(cached) = self.relevance_cache.get(&content_hash) {
+            return Ok(cached.classification.clone());
+        }
+        
+        // Extract features for AI model
+        let features = self.extract_self_relevance_features(content, context);
+        
+        // Get AI prediction
+        let ai_relevance = self.self_relevance_model.classify(&features).await?;
+        
+        // Rule-based checks for robustness
+        let rule_based_relevance = self.check_self_references(content);
+        
+        // Combine predictions
+        let is_self_relevant = ai_relevance.confidence > 0.5 || rule_based_relevance;
+        let confidence = if rule_based_relevance {
+            ai_relevance.confidence.max(0.9) // High confidence for explicit self-references
+        } else {
+            ai_relevance.confidence
+        };
+        
+        let classification = SelfRelevanceClassification {
+            is_self_relevant,
+            confidence,
+            relevance_type: self.determine_relevance_type(content, &features),
+            self_aspects_activated: self.identify_activated_aspects(content),
+            processing_depth: if is_self_relevant { 
+                ProcessingDepth::Deep 
+            } else { 
+                ProcessingDepth::Shallow 
+            },
+        };
+        
+        // Cache the result
+        self.relevance_cache.insert(
+            content_hash,
+            SelfRelevanceScore {
+                classification: classification.clone(),
+                timestamp: std::time::Instant::now(),
+            }
+        );
+        
+        self.monitor.record_metric("self_relevance_classifications", 1.0);
+        
+        Ok(classification)
+    }
+    
+    fn check_self_references(&self, content: &str) -> bool {
+        // Check for first-person pronouns and self-referential language
+        let self_pronouns = ["I", "me", "my", "myself", "mine"];
+        let content_lower = content.to_lowercase();
+        
+        self_pronouns.iter().any(|pronoun| {
+            content_lower.contains(&pronoun.to_lowercase())
+        })
+    }
+    
+    fn extract_self_relevance_features(&self,
+        content: &str,
+        context: &ProcessingContext
+    ) -> SelfRelevanceFeatures {
+        SelfRelevanceFeatures {
+            has_first_person: self.check_self_references(content),
+            semantic_similarity_to_self: self.self_concept_matcher.similarity(content),
+            autobiographical_overlap: self.autobiographical_linker.overlap_score(content),
+            trait_relevance: self.self_schema.trait_relevance(content),
+            goal_relevance: self.self_model.goal_relevance(content),
+            value_alignment: self.self_model.value_alignment(content),
+            context_features: context.to_features(),
+        }
+    }
+    
+    pub fn enhance_memory_with_self_reference(&mut self,
+        memory: &mut Memory,
+        self_relevance: &SelfRelevanceClassification
+    ) {
+        if self_relevance.is_self_relevant {
+            // Self-referential memories get enhanced encoding
+            memory.encoding_strength *= 1.5;
+            memory.consolidation_priority += 0.3;
+            memory.retrieval_probability *= 1.4;
+            
+            // Add self-reference metadata
+            memory.add_metadata("self_relevant", true);
+            memory.add_metadata("self_aspects", &self_relevance.self_aspects_activated);
+        }
+    }
+}
+
+pub struct SelfRelevanceClassification {
+    pub is_self_relevant: bool,
+    pub confidence: f32,
+    pub relevance_type: SelfRelevanceType,
+    pub self_aspects_activated: Vec<SelfAspect>,
+    pub processing_depth: ProcessingDepth,
+}
+
+// Performance metrics:
+// - Self-relevance classification accuracy: >88% (binary classification)
+// - Processing time: <2ms per classification
+// - Test dataset: 5000+ labeled self-relevant/non-relevant items
+// - Example: "You are intelligent" -> Self-relevant (True) with 88%+ accuracy
+```
+
 ## Week 22: Metacognitive Monitoring
 
 ### Task 22.1: Metamemory System
@@ -774,6 +1056,8 @@ impl ConfidenceJudgments {
                 ai_contribution: ai_confidence,
             },
             calibration_quality: self.calibration_history.get_calibration_score(),
+            expected_calibration_error: self.calibration_history.calculate_ece(),
+            brier_score: self.calibration_history.calculate_brier_score(),
         };
         
         self.monitor.record_metric("confidence_judgments_made", 1.0);
@@ -822,6 +1106,51 @@ impl ConfidenceJudgments {
         let calibration_error = judgment.confidence - actual_accuracy;
         self.overconfidence_bias *= 0.9; // Slow learning
         self.overconfidence_bias += calibration_error * 0.1;
+        
+        // Update calibration metrics
+        self.monitor.record_metric("confidence_ece", self.calibration_history.calculate_ece());
+        self.monitor.record_metric("confidence_brier_score", self.calibration_history.calculate_brier_score());
+    }
+}
+
+impl CalibrationHistory {
+    pub fn calculate_ece(&self) -> f32 {
+        // Expected Calibration Error calculation
+        // Group predictions into bins and calculate |accuracy - confidence| for each bin
+        let mut bins: Vec<Vec<(f32, f32)>> = vec![vec![]; 10]; // 10 bins
+        
+        for (confidence, accuracy) in &self.judgments {
+            let bin_idx = (confidence * 10.0).min(9.0) as usize;
+            bins[bin_idx].push((*confidence, *accuracy));
+        }
+        
+        let mut ece = 0.0;
+        let total_samples = self.judgments.len() as f32;
+        
+        for bin in bins {
+            if !bin.is_empty() {
+                let bin_size = bin.len() as f32;
+                let avg_confidence: f32 = bin.iter().map(|(c, _)| c).sum::<f32>() / bin_size;
+                let avg_accuracy: f32 = bin.iter().map(|(_, a)| a).sum::<f32>() / bin_size;
+                let bin_weight = bin_size / total_samples;
+                ece += bin_weight * (avg_confidence - avg_accuracy).abs();
+            }
+        }
+        
+        ece
+    }
+    
+    pub fn calculate_brier_score(&self) -> f32 {
+        // Brier Score calculation: mean((confidence - accuracy)^2)
+        if self.judgments.is_empty() {
+            return 0.0;
+        }
+        
+        let sum_squared_errors: f32 = self.judgments.iter()
+            .map(|(confidence, accuracy)| (confidence - accuracy).powi(2))
+            .sum();
+        
+        sum_squared_errors / self.judgments.len() as f32
     }
 }
 ```
@@ -2681,8 +3010,17 @@ impl EmotionalMetacognitivePerformanceSummary {
 ## Success Criteria
 - [ ] Emotion tagging: <5ms with AI models using existing infrastructure
 - [ ] Mood congruent retrieval: <10ms for 1000 entities using batch processing
+- [ ] Emotional contagion: <3ms processing, >85% emotion spread prediction accuracy
+  - Test criteria: Using labeled emotion spread dataset with 1000+ examples
+  - Example: Input: User A shows happiness → Output: Predict User B emotion change with 85% accuracy
+- [ ] Self-referential processing: <2ms processing, >88% self-relevance classification accuracy
+  - Test criteria: Binary classification on 5000+ labeled self-relevant/non-relevant items
+  - Example: Input: "You are intelligent" → Output: Self-relevant (True) with 88% accuracy
 - [ ] FOK prediction accuracy: >85% with neural model
-- [ ] Confidence calibration: <3ms per judgment
+- [ ] Confidence calibration: <3ms per judgment, ECE <0.05, Brier score <0.15
+  - Expected Calibration Error (ECE) <0.05
+  - Brier score <0.15 on confidence predictions
+  - Example: When model says 80% confident, it should be correct 80±5% of the time
 - [ ] Strategy selection: <4ms with AI recommendation
 - [ ] Importance scoring: <2ms with caching using existing patterns
 - [ ] Batch processing: 1000+ entities/second using existing BatchProcessor

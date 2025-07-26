@@ -450,3 +450,26 @@ pub fn build_test_brain_graph() -> BrainEnhancedKnowledgeGraph {
     BrainEnhancedKnowledgeGraph::new_for_test()
         .expect("Failed to create test brain graph")
 }
+
+/// Create a test cognitive entity extractor for testing
+pub async fn build_test_cognitive_entity_extractor() -> crate::core::entity_extractor::CognitiveEntityExtractor {
+    let orchestrator = Arc::new(build_test_cognitive_orchestrator().await);
+    let attention_manager = Arc::new(build_test_attention_manager().await);
+    let working_memory = Arc::new(build_test_working_memory().await);
+    let metrics_collector = Arc::new(build_test_brain_metrics_collector().await);
+    let performance_monitor = Arc::new(build_test_performance_monitor().await);
+    
+    crate::core::entity_extractor::CognitiveEntityExtractor::new(
+        orchestrator,
+        attention_manager,
+        working_memory,
+        metrics_collector,
+        performance_monitor,
+    )
+}
+
+/// Create a test neural server for testing  
+pub async fn build_test_neural_server_cognitive() -> crate::neural::neural_server::NeuralProcessingServer {
+    crate::neural::neural_server::NeuralProcessingServer::new("http://localhost:8001".to_string()).await
+        .expect("Failed to create test neural server")
+}

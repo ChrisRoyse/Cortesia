@@ -922,8 +922,8 @@ impl CognitiveRelationshipExtractor {
                 priority: TransactionPriority::High,
                 isolation_level: IsolationLevel::ReadCommitted,
                 consistency_mode: ConsistencyMode::Strong,
-                timeout_seconds: 30,
-                application_context: Some("relationship_extraction".to_string()),
+                initiator: Some("relationship_extraction".to_string()),
+                description: Some("Extracting relationships with cognitive enhancement".to_string()),
             };
             
             Some(coordinator.begin_transaction(
@@ -2006,7 +2006,7 @@ impl CognitiveRelationshipExtractor {
         all_relationships.extend(local_relationships);
         
         // Deduplicate and merge
-        Ok(self.deduplicate_relationships(all_relationships))
+        Ok(self.native_relation_model.deduplicate_relationships(all_relationships))
     }
     
     /// Extract relationships using local methods (non-federated)
@@ -2062,14 +2062,13 @@ impl CognitiveRelationshipExtractor {
                         "context": &rel.source_text,
                     }),
                     parameters: NeuralParameters {
-                        temperature: Some(0.3),
-                        top_k: Some(5),
-                        max_length: Some(10),
+                        temperature: 0.3,
+                        top_k: Some(10),
                         ..Default::default()
                     },
                 };
                 
-                match neural_server.process(neural_request).await {
+                match neural_server.process_request(neural_request).await {
                     Ok(response) => {
                         let predicted_type = self.parse_neural_relationship_type(&response);
                         let confidence = self.extract_neural_confidence(&response);
@@ -2282,10 +2281,17 @@ impl CognitiveRelationshipExtractor {
             });
             
             // Store in working memory with attention weight
-            self.working_memory.store_with_attention(
-                &memory_key,
-                memory_value,
+            let memory_content = crate::cognitive::working_memory::MemoryContent::Relationship(
+                rel.subject.clone(),
+                rel.object.clone(),
+                rel.confidence,
+            );
+            
+            self.working_memory.store_in_working_memory_with_attention(
+                memory_content,
                 rel.neural_salience,
+                crate::cognitive::working_memory::BufferType::Visuospatial,
+                rel.attention_weights.get(0).copied().unwrap_or(1.0),
             ).await?;
         }
         

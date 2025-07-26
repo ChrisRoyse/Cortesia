@@ -1,0 +1,1 @@
+cargo check 2>&1 | Out-String | Select-String "error\[E" | Select -First 20

@@ -74,7 +74,7 @@ impl CognitiveEntity {
 }
 
 /// Extraction model types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ExtractionModel {
     CognitiveDistilBERT,
     CognitiveNativeBERT,
@@ -2340,7 +2340,7 @@ mod tests {
 
     #[test]
     fn test_extract_person_entities() {
-        let extractor = EntityExtractor::new();
+        let extractor = EntityExtractor::default();
         let text = "Albert Einstein developed the Theory of Relativity in 1905.";
         let entities = extractor.extract_entities(text);
 
@@ -2445,7 +2445,7 @@ mod tests {
 
     #[test]
     fn test_extract_organization_entities() {
-        let extractor = EntityExtractor::new();
+        let extractor = EntityExtractor::default();
         let text = "Microsoft Corporation announced a partnership with OpenAI Inc.";
         let entities = extractor.extract_entities(text);
 
@@ -2455,7 +2455,7 @@ mod tests {
 
     #[test]
     fn test_extract_quoted_entities() {
-        let extractor = EntityExtractor::new();
+        let extractor = EntityExtractor::default();
         let text = "The concept of 'quantum entanglement' is fascinating.";
         let entities = extractor.extract_entities(text);
 
@@ -2464,7 +2464,7 @@ mod tests {
 
     #[test]
     fn test_extract_time_entities() {
-        let extractor = EntityExtractor::new();
+        let extractor = EntityExtractor::default();
         let text = "The meeting is scheduled for January 15, 2024.";
         let entities = extractor.extract_entities(text);
 
@@ -2474,7 +2474,7 @@ mod tests {
 
     #[test]
     fn test_no_overlapping_entities() {
-        let extractor = EntityExtractor::new();
+        let extractor = EntityExtractor::default();
         let text = "New York City is in New York State.";
         let entities = extractor.extract_entities(text);
 

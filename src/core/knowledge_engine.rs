@@ -625,6 +625,7 @@ mod tests {
             object: "chocolate".to_string(),
             confidence: 0.9,
             source: Some("test".to_string()),
+            enhanced_metadata: None,
         }
     }
 
@@ -982,6 +983,7 @@ mod tests {
             object: "chocolate".to_string(),
             confidence: 0.9,
             source: Some("test".to_string()),
+            enhanced_metadata: None,
         };
         
         let triple2 = Triple {
@@ -990,6 +992,7 @@ mod tests {
             object: "sweet".to_string(),
             confidence: 0.8,
             source: Some("test".to_string()),
+            enhanced_metadata: None,
         };
         
         engine.store_triple(triple1, None).unwrap();

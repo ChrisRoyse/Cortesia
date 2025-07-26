@@ -363,7 +363,7 @@ impl CognitiveQuestionAnsweringEngine {
     
     /// Get cached answer if available and not expired
     async fn get_cached_answer(&self, question: &str) -> Option<CognitiveAnswer> {
-        if let Some(entry) = self.answer_cache.get_mut(question) {
+        if let Some(mut entry) = self.answer_cache.get_mut(question) {
             let age = entry.timestamp.elapsed().as_secs();
             if age < self.cache_ttl_seconds {
                 entry.access_count += 1;
