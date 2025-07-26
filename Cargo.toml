@@ -33,6 +33,14 @@ path = "src/bin/llmkg_mcp_server.rs"
 name = "validate_accuracy"
 path = "tests/corpus/validate_accuracy.rs"
 
+[[bin]]
+name = "federation_demo"
+path = "examples/federation_demo.rs"
+
+[[bin]]
+name = "test_federation_performance"
+path = "src/bin/test_federation_performance.rs"
+
 # [[bin]]
 # name = "test_4_tools_basic"
 # path = "test_4_tools_basic.rs"
@@ -99,17 +107,19 @@ num-traits = "0.2"
 nalgebra = { version = "0.33", optional = true }
 ordered-float = "4.2"
 
-# AI/ML dependencies - Native Rust ML frameworks
-# Temporarily disabled Candle due to rand version conflicts
-# candle-core = { version = "0.3" }
-# candle-nn = "0.3"
-# candle-transformers = "0.3"
-# tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
+# AI/ML dependencies - Real neural inference frameworks
+candle-core = { version = "0.8.0" }
+candle-nn = { version = "0.8.0" }
+candle-transformers = { version = "0.8.0" }
+tokenizers = { version = "0.20.0", default-features = false, features = ["onig"] }
 ndarray = { version = "0.15", features = ["rayon"] }
 ndarray-rand = "0.14"
-# safetensors = "0.4"
-# hf-hub = { version = "0.3", features = ["tokio"] }
-# indicatif = "0.17"
+safetensors = { version = "0.4" }
+hf-hub = { version = "0.3", features = ["tokio"] }
+indicatif = { version = "0.17" }
+# For downloading models
+flate2 = "1.0"
+tokio-util = { version = "0.7", features = ["codec"] }
 
 web-sys = { version = "0.3", features = ["console", "Performance", "WorkerGlobalScope"], optional = true }
 
@@ -125,14 +135,21 @@ getrandom = { version = "0.2", features = ["js"], optional = true }
 sha2 = "0.10"
 tower = "0.4"
 num_cpus = "1.16"
+# For real neural model inference
+memmap2 = "0.9"
+byteorder = "1.5"
 
 # Code analysis and monitoring dependencies
 syn = { version = "2.0", features = ["full", "visit"] }
 walkdir = "2.4"
 notify = "6.1"
 
+# Database dependencies for federation
+rusqlite = { version = "0.30", features = ["bundled"] }
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1", "with-uuid-1"] }
+hex = "0.4"
+
 # Test infrastructure dependencies (optional)
-rusqlite = { version = "0.30", features = ["bundled"], optional = true }
 axum = { version = "0.7", optional = true }
 tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
 handlebars = { version = "5.0", optional = true }
@@ -164,10 +181,11 @@ opt-level = "s"
 [features]
 default = ["native"]
 wasm = ["wasm-bindgen", "wasm-bindgen-futures", "console_error_panic_hook", "wee_alloc", "js-sys", "web-sys", "getrandom"]
-native = ["nalgebra", "rusqlite"]
+native = ["nalgebra"]
 simd = []
 cuda = []
 mcp = []
+federation = []
 
 # Integration test targets for cognitive patterns
 [[test]]

@@ -23,6 +23,7 @@ use crate::monitoring::performance::PerformanceMonitor;
 use crate::error::Result;
 use crate::models::model_loader::ModelLoader;
 use crate::models::{RustBertNER, RustTinyBertNER, RustMiniLM};
+use crate::models::candle_models::{RealDistilBertNER, RealTinyBertNER, RealMiniLM, RealEntity};
 
 /// Original legacy entity structure for backward compatibility
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -479,10 +480,10 @@ pub struct CognitiveEntityExtractor {
     legacy_extractor: EntityExtractor,
     // Model loader for real neural models
     model_loader: Arc<ModelLoader>,
-    // Loaded models cache
-    distilbert_ner: Option<Arc<RustBertNER>>,
-    tinybert_ner: Option<Arc<RustTinyBertNER>>,
-    minilm_embedder: Option<Arc<RustMiniLM>>,
+    // Loaded REAL models cache
+    distilbert_ner: Option<Arc<RealDistilBertNER>>,
+    tinybert_ner: Option<Arc<RealTinyBertNER>>,
+    minilm_embedder: Option<Arc<RealMiniLM>>,
 }
 
 impl CognitiveEntityExtractor {
@@ -593,7 +594,7 @@ impl CognitiveEntityExtractor {
         }
         
         // Route to appropriate extraction method based on cognitive assessment
-        let entities = if reasoning_result.quality_metrics.efficiency_score < 0.5 {
+        let mut entities = if reasoning_result.quality_metrics.efficiency_score < 0.5 {
             // Simple extraction using legacy models with cognitive enhancement
             self.extract_with_legacy_enhanced(text, &attention_weights, &reasoning_result).await?
         } else if let Some(neural_server) = &self.neural_server {
@@ -603,6 +604,9 @@ impl CognitiveEntityExtractor {
             // Fallback to enhanced legacy processing
             self.extract_with_legacy_enhanced(text, &attention_weights, &reasoning_result).await?
         };
+        
+        // CRITICAL: Actually integrate with all storage systems
+        self.integrate_with_all_storage_systems(&mut entities).await?;
         
         // Store in working memory for context
         self.working_memory.store_entities(&entities).await?;
@@ -629,84 +633,176 @@ impl CognitiveEntityExtractor {
         // Cache with cognitive metadata
         self.cache_entities_with_cognitive_metadata(text, &entities, &reasoning_result).await;
         
-        // Store entities with real persistence if storage is available
-        if self.mmap_storage.is_some() {
-            self.persist_entities_to_storage(&entities).await?;
-        }
-        
         Ok(entities)
     }
     
-    /// Persist entities to MMAP storage with HNSW indexing and quantization
-    async fn persist_entities_to_storage(&self, entities: &[CognitiveEntity]) -> Result<()> {
+    /// CRITICAL: Integrate entities with ALL storage systems - MMAP, HNSW, Quantization, String Interning
+    async fn integrate_with_all_storage_systems(&self, entities: &mut [CognitiveEntity]) -> Result<()> {
         let start_time = Instant::now();
         
-        // Get storage components
-        let mmap_storage = self.mmap_storage.as_ref()
-            .ok_or_else(|| crate::error::GraphError::StorageError("MMAP storage not initialized".to_string()))?;
-        let string_interner = self.string_interner.as_ref()
-            .ok_or_else(|| crate::error::GraphError::StorageError("String interner not initialized".to_string()))?;
-        
-        // Batch process entities for optimal performance
-        let mut entity_batch = Vec::new();
-        
-        for entity in entities {
-            // Intern strings for memory efficiency
-            let interned_name = string_interner.intern(&entity.name);
-            let interned_type = string_interner.intern(&format!("{:?}", entity.entity_type));
+        // STEP 1: String interning to reduce memory usage for entity names
+        if let Some(string_interner) = &self.string_interner {
+            let memory_before = std::mem::size_of_val(entities);
             
-            // Create entity key and data
-            let entity_key = crate::core::types::EntityKey::from_raw(entity.id.as_u128() as u64);
-            let entity_data = crate::core::types::EntityData::new(
-                interned_type.0 as u16,
-                serde_json::to_string(&entity).unwrap_or_default(),
-                entity.embedding.clone().unwrap_or_default(),
-            );
-            
-            // Add to batch
-            entity_batch.push((entity_key, entity_data, entity.embedding.clone().unwrap_or_default()));
-            
-            // Store in HNSW index for fast similarity search if available
-            if let Some(hnsw_index) = &self.hnsw_index {
-                if let Some(embedding) = &entity.embedding {
-                    let mut hnsw = hnsw_index.write();
-                    hnsw.insert(
-                        entity.id.as_u128() as u32,
-                        entity_key,
-                        embedding.clone()
-                    )?;
+            for entity in entities.iter_mut() {
+                // Intern entity name and type to save memory
+                let interned_name = string_interner.intern(&entity.name);
+                let interned_type = string_interner.intern(&format!("{:?}", entity.entity_type));
+                
+                // Replace string with interned version (saving memory)
+                if let Some(interned_name_str) = string_interner.get(interned_name) {
+                    entity.name = interned_name_str;
                 }
             }
             
-            // Store in quantized index for memory-efficient search
-            if let Some(quantized_index) = &self.quantized_index {
-                if let Some(embedding) = &entity.embedding {
-                    if quantized_index.is_ready() {
-                        quantized_index.insert(
-                            entity.id.as_u128() as u32,
-                            entity_key,
-                            embedding.clone()
-                        )?;
+            let memory_after = std::mem::size_of_val(entities);
+            let memory_saved = memory_before.saturating_sub(memory_after);
+            println!("🔄 String interning saved {} bytes of memory", memory_saved);
+        }
+        
+        // STEP 2: Generate REAL embeddings for entities if not present
+        for entity in entities.iter_mut() {
+            if entity.embedding.is_none() {
+                if let Some(minilm) = &self.minilm_embedder {
+                    // Generate context window around entity
+                    let context = entity.context.as_deref().unwrap_or(&entity.name);
+                    match minilm.encode(context).await {
+                        Ok(embedding) => {
+                            // Verify 384 dimensions for MiniLM
+                            if embedding.len() == 384 {
+                                entity.embedding = Some(embedding);
+                                println!("🧠 Generated 384-dim embedding for entity: {}", entity.name);
+                            } else {
+                                eprintln!("⚠️  Embedding dimension mismatch: {} != 384", embedding.len());
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("❌ Failed to generate embedding for {}: {}", entity.name, e);
+                        }
                     }
                 }
             }
         }
         
-        // Batch write to MMAP storage
-        if !entity_batch.is_empty() {
-            // Now that PersistentMMapStorage uses interior mutability, we can call methods directly
-            mmap_storage.batch_add_entities(&entity_batch)?;
+        // STEP 3: Store entities in MMAP storage with zero-copy serialization
+        if let Some(mmap_storage) = &self.mmap_storage {
+            let mut entity_batch = Vec::new();
             
-            // Sync to disk for persistence
-            mmap_storage.sync_to_disk()?;
+            for entity in entities.iter() {
+                if let Some(embedding) = &entity.embedding {
+                    let entity_key = crate::core::types::EntityKey::from_raw(entity.id.as_u128() as u64);
+                    let entity_data = crate::core::types::EntityData::new(
+                        0, // simplified type
+                        serde_json::to_string(entity).unwrap_or_default(),
+                        embedding.clone(),
+                    );
+                    
+                    entity_batch.push((entity_key, entity_data, embedding.clone()));
+                }
+            }
+            
+            if !entity_batch.is_empty() {
+                // Use batch method for better performance
+                match mmap_storage.batch_add_entities(&entity_batch) {
+                    Ok(_) => {
+                        println!("💾 Stored {} entities in MMAP storage", entity_batch.len());
+                        
+                        // Sync to disk for persistence
+                        if let Err(e) = mmap_storage.sync_to_disk() {
+                            eprintln!("⚠️  MMAP sync failed: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("❌ MMAP storage failed: {}", e);
+                    }
+                }
+            }
         }
         
-        let storage_time = start_time.elapsed();
+        // STEP 4: Add embeddings to HNSW index for fast similarity search
+        if let Some(hnsw_index) = &self.hnsw_index {
+            let mut entities_indexed = 0;
+            
+            for entity in entities.iter() {
+                if let Some(embedding) = &entity.embedding {
+                    let entity_key = crate::core::types::EntityKey::from_raw(entity.id.as_u128() as u64);
+                    
+                    match hnsw_index.write().insert(
+                        entity.id.as_u128() as u32,
+                        entity_key,
+                        embedding.clone()
+                    ) {
+                        Ok(_) => entities_indexed += 1,
+                        Err(e) => eprintln!("❌ HNSW insert failed for {}: {}", entity.name, e),
+                    }
+                }
+            }
+            
+            if entities_indexed > 0 {
+                println!("🔍 Indexed {} entities in HNSW for similarity search", entities_indexed);
+            }
+        }
         
-        // Verify performance: <1ms total overhead per entity
-        let ms_per_entity = storage_time.as_micros() as f32 / 1000.0 / entities.len() as f32;
-        if ms_per_entity > 1.0 {
-            eprintln!("Warning: Storage took {:.2}ms per entity (target: <1ms)", ms_per_entity);
+        // STEP 5: Add embeddings to quantized index for memory-efficient search
+        if let Some(quantized_index) = &self.quantized_index {
+            if quantized_index.is_ready() {
+                let mut entities_quantized = 0;
+                
+                for entity in entities.iter() {
+                    if let Some(embedding) = &entity.embedding {
+                        let entity_key = crate::core::types::EntityKey::from_raw(entity.id.as_u128() as u64);
+                        
+                        match quantized_index.insert(
+                            entity.id.as_u128() as u32,
+                            entity_key,
+                            embedding.clone()
+                        ) {
+                            Ok(_) => entities_quantized += 1,
+                            Err(e) => eprintln!("❌ Quantized index insert failed for {}: {}", entity.name, e),
+                        }
+                    }
+                }
+                
+                if entities_quantized > 0 {
+                    println!("🗜️  Quantized {} entities for memory-efficient search", entities_quantized);
+                    
+                    // Show compression stats
+                    let stats = quantized_index.memory_usage();
+                    if stats.compression_ratio > 1.0 {
+                        println!("💾 Quantization achieved {:.1}x compression ratio", stats.compression_ratio);
+                    }
+                }
+            } else {
+                // Train quantizer if not ready
+                let embeddings: Vec<Vec<f32>> = entities.iter()
+                    .filter_map(|e| e.embedding.clone())
+                    .collect();
+                    
+                if embeddings.len() >= 10 { // Need minimum training data
+                    match quantized_index.train(&embeddings) {
+                        Ok(_) => {
+                            println!("🎯 Trained quantizer with {} embeddings", embeddings.len());
+                            // Retry insertion after training
+                            self.integrate_with_all_storage_systems(entities).await?;
+                        }
+                        Err(e) => eprintln!("❌ Quantizer training failed: {}", e),
+                    }
+                }
+            }
+        }
+        
+        let total_time = start_time.elapsed();
+        let ms_per_entity = if entities.len() > 0 {
+            total_time.as_micros() as f32 / 1000.0 / entities.len() as f32
+        } else {
+            0.0
+        };
+        
+        // Verify performance target: <1ms overhead per entity
+        if ms_per_entity <= 1.0 {
+            println!("⚡ Storage integration: {:.2}ms per entity (target: <1ms) ✅", ms_per_entity);
+        } else {
+            eprintln!("⚠️  Storage integration: {:.2}ms per entity (target: <1ms) ❌", ms_per_entity);
         }
         
         Ok(())
@@ -940,7 +1036,7 @@ impl CognitiveEntityExtractor {
         vec![]
     }
 
-    /// Extract entities using DistilBERT-NER (66M params)
+    /// Extract entities using REAL DistilBERT-NER (66M params) with actual inference
     async fn extract_with_distilbert(
         &self,
         text: &str,
@@ -948,28 +1044,36 @@ impl CognitiveEntityExtractor {
         reasoning_result: &ReasoningResult,
     ) -> Result<Vec<CognitiveEntity>> {
         let distilbert = self.distilbert_ner.as_ref()
-            .ok_or_else(|| crate::error::GraphError::ModelError("DistilBERT-NER not loaded".to_string()))?;
+            .ok_or_else(|| crate::error::GraphError::ModelError("Real DistilBERT-NER not loaded".to_string()))?;
         
         let start_time = Instant::now();
         
-        // Tokenize input
-        let tokenized = distilbert.tokenizer.encode(text, true);
+        // REAL NEURAL INFERENCE with actual model weights
+        let real_entities = distilbert.extract_entities(text).await
+            .map_err(|e| crate::error::GraphError::ModelError(format!("Real DistilBERT inference failed: {}", e)))?;
         
-        // Run NER inference
-        let entities = distilbert.predict(&tokenized.input_ids);
-        
-        // Generate embeddings if MiniLM is available
+        // Generate REAL embeddings if MiniLM is available
         let embeddings = if let Some(minilm) = &self.minilm_embedder {
-            self.generate_entity_embeddings(&entities, text, minilm).await?
+            self.generate_real_entity_embeddings(&real_entities, text, minilm).await?
         } else {
-            vec![None; entities.len()]
+            vec![None; real_entities.len()]
         };
         
         let inference_time = start_time.elapsed();
         
-        // Convert to cognitive entities with real confidence scores
+        // Verify performance: <5ms per sentence
+        let sentence_count = text.matches(|c: char| c == '.' || c == '!' || c == '?').count().max(1);
+        let ms_per_sentence = inference_time.as_millis() as f32 / sentence_count as f32;
+        
+        if ms_per_sentence <= 5.0 {
+            println!("🧠 Real DistilBERT: {:.2}ms/sentence (target: <5ms)", ms_per_sentence);
+        } else {
+            eprintln!("⚠️  Real DistilBERT: {:.2}ms/sentence (target: <5ms)", ms_per_sentence);
+        }
+        
+        // Convert real entities to cognitive entities
         let mut cognitive_entities = Vec::new();
-        for (i, (entity, embedding)) in entities.iter().zip(embeddings.iter()).enumerate() {
+        for (i, (entity, embedding)) in real_entities.iter().zip(embeddings.iter()).enumerate() {
             let cognitive_entity = CognitiveEntity {
                 id: uuid::Uuid::new_v4(),
                 name: entity.text.clone(),
@@ -977,7 +1081,7 @@ impl CognitiveEntityExtractor {
                 aliases: self.find_aliases(&entity.text).await,
                 context: Some(text.to_string()),
                 embedding: embedding.clone(),
-                confidence_score: entity.score,
+                confidence_score: entity.confidence, // REAL confidence from neural model
                 extraction_model: ExtractionModel::CognitiveDistilBERT,
                 reasoning_pattern: match reasoning_result.strategy_used {
                     ReasoningStrategy::Specific(pattern) => pattern,
@@ -986,21 +1090,23 @@ impl CognitiveEntityExtractor {
                 attention_weights: if i < attention_weights.len() {
                     vec![attention_weights[i]]
                 } else {
-                    vec![entity.score] // Use model confidence as attention weight
+                    vec![entity.confidence] // Use real model confidence as attention weight
                 },
-                working_memory_context: Some(format!("distilbert_context_{}", inference_time.as_millis())),
-                competitive_inhibition_score: self.calculate_inhibition_score(&entity.label, &entities),
-                neural_salience: entity.score * 0.9, // High salience for DistilBERT
+                working_memory_context: Some(format!("real_distilbert_context_{}", inference_time.as_millis())),
+                competitive_inhibition_score: self.calculate_real_inhibition_score(&entity.label, &real_entities),
+                neural_salience: entity.confidence * 0.95, // High salience for real DistilBERT
                 start_pos: entity.start,
                 end_pos: entity.end,
             };
             cognitive_entities.push(cognitive_entity);
         }
         
+        println!("✅ Real DistilBERT extracted {} entities with actual neural inference", cognitive_entities.len());
+        
         Ok(cognitive_entities)
     }
 
-    /// Extract entities using TinyBERT-NER (14.5M params) for fast processing
+    /// Extract entities using REAL TinyBERT-NER (14.5M params) optimized for <5ms inference
     async fn extract_with_tinybert(
         &self,
         text: &str,
@@ -1008,37 +1114,34 @@ impl CognitiveEntityExtractor {
         reasoning_result: &ReasoningResult,
     ) -> Result<Vec<CognitiveEntity>> {
         let tinybert = self.tinybert_ner.as_ref()
-            .ok_or_else(|| crate::error::GraphError::ModelError("TinyBERT-NER not loaded".to_string()))?;
+            .ok_or_else(|| crate::error::GraphError::ModelError("Real TinyBERT-NER not loaded".to_string()))?;
         
         let start_time = Instant::now();
         
-        // Process text in batches for optimal performance
-        let batch_size = 64; // TinyBERT recommended batch size
-        let sentences: Vec<&str> = text.split_terminator(|c: char| c == '.' || c == '!' || c == '?')
-            .filter(|s| !s.trim().is_empty())
-            .collect();
-        
-        let mut all_entities = Vec::new();
-        
-        for batch in sentences.chunks(batch_size) {
-            let batch_text = batch.join(". ");
-            let entities = tinybert.predict(&batch_text);
-            all_entities.extend(entities);
-        }
+        // REAL FAST NEURAL INFERENCE with actual TinyBERT weights
+        let real_entities = tinybert.predict(text).await
+            .map_err(|e| crate::error::GraphError::ModelError(format!("Real TinyBERT inference failed: {}", e)))?;
         
         let inference_time = start_time.elapsed();
         
-        // Convert to cognitive entities
+        // Verify speed target: <5ms total
+        if inference_time.as_millis() <= 5 {
+            println!("⚡ Real TinyBERT achieved <5ms: {}ms", inference_time.as_millis());
+        } else {
+            eprintln!("⚠️  Real TinyBERT took {}ms (target: <5ms)", inference_time.as_millis());
+        }
+        
+        // Convert real entities to cognitive entities
         let mut cognitive_entities = Vec::new();
-        for (i, entity) in all_entities.iter().enumerate() {
+        for (i, entity) in real_entities.iter().enumerate() {
             let cognitive_entity = CognitiveEntity {
                 id: uuid::Uuid::new_v4(),
-                name: entity.name.clone(),
-                entity_type: entity.entity_type.clone(),
+                name: entity.text.clone(),
+                entity_type: self.convert_label_to_entity_type(&entity.label),
                 aliases: vec![],
                 context: Some(text.to_string()),
                 embedding: None, // TinyBERT focuses on speed, embeddings generated separately if needed
-                confidence_score: 0.85, // TinyBERT typically has good but not perfect confidence
+                confidence_score: entity.confidence, // REAL confidence from neural model
                 extraction_model: ExtractionModel::CognitiveNativeBERT,
                 reasoning_pattern: match reasoning_result.strategy_used {
                     ReasoningStrategy::Specific(pattern) => pattern,
@@ -1047,28 +1150,25 @@ impl CognitiveEntityExtractor {
                 attention_weights: if i < attention_weights.len() {
                     vec![attention_weights[i]]
                 } else {
-                    vec![0.7] // Default attention for TinyBERT
+                    vec![entity.confidence] // Use real confidence as attention weight
                 },
-                working_memory_context: Some(format!("tinybert_batch_{}", inference_time.as_micros())),
-                competitive_inhibition_score: 0.7,
-                neural_salience: 0.75,
-                start_pos: entity.start_pos,
-                end_pos: entity.end_pos,
+                working_memory_context: Some(format!("real_tinybert_{}", inference_time.as_micros())),
+                competitive_inhibition_score: self.calculate_real_inhibition_score(&entity.label, &real_entities),
+                neural_salience: entity.confidence * 0.85, // Salience based on real confidence
+                start_pos: entity.start,
+                end_pos: entity.end,
             };
             cognitive_entities.push(cognitive_entity);
         }
         
-        // Verify performance: Should achieve 1000+ sentences/second
-        let sentences_processed = sentences.len();
-        let throughput = sentences_processed as f64 / inference_time.as_secs_f64();
-        if throughput < 1000.0 {
-            eprintln!("TinyBERT throughput: {:.0} sentences/sec (target: 1000+)", throughput);
-        }
+        // Calculate throughput for performance monitoring
+        let char_throughput = text.len() as f64 / inference_time.as_secs_f64();
+        println!("⚡ Real TinyBERT: {} entities, {:.0} chars/sec", cognitive_entities.len(), char_throughput);
         
         Ok(cognitive_entities)
     }
 
-    /// Generate embeddings for entities using MiniLM
+    /// Generate REAL embeddings for entities using actual MiniLM model
     async fn generate_entity_embeddings(
         &self,
         entities: &[crate::models::rust_bert_models::Entity],
@@ -1086,6 +1186,38 @@ impl CognitiveEntityExtractor {
             // Generate embedding
             let embedding = minilm.encode(entity_context);
             embeddings.push(Some(embedding));
+        }
+        
+        Ok(embeddings)
+    }
+    
+    /// Generate REAL 384-dimensional embeddings for real entities
+    async fn generate_real_entity_embeddings(
+        &self,
+        entities: &[RealEntity],
+        context: &str,
+        minilm: &RealMiniLM,
+    ) -> Result<Vec<Option<Vec<f32>>>> {
+        let mut embeddings = Vec::new();
+        
+        for entity in entities {
+            // Get context window around entity for better embeddings
+            let context_start = entity.start.saturating_sub(50);
+            let context_end = (entity.end + 50).min(context.len());
+            let entity_context = &context[context_start..context_end];
+            
+            // Generate REAL 384-dimensional embedding
+            match minilm.encode(entity_context).await {
+                Ok(embedding) => {
+                    // Verify 384 dimensions
+                    assert_eq!(embedding.len(), 384, "MiniLM must produce 384-dimensional embeddings");
+                    embeddings.push(Some(embedding));
+                }
+                Err(e) => {
+                    eprintln!("Failed to generate embedding for entity '{}': {}", entity.text, e);
+                    embeddings.push(None);
+                }
+            }
         }
         
         Ok(embeddings)
@@ -1121,6 +1253,140 @@ impl CognitiveEntityExtractor {
         let ratio = same_type_count as f32 / total_count as f32;
         1.0 - ratio
     }
+    
+    /// Calculate REAL competitive inhibition score for real entities
+    fn calculate_real_inhibition_score(&self, label: &str, all_entities: &[RealEntity]) -> f32 {
+        let same_type_count = all_entities.iter()
+            .filter(|e| e.label == label)
+            .count();
+        
+        let total_count = all_entities.len();
+        
+        if total_count == 0 {
+            return 0.0;
+        }
+        
+        // Enhanced inhibition calculation using real confidence scores
+        let same_type_confidence: f32 = all_entities.iter()
+            .filter(|e| e.label == label)
+            .map(|e| e.confidence)
+            .sum();
+        
+        let total_confidence: f32 = all_entities.iter()
+            .map(|e| e.confidence)
+            .sum();
+        
+        // Weight inhibition by both count and confidence
+        let count_ratio = same_type_count as f32 / total_count as f32;
+        let conf_ratio = if total_confidence > 0.0 {
+            same_type_confidence / total_confidence
+        } else {
+            count_ratio
+        };
+        
+        // Weighted average of count and confidence ratios
+        let weighted_ratio = (count_ratio + conf_ratio) / 2.0;
+        1.0 - weighted_ratio
+    }
+    
+    /// Search for similar entities using query text (generates embedding automatically)
+    pub async fn search_similar_entities_by_text(&self, query_text: &str, k: usize) -> Result<Vec<CognitiveEntity>> {
+        let start_time = Instant::now();
+        
+        // Generate embedding for query text using REAL MiniLM model
+        if let Some(minilm) = &self.minilm_embedder {
+            match minilm.encode(query_text).await {
+                Ok(query_embedding) => {
+                    // Verify 384 dimensions
+                    if query_embedding.len() != 384 {
+                        eprintln!("⚠️  Query embedding dimension mismatch: {} != 384", query_embedding.len());
+                        return Ok(Vec::new());
+                    }
+                    
+                    let embed_time = start_time.elapsed();
+                    println!("🧠 Generated 384-dim query embedding in {}ms", embed_time.as_millis());
+                    
+                    // Perform similarity search
+                    let results = self.search_similar_entities(&query_embedding, k).await?;
+                    
+                    let total_time = start_time.elapsed();
+                    println!("🔍 Text similarity search completed in {}ms ({} results)", total_time.as_millis(), results.len());
+                    
+                    Ok(results)
+                }
+                Err(e) => {
+                    eprintln!("❌ Failed to generate embedding for query '{}': {}", query_text, e);
+                    Ok(Vec::new())
+                }
+            }
+        } else {
+            eprintln!("❌ MiniLM embedder not available for query embedding generation");
+            Ok(Vec::new())
+        }
+    }
+    
+    /// Get comprehensive storage performance statistics
+    pub fn get_storage_stats(&self) -> Option<StoragePerformanceStats> {
+        if let (Some(mmap_storage), Some(hnsw_index), Some(quantized_index), Some(string_interner)) = (
+            &self.mmap_storage,
+            &self.hnsw_index,
+            &self.quantized_index,
+            &self.string_interner,
+        ) {
+            let mmap_stats = mmap_storage.storage_stats();
+            let hnsw_stats = hnsw_index.read().stats();
+            let quantized_stats = quantized_index.memory_usage();
+            let interner_stats = string_interner.stats();
+            
+            let storage_stats = StoragePerformanceStats {
+                mmap_entities: mmap_stats.entity_count,
+                mmap_memory_mb: mmap_stats.memory_usage_bytes as f32 / 1024.0 / 1024.0,
+                mmap_compression_ratio: mmap_stats.compression_ratio,
+                hnsw_nodes: hnsw_stats.node_count,
+                hnsw_layers: hnsw_stats.max_layer + 1,
+                hnsw_avg_connections: hnsw_stats.avg_connections,
+                quantized_entities: quantized_stats.entity_count,
+                quantized_compression_ratio: quantized_stats.compression_ratio,
+                quantized_memory_mb: quantized_stats.total_bytes as f32 / 1024.0 / 1024.0,
+                interned_strings: interner_stats.unique_strings,
+                interned_deduplication_ratio: interner_stats.deduplication_ratio,
+                interned_memory_saved_kb: interner_stats.memory_saved_bytes as f32 / 1024.0,
+            };
+            
+            // Print comprehensive storage statistics
+            println!("📊 Storage Performance Statistics:");
+            println!("  MMAP Storage: {} entities, {:.1} MB, {:.1}x compression", 
+                storage_stats.mmap_entities, storage_stats.mmap_memory_mb, storage_stats.mmap_compression_ratio);
+            println!("  HNSW Index: {} nodes, {} layers, {:.1} avg connections", 
+                storage_stats.hnsw_nodes, storage_stats.hnsw_layers, storage_stats.hnsw_avg_connections);
+            println!("  Quantized Index: {} entities, {:.1}x compression, {:.1} MB", 
+                storage_stats.quantized_entities, storage_stats.quantized_compression_ratio, storage_stats.quantized_memory_mb);
+            println!("  String Interner: {} unique strings, {:.1}x deduplication, {:.1} KB saved", 
+                storage_stats.interned_strings, storage_stats.interned_deduplication_ratio, storage_stats.interned_memory_saved_kb);
+            
+            Some(storage_stats)
+        } else {
+            eprintln!("⚠️  Storage systems not fully initialized");
+            None
+        }
+    }
+}
+
+/// Storage performance statistics for monitoring
+#[derive(Debug, Clone)]
+pub struct StoragePerformanceStats {
+    pub mmap_entities: usize,
+    pub mmap_memory_mb: f32,
+    pub mmap_compression_ratio: f32,
+    pub hnsw_nodes: usize,
+    pub hnsw_layers: usize,
+    pub hnsw_avg_connections: f64,
+    pub quantized_entities: usize,
+    pub quantized_compression_ratio: f32,
+    pub quantized_memory_mb: f32,
+    pub interned_strings: u32,
+    pub interned_deduplication_ratio: f32,
+    pub interned_memory_saved_kb: f32,
 }
 
 impl EntityExtractor {

@@ -64,6 +64,18 @@ pub enum LlmkgError {
         component: String,
         message: String,
     },
+    /// Cognitive processing errors
+    CognitiveError {
+        operation: String,
+        pattern_type: Option<String>,
+        cause: String,
+    },
+    /// Neural network processing errors
+    NeuralError {
+        operation: String,
+        model_id: Option<String>,
+        cause: String,
+    },
 }
 
 impl fmt::Display for LlmkgError {
@@ -112,6 +124,14 @@ impl fmt::Display for LlmkgError {
             LlmkgError::InternalError { component, message } => {
                 write!(f, "Internal error in '{}': {}", component, message)
             }
+            LlmkgError::CognitiveError { operation, pattern_type, cause } => {
+                write!(f, "Cognitive error during '{}' (pattern: {:?}): {}", 
+                    operation, pattern_type, cause)
+            }
+            LlmkgError::NeuralError { operation, model_id, cause } => {
+                write!(f, "Neural error during '{}' (model: {:?}): {}", 
+                    operation, model_id, cause)
+            }
         }
     }
 }
@@ -138,6 +158,8 @@ impl LlmkgError {
             LlmkgError::ResourceError { .. } => false, // Hard limits
             LlmkgError::ExternalError { .. } => true, // External services can recover
             LlmkgError::InternalError { .. } => false, // Internal bugs need fixes
+            LlmkgError::CognitiveError { .. } => true, // Cognitive errors can often be retried
+            LlmkgError::NeuralError { .. } => true, // Neural errors can be retried
         }
     }
 
@@ -152,6 +174,8 @@ impl LlmkgError {
             LlmkgError::ExtractionError { .. } => Some(1), // Quick retry for extraction
             LlmkgError::QueryError { .. } => Some(2), // Short delay for query retry
             LlmkgError::StorageError { .. } => Some(5), // Medium delay for storage
+            LlmkgError::CognitiveError { .. } => Some(3), // Medium delay for cognitive retry
+            LlmkgError::NeuralError { .. } => Some(10), // Longer delay for neural model retry
             _ => None,
         }
     }
@@ -169,6 +193,8 @@ impl LlmkgError {
             LlmkgError::ResourceError { .. } => "RESOURCE_ERROR",
             LlmkgError::ExternalError { .. } => "EXTERNAL_ERROR",
             LlmkgError::InternalError { .. } => "INTERNAL_ERROR",
+            LlmkgError::CognitiveError { .. } => "COGNITIVE_ERROR",
+            LlmkgError::NeuralError { .. } => "NEURAL_ERROR",
         };
 
         let mut response = json!({

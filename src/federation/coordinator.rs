@@ -223,7 +223,7 @@ impl FederationCoordinator {
                 let db_config = DatabaseConfig {
                     id: db_id.clone(),
                     connection_string: format!("federation_{}.db", db_id.as_str()),
-                    database_type: DatabaseType::InMemory, // Default to in-memory for testing
+                    database_type: DatabaseType::SQLite, // Use real SQLite databases
                     max_connections: 10,
                     connection_timeout: Duration::from_secs(5),
                     query_timeout: Duration::from_secs(30),

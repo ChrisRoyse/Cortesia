@@ -63,7 +63,6 @@ pub trait DatabaseConnection: Send + Sync {
 
 /// SQLite database connection
 pub struct SQLiteConnection {
-    #[cfg(feature = "native")]
     connection: Option<rusqlite::Connection>,
     database_id: DatabaseId,
     active_transactions: HashMap<TransactionId, TransactionState>,
@@ -208,51 +207,85 @@ impl DatabaseConnectionPool {
 
 impl SQLiteConnection {
     pub fn new(database_id: DatabaseId, connection_string: &str) -> Result<Self> {
-        #[cfg(feature = "native")]
-        {
-            let conn = rusqlite::Connection::open(connection_string)
-                .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to open SQLite database: {}", e)))?;
-            
-            // Enable foreign keys and WAL mode for better concurrency
-            conn.execute("PRAGMA foreign_keys = ON", [])
-                .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to enable foreign keys: {}", e)))?;
-            conn.execute("PRAGMA journal_mode = WAL", [])
-                .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to set WAL mode: {}", e)))?;
-            
-            Ok(Self {
-                connection: Some(conn),
-                database_id,
-                active_transactions: HashMap::new(),
-            })
-        }
+        let conn = rusqlite::Connection::open(connection_string)
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to open SQLite database: {}", e)))?;
         
-        #[cfg(not(feature = "native"))]
-        {
-            Ok(Self {
-                connection: None,
-                database_id,
-                active_transactions: HashMap::new(),
-            })
-        }
+        // Enable foreign keys and WAL mode for better concurrency
+        conn.execute("PRAGMA foreign_keys = ON", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to enable foreign keys: {}", e)))?;
+        conn.execute("PRAGMA journal_mode = WAL", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to set WAL mode: {}", e)))?;
+        
+        // Create schema tables for entities and relationships
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS entities (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                data BLOB,
+                metadata TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        ).map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create entities table: {}", e)))?;
+        
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS relationships (
+                id TEXT PRIMARY KEY,
+                from_entity TEXT NOT NULL,
+                to_entity TEXT NOT NULL,
+                relationship_type TEXT NOT NULL,
+                properties TEXT,
+                confidence REAL DEFAULT 1.0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (from_entity) REFERENCES entities(id),
+                FOREIGN KEY (to_entity) REFERENCES entities(id)
+            )",
+            [],
+        ).map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create relationships table: {}", e)))?;
+        
+        // Create indices for better performance
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(type)", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create entity type index: {}", e)))?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_relationships_from ON relationships(from_entity)", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create from_entity index: {}", e)))?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_relationships_to ON relationships(to_entity)", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create to_entity index: {}", e)))?;
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_relationships_type ON relationships(relationship_type)", [])
+            .map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create relationship type index: {}", e)))?;
+        
+        // Create transaction log table for 2PC coordination
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS transaction_log (
+                transaction_id TEXT NOT NULL,
+                phase TEXT NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT NOT NULL,
+                error_message TEXT,
+                PRIMARY KEY (transaction_id, phase)
+            )",
+            [],
+        ).map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create transaction log table: {}", e)))?;
+        
+        Ok(Self {
+            connection: Some(conn),
+            database_id,
+            active_transactions: HashMap::new(),
+        })
     }
 }
 
 #[async_trait]
 impl DatabaseConnection for SQLiteConnection {
     async fn is_alive(&self) -> Result<bool> {
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                conn.execute("SELECT 1", [])
-                    .map(|_| true)
-                    .map_err(|e| GraphError::DatabaseConnectionError(format!("Connection check failed: {}", e)))
-            } else {
-                Ok(false)
-            }
+        if let Some(conn) = &self.connection {
+            conn.execute("SELECT 1", [])
+                .map(|_| true)
+                .map_err(|e| GraphError::DatabaseConnectionError(format!("Connection check failed: {}", e)))
+        } else {
+            Ok(false)
         }
-        
-        #[cfg(not(feature = "native"))]
-        Ok(false)
     }
     
     async fn begin_transaction(&mut self, transaction_id: &TransactionId) -> Result<()> {
@@ -262,23 +295,26 @@ impl DatabaseConnection for SQLiteConnection {
             ));
         }
         
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                let savepoint_name = format!("sp_{}", transaction_id.as_str());
-                conn.execute(&format!("SAVEPOINT {}", savepoint_name), [])
-                    .map_err(|e| GraphError::TransactionError(format!("Failed to begin transaction: {}", e)))?;
-                
-                self.active_transactions.insert(
-                    transaction_id.clone(),
-                    TransactionState {
-                        transaction_id: transaction_id.clone(),
-                        status: TransactionPhase::Active,
-                        operations: Vec::new(),
-                        savepoint_name: Some(savepoint_name),
-                    },
-                );
-            }
+        if let Some(conn) = &self.connection {
+            let savepoint_name = format!("sp_{}", transaction_id.as_str());
+            conn.execute(&format!("SAVEPOINT {}", savepoint_name), [])
+                .map_err(|e| GraphError::TransactionError(format!("Failed to begin transaction: {}", e)))?;
+            
+            // Log transaction begin
+            conn.execute(
+                "INSERT OR REPLACE INTO transaction_log (transaction_id, phase, status) VALUES (?, 'BEGIN', 'ACTIVE')",
+                [transaction_id.as_str()],
+            ).map_err(|e| GraphError::TransactionError(format!("Failed to log transaction begin: {}", e)))?;
+            
+            self.active_transactions.insert(
+                transaction_id.clone(),
+                TransactionState {
+                    transaction_id: transaction_id.clone(),
+                    status: TransactionPhase::Active,
+                    operations: Vec::new(),
+                    savepoint_name: Some(savepoint_name),
+                },
+            );
         }
         
         Ok(())
@@ -299,18 +335,21 @@ impl DatabaseConnection for SQLiteConnection {
         state.status = TransactionPhase::Preparing;
         
         // SQLite doesn't have explicit prepare phase, but we can validate operations
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                // Check if all operations are valid
-                for op in &state.operations {
-                    // Try to prepare statement to validate SQL
-                    let _ = conn.prepare(&op.sql)
-                        .map_err(|e| GraphError::TransactionError(
-                            format!("Invalid SQL in transaction: {}", e)
-                        ))?;
-                }
+        if let Some(conn) = &self.connection {
+            // Check if all operations are valid
+            for op in &state.operations {
+                // Try to prepare statement to validate SQL
+                let _ = conn.prepare(&op.sql)
+                    .map_err(|e| GraphError::TransactionError(
+                        format!("Invalid SQL in transaction: {}", e)
+                    ))?;
             }
+            
+            // Log prepare phase
+            conn.execute(
+                "INSERT OR REPLACE INTO transaction_log (transaction_id, phase, status) VALUES (?, 'PREPARE', 'PREPARED')",
+                [transaction_id.as_str()],
+            ).map_err(|e| GraphError::TransactionError(format!("Failed to log prepare: {}", e)))?;
         }
         
         state.status = TransactionPhase::Prepared;
@@ -331,15 +370,18 @@ impl DatabaseConnection for SQLiteConnection {
         
         state.status = TransactionPhase::Committing;
         
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                if let Some(savepoint_name) = &state.savepoint_name {
-                    conn.execute(&format!("RELEASE SAVEPOINT {}", savepoint_name), [])
-                        .map_err(|e| GraphError::TransactionError(
-                            format!("Failed to commit transaction: {}", e)
-                        ))?;
-                }
+        if let Some(conn) = &self.connection {
+            if let Some(savepoint_name) = &state.savepoint_name {
+                conn.execute(&format!("RELEASE SAVEPOINT {}", savepoint_name), [])
+                    .map_err(|e| GraphError::TransactionError(
+                        format!("Failed to commit transaction: {}", e)
+                    ))?;
+                
+                // Log commit
+                conn.execute(
+                    "INSERT OR REPLACE INTO transaction_log (transaction_id, phase, status) VALUES (?, 'COMMIT', 'COMMITTED')",
+                    [transaction_id.as_str()],
+                ).map_err(|e| GraphError::TransactionError(format!("Failed to log commit: {}", e)))?;
             }
         }
         
@@ -356,19 +398,22 @@ impl DatabaseConnection for SQLiteConnection {
         
         state.status = TransactionPhase::Aborting;
         
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                if let Some(savepoint_name) = &state.savepoint_name {
-                    conn.execute(&format!("ROLLBACK TO SAVEPOINT {}", savepoint_name), [])
-                        .map_err(|e| GraphError::TransactionError(
-                            format!("Failed to rollback transaction: {}", e)
-                        ))?;
-                    conn.execute(&format!("RELEASE SAVEPOINT {}", savepoint_name), [])
-                        .map_err(|e| GraphError::TransactionError(
-                            format!("Failed to release savepoint: {}", e)
-                        ))?;
-                }
+        if let Some(conn) = &self.connection {
+            if let Some(savepoint_name) = &state.savepoint_name {
+                conn.execute(&format!("ROLLBACK TO SAVEPOINT {}", savepoint_name), [])
+                    .map_err(|e| GraphError::TransactionError(
+                        format!("Failed to rollback transaction: {}", e)
+                    ))?;
+                conn.execute(&format!("RELEASE SAVEPOINT {}", savepoint_name), [])
+                    .map_err(|e| GraphError::TransactionError(
+                        format!("Failed to release savepoint: {}", e)
+                    ))?;
+                
+                // Log rollback
+                conn.execute(
+                    "INSERT OR REPLACE INTO transaction_log (transaction_id, phase, status) VALUES (?, 'ROLLBACK', 'ABORTED')",
+                    [transaction_id.as_str()],
+                ).map_err(|e| GraphError::TransactionError(format!("Failed to log rollback: {}", e)))?;
             }
         }
         
@@ -412,33 +457,30 @@ impl DatabaseConnection for SQLiteConnection {
             operation_type,
         });
         
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                // Convert JSON values to rusqlite params
-                let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
-                    .map(|v| match v {
-                        serde_json::Value::Null => rusqlite::types::Value::Null,
-                        serde_json::Value::Bool(b) => rusqlite::types::Value::Integer(if b { 1 } else { 0 }),
-                        serde_json::Value::Number(n) => {
-                            if let Some(i) = n.as_i64() {
-                                rusqlite::types::Value::Integer(i)
-                            } else if let Some(f) = n.as_f64() {
-                                rusqlite::types::Value::Real(f)
-                            } else {
-                                rusqlite::types::Value::Null
-                            }
+        if let Some(conn) = &self.connection {
+            // Convert JSON values to rusqlite params
+            let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
+                .map(|v| match v {
+                    serde_json::Value::Null => rusqlite::types::Value::Null,
+                    serde_json::Value::Bool(b) => rusqlite::types::Value::Integer(if b { 1 } else { 0 }),
+                    serde_json::Value::Number(n) => {
+                        if let Some(i) = n.as_i64() {
+                            rusqlite::types::Value::Integer(i)
+                        } else if let Some(f) = n.as_f64() {
+                            rusqlite::types::Value::Real(f)
+                        } else {
+                            rusqlite::types::Value::Null
                         }
-                        serde_json::Value::String(s) => rusqlite::types::Value::Text(s),
-                        _ => rusqlite::types::Value::Text(v.to_string()),
-                    })
-                    .collect();
-                
-                conn.execute(sql, rusqlite::params_from_iter(rusqlite_params))
-                    .map_err(|e| GraphError::DatabaseConnectionError(
-                        format!("Failed to execute SQL: {}", e)
-                    ))?;
-            }
+                    }
+                    serde_json::Value::String(s) => rusqlite::types::Value::Text(s),
+                    _ => rusqlite::types::Value::Text(v.to_string()),
+                })
+                .collect();
+            
+            conn.execute(sql, rusqlite::params_from_iter(rusqlite_params))
+                .map_err(|e| GraphError::DatabaseConnectionError(
+                    format!("Failed to execute SQL: {}", e)
+                ))?;
         }
         
         Ok(())
@@ -451,69 +493,66 @@ impl DatabaseConnection for SQLiteConnection {
             ));
         }
         
-        #[cfg(feature = "native")]
-        {
-            if let Some(conn) = &self.connection {
-                // Convert JSON values to rusqlite params
-                let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
-                    .map(|v| match v {
-                        serde_json::Value::Null => rusqlite::types::Value::Null,
-                        serde_json::Value::Bool(b) => rusqlite::types::Value::Integer(if b { 1 } else { 0 }),
-                        serde_json::Value::Number(n) => {
-                            if let Some(i) = n.as_i64() {
-                                rusqlite::types::Value::Integer(i)
-                            } else if let Some(f) = n.as_f64() {
-                                rusqlite::types::Value::Real(f)
-                            } else {
-                                rusqlite::types::Value::Null
-                            }
+        if let Some(conn) = &self.connection {
+            // Convert JSON values to rusqlite params
+            let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
+                .map(|v| match v {
+                    serde_json::Value::Null => rusqlite::types::Value::Null,
+                    serde_json::Value::Bool(b) => rusqlite::types::Value::Integer(if b { 1 } else { 0 }),
+                    serde_json::Value::Number(n) => {
+                        if let Some(i) = n.as_i64() {
+                            rusqlite::types::Value::Integer(i)
+                        } else if let Some(f) = n.as_f64() {
+                            rusqlite::types::Value::Real(f)
+                        } else {
+                            rusqlite::types::Value::Null
                         }
-                        serde_json::Value::String(s) => rusqlite::types::Value::Text(s),
-                        _ => rusqlite::types::Value::Text(v.to_string()),
-                    })
-                    .collect();
-                
-                let mut stmt = conn.prepare(sql)
-                    .map_err(|e| GraphError::DatabaseConnectionError(
-                        format!("Failed to prepare query: {}", e)
-                    ))?;
-                
-                let column_names: Vec<String> = stmt.column_names()
-                    .into_iter()
-                    .map(|s| s.to_string())
-                    .collect();
-                
-                let rows = stmt.query_map(rusqlite::params_from_iter(rusqlite_params), |row| {
-                    let mut result = HashMap::new();
-                    for (i, name) in column_names.iter().enumerate() {
-                        let value: rusqlite::types::Value = row.get(i)?;
-                        let json_value = match value {
-                            rusqlite::types::Value::Null => serde_json::Value::Null,
-                            rusqlite::types::Value::Integer(i) => serde_json::Value::Number(i.into()),
-                            rusqlite::types::Value::Real(f) => serde_json::Value::Number(
-                                serde_json::Number::from_f64(f).unwrap_or(serde_json::Number::from(0))
-                            ),
-                            rusqlite::types::Value::Text(s) => serde_json::Value::String(s),
-                            rusqlite::types::Value::Blob(b) => serde_json::Value::String(
-                                base64::encode(b)
-                            ),
-                        };
-                        result.insert(name.clone(), json_value);
                     }
-                    Ok(result)
-                }).map_err(|e| GraphError::DatabaseConnectionError(
-                    format!("Failed to execute query: {}", e)
+                    serde_json::Value::String(s) => rusqlite::types::Value::Text(s),
+                    _ => rusqlite::types::Value::Text(v.to_string()),
+                })
+                .collect();
+            
+            let mut stmt = conn.prepare(sql)
+                .map_err(|e| GraphError::DatabaseConnectionError(
+                    format!("Failed to prepare query: {}", e)
                 ))?;
-                
-                let mut results = Vec::new();
-                for row in rows {
-                    results.push(row.map_err(|e| GraphError::DatabaseConnectionError(
-                        format!("Failed to fetch row: {}", e)
-                    ))?);
+            
+            let column_names: Vec<String> = stmt.column_names()
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect();
+            
+            let rows = stmt.query_map(rusqlite::params_from_iter(rusqlite_params), |row| {
+                let mut result = HashMap::new();
+                for (i, name) in column_names.iter().enumerate() {
+                    let value: rusqlite::types::Value = row.get(i)?;
+                    let json_value = match value {
+                        rusqlite::types::Value::Null => serde_json::Value::Null,
+                        rusqlite::types::Value::Integer(i) => serde_json::Value::Number(i.into()),
+                        rusqlite::types::Value::Real(f) => serde_json::Value::Number(
+                            serde_json::Number::from_f64(f).unwrap_or(serde_json::Number::from(0))
+                        ),
+                        rusqlite::types::Value::Text(s) => serde_json::Value::String(s),
+                        rusqlite::types::Value::Blob(b) => serde_json::Value::String(
+                            hex::encode(b)
+                        ),
+                    };
+                    result.insert(name.clone(), json_value);
                 }
-                
-                return Ok(results);
+                Ok(result)
+            }).map_err(|e| GraphError::DatabaseConnectionError(
+                format!("Failed to execute query: {}", e)
+            ))?;
+            
+            let mut results = Vec::new();
+            for row in rows {
+                results.push(row.map_err(|e| GraphError::DatabaseConnectionError(
+                    format!("Failed to fetch row: {}", e)
+                ))?);
             }
+            
+            return Ok(results);
         }
         
         Ok(Vec::new())
@@ -700,15 +739,3 @@ impl DatabaseConnection for InMemoryConnection {
     }
 }
 
-// Add base64 encoding support for blob data
-#[cfg(feature = "native")]
-mod base64 {
-    pub fn encode(data: Vec<u8>) -> String {
-        use std::fmt::Write;
-        let mut encoded = String::new();
-        for byte in data {
-            write!(&mut encoded, "{:02x}", byte).unwrap();
-        }
-        encoded
-    }
-}

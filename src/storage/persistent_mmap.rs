@@ -245,7 +245,7 @@ impl PersistentMMapStorage {
     }
     
     /// Add entity with automatic quantization
-    pub fn add_entity(&mut self, entity_key: EntityKey, _data: &EntityData, embedding: &[f32]) -> Result<()> {
+    pub fn add_entity(&self, entity_key: EntityKey, _data: &EntityData, embedding: &[f32]) -> Result<()> {
         // Quantize embedding
         let quantized = {
             let quantizer = self.quantizer.read();
@@ -263,8 +263,12 @@ impl PersistentMMapStorage {
         };
         
         // Store quantized embedding
-        let embedding_offset = self.quantized_embeddings.len() as u32;
-        self.quantized_embeddings.extend_from_slice(&quantized);
+        let embedding_offset = {
+            let mut embeddings = self.quantized_embeddings.write();
+            let offset = embeddings.len() as u32;
+            embeddings.extend_from_slice(&quantized);
+            offset
+        };
         
         // Create compact entity
         let entity = MMapEntity {
@@ -276,8 +280,12 @@ impl PersistentMMapStorage {
         };
         
         // Add to storage
-        let entity_index = self.entities.len() as u32;
-        self.entities.push(entity);
+        let entity_index = {
+            let mut entities = self.entities.write();
+            let index = entities.len() as u32;
+            entities.push(entity);
+            index
+        };
         
         // Update index
         {
@@ -294,7 +302,12 @@ impl PersistentMMapStorage {
         self.write_count.fetch_add(1, Ordering::Relaxed);
         
         // Auto-sync if enabled
-        if self.auto_sync && self.entities.len() % 100 == 0 {
+        let should_sync = self.auto_sync.load(Ordering::Relaxed) && {
+            let entities = self.entities.read();
+            entities.len() % 100 == 0
+        };
+        
+        if should_sync {
             self.sync_to_disk()?;
         }
         
@@ -302,7 +315,7 @@ impl PersistentMMapStorage {
     }
     
     /// Batch add entities for better performance
-    pub fn batch_add_entities(&mut self, entities_data: &[(EntityKey, EntityData, Vec<f32>)]) -> Result<()> {
+    pub fn batch_add_entities(&self, entities_data: &[(EntityKey, EntityData, Vec<f32>)]) -> Result<()> {
         if entities_data.is_empty() {
             return Ok(());
         }
@@ -333,27 +346,31 @@ impl PersistentMMapStorage {
             quantizer.batch_encode(&embeddings)?
         };
         
-        // Add all entities
-        let mut index = self.entity_index.write();
+        // Add all entities with proper locking
         let mut total_memory_added = 0;
-        
-        for ((entity_key, _data, _embedding), quantized) in entities_data.iter().zip(quantized_batch.iter()) {
-            let embedding_offset = self.quantized_embeddings.len() as u32;
-            self.quantized_embeddings.extend_from_slice(quantized);
+        {
+            let mut embeddings = self.quantized_embeddings.write();
+            let mut entities = self.entities.write();
+            let mut index = self.entity_index.write();
             
-            let entity = MMapEntity {
-                entity_key: entity_key.as_raw(),
-                embedding_offset,
-                property_size: 0,
-                relationship_count: 0, // relationships stored separately
-                flags: 0,
-            };
-            
-            let entity_index = self.entities.len() as u32;
-            self.entities.push(entity);
-            index.insert(*entity_key, entity_index);
-            
-            total_memory_added += std::mem::size_of::<MMapEntity>() + quantized.len();
+            for ((entity_key, _data, _embedding), quantized) in entities_data.iter().zip(quantized_batch.iter()) {
+                let embedding_offset = embeddings.len() as u32;
+                embeddings.extend_from_slice(quantized);
+                
+                let entity = MMapEntity {
+                    entity_key: entity_key.as_raw(),
+                    embedding_offset,
+                    property_size: 0,
+                    relationship_count: 0, // relationships stored separately
+                    flags: 0,
+                };
+                
+                let entity_index = entities.len() as u32;
+                entities.push(entity);
+                index.insert(*entity_key, entity_index);
+                
+                total_memory_added += std::mem::size_of::<MMapEntity>() + quantized.len();
+            }
         }
         
         self.memory_usage.fetch_add(total_memory_added as u64, Ordering::Relaxed);
@@ -363,13 +380,14 @@ impl PersistentMMapStorage {
     }
     
     /// Get entity by key
-    pub fn get_entity(&self, entity_key: EntityKey) -> Option<&MMapEntity> {
+    pub fn get_entity(&self, entity_key: EntityKey) -> Option<MMapEntity> {
         let index = self.entity_index.read();
         let entity_index = *index.get(&entity_key)?;
         drop(index);
         
         self.read_count.fetch_add(1, Ordering::Relaxed);
-        self.entities.get(entity_index as usize)
+        let entities = self.entities.read();
+        entities.get(entity_index as usize).cloned()
     }
     
     /// Get quantized embedding for entity
@@ -420,10 +438,14 @@ impl PersistentMMapStorage {
         Ok(results)
     }
     
-    /// Sync data to disk
-    pub fn sync_to_disk(&mut self) -> Result<()> {
-        self.header.entity_count = self.entities.len() as u32;
-        self.header.embedding_section_size = self.quantized_embeddings.len() as u64;
+    /// Sync data to disk  
+    pub fn sync_to_disk(&self) -> Result<()> {
+        let entities = self.entities.read();
+        let embeddings = self.quantized_embeddings.read();
+        
+        let mut header = self.header.write();
+        header.entity_count = entities.len() as u32;
+        header.embedding_section_size = embeddings.len() as u64;
         
         // Open/create file for writing
         let mut file = OpenOptions::new()
@@ -433,24 +455,25 @@ impl PersistentMMapStorage {
             .open(&self.file_path)?;
         
         // Write header
-        bincode::serialize_into(&mut file, &self.header)
+        bincode::serialize_into(&mut file, &*header)
             .map_err(|_| GraphError::IndexCorruption)?;
+        drop(header);
         
         // Write entities
-        for entity in &self.entities {
+        for entity in entities.iter() {
             bincode::serialize_into(&mut file, entity)
                 .map_err(|_| GraphError::IndexCorruption)?;
         }
         
         // Write quantized embeddings
-        if !self.quantized_embeddings.is_empty() {
-            file.write_all(&self.quantized_embeddings)?;
+        if !embeddings.is_empty() {
+            file.write_all(&*embeddings)?;
         }
         
         let file_size = file.seek(SeekFrom::Current(0))?;
         file.sync_all()?;
         
-        self.file = Some(file);
+        *self.file.write() = Some(file);
         self.file_size.store(file_size, Ordering::Relaxed);
         
         Ok(())
@@ -459,16 +482,20 @@ impl PersistentMMapStorage {
     /// Get comprehensive storage statistics
     pub fn storage_stats(&self) -> StorageStats {
         let quantizer = self.quantizer.read();
-        let compression_stats = quantizer.compression_stats(self.header.embedding_dim as usize);
+        let entities = self.entities.read();
+        let embeddings = self.quantized_embeddings.read();
+        let header = self.header.read();
+        
+        let compression_stats = quantizer.compression_stats(header.embedding_dim as usize);
         
         StorageStats {
-            entity_count: self.entities.len(),
+            entity_count: entities.len(),
             memory_usage_bytes: self.memory_usage.load(Ordering::Relaxed),
             file_size_bytes: self.file_size.load(Ordering::Relaxed),
-            quantized_embedding_bytes: self.quantized_embeddings.len(),
+            quantized_embedding_bytes: embeddings.len(),
             compression_ratio: compression_stats.compression_ratio,
-            avg_bytes_per_entity: if self.entities.len() > 0 {
-                self.memory_usage.load(Ordering::Relaxed) / self.entities.len() as u64
+            avg_bytes_per_entity: if entities.len() > 0 {
+                self.memory_usage.load(Ordering::Relaxed) / entities.len() as u64
             } else {
                 0
             },

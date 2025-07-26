@@ -12,12 +12,16 @@ pub mod rust_bert_models;
 pub mod rust_t5_models;
 pub mod rust_embeddings;
 pub mod model_loader;
+// Real neural model implementations with Candle
+pub mod candle_models;
 
 // Re-export key types for convenience
 pub use rust_bert_models::{RustBertNER, RustTinyBertNER, Entity};
 pub use rust_t5_models::RustT5Small;
 pub use rust_embeddings::RustMiniLM;
 pub use rust_tokenizer::{RustTokenizer, TokenizedInput};
+// Re-export real neural models
+pub use candle_models::{RealDistilBertNER, RealTinyBertNER, RealMiniLM, RealEntity};
 
 /// Model types available in the native Rust system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -9,6 +9,7 @@ pub mod types;
 pub mod database_connection;
 pub mod transaction_log;
 pub mod two_phase_commit;
+pub mod test_federation;
 
 pub use registry::{DatabaseRegistry, DatabaseDescriptor};
 pub use router::{QueryRouter, QueryPlan};

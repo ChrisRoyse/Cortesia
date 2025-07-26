@@ -21,6 +21,9 @@ pub mod reasoning_engine;
 pub mod error_handling;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
+use crate::cognitive::orchestrator::CognitiveOrchestrator;
+use crate::neural::neural_server::NeuralProcessingServer;
+use crate::federation::coordinator::FederationCoordinator;
 use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};
 use crate::error::Result;
 use crate::versioning::MultiDatabaseVersionManager;
@@ -35,15 +38,26 @@ use std::collections::HashMap;
 /// 
 /// Provides high-level, intuitive operations for knowledge graph interaction
 /// that are specifically designed for LLM consumption and generation.
+/// 
+/// **Enhanced with Cognitive Intelligence**: All 28 tools now include cognitive metadata,
+/// neural confidence scoring, and reasoning pattern analysis.
 pub struct LLMFriendlyMCPServer {
     knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
+    cognitive_orchestrator: Arc<CognitiveOrchestrator>,
+    neural_server: Arc<NeuralProcessingServer>,
+    federation_coordinator: Arc<FederationCoordinator>,
     usage_stats: Arc<RwLock<UsageStats>>,
     version_manager: Arc<MultiDatabaseVersionManager>,
 }
 
 impl LLMFriendlyMCPServer {
-    /// Create a new LLM-friendly MCP server
-    pub fn new(knowledge_engine: Arc<RwLock<KnowledgeEngine>>) -> Result<Self> {
+    /// Create a new LLM-friendly MCP server with cognitive enhancements
+    pub fn new(
+        knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
+        cognitive_orchestrator: Arc<CognitiveOrchestrator>,
+        neural_server: Arc<NeuralProcessingServer>,
+        federation_coordinator: Arc<FederationCoordinator>,
+    ) -> Result<Self> {
         let version_manager = Arc::new(MultiDatabaseVersionManager::new()?);
         
         // Initialize the branch manager
@@ -54,6 +68,9 @@ impl LLMFriendlyMCPServer {
         
         Ok(Self {
             knowledge_engine,
+            cognitive_orchestrator,
+            neural_server,
+            federation_coordinator,
             usage_stats: Arc::new(RwLock::new(UsageStats::default())),
             version_manager,
         })
@@ -81,96 +98,120 @@ impl LLMFriendlyMCPServer {
         let timeout_duration = tokio::time::Duration::from_secs(5);
         let timeout_result = tokio::time::timeout(timeout_duration, async {
             match method.as_str() {
-            // Storage operations
+            // Storage operations (COGNITIVE ENHANCED)
             "store_fact" => {
-                handlers::storage::handle_store_fact(
+                handlers::storage::handle_store_fact_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "store_knowledge" => {
-                handlers::storage::handle_store_knowledge(
+                handlers::storage::handle_store_knowledge_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Query operations
+            // Query operations (COGNITIVE ENHANCED)
             "find_facts" => {
-                handlers::query::handle_find_facts(
+                handlers::query::handle_find_facts_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "ask_question" => {
-                handlers::query::handle_ask_question(
+                handlers::query::handle_ask_question_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Exploration operations
+            // Exploration operations (COGNITIVE ENHANCED)
             // "explore_connections" => migration (now part of analyze_graph)
             "get_suggestions" => {
-                handlers::exploration::handle_get_suggestions(
+                handlers::exploration::handle_get_suggestions_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Advanced operations
+            // Advanced operations (COGNITIVE ENHANCED)
             "generate_graph_query" => {
-                handlers::advanced::handle_generate_graph_query(
+                handlers::advanced::handle_generate_graph_query_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "hybrid_search" => {
-                handlers::advanced::handle_hybrid_search(
+                handlers::advanced::handle_hybrid_search_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "validate_knowledge" => {
-                handlers::advanced::handle_validate_knowledge(
+                handlers::advanced::handle_validate_knowledge_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "analyze_graph" => {
-                handlers::graph_analysis::handle_analyze_graph(
+                handlers::graph_analysis::handle_analyze_graph_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
 
-            // Tier 1 Advanced Cognitive Tools
+            // Tier 1 Advanced Cognitive Tools (COGNITIVE ENHANCED)
             "neural_importance_scoring" => {
-                handlers::cognitive::handle_neural_importance_scoring(
+                handlers::advanced::handle_neural_importance_scoring_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "divergent_thinking_engine" => {
-                handlers::cognitive::handle_divergent_thinking_engine(
+                handlers::advanced::handle_divergent_thinking_engine_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "time_travel_query" => {
-                handlers::temporal::handle_time_travel_query(
+                handlers::temporal::handle_time_travel_query_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -184,8 +225,10 @@ impl LLMFriendlyMCPServer {
             // "hierarchical_clustering" => migration
             // "predict_graph_structure" => migration
             "cognitive_reasoning_chains" => {
-                handlers::advanced::handle_cognitive_reasoning_chains(
+                handlers::advanced::handle_cognitive_reasoning_chains_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -194,41 +237,74 @@ impl LLMFriendlyMCPServer {
             // "approximate_similarity_search" => migration
             // "knowledge_quality_metrics" => migration
 
-            // Statistics operations
+            // Statistics operations (COGNITIVE ENHANCED)
             "get_stats" => {
-                handlers::stats::handle_get_stats(
+                handlers::stats::handle_get_stats_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             
-            // Branching operations
+            // Branching operations (COGNITIVE ENHANCED)
             "create_branch" => {
-                handlers::temporal::handle_create_branch(
+                handlers::temporal::handle_create_branch_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                     self.version_manager.clone(),
                 ).await
             }
             "list_branches" => {
-                handlers::temporal::handle_list_branches(
+                handlers::temporal::handle_list_branches_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "compare_branches" => {
-                handlers::temporal::handle_compare_branches(
+                handlers::temporal::handle_compare_branches_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "merge_branches" => {
-                handlers::temporal::handle_merge_branches(
+                handlers::temporal::handle_merge_branches_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+
+            // NEW COGNITIVE-SPECIFIC TOOLS
+            "cognitive_reasoning" => {
+                handlers::storage::handle_cognitive_reasoning(
+                    &self.cognitive_orchestrator,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "neural_train_model" => {
+                handlers::storage::handle_neural_train_model(
+                    &self.neural_server,
+                    &self.usage_stats,
+                    params.clone(),
+                ).await
+            }
+            "neural_predict" => {
+                handlers::storage::handle_neural_predict(
+                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await

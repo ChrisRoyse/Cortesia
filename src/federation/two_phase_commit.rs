@@ -298,17 +298,31 @@ impl TwoPhaseCommitCoordinator {
                 for op in &ops_for_db {
                     match &op.operation_type {
                         crate::federation::coordinator::OperationType::CreateEntity { entity_id, entity_data } => {
-                            let sql = "INSERT INTO entities (id, data) VALUES (?, ?)";
+                            // Extract name and type from entity_data if available
+                            let name = entity_data.get("name")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or(entity_id)
+                                .to_string();
+                            let entity_type = entity_data.get("type")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("unknown")
+                                .to_string();
+                            let metadata = serde_json::to_string(entity_data).unwrap();
+                            
+                            let sql = "INSERT INTO entities (id, name, type, metadata) VALUES (?, ?, ?, ?)";
                             let params = vec![
                                 serde_json::Value::String(entity_id.clone()),
-                                serde_json::to_value(entity_data).unwrap(),
+                                serde_json::Value::String(name),
+                                serde_json::Value::String(entity_type),
+                                serde_json::Value::String(metadata),
                             ];
                             conn_guard.execute(&tx_id, sql, params).await?;
                         }
                         crate::federation::coordinator::OperationType::UpdateEntity { entity_id, changes } => {
-                            let sql = "UPDATE entities SET data = ? WHERE id = ?";
+                            let metadata = serde_json::to_string(changes).unwrap();
+                            let sql = "UPDATE entities SET metadata = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
                             let params = vec![
-                                serde_json::to_value(changes).unwrap(),
+                                serde_json::Value::String(metadata),
                                 serde_json::Value::String(entity_id.clone()),
                             ];
                             conn_guard.execute(&tx_id, sql, params).await?;

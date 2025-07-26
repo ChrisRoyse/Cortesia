@@ -15,6 +15,7 @@ use crate::models::{ModelType, ModelError};
 use crate::models::rust_bert_models::{RustBertNER, RustTinyBertNER, Matrix};
 use crate::models::rust_embeddings::RustMiniLM;
 use crate::models::rust_tokenizer::RustTokenizer;
+use crate::models::candle_models::{RealDistilBertNER, RealTinyBertNER, RealMiniLM};
 
 /// Model weight format for serialization
 #[derive(Debug, Serialize, Deserialize)]
@@ -133,19 +134,54 @@ impl ModelLoader {
         }
     }
 
-    /// Load DistilBERT-NER model (66M params)
-    pub async fn load_distilbert_ner(&self) -> Result<Arc<RustBertNER>> {
-        self.load_model(ModelType::DistilBertNER).await
+    /// Load DistilBERT-NER model (66M params) - REAL VERSION
+    pub async fn load_distilbert_ner(&self) -> Result<Arc<RealDistilBertNER>> {
+        println!("🔄 Loading real DistilBERT-NER model with actual weights...");
+        
+        // Try to load real model first
+        match RealDistilBertNER::from_pretrained().await {
+            Ok(model) => {
+                println!("✅ Real DistilBERT-NER loaded successfully");
+                Ok(Arc::new(model))
+            }
+            Err(e) => {
+                eprintln!("⚠️  Failed to load real DistilBERT-NER: {}", e);
+                eprintln!("   This is expected in test environments without internet access");
+                Err(GraphError::ModelError(format!("Failed to load real DistilBERT-NER: {}", e)))
+            }
+        }
     }
 
-    /// Load TinyBERT-NER model (14.5M params)
-    pub async fn load_tinybert_ner(&self) -> Result<Arc<RustTinyBertNER>> {
-        self.load_model(ModelType::TinyBertNER).await
+    /// Load TinyBERT-NER model (14.5M params) - REAL VERSION
+    pub async fn load_tinybert_ner(&self) -> Result<Arc<RealTinyBertNER>> {
+        println!("🔄 Loading real TinyBERT-NER for <5ms inference...");
+        
+        match RealTinyBertNER::from_pretrained().await {
+            Ok(model) => {
+                println!("✅ Real TinyBERT-NER loaded successfully");
+                Ok(Arc::new(model))
+            }
+            Err(e) => {
+                eprintln!("⚠️  Failed to load real TinyBERT-NER: {}", e);
+                Err(GraphError::ModelError(format!("Failed to load real TinyBERT-NER: {}", e)))
+            }
+        }
     }
 
-    /// Load all-MiniLM-L6-v2 model (22M params)
-    pub async fn load_minilm(&self) -> Result<Arc<RustMiniLM>> {
-        self.load_model(ModelType::MiniLM).await
+    /// Load all-MiniLM-L6-v2 model (22M params) - REAL VERSION  
+    pub async fn load_minilm(&self) -> Result<Arc<RealMiniLM>> {
+        println!("🔄 Loading real MiniLM-L6-v2 for 384-dimensional embeddings...");
+        
+        match RealMiniLM::from_pretrained().await {
+            Ok(model) => {
+                println!("✅ Real MiniLM-L6-v2 loaded successfully");
+                Ok(Arc::new(model))
+            }
+            Err(e) => {
+                eprintln!("⚠️  Failed to load real MiniLM-L6-v2: {}", e);
+                Err(GraphError::ModelError(format!("Failed to load real MiniLM-L6-v2: {}", e)))
+            }
+        }
     }
 
     /// Generic model loading function

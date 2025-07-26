@@ -237,6 +237,10 @@ impl DistributedTransactionLog {
     
     /// Write log entry to disk
     async fn write_log_entry(&self, entry: &LogEntry) -> Result<()> {
+        // Ensure log directory exists
+        fs::create_dir_all(&self.log_dir).await
+            .map_err(|e| GraphError::StorageError(format!("Failed to create log directory: {}", e)))?;
+            
         let filename = self.log_dir.join(format!("{}.log", entry.transaction_id.as_str()));
         
         let serialized = serde_json::to_string(entry)
@@ -254,6 +258,10 @@ impl DistributedTransactionLog {
         
         file.flush().await
             .map_err(|e| GraphError::StorageError(format!("Failed to flush log file: {}", e)))?;
+        
+        // Force filesystem sync to ensure durability
+        file.sync_all().await
+            .map_err(|e| GraphError::StorageError(format!("Failed to sync log file: {}", e)))?;
         
         Ok(())
     }
