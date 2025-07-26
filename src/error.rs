@@ -144,3 +144,10 @@ impl From<GraphError> for String {
 }
 
 pub type Result<T> = std::result::Result<T, GraphError>;
+
+// Conversion from ModelError to GraphError
+impl From<crate::models::ModelError> for GraphError {
+    fn from(err: crate::models::ModelError) -> Self {
+        GraphError::ModelError(err.to_string())
+    }
+}

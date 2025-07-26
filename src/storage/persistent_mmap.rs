@@ -391,15 +391,16 @@ impl PersistentMMapStorage {
     }
     
     /// Get quantized embedding for entity
-    pub fn get_quantized_embedding(&self, entity_key: EntityKey) -> Option<&[u8]> {
+    pub fn get_quantized_embedding(&self, entity_key: EntityKey) -> Option<Vec<u8>> {
         let entity = self.get_entity(entity_key)?;
         let start = entity.embedding_offset as usize;
         let quantizer = self.quantizer.read();
         let size = quantizer.num_subspaces();
         drop(quantizer);
         
-        if start + size <= self.quantized_embeddings.len() {
-            Some(&self.quantized_embeddings[start..start + size])
+        let embeddings = self.quantized_embeddings.read();
+        if start + size <= embeddings.len() {
+            Some(embeddings[start..start + size].to_vec())
         } else {
             None
         }
@@ -409,7 +410,7 @@ impl PersistentMMapStorage {
     pub fn get_reconstructed_embedding(&self, entity_key: EntityKey) -> Result<Option<Vec<f32>>> {
         if let Some(quantized) = self.get_quantized_embedding(entity_key) {
             let quantizer = self.quantizer.read();
-            Ok(Some(quantizer.decode(quantized)?))
+            Ok(Some(quantizer.decode(&quantized)?))
         } else {
             Ok(None)
         }
@@ -421,7 +422,8 @@ impl PersistentMMapStorage {
         let mut results = Vec::new();
         
         // Use asymmetric distance for efficiency
-        for entity in &self.entities {
+        let entities = self.entities.read();
+        for entity in entities.iter() {
             let entity_key = EntityKey::from_raw(entity.entity_key);
             if let Some(quantized) = self.get_quantized_embedding(entity_key) {
                 if let Ok(distance) = quantizer.asymmetric_distance(query, &quantized) {
@@ -508,7 +510,7 @@ impl PersistentMMapStorage {
     
     /// Enable/disable auto-sync
     pub fn set_auto_sync(&mut self, enabled: bool) {
-        self.auto_sync = enabled;
+        self.auto_sync.store(enabled, Ordering::Relaxed);
     }
     
     /// Get quantizer for external operations
@@ -524,19 +526,24 @@ impl PersistentMMapStorage {
         let codes_size = quantizer.num_subspaces();
         drop(quantizer);
         
-        for entity in &mut self.entities {
+        let mut entities = self.entities.write();
+        for entity in entities.iter_mut() {
             let old_offset = entity.embedding_offset as usize;
             let new_offset = new_embeddings.len() as u32;
             
-            if old_offset + codes_size <= self.quantized_embeddings.len() {
-                new_embeddings.extend_from_slice(&self.quantized_embeddings[old_offset..old_offset + codes_size]);
+            let embeddings = self.quantized_embeddings.read();
+            if old_offset + codes_size <= embeddings.len() {
+                new_embeddings.extend_from_slice(&embeddings[old_offset..old_offset + codes_size]);
                 entity.embedding_offset = new_offset;
             }
         }
+        drop(entities);
         
-        self.quantized_embeddings = new_embeddings;
+        let mut embeddings_write = self.quantized_embeddings.write();
+        *embeddings_write = new_embeddings;
+        drop(embeddings_write);
         
-        if self.auto_sync {
+        if self.auto_sync.load(Ordering::Relaxed) {
             self.sync_to_disk()?;
         }
         

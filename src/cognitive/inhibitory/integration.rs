@@ -99,6 +99,36 @@ async fn apply_pattern_specific_inhibition(
             // Tree of thoughts: hierarchical inhibition allowing branching
             apply_systems_inhibition(pattern, &inhibition_profile, &mut affected_entities);
         }
+        
+        CognitivePatternType::Analytical => {
+            // Analytical thinking: focused inhibition on irrelevant details
+            apply_convergent_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::PatternRecognition => {
+            // Pattern recognition: selective inhibition of non-patterns
+            apply_abstract_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::Linguistic => {
+            // Linguistic thinking: context-aware inhibition
+            apply_adaptive_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::Creative => {
+            // Creative thinking: minimal inhibition for free association
+            apply_divergent_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::Ensemble => {
+            // Ensemble thinking: balanced inhibition across patterns
+            apply_adaptive_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
+        
+        CognitivePatternType::Unknown => {
+            // Unknown pattern: default conservative inhibition
+            apply_convergent_inhibition(pattern, &inhibition_profile, &mut affected_entities);
+        }
     }
     
     Ok(PatternSpecificInhibition {
@@ -171,6 +201,48 @@ fn get_inhibition_profile(pattern_type: CognitivePatternType) -> InhibitionProfi
             convergent_factor: 0.4,
             divergent_factor: 0.7,
             lateral_spread: 0.6,
+            critical_threshold: 0.5,
+        },
+        
+        CognitivePatternType::Analytical => InhibitionProfile {
+            convergent_factor: 0.8,
+            divergent_factor: 0.2,
+            lateral_spread: 0.3,
+            critical_threshold: 0.7,
+        },
+        
+        CognitivePatternType::PatternRecognition => InhibitionProfile {
+            convergent_factor: 0.6,
+            divergent_factor: 0.4,
+            lateral_spread: 0.5,
+            critical_threshold: 0.6,
+        },
+        
+        CognitivePatternType::Linguistic => InhibitionProfile {
+            convergent_factor: 0.7,
+            divergent_factor: 0.3,
+            lateral_spread: 0.4,
+            critical_threshold: 0.65,
+        },
+        
+        CognitivePatternType::Creative => InhibitionProfile {
+            convergent_factor: 0.2,
+            divergent_factor: 0.8,
+            lateral_spread: 0.9,
+            critical_threshold: 0.3,
+        },
+        
+        CognitivePatternType::Ensemble => InhibitionProfile {
+            convergent_factor: 0.5,
+            divergent_factor: 0.5,
+            lateral_spread: 0.5,
+            critical_threshold: 0.5,
+        },
+        
+        CognitivePatternType::Unknown => InhibitionProfile {
+            convergent_factor: 0.5,
+            divergent_factor: 0.5,
+            lateral_spread: 0.5,
             critical_threshold: 0.5,
         },
     }

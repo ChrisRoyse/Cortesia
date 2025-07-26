@@ -585,6 +585,7 @@ impl CognitivePattern for AbstractThinking {
                 total_energy: abstract_result.efficiency_gains.query_time_improvement,
                 additional_info: self.create_abstract_metadata(&abstract_result),
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     

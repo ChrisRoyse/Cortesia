@@ -432,6 +432,7 @@ impl CognitivePattern for CriticalThinking {
                 total_energy: critical_result.uncertainty_analysis.overall_uncertainty,
                 additional_info: self.create_critical_metadata(&critical_result),
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     

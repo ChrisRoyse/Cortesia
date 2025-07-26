@@ -87,6 +87,12 @@ pub enum ModelError {
     MatrixError(String),
 }
 
+impl From<crate::error::GraphError> for ModelError {
+    fn from(err: crate::error::GraphError) -> Self {
+        ModelError::InferenceError(err.to_string())
+    }
+}
+
 pub type Result<T> = std::result::Result<T, ModelError>;
 
 /// Performance metrics for model inference

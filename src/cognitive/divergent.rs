@@ -905,6 +905,7 @@ impl CognitivePattern for DivergentThinking {
                     info
                 },
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
 

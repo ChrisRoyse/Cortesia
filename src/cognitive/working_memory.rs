@@ -1041,7 +1041,7 @@ impl WorkingMemorySystem {
             .take(5)
             .collect();
         
-        for item in items_to_consolidate {
+        for item in &items_to_consolidate {
             // Store in long-term memory (SDR storage)
             match &item.content {
                 MemoryContent::Concept(concept) => {

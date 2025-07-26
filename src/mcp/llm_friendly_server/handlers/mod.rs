@@ -2,6 +2,7 @@
 
 pub mod storage;
 pub mod query;
+pub mod cognitive_query;
 pub mod exploration;
 pub mod advanced;
 pub mod cognitive;

@@ -845,6 +845,46 @@ impl Phase3IntegratedCognitiveSystem {
                 ).await?;
                 (format!("Tree exploration found {} paths", result.total_paths_explored), 0.75)
             }
+            CognitivePatternType::Analytical => {
+                // Analytical thinking - systematic analysis
+                let result = self.convergent_thinking.execute_convergent_query(query, None).await?;
+                (format!("Analytical reasoning: {}", result.answer), result.confidence)
+            }
+            CognitivePatternType::PatternRecognition => {
+                // Pattern recognition - identify recurring patterns
+                let result = self.abstract_thinking.execute_pattern_analysis(
+                    crate::cognitive::types::AnalysisScope::Global,
+                    crate::cognitive::types::PatternType::Structural,
+                ).await?;
+                (format!("Recognized {} patterns", result.patterns_found.len()), 0.8)
+            }
+            CognitivePatternType::Linguistic => {
+                // Linguistic analysis - language understanding
+                let result = self.convergent_thinking.execute_convergent_query(query, None).await?;
+                (format!("Linguistic analysis: {}", result.answer), result.confidence)
+            }
+            CognitivePatternType::Creative => {
+                // Creative thinking - imaginative exploration
+                let result = self.divergent_thinking.execute_divergent_exploration(
+                    query,
+                    crate::cognitive::types::ExplorationType::Creative,
+                ).await?;
+                (format!("Creative exploration yielded {} ideas", result.explorations.len()), 0.7)
+            }
+            CognitivePatternType::Ensemble => {
+                // Ensemble thinking - combine multiple patterns
+                let result = self.adaptive_thinking.execute_adaptive_reasoning(
+                    query,
+                    None,
+                    vec![CognitivePatternType::Convergent, CognitivePatternType::Divergent, CognitivePatternType::Critical],
+                ).await?;
+                (result.final_answer, result.confidence_distribution.ensemble_confidence)
+            }
+            CognitivePatternType::Unknown => {
+                // Unknown pattern - fallback to convergent
+                let result = self.convergent_thinking.execute_convergent_query(query, None).await?;
+                (format!("Unknown pattern fallback: {}", result.answer), result.confidence * 0.8)
+            }
         };
 
         Ok(PatternExecutionResult {

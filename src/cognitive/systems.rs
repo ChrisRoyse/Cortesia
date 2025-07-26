@@ -396,6 +396,7 @@ impl CognitivePattern for SystemsThinking {
                 total_energy: systems_result.system_complexity,
                 additional_info: self.create_additional_metadata(&systems_result),
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     

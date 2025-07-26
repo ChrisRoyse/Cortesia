@@ -31,7 +31,7 @@ pub struct FederatedUsageStats {
 
 impl FederatedMCPServer {
     pub async fn new() -> Result<Self> {
-        let federation_manager = Arc::new(RwLock::new(FederationManager::new()?));
+        let federation_manager = Arc::new(RwLock::new(FederationManager::new().await?));
         let version_manager = Arc::new(RwLock::new(MultiDatabaseVersionManager::new()?));
         let math_engine = Arc::new(MathEngine::new()?);
         

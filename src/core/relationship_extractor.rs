@@ -12,6 +12,7 @@ use tokio::time::Instant;
 use uuid::Uuid;
 use regex::{Regex, RegexSet};
 use once_cell::sync::Lazy;
+use rand;
 
 // Cognitive and neural processing imports
 use crate::cognitive::orchestrator::CognitiveOrchestrator;
@@ -915,7 +916,25 @@ impl CognitiveRelationshipExtractor {
     pub async fn extract_relationships(&self, text: &str) -> Result<Vec<CognitiveRelationship>> {
         let start_time = Instant::now();
         
-        // Cognitive reasoning for relationship extraction strategy
+        // 1. Start federation transaction for cross-database coordination
+        let transaction_id = if let Some(ref coordinator) = self.federation_coordinator {
+            let metadata = TransactionMetadata {
+                priority: TransactionPriority::High,
+                isolation_level: IsolationLevel::ReadCommitted,
+                consistency_mode: ConsistencyMode::Strong,
+                timeout_seconds: 30,
+                application_context: Some("relationship_extraction".to_string()),
+            };
+            
+            Some(coordinator.begin_transaction(
+                vec![DatabaseId::new("primary".to_string()), DatabaseId::new("semantic".to_string()), DatabaseId::new("neural".to_string())],
+                metadata
+            ).await?)
+        } else {
+            None
+        };
+        
+        // 2. Cognitive reasoning for relationship extraction strategy
         let reasoning_result = self.cognitive_orchestrator.reason(
             &format!("Extract relationships from: {}", text),
             Some("relationship_extraction"),
@@ -926,15 +945,19 @@ impl CognitiveRelationshipExtractor {
             ])
         ).await?;
         
-        // Use attention manager to focus on relationship patterns
+        // 3. Use attention manager to focus on relationship patterns
         let attention_weights = vec![0.7; text.len().min(20)]; // Enhanced attention for relationships
         
-        // Check cognitive cache with attention-based retrieval
+        // 4. Check cognitive cache with attention-based retrieval
         if let Some(cached) = self.get_cached_relationships_with_attention(text, &attention_weights).await {
+            // Commit empty transaction if needed
+            if let (Some(ref coordinator), Some(ref tx_id)) = (&self.federation_coordinator, &transaction_id) {
+                let _ = coordinator.commit_transaction(tx_id).await;
+            }
             return Ok(cached);
         }
         
-        // First extract entities (required for relationship extraction)
+        // 5. First extract entities (required for relationship extraction)
         let entity_extractor = crate::core::entity_extractor::CognitiveEntityExtractor::new(
             self.cognitive_orchestrator.clone(),
             self.attention_manager.clone(),
@@ -944,24 +967,41 @@ impl CognitiveRelationshipExtractor {
         );
         let entities = entity_extractor.extract_entities(text).await?;
         
-        // Parallel extraction with cognitive coordination using tokio::join!
-        let (neural_rels, native_rels, federated_rels) = tokio::join!(
-            self.extract_with_neural_server(text, &entities, &reasoning_result),
-            self.extract_with_native_models(text, &entities, &reasoning_result),
-            self.extract_cross_database_relationships(text, &reasoning_result)
-        );
+        // 6. Extract relationships across databases with federation support
+        let relationships = if let Some(ref tx_id) = transaction_id {
+            self.extract_cross_database_relationships_with_transaction(
+                text, 
+                &entities,
+                tx_id,
+                &reasoning_result
+            ).await?
+        } else {
+            // Fallback to non-federated extraction
+            self.extract_relationships_local(text, &entities, &reasoning_result).await?
+        };
         
-        // Cognitive fusion of relationship extractions
-        let fused_relationships = self.cognitive_fusion(
-            neural_rels?, 
-            native_rels?, 
-            federated_rels?,
-            &reasoning_result
-        ).await?;
+        // 7. Use neural classification for 30+ relationship types
+        let classified_relationships = self.classify_relationships_neural(relationships).await?;
         
-        // Store in working memory for context propagation
-        // self.working_memory.store_relationships(&fused_relationships).await?;
+        // 8. Validate and enhance with cross-database information
+        let enhanced_relationships = if let Some(ref tx_id) = transaction_id {
+            self.enhance_relationships_cross_database(classified_relationships, tx_id).await?
+        } else {
+            classified_relationships
+        };
         
+        // 9. Store in working memory for context propagation
+        self.store_in_working_memory(&enhanced_relationships).await?;
+        
+        // 10. Commit transaction if we started one
+        if let (Some(ref coordinator), Some(ref tx_id)) = (&self.federation_coordinator, &transaction_id) {
+            coordinator.commit_transaction(tx_id).await?;
+        }
+        
+        // 11. Cache the results with attention metadata
+        self.cache_relationships_with_attention(text, &enhanced_relationships, &attention_weights).await;
+        
+        // 12. Record metrics
         let duration = start_time.elapsed();
         
         // Record performance metrics
@@ -972,13 +1012,13 @@ impl CognitiveRelationshipExtractor {
             working_memory_utilization: 0.6, // Simplified for now
             neural_server_calls: if self.neural_server.is_some() { 1 } else { 0 },
             federation_calls: if self.federation_coordinator.is_some() { 1 } else { 0 },
-            relationships_extracted: fused_relationships.len(),
-            confidence_distribution: fused_relationships.iter().map(|r| r.confidence).collect(),
-            extraction_model_breakdown: self.calculate_model_breakdown(&fused_relationships),
+            relationships_extracted: enhanced_relationships.len(),
+            confidence_distribution: enhanced_relationships.iter().map(|r| r.confidence).collect(),
+            extraction_model_breakdown: self.calculate_model_breakdown(&enhanced_relationships),
         };
         
         // Cache with cognitive metadata
-        self.cache_relationships_with_cognitive_metadata(text, &fused_relationships, &reasoning_result).await;
+        self.cache_relationships_with_cognitive_metadata(text, &enhanced_relationships, &reasoning_result).await;
         
         // Verify performance target: <12ms per sentence with federation
         if duration.as_millis() > 12 {
@@ -988,7 +1028,7 @@ impl CognitiveRelationshipExtractor {
             );
         }
         
-        Ok(fused_relationships)
+        Ok(enhanced_relationships)
     }
 
     /// Extract relationships using neural server with cognitive guidance
@@ -1114,7 +1154,7 @@ impl CognitiveRelationshipExtractor {
             let pattern = Regex::new(pattern_str).unwrap();
             for cap in pattern.captures_iter(text) {
                 if let (Some(subj), Some(verb), Some(obj)) = (cap.get(1), cap.get(2), cap.get(3)) {
-                    let rel_type = if hint_type != &CognitiveRelationshipType::Unknown {
+                    let rel_type = if hint_type != CognitiveRelationshipType::Unknown {
                         hint_type.clone()
                     } else {
                         self.classify_verb_dependency(verb.as_str())
@@ -1529,7 +1569,7 @@ impl CognitiveRelationshipExtractor {
         // Aggregate metadata from all sources
         let mut all_databases = HashSet::new();
         let mut total_salience = 0.0;
-        let mut max_federation_conf = 0.0;
+        let mut max_federation_conf = 0.0f32;
         
         for rel in &group {
             all_databases.extend(rel.source_databases.iter().cloned());
@@ -1718,7 +1758,7 @@ impl CognitiveRelationshipExtractor {
     
     /// Calculate confidence based on neural features
     fn calculate_neural_confidence(&self, subject: &str, predicate: &str, object: &str) -> f32 {
-        let mut confidence = 0.85; // Base confidence
+        let mut confidence: f32 = 0.85; // Base confidence
         
         // Boost confidence for well-formed inputs
         if subject.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
@@ -1739,7 +1779,7 @@ impl CognitiveRelationshipExtractor {
             confidence += 0.07;
         }
         
-        confidence.min(0.98).max(0.5)
+        confidence.min(0.98f32).max(0.5f32)
     }
     
     /// Rule-based classification fallback
@@ -1896,6 +1936,600 @@ impl CognitiveRelationshipExtractor {
     /// Clear relationship cache for memory management
     pub async fn clear_cache(&self) {
         self.relationship_cache.clear();
+    }
+    
+    /// Extract relationships with cross-database transaction support
+    async fn extract_cross_database_relationships_with_transaction(
+        &self,
+        text: &str,
+        entities: &[crate::core::entity_extractor::CognitiveEntity],
+        transaction_id: &crate::federation::coordinator::TransactionId,
+        reasoning_result: &ReasoningResult,
+    ) -> Result<Vec<CognitiveRelationship>> {
+        let mut all_relationships = Vec::new();
+        
+        // Execute queries across databases within the transaction
+        if let Some(ref coordinator) = self.federation_coordinator {
+            // Query primary database for factual relationships
+            let primary_query = self.build_relationship_query(text, entities, "primary");
+            let primary_results = coordinator.execute_cross_database_query(
+                vec![DatabaseId::new("primary".to_string())],
+                &primary_query,
+                vec![],
+                crate::federation::coordinator::QueryMetadata {
+                    initiator: Some("relationship_extractor".to_string()),
+                    query_type: crate::federation::coordinator::QueryType::Read,
+                    priority: crate::federation::coordinator::QueryPriority::Normal,
+                    timeout_ms: 10000,
+                    require_consistency: false,
+                }
+            ).await?;
+            
+            // Query semantic database for inferred relationships
+            let semantic_query = self.build_relationship_query(text, entities, "semantic");
+            let semantic_results = coordinator.execute_cross_database_query(
+                vec![DatabaseId::new("semantic".to_string())],
+                &semantic_query,
+                vec![],
+                crate::federation::coordinator::QueryMetadata {
+                    initiator: Some("relationship_extractor".to_string()),
+                    query_type: crate::federation::coordinator::QueryType::Read,
+                    priority: crate::federation::coordinator::QueryPriority::Normal,
+                    timeout_ms: 10000,
+                    require_consistency: false,
+                }
+            ).await?;
+            
+            // Query neural database for ML-derived relationships
+            let neural_query = self.build_relationship_query(text, entities, "neural");
+            let neural_results = coordinator.execute_cross_database_query(
+                vec![DatabaseId::new("neural".to_string())],
+                &neural_query,
+                vec![],
+                crate::federation::coordinator::QueryMetadata {
+                    initiator: Some("relationship_extractor".to_string()),
+                    query_type: crate::federation::coordinator::QueryType::Read,
+                    priority: crate::federation::coordinator::QueryPriority::Normal,
+                    timeout_ms: 10000,
+                    require_consistency: false,
+                }
+            ).await?;
+            
+            // Convert results to relationships
+            all_relationships.extend(self.parse_database_results(primary_results, "primary", entities, text, reasoning_result)?);
+            all_relationships.extend(self.parse_database_results(semantic_results, "semantic", entities, text, reasoning_result)?);
+            all_relationships.extend(self.parse_database_results(neural_results, "neural", entities, text, reasoning_result)?);
+        }
+        
+        // Also extract relationships using local methods
+        let local_relationships = self.extract_relationships_local(text, entities, reasoning_result).await?;
+        all_relationships.extend(local_relationships);
+        
+        // Deduplicate and merge
+        Ok(self.deduplicate_relationships(all_relationships))
+    }
+    
+    /// Extract relationships using local methods (non-federated)
+    async fn extract_relationships_local(
+        &self,
+        text: &str,
+        entities: &[crate::core::entity_extractor::CognitiveEntity],
+        reasoning_result: &ReasoningResult,
+    ) -> Result<Vec<CognitiveRelationship>> {
+        // Parallel extraction with multiple methods
+        let (neural_rels, native_rels) = tokio::join!(
+            self.extract_with_neural_server(text, entities, reasoning_result),
+            self.extract_with_native_models(text, entities, reasoning_result),
+        );
+        
+        // Combine results
+        let mut all_relationships = Vec::new();
+        all_relationships.extend(neural_rels?);
+        all_relationships.extend(native_rels?);
+        
+        Ok(all_relationships)
+    }
+    
+    /// Classify relationships using neural models for 30+ types
+    async fn classify_relationships_neural(
+        &self,
+        relationships: Vec<CognitiveRelationship>,
+    ) -> Result<Vec<CognitiveRelationship>> {
+        let mut classified = Vec::new();
+        
+        for mut rel in relationships {
+            // Skip if already well-classified with high confidence
+            if rel.relationship_type != CognitiveRelationshipType::Unknown && rel.confidence > 0.9 {
+                classified.push(rel);
+                continue;
+            }
+            
+            // Neural classification for better accuracy
+            let (new_type, new_confidence) = if let Some(ref neural_server) = self.neural_server {
+                // Prepare input for neural classification
+                let input_text = format!("{} {} {}", rel.subject, rel.predicate, rel.object);
+                
+                let neural_request = crate::neural::neural_server::NeuralRequest {
+                    operation: NeuralOperation::Predict { 
+                        input: self.prepare_neural_input(&input_text)
+                    },
+                    model_id: "relationship_classifier_30plus".to_string(),
+                    input_data: serde_json::json!({
+                        "text": input_text,
+                        "subject": &rel.subject,
+                        "predicate": &rel.predicate,
+                        "object": &rel.object,
+                        "context": &rel.source_text,
+                    }),
+                    parameters: NeuralParameters {
+                        temperature: Some(0.3),
+                        top_k: Some(5),
+                        max_length: Some(10),
+                        ..Default::default()
+                    },
+                };
+                
+                match neural_server.process(neural_request).await {
+                    Ok(response) => {
+                        let predicted_type = self.parse_neural_relationship_type(&response);
+                        let confidence = self.extract_neural_confidence(&response);
+                        (predicted_type, confidence)
+                    },
+                    Err(_) => {
+                        // Fallback to enhanced rule-based classification
+                        self.classify_relationship_enhanced(&rel.subject, &rel.predicate, &rel.object)
+                    }
+                }
+            } else {
+                // Enhanced rule-based classification supporting all 30+ types
+                self.classify_relationship_enhanced(&rel.subject, &rel.predicate, &rel.object)
+            };
+            
+            // Update relationship with new classification
+            rel.relationship_type = new_type;
+            rel.confidence = rel.confidence.max(new_confidence); // Keep higher confidence
+            
+            classified.push(rel);
+        }
+        
+        Ok(classified)
+    }
+    
+    /// Enhanced rule-based classification supporting 30+ relationship types
+    fn classify_relationship_enhanced(&self, subject: &str, predicate: &str, object: &str) -> (CognitiveRelationshipType, f32) {
+        let predicate_lower = predicate.to_lowercase();
+        let text_lower = format!("{} {} {}", subject.to_lowercase(), predicate_lower, object.to_lowercase());
+        
+        // Check for specific patterns and keywords
+        let (rel_type, base_confidence) = if predicate_lower.contains("discover") {
+            (CognitiveRelationshipType::Discovered, 0.9)
+        } else if predicate_lower.contains("invent") {
+            (CognitiveRelationshipType::Invented, 0.9)
+        } else if predicate_lower.contains("create") || predicate_lower.contains("establish") {
+            (CognitiveRelationshipType::Created, 0.88)
+        } else if predicate_lower.contains("develop") {
+            (CognitiveRelationshipType::Developed, 0.88)
+        } else if predicate_lower.contains("found") && !predicate_lower.contains("found that") {
+            (CognitiveRelationshipType::Founded, 0.87)
+        } else if predicate_lower.contains("build") || predicate_lower.contains("built") || predicate_lower.contains("construct") {
+            (CognitiveRelationshipType::Built, 0.88)
+        } else if predicate_lower.contains("write") || predicate_lower.contains("wrote") || predicate_lower.contains("author") {
+            (CognitiveRelationshipType::Wrote, 0.89)
+        } else if predicate_lower.contains("design") {
+            (CognitiveRelationshipType::Designed, 0.87)
+        } else if predicate_lower.contains("produce") || predicate_lower.contains("direct") {
+            (CognitiveRelationshipType::Produced, 0.86)
+        } else if predicate_lower.contains("publish") {
+            (CognitiveRelationshipType::Published, 0.88)
+        } else if text_lower.contains("born in") || text_lower.contains("was born") {
+            (CognitiveRelationshipType::BornIn, 0.92)
+        } else if text_lower.contains("lived in") || text_lower.contains("resided") {
+            (CognitiveRelationshipType::LivedIn, 0.87)
+        } else if text_lower.contains("worked at") || text_lower.contains("employed by") {
+            (CognitiveRelationshipType::WorkedAt, 0.88)
+        } else if text_lower.contains("studied at") || text_lower.contains("graduated from") {
+            (CognitiveRelationshipType::StudiedAt, 0.89)
+        } else if text_lower.contains("located in") || text_lower.contains("situated in") {
+            (CognitiveRelationshipType::LocatedIn, 0.9)
+        } else if text_lower.contains("based in") || text_lower.contains("headquartered") {
+            (CognitiveRelationshipType::BasedIn, 0.88)
+        } else if predicate_lower.contains("from") && subject.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+            (CognitiveRelationshipType::From, 0.85)
+        } else if predicate_lower.contains("before") {
+            (CognitiveRelationshipType::Before, 0.86)
+        } else if predicate_lower.contains("after") {
+            (CognitiveRelationshipType::After, 0.86)
+        } else if predicate_lower.contains("during") {
+            (CognitiveRelationshipType::During, 0.87)
+        } else if predicate_lower.contains("simultaneous") || predicate_lower.contains("at the same time") {
+            (CognitiveRelationshipType::SimultaneousWith, 0.85)
+        } else if text_lower.contains("is a") || text_lower.contains("was a") {
+            (CognitiveRelationshipType::IsA, 0.9)
+        } else if text_lower.contains("part of") || text_lower.contains("member of") {
+            (CognitiveRelationshipType::PartOf, 0.88)
+        } else if predicate_lower.contains("contains") || predicate_lower.contains("includes") {
+            (CognitiveRelationshipType::Contains, 0.87)
+        } else if text_lower.contains("belongs to") {
+            (CognitiveRelationshipType::BelongsTo, 0.86)
+        } else if predicate_lower.contains("cause") {
+            (CognitiveRelationshipType::Causes, 0.85)
+        } else if text_lower.contains("caused by") {
+            (CognitiveRelationshipType::CausedBy, 0.85)
+        } else if predicate_lower.contains("prevent") {
+            (CognitiveRelationshipType::Prevents, 0.84)
+        } else if predicate_lower.contains("enable") || predicate_lower.contains("allow") {
+            (CognitiveRelationshipType::Enables, 0.85)
+        } else if text_lower.contains("leads to") || text_lower.contains("results in") {
+            (CognitiveRelationshipType::LeadsTo, 0.84)
+        } else if text_lower.contains("married to") || text_lower.contains("spouse of") {
+            (CognitiveRelationshipType::MarriedTo, 0.91)
+        } else if text_lower.contains("child of") || text_lower.contains("son of") || text_lower.contains("daughter of") {
+            (CognitiveRelationshipType::ChildOf, 0.9)
+        } else if text_lower.contains("parent of") || text_lower.contains("father of") || text_lower.contains("mother of") {
+            (CognitiveRelationshipType::ParentOf, 0.9)
+        } else if text_lower.contains("sibling of") || text_lower.contains("brother of") || text_lower.contains("sister of") {
+            (CognitiveRelationshipType::SiblingOf, 0.89)
+        } else if text_lower.contains("collaborated with") || text_lower.contains("worked with") {
+            (CognitiveRelationshipType::CollaboratedWith, 0.87)
+        } else if predicate_lower.contains("won") || predicate_lower.contains("win") {
+            (CognitiveRelationshipType::Won, 0.89)
+        } else if predicate_lower.contains("received") || predicate_lower.contains("got") {
+            (CognitiveRelationshipType::Received, 0.87)
+        } else if predicate_lower.contains("awarded") || predicate_lower.contains("given") {
+            (CognitiveRelationshipType::Awarded, 0.88)
+        } else if text_lower.contains("nominated for") {
+            (CognitiveRelationshipType::Nominated, 0.86)
+        } else if predicate_lower.contains("has") || predicate_lower.contains("have") {
+            (CognitiveRelationshipType::Has, 0.82)
+        } else if predicate_lower.contains("is") || predicate_lower.contains("are") || predicate_lower.contains("was") || predicate_lower.contains("were") {
+            (CognitiveRelationshipType::Is, 0.8)
+        } else if predicate_lower.contains("owns") || predicate_lower.contains("possess") {
+            (CognitiveRelationshipType::Owns, 0.86)
+        } else if predicate_lower.contains("use") || predicate_lower.contains("utilize") {
+            (CognitiveRelationshipType::Uses, 0.85)
+        } else if text_lower.contains("related to") || text_lower.contains("connected to") {
+            (CognitiveRelationshipType::RelatedTo, 0.83)
+        } else if text_lower.contains("similar to") || text_lower.contains("like") {
+            (CognitiveRelationshipType::SimilarTo, 0.82)
+        } else if text_lower.contains("opposite") || text_lower.contains("contrary") {
+            (CognitiveRelationshipType::OppositeTo, 0.84)
+        } else if text_lower.contains("influenced by") || text_lower.contains("affected by") {
+            (CognitiveRelationshipType::InfluencedBy, 0.85)
+        } else if predicate_lower.contains("influence") || predicate_lower.contains("affect") {
+            (CognitiveRelationshipType::Influences, 0.85)
+        } else if text_lower.contains("inspired by") {
+            (CognitiveRelationshipType::InspiredBy, 0.86)
+        } else if predicate_lower.contains("inspire") {
+            (CognitiveRelationshipType::Inspires, 0.85)
+        } else if text_lower.contains("knows about") || text_lower.contains("understands") {
+            (CognitiveRelationshipType::KnowsAbout, 0.83)
+        } else if predicate_lower.contains("teach") || predicate_lower.contains("instruct") {
+            (CognitiveRelationshipType::TeachesAbout, 0.85)
+        } else if predicate_lower.contains("learn") || predicate_lower.contains("study") {
+            (CognitiveRelationshipType::LearnsAbout, 0.84)
+        } else {
+            (CognitiveRelationshipType::Unknown, 0.5)
+        };
+        
+        // Adjust confidence based on context
+        let adjusted_confidence = self.adjust_confidence_by_context(subject, object, base_confidence);
+        
+        (rel_type, adjusted_confidence)
+    }
+    
+    /// Enhance relationships with cross-database validation
+    async fn enhance_relationships_cross_database(
+        &self,
+        relationships: Vec<CognitiveRelationship>,
+        transaction_id: &crate::federation::coordinator::TransactionId,
+    ) -> Result<Vec<CognitiveRelationship>> {
+        let mut enhanced = Vec::new();
+        
+        for mut rel in relationships {
+            // Query additional databases for validation and enrichment
+            if let Some(ref coordinator) = self.federation_coordinator {
+                // Check if relationship exists in knowledge bases
+                let validation_query = format!(
+                    "SELECT confidence, source FROM relationships WHERE subject = '{}' AND predicate = '{}' AND object = '{}'",
+                    rel.subject, rel.predicate, rel.object
+                );
+                
+                let validation_results = coordinator.execute_cross_database_query(
+                    vec![DatabaseId::new("primary".to_string()), DatabaseId::new("semantic".to_string())],
+                    &validation_query,
+                    vec![],
+                    crate::federation::coordinator::QueryMetadata {
+                        initiator: Some("relationship_validator".to_string()),
+                        query_type: crate::federation::coordinator::QueryType::Read,
+                        priority: crate::federation::coordinator::QueryPriority::Normal,
+                        timeout_ms: 5000,
+                        require_consistency: false,
+                    }
+                ).await;
+                
+                // Update relationship based on validation results
+                if let Ok(results) = validation_results {
+                    if !results.results.is_empty() {
+                        rel.cross_database_validated = true;
+                        rel.federation_confidence = rel.federation_confidence.max(0.9);
+                        
+                        // Add source databases
+                        for (db_id, _) in results.results {
+                            if !rel.source_databases.contains(&db_id.0) {
+                                rel.source_databases.push(db_id.0);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            enhanced.push(rel);
+        }
+        
+        Ok(enhanced)
+    }
+    
+    /// Store relationships in working memory
+    async fn store_in_working_memory(&self, relationships: &[CognitiveRelationship]) -> Result<()> {
+        // Convert relationships to working memory format
+        for rel in relationships {
+            let memory_key = format!("rel_{}_{}", rel.subject, rel.object);
+            let memory_value = serde_json::json!({
+                "type": format!("{:?}", rel.relationship_type),
+                "confidence": rel.confidence,
+                "predicate": &rel.predicate,
+                "timestamp": chrono::Utc::now().to_rfc3339(),
+            });
+            
+            // Store in working memory with attention weight
+            self.working_memory.store_with_attention(
+                &memory_key,
+                memory_value,
+                rel.neural_salience,
+            ).await?;
+        }
+        
+        Ok(())
+    }
+    
+    /// Build relationship query for specific database type
+    fn build_relationship_query(&self, text: &str, entities: &[crate::core::entity_extractor::CognitiveEntity], db_type: &str) -> String {
+        match db_type {
+            "primary" => {
+                // Query for factual relationships
+                format!(
+                    "SELECT subject, predicate, object, confidence FROM relationships WHERE text LIKE '%{}%' LIMIT 50",
+                    text.replace("'", "''")
+                )
+            },
+            "semantic" => {
+                // Query for semantic/inferred relationships
+                format!(
+                    "SELECT e1.name as subject, r.type as predicate, e2.name as object, r.score as confidence 
+                     FROM entities e1 
+                     JOIN semantic_relations r ON e1.id = r.from_id 
+                     JOIN entities e2 ON r.to_id = e2.id 
+                     WHERE e1.text LIKE '%{}%' OR e2.text LIKE '%{}%' 
+                     LIMIT 50",
+                    text.replace("'", "''"),
+                    text.replace("'", "''")
+                )
+            },
+            "neural" => {
+                // Query for ML-derived relationships
+                let entity_names: Vec<String> = entities.iter().map(|e| e.name.clone()).collect();
+                format!(
+                    "SELECT subject, predicate, object, neural_confidence as confidence 
+                     FROM neural_relationships 
+                     WHERE subject IN ({}) OR object IN ({}) 
+                     LIMIT 50",
+                    entity_names.iter().map(|e| format!("'{}'", e.replace("'", "''"))).collect::<Vec<_>>().join(", "),
+                    entity_names.iter().map(|e| format!("'{}'", e.replace("'", "''"))).collect::<Vec<_>>().join(", ")
+                )
+            },
+            _ => {
+                // Default query
+                format!("SELECT * FROM relationships WHERE text LIKE '%{}%' LIMIT 50", text.replace("'", "''"))
+            }
+        }
+    }
+    
+    /// Parse database results into relationships
+    fn parse_database_results(
+        &self,
+        results: crate::federation::coordinator::CrossDatabaseQueryResult,
+        source_db: &str,
+        entities: &[crate::core::entity_extractor::CognitiveEntity],
+        text: &str,
+        reasoning_result: &ReasoningResult,
+    ) -> Result<Vec<CognitiveRelationship>> {
+        let mut relationships = Vec::new();
+        
+        for (db_id, query_result) in results.results {
+            for row in query_result.rows {
+                // Extract fields from row
+                if let (Some(subject), Some(predicate), Some(object), Some(confidence)) = (
+                    row.get("subject").and_then(|v| v.as_str()),
+                    row.get("predicate").and_then(|v| v.as_str()),
+                    row.get("object").and_then(|v| v.as_str()),
+                    row.get("confidence").and_then(|v| v.as_f64()),
+                ) {
+                    let rel_type = self.classify_relationship_enhanced(subject, predicate, object).0;
+                    
+                    let relationship = CognitiveRelationship {
+                        id: Uuid::new_v4(),
+                        subject: subject.to_string(),
+                        predicate: predicate.to_string(),
+                        object: object.to_string(),
+                        relationship_type: rel_type,
+                        confidence: confidence as f32,
+                        source_text: text.to_string(),
+                        extracted_from_span: (0, text.len()),
+                        reasoning_pattern: match reasoning_result.strategy_used {
+                            ReasoningStrategy::Specific(pattern) => pattern,
+                            _ => CognitivePatternType::Convergent,
+                        },
+                        extraction_model: ExtractionModel::FederatedModel,
+                        attention_weights: vec![0.85],
+                        working_memory_context: Some(format!("from_{}_db", source_db)),
+                        embedding: None,
+                        neural_salience: 0.8,
+                        semantic_similarity_score: None,
+                        source_databases: vec![db_id.0.clone(), source_db.to_string()],
+                        cross_database_validated: true,
+                        federation_confidence: 0.9,
+                        extraction_time_ms: 0,
+                        created_at: chrono::Utc::now(),
+                    };
+                    
+                    relationships.push(relationship);
+                }
+            }
+        }
+        
+        Ok(relationships)
+    }
+    
+    /// Prepare neural input for classification
+    fn prepare_neural_input(&self, text: &str) -> Vec<f32> {
+        // Simple embedding simulation - in production would use actual embeddings
+        let mut features = Vec::new();
+        
+        // Text length features
+        features.push(text.len() as f32 / 100.0);
+        features.push(text.split_whitespace().count() as f32 / 20.0);
+        
+        // Character type features
+        let uppercase_count = text.chars().filter(|c| c.is_uppercase()).count();
+        let lowercase_count = text.chars().filter(|c| c.is_lowercase()).count();
+        let digit_count = text.chars().filter(|c| c.is_numeric()).count();
+        
+        features.push(uppercase_count as f32 / text.len().max(1) as f32);
+        features.push(lowercase_count as f32 / text.len().max(1) as f32);
+        features.push(digit_count as f32 / text.len().max(1) as f32);
+        
+        // Add some random noise for variety (in production would be actual embeddings)
+        for _ in 0..10 {
+            features.push(rand::random::<f32>() * 0.1 + 0.45);
+        }
+        
+        features
+    }
+    
+    /// Parse neural response to get relationship type
+    fn parse_neural_relationship_type(&self, response: &crate::neural::neural_server::NeuralResponse) -> CognitiveRelationshipType {
+        // Extract predicted type from neural response
+        if let Some(prediction) = response.output.get("predicted_type").and_then(|v| v.as_str()) {
+            // Map string prediction to enum
+            match prediction.to_lowercase().as_str() {
+                "discovered" => CognitiveRelationshipType::Discovered,
+                "invented" => CognitiveRelationshipType::Invented,
+                "created" => CognitiveRelationshipType::Created,
+                "developed" => CognitiveRelationshipType::Developed,
+                "founded" => CognitiveRelationshipType::Founded,
+                "built" => CognitiveRelationshipType::Built,
+                "wrote" => CognitiveRelationshipType::Wrote,
+                "designed" => CognitiveRelationshipType::Designed,
+                "produced" => CognitiveRelationshipType::Produced,
+                "published" => CognitiveRelationshipType::Published,
+                "bornin" => CognitiveRelationshipType::BornIn,
+                "livedin" => CognitiveRelationshipType::LivedIn,
+                "workedat" => CognitiveRelationshipType::WorkedAt,
+                "studiedat" => CognitiveRelationshipType::StudiedAt,
+                "locatedin" => CognitiveRelationshipType::LocatedIn,
+                "basedin" => CognitiveRelationshipType::BasedIn,
+                "from" => CognitiveRelationshipType::From,
+                "before" => CognitiveRelationshipType::Before,
+                "after" => CognitiveRelationshipType::After,
+                "during" => CognitiveRelationshipType::During,
+                "simultaneouswith" => CognitiveRelationshipType::SimultaneousWith,
+                "isa" => CognitiveRelationshipType::IsA,
+                "partof" => CognitiveRelationshipType::PartOf,
+                "contains" => CognitiveRelationshipType::Contains,
+                "belongsto" => CognitiveRelationshipType::BelongsTo,
+                "causes" => CognitiveRelationshipType::Causes,
+                "causedby" => CognitiveRelationshipType::CausedBy,
+                "prevents" => CognitiveRelationshipType::Prevents,
+                "enables" => CognitiveRelationshipType::Enables,
+                "leadsto" => CognitiveRelationshipType::LeadsTo,
+                "marriedto" => CognitiveRelationshipType::MarriedTo,
+                "childof" => CognitiveRelationshipType::ChildOf,
+                "parentof" => CognitiveRelationshipType::ParentOf,
+                "siblingof" => CognitiveRelationshipType::SiblingOf,
+                "collaboratedwith" => CognitiveRelationshipType::CollaboratedWith,
+                "workswith" => CognitiveRelationshipType::WorksWith,
+                "won" => CognitiveRelationshipType::Won,
+                "received" => CognitiveRelationshipType::Received,
+                "awarded" => CognitiveRelationshipType::Awarded,
+                "nominated" => CognitiveRelationshipType::Nominated,
+                "has" => CognitiveRelationshipType::Has,
+                "is" => CognitiveRelationshipType::Is,
+                "owns" => CognitiveRelationshipType::Owns,
+                "uses" => CognitiveRelationshipType::Uses,
+                "relatedto" => CognitiveRelationshipType::RelatedTo,
+                "similarto" => CognitiveRelationshipType::SimilarTo,
+                "oppositeto" => CognitiveRelationshipType::OppositeTo,
+                "connectedto" => CognitiveRelationshipType::ConnectedTo,
+                "influencedby" => CognitiveRelationshipType::InfluencedBy,
+                "influences" => CognitiveRelationshipType::Influences,
+                "inspiredby" => CognitiveRelationshipType::InspiredBy,
+                "inspires" => CognitiveRelationshipType::Inspires,
+                "knowsabout" => CognitiveRelationshipType::KnowsAbout,
+                "teachesabout" => CognitiveRelationshipType::TeachesAbout,
+                "learnsabout" => CognitiveRelationshipType::LearnsAbout,
+                _ => CognitiveRelationshipType::Unknown,
+            }
+        } else {
+            CognitiveRelationshipType::Unknown
+        }
+    }
+    
+    /// Extract confidence from neural response
+    fn extract_neural_confidence(&self, response: &crate::neural::neural_server::NeuralResponse) -> f32 {
+        response.output.get("confidence")
+            .and_then(|v| v.as_f64())
+            .map(|c| c as f32)
+            .unwrap_or(0.75)
+            .min(0.98)
+            .max(0.5)
+    }
+    
+    /// Adjust confidence based on entity context
+    fn adjust_confidence_by_context(&self, subject: &str, object: &str, base_confidence: f32) -> f32 {
+        let mut confidence = base_confidence;
+        
+        // Boost for proper nouns (capitalized)
+        if subject.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+            confidence += 0.02;
+        }
+        if object.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+            confidence += 0.02;
+        }
+        
+        // Boost for longer, more specific entities
+        if subject.split_whitespace().count() > 1 {
+            confidence += 0.01;
+        }
+        if object.split_whitespace().count() > 1 {
+            confidence += 0.01;
+        }
+        
+        // Penalty for very short entities
+        if subject.len() < 3 || object.len() < 3 {
+            confidence -= 0.05;
+        }
+        
+        confidence.min(0.98).max(0.4)
+    }
+    
+    /// Cache relationships with attention weights
+    async fn cache_relationships_with_attention(
+        &self,
+        text: &str,
+        relationships: &[CognitiveRelationship],
+        _attention_weights: &[f32],
+    ) {
+        self.relationship_cache.insert(text.to_string(), relationships.to_vec());
     }
 }
 

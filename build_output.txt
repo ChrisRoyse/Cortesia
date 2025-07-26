@@ -1,0 +1,2406 @@
+warning: file `C:\code\LLMKG\examples\federation_demo.rs` found to be present in multiple build targets:
+  * `bin` target `federation_demo`
+  * `example` target `federation_demo`
+warning: unused key `env` in [target] config table `cfg(windows)`
+   Compiling llmkg v0.1.0 (C:\code\LLMKG)
+warning: unused imports: `RustBertNER` and `RustTinyBertNER`
+  --> src\core\entity_extractor.rs:26:21
+   |
+26 | use crate::models::{RustBertNER, RustTinyBertNER, RustMiniLM};
+   |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `ReasoningStrategy`
+  --> src\core\answer_generator.rs:20:70
+   |
+20 | use crate::cognitive::types::{CognitivePatternType, ReasoningResult, ReasoningStrategy};
+   |                                                                      ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Mutex`
+  --> src\federation\two_phase_commit.rs:10:27
+   |
+10 | use tokio::sync::{RwLock, Mutex};
+   |                           ^^^^^
+
+warning: unused import: `ModelLoaderConfig`
+  --> src\neural\neural_server.rs:10:48
+   |
+10 | use crate::models::model_loader::{ModelLoader, ModelLoaderConfig};
+   |                                                ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `RustBertNER`, `RustMiniLM`, and `RustTinyBertNER`
+  --> src\neural\neural_server.rs:11:21
+   |
+11 | use crate::models::{RustBertNER, RustTinyBertNER, RustMiniLM, RustT5Small};
+   |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `Instant`
+ --> src\cognitive\types.rs:9:27
+  |
+9 | use std::time::{Duration, Instant};
+  |                           ^^^^^^^
+
+warning: unused import: `TripleQuery`
+ --> src\tools\migration.rs:6:49
+  |
+6 | use crate::core::knowledge_types::{MemoryStats, TripleQuery};
+  |                                                 ^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src\models\rust_bert_models.rs:3:5
+  |
+3 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `ModelError` and `ModelType`
+ --> src\models\rust_bert_models.rs:6:21
+  |
+6 | use crate::models::{ModelType, ModelError, Result};
+  |                     ^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `TokenizedInput`
+ --> src\models\rust_t5_models.rs:4:52
+  |
+4 | use crate::models::rust_tokenizer::{RustTokenizer, TokenizedInput};
+  |                                                    ^^^^^^^^^^^^^^
+
+warning: unused import: `ModelError`
+ --> src\models\rust_t5_models.rs:6:21
+  |
+6 | use crate::models::{ModelError, Result};
+  |                     ^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src\models\rust_embeddings.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused imports: `RustTokenizer` and `TokenizedInput`
+ --> src\models\rust_embeddings.rs:4:37
+  |
+4 | use crate::models::rust_tokenizer::{RustTokenizer, TokenizedInput};
+  |                                     ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+
+warning: unused imports: `EmbeddingLayer`, `FeedForward`, and `SelfAttention`
+ --> src\models\rust_embeddings.rs:5:62
+  |
+5 | use crate::models::rust_bert_models::{Matrix, RustBertModel, EmbeddingLayer, SelfAttention, FeedForward};
+  |                                                              ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused import: `ModelError`
+ --> src\models\rust_embeddings.rs:6:21
+  |
+6 | use crate::models::{ModelError, Result};
+  |                     ^^^^^^^^^^
+
+warning: unused import: `ModelError`
+  --> src\models\model_loader.rs:14:32
+   |
+14 | use crate::models::{ModelType, ModelError};
+   |                                ^^^^^^^^^^
+
+warning: unused import: `crate::models::rust_tokenizer::RustTokenizer`
+  --> src\models\model_loader.rs:17:5
+   |
+17 | use crate::models::rust_tokenizer::RustTokenizer;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::path::Path`
+ --> src\models\candle_models.rs:7:5
+  |
+7 | use std::path::Path;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `DType`
+ --> src\models\candle_models.rs:8:35
+  |
+8 | use candle_core::{Device, Tensor, DType};
+  |                                   ^^^^^
+
+warning: unused import: `Embedding`
+ --> src\models\candle_models.rs:9:25
+  |
+9 | use candle_nn::{Linear, Embedding, Module, VarBuilder};
+  |                         ^^^^^^^^^
+
+warning: unused import: `ModelType`
+  --> src\models\candle_models.rs:17:21
+   |
+17 | use crate::models::{ModelType, Result as ModelResult};
+   |                     ^^^^^^^^^
+
+warning: unused import: `crate::core::relationship_extractor::CognitiveRelationshipExtractor`
+ --> src\mcp\llm_friendly_server\handlers\storage.rs:7:5
+  |
+7 | use crate::core::relationship_extractor::CognitiveRelationshipExtractor;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `CognitivePatternType`
+  --> src\mcp\llm_friendly_server\handlers\storage.rs:10:50
+   |
+10 | use crate::cognitive::types::{ReasoningStrategy, CognitivePatternType};
+   |                                                  ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::federation::coordinator::FederationCoordinator`
+  --> src\mcp\llm_friendly_server\handlers\storage.rs:12:5
+   |
+12 | use crate::federation::coordinator::FederationCoordinator;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `LlmkgResult`
+  --> src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:10:17
+   |
+10 |     LlmkgError, LlmkgResult, HandlerResult,
+   |                 ^^^^^^^^^^^
+
+warning: unused variable: `cognitive_metrics`
+   --> src\core\entity_extractor.rs:618:13
+    |
+618 |         let cognitive_metrics = CognitiveMetrics {
+    |             ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cognitive_metrics`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+error[E0061]: this method takes 3 arguments but 2 arguments were supplied
+   --> src\core\entity_extractor.rs:731:46
+    |
+731 |                       match hnsw_index.write().insert(
+    |  ______________________________________________^^^^^^-
+732 | |                         entity.id.as_u128() as u32,
+733 | |                         embedding
+734 | |                     ) {
+    | |_____________________- argument #3 of type `Vec<f32>` is missing
+    |
+note: expected `EntityKey`, found `&Vec<f32>`
+   --> src\core\entity_extractor.rs:733:25
+    |
+733 |                         embedding
+    |                         ^^^^^^^^^
+    = note: expected struct `core::types::EntityKey`
+            found reference `&Vec<f32>`
+note: method defined here
+   --> src\storage\hnsw.rs:90:12
+    |
+90  |     pub fn insert(&self, entity_id: u32, entity_key: EntityKey, embedding: Vec<f32>) -> Result<()> {
+    |            ^^^^^^                        ---------------------  -------------------
+help: provide the argument
+    |
+731 -                     match hnsw_index.write().insert(
+732 -                         entity.id.as_u128() as u32,
+733 -                         embedding
+734 -                     ) {
+731 +                     match hnsw_index.write().insert(entity.id.as_u128() as u32, /* core::types::EntityKey */, /* Vec<f32> */) {
+    |
+
+error[E0599]: no method named `encode_single` found for reference `&RealMiniLM` in the current scope
+    --> src\core\entity_extractor.rs:1218:26
+     |
+1218 |             match minilm.encode_single(entity_context) {
+     |                          ^^^^^^^^^^^^^ method not found in `&RealMiniLM`
+
+error[E0599]: no method named `encode_single` found for reference `&Arc<RealMiniLM>` in the current scope
+    --> src\core\entity_extractor.rs:1307:26
+     |
+1307 |             match minilm.encode_single(query_text) {
+     |                          ^^^^^^^^^^^^^ method not found in `&Arc<RealMiniLM>`
+
+warning: unused variable: `neural_server`
+    --> src\core\relationship_extractor.rs:1001:21
+     |
+1001 |         if let Some(neural_server) = &self.neural_server {
+     |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\relationship_extractor.rs:1003:17
+     |
+1003 |             let neural_request = crate::neural::neural_server::NeuralRequest {
+     |                 ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+error[E0308]: mismatched types
+    --> src\core\relationship_extractor.rs:1117:52
+     |
+1117 |                     let rel_type = if hint_type != &CognitiveRelationshipType::Unknown {
+     |                                       ---------    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CognitiveRelationshipType`, found `&CognitiveRelationshipType`
+     |                                       |
+     |                                       expected because this is `relationship_extractor::CognitiveRelationshipType`
+     |
+help: consider removing the borrow
+     |
+1117 -                     let rel_type = if hint_type != &CognitiveRelationshipType::Unknown {
+1117 +                     let rel_type = if hint_type != CognitiveRelationshipType::Unknown {
+     |
+
+warning: unused variable: `entities`
+    --> src\core\relationship_extractor.rs:1208:9
+     |
+1208 |         entities: &[crate::core::entity_extractor::CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `key`
+    --> src\core\relationship_extractor.rs:1383:14
+     |
+1383 |         for (key, group) in grouped {
+     |              ^^^ help: if this is intentional, prefix it with an underscore: `_key`
+
+warning: unused variable: `i`
+    --> src\core\relationship_extractor.rs:1566:18
+     |
+1566 |             for (i, prediction) in predictions.iter().enumerate() {
+     |                  ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: unused variable: `neural_server`
+    --> src\core\relationship_extractor.rs:1656:21
+     |
+1656 |         if let Some(neural_server) = &self.neural_server {
+     |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\relationship_extractor.rs:1660:17
+     |
+1660 |             let neural_request = crate::neural::neural_server::NeuralRequest {
+     |                 ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `metrics`
+   --> src\core\question_parser.rs:861:13
+    |
+861 |         let metrics = CognitiveParsingMetrics {
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `neural_server`
+   --> src\core\question_parser.rs:886:9
+    |
+886 |         neural_server: &NeuralProcessingServer,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+   --> src\core\question_parser.rs:892:13
+    |
+892 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1209:9
+     |
+1209 |         entities: &[CognitiveEntity]
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `question`
+    --> src\core\question_parser.rs:1286:9
+     |
+1286 |         question: &str,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_question`
+
+warning: unused variable: `neural_server`
+    --> src\core\question_parser.rs:1287:9
+     |
+1287 |         neural_server: &NeuralProcessingServer
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1301:9
+     |
+1301 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `reasoning_result`
+    --> src\core\question_parser.rs:1302:9
+     |
+1302 |         reasoning_result: &ReasoningResult,
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1346:9
+     |
+1346 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1390:9
+     |
+1390 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `neural_server`
+    --> src\core\question_parser.rs:1463:9
+     |
+1463 |         neural_server: &NeuralProcessingServer,
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `reasoning_result`
+    --> src\core\question_parser.rs:1494:9
+     |
+1494 |         reasoning_result: &ReasoningResult,
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`
+   --> src\core\answer_generator.rs:598:17
+    |
+598 |                 confidence_score: 0.8,
+    |                 ^^^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`
+   --> src\core\answer_generator.rs:599:17
+    |
+599 |                 citation_score: 0.6,
+    |                 ^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`
+   --> src\core\answer_generator.rs:628:17
+    |
+628 |                 confidence_score: 0.8,
+    |                 ^^^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`
+   --> src\core\answer_generator.rs:629:17
+    |
+629 |                 citation_score: 0.6,
+    |                 ^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`
+   --> src\core\answer_generator.rs:658:17
+    |
+658 |                 confidence_score: 0.8,
+    |                 ^^^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`
+   --> src\core\answer_generator.rs:659:17
+    |
+659 |                 citation_score: 0.6,
+    |                 ^^^^^^^^^^^^^^ `AnswerQualityMetrics` does not have this field
+    |
+    = note: available fields are: `factual_accuracy`, `neural_confidence`, `cognitive_consistency`, `source_reliability`
+
+warning: unused variable: `neural_server`
+   --> src\core\answer_generator.rs:861:9
+    |
+861 |         neural_server: &NeuralProcessingServer,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+   --> src\core\answer_generator.rs:867:13
+    |
+867 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+error[E0061]: this function takes 4 arguments but 2 arguments were supplied
+   --> src\core\answer_generator.rs:962:29
+    |
+962 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----------------------------- two arguments of type `&[relationship_extractor::CognitiveRelationship]` and `&CognitiveQuestionIntent` are missing
+    |
+note: expected `&AnswerGenerator`, found `Vec<Triple>`
+   --> src\core\answer_generator.rs:962:62
+    |
+962 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                                                              ^^^^^^^^^^^^
+    = note: expected reference `&AnswerGenerator`
+                  found struct `Vec<Triple>`
+note: expected `&[CognitiveEntity]`, found `QuestionIntent`
+   --> src\core\answer_generator.rs:962:76
+    |
+962 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                                                                            ^^^^^^^^^^^^^
+    = note: expected reference `&[entity_extractor::CognitiveEntity]`
+                  found struct `QuestionIntent`
+note: method defined here
+   --> src\core\answer_generator.rs:605:18
+    |
+605 |     pub async fn generate_answer(
+    |                  ^^^^^^^^^^^^^^^
+606 |         &self,
+    |         -----
+607 |         _entities: &[crate::core::entity_extractor::CognitiveEntity],
+    |         ------------------------------------------------------------
+608 |         _relationships: &[crate::core::relationship_extractor::CognitiveRelationship],
+    |         -----------------------------------------------------------------------------
+609 |         _intent: &CognitiveQuestionIntent,
+    |         ---------------------------------
+help: provide the arguments
+    |
+962 -         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+962 +         let legacy_answer = AnswerGenerator::generate_answer(/* &AnswerGenerator */, /* &[entity_extractor::CognitiveEntity] */, /* &[relationship_extractor::CognitiveRelationship] */, /* &CognitiveQuestionIntent */);
+    |
+
+error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\core\answer_generator.rs:966:28
+    |
+966 |             &legacy_answer.text,
+    |                            ^^^^ unknown field
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:974:13
+     |
+973  |         let enhanced_confidence = self.calculate_cognitive_answer_confidence(
+     |                                        ------------------------------------- arguments to this method are incorrect
+974  |             &legacy_answer,
+     |             ^^^^^^^^^^^^^^ expected `&Answer`, found `&impl Future<Output = Result<..., ...>>`
+     |
+     = note: expected reference `&Answer`
+                found reference `&impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+note: method defined here
+    --> src\core\answer_generator.rs:1611:14
+     |
+1611 |     async fn calculate_cognitive_answer_confidence(
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1612 |         &self,
+1613 |         legacy_answer: &Answer,
+     |         ----------------------
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1012:17
+     |
+1012 |                 self.generate_factual_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1015:17
+     |
+1015 |                 self.generate_explanatory_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1018:17
+     |
+1018 |                 self.generate_comparative_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1021:17
+     |
+1021 |                 self.generate_temporal_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1024:17
+     |
+1024 |                 self.generate_causal_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+warning: unused variable: `neural_server`
+    --> src\core\answer_generator.rs:1066:9
+     |
+1066 |         neural_server: &NeuralProcessingServer,
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\answer_generator.rs:1069:13
+     |
+1069 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+     |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1146:9
+     |
+1146 |         subtype: &FactualSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1316:9
+     |
+1316 |         subtype: &ExplanatorySubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1341:9
+     |
+1341 |         subtype: &ComparativeSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1366:9
+     |
+1366 |         subtype: &TemporalSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1391:9
+     |
+1391 |         subtype: &CausalSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1513:70
+     |
+1513 |     async fn generate_complex_answer(&self, facts: &[CognitiveFact], intent: &CognitiveQuestionIntent) -> String {
+     |                                                                      ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1658:69
+     |
+1658 |     async fn assess_answer_quality(&self, answer: &CognitiveAnswer, intent: &CognitiveQuestionIntent) -> AnswerQualityMetrics {
+     |                                                                     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+warning: unused variable: `attention_weights`
+    --> src\core\answer_generator.rs:1690:9
+     |
+1690 |         attention_weights: &[f32],
+     |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_attention_weights`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1702:9
+     |
+1702 |         intent: &CognitiveQuestionIntent,
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+error[E0599]: `InternedString` doesn't implement `std::fmt::Display`
+  --> src\storage\integration_test.rs:66:28
+   |
+66 |             interned_props.to_string(),
+   |                            ^^^^^^^^^ `InternedString` cannot be formatted with the default formatter
+   |
+  ::: src\storage\string_interner.rs:12:1
+   |
+12 | pub struct InternedString(pub u32);
+   | ------------------------- method `to_string` not found for this struct because it doesn't satisfy `InternedString: ToString` or `InternedString: std::fmt::Display`
+   |
+   = note: the following trait bounds were not satisfied:
+           `InternedString: std::fmt::Display`
+           which is required by `InternedString: ToString`
+   = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+  --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\fmt\mod.rs:984:1
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+           candidate #1: `ToString`
+
+error[E0382]: use of moved value: `decision`
+   --> src\federation\transaction_log.rs:200:35
+    |
+178 |         decision: TransactionDecision,
+    |         -------- move occurs because `decision` has type `TransactionDecision`, which does not implement the `Copy` trait
+...
+198 |             record.decision = Some(decision);
+    |                                    -------- value moved here
+199 |             record.end_time = Some(SystemTime::now());
+200 |             record.status = match decision {
+    |                                   ^^^^^^^^ value used here after move
+    |
+help: consider cloning the value if the performance cost is acceptable
+    |
+198 |             record.decision = Some(decision.clone());
+    |                                            ++++++++
+
+warning: unused variable: `metadata`
+   --> src\federation\two_phase_commit.rs:157:9
+    |
+157 |         metadata: TransactionMetadata,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metadata`
+
+warning: unused variable: `phase_completed`
+   --> src\federation\two_phase_commit.rs:188:28
+    |
+188 |         let (all_prepared, phase_completed) = match prepare_result {
+    |                            ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_phase_completed`
+
+warning: unused variable: `participant_results`
+   --> src\federation\two_phase_commit.rs:480:9
+    |
+480 |         participant_results: &mut HashMap<DatabaseId, ParticipantResult>,
+    |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_participant_results`
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src\neural\neural_server.rs:318:62
+    |
+318 |             request_id: format!("req_{}", chrono::Utc::now().timestamp_nanos()),
+    |                                                              ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+error[E0599]: no method named `generate` found for reference `&Arc<RustT5Small>` in the current scope
+   --> src\neural\neural_server.rs:482:39
+    |
+482 |                 let generated = model.generate(text, 100); // Max 100 tokens
+    |                                       ^^^^^^^^
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `generate`, perhaps you need to implement one of them:
+            candidate #1: `generic_array::sequence::GenericSequence`
+            candidate #2: `itertools::intersperse::IntersperseElement`
+            candidate #3: `itertools::intersperse::IntersperseElement`
+            candidate #4: `rand_core::block::BlockRngCore`
+            candidate #5: `rand_core::block::BlockRngCore`
+help: there is a method `generate_text` with a similar name, but with different arguments
+   --> src\models\rust_t5_models.rs:447:5
+    |
+447 |     pub fn generate_text(&self, prompt: &str) -> Result<String> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: one of the expressions' fields has a method of the same name
+    |
+482 |                 let generated = model.model.generate(text, 100); // Max 100 tokens
+    |                                       ++++++
+
+error[E0063]: missing field `patterns_executed` in initializer of `cognitive::types::ReasoningResult`
+   --> src\cognitive\orchestrator.rs:196:12
+    |
+196 |         Ok(ReasoningResult {
+    |            ^^^^^^^^^^^^^^^ missing `patterns_executed`
+
+error[E0063]: missing field `patterns_executed` in initializer of `cognitive::types::ReasoningResult`
+   --> src\cognitive\orchestrator.rs:244:12
+    |
+244 |         Ok(ReasoningResult {
+    |            ^^^^^^^^^^^^^^^ missing `patterns_executed`
+
+error[E0063]: missing field `patterns_executed` in initializer of `cognitive::types::ReasoningResult`
+   --> src\cognitive\orchestrator.rs:387:12
+    |
+387 |         Ok(ReasoningResult {
+    |            ^^^^^^^^^^^^^^^ missing `patterns_executed`
+
+warning: unused variable: `item`
+    --> src\cognitive\working_memory.rs:1010:13
+     |
+1010 |         for item in &all_items {
+     |             ^^^^ help: if this is intentional, prefix it with an underscore: `_item`
+
+error[E0382]: borrow of moved value: `items_to_consolidate`
+    --> src\cognitive\working_memory.rs:1070:40
+     |
+1039 |         let items_to_consolidate: Vec<_> = consolidation_candidates
+     |             -------------------- move occurs because `items_to_consolidate` has type `Vec<MemoryItem>`, which does not implement the `Copy` trait
+...
+1044 |         for item in items_to_consolidate {
+     |                     -------------------- `items_to_consolidate` moved due to this implicit call to `.into_iter()`
+...
+1070 |         buffers.episodic_buffer.retain(|item| {
+     |                                        ^^^^^^ value borrowed here after move
+1071 |             !items_to_consolidate.iter().any(|consolidated| {
+     |              -------------------- borrow occurs due to use in closure
+     |
+note: `std::iter::IntoIterator::into_iter` takes ownership of the receiver `self`, which moves `items_to_consolidate`
+    --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\iter\traits\collect.rs:313:18
+help: consider iterating over a slice of the `Vec<MemoryItem>`'s content to avoid moving into the `for` loop
+     |
+1044 |         for item in &items_to_consolidate {
+     |                     +
+
+error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+  --> src\cognitive\inhibitory\integration.rs:57:11
+   |
+57 |     match cognitive_pattern {
+   |           ^^^^^^^^^^^^^^^^^ patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+   |
+note: `cognitive::types::CognitivePatternType` defined here
+  --> src\cognitive\types.rs:66:10
+   |
+66 | pub enum CognitivePatternType {
+   |          ^^^^^^^^^^^^^^^^^^^^
+...
+76 |     Analytical,
+   |     ---------- not covered
+77 |     PatternRecognition,
+   |     ------------------ not covered
+78 |     Linguistic,
+   |     ---------- not covered
+79 |     Creative,
+   |     -------- not covered
+80 |     Ensemble,
+   |     -------- not covered
+   = note: the matched value is of type `cognitive::types::CognitivePatternType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern as shown, or multiple match arms
+   |
+101~         },
+102+         _ => todo!()
+   |
+
+error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+   --> src\cognitive\phase3_integration.rs:782:28
+    |
+782 |         let result = match pattern {
+    |                            ^^^^^^^ patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+    |
+note: `cognitive::types::CognitivePatternType` defined here
+   --> src\cognitive\types.rs:66:10
+    |
+66  | pub enum CognitivePatternType {
+    |          ^^^^^^^^^^^^^^^^^^^^
+...
+76  |     Analytical,
+    |     ---------- not covered
+77  |     PatternRecognition,
+    |     ------------------ not covered
+78  |     Linguistic,
+    |     ---------- not covered
+79  |     Creative,
+    |     -------- not covered
+80  |     Ensemble,
+    |     -------- not covered
+    = note: the matched value is of type `cognitive::types::CognitivePatternType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern as shown, or multiple match arms
+    |
+847 ~             },
+848 +             _ => todo!()
+    |
+
+warning: unused variable: `migration_result`
+   --> src\tools\migration.rs:536:13
+    |
+536 |         let migration_result = self.migrate_entities_with_cognitive_enhancement(
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_migration_result`
+
+warning: unused variable: `legacy_storage`
+   --> src\tools\migration.rs:728:9
+    |
+728 |         legacy_storage: &dyn LegacyStorage,
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_legacy_storage`
+
+error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied
+   --> src\models\model_loader.rs:194:46
+    |
+115 | pub trait NeuralModel: Send + Sync {
+    | ---------------------------------- doesn't satisfy `dyn NeuralModel: NeuralModelExt` or `dyn NeuralModel: Sized`
+...
+194 |             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
+    |                                              ^^^^^^ method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+    |
+   ::: C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dashmap-5.5.3\src\mapref\one.rs:8:1
+    |
+8   | pub struct Ref<'a, K, V, S = RandomState> {
+    | ----------------------------------------- doesn't satisfy `_: NeuralModelExt` or `_: NeuralModel`
+    |
+note: the following trait bounds were not satisfied:
+      `Arc<dyn NeuralModel>: NeuralModel`
+      `dashmap::mapref::one::Ref<'_, ModelType, Arc<(dyn NeuralModel + 'static)>>: NeuralModel`
+      `dyn NeuralModel: Sized`
+   --> src\models\model_loader.rs:440:6
+    |
+440 | impl<T: NeuralModel + 'static> NeuralModelExt for T {
+    |      ^  ^^^^^^^^^^^            --------------     -
+    |      |  |
+    |      |  unsatisfied trait bound introduced here
+    |      unsatisfied trait bound introduced here
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `NeuralModelExt` defines an item `as_any`, perhaps you need to implement it
+   --> src\models\model_loader.rs:436:1
+    |
+436 | pub trait NeuralModelExt {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider relaxing the type parameter's implicit `Sized` bound
+    |
+440 | impl<T: ?Sized + NeuralModel + 'static> NeuralModelExt for T {
+    |         ++++++++
+
+error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied
+   --> src\models\model_loader.rs:210:46
+    |
+115 | pub trait NeuralModel: Send + Sync {
+    | ---------------------------------- doesn't satisfy `dyn NeuralModel: NeuralModelExt` or `dyn NeuralModel: Sized`
+...
+210 |             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
+    |                                              ^^^^^^ method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+    |
+   ::: C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dashmap-5.5.3\src\mapref\one.rs:8:1
+    |
+8   | pub struct Ref<'a, K, V, S = RandomState> {
+    | ----------------------------------------- doesn't satisfy `_: NeuralModelExt` or `_: NeuralModel`
+    |
+note: the following trait bounds were not satisfied:
+      `Arc<dyn NeuralModel>: NeuralModel`
+      `dashmap::mapref::one::Ref<'_, ModelType, Arc<(dyn NeuralModel + 'static)>>: NeuralModel`
+      `dyn NeuralModel: Sized`
+   --> src\models\model_loader.rs:440:6
+    |
+440 | impl<T: NeuralModel + 'static> NeuralModelExt for T {
+    |      ^  ^^^^^^^^^^^            --------------     -
+    |      |  |
+    |      |  unsatisfied trait bound introduced here
+    |      unsatisfied trait bound introduced here
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `NeuralModelExt` defines an item `as_any`, perhaps you need to implement it
+   --> src\models\model_loader.rs:436:1
+    |
+436 | pub trait NeuralModelExt {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider relaxing the type parameter's implicit `Sized` bound
+    |
+440 | impl<T: ?Sized + NeuralModel + 'static> NeuralModelExt for T {
+    |         ++++++++
+
+error[E0277]: `?` couldn't convert the error: `dyn StdError + std::marker::Send + Sync: Sized` is not satisfied
+  --> src\models\candle_models.rs:94:71
+   |
+94 |         let tokenizer = Arc::new(Tokenizer::from_file(&tokenizer_file)?);
+   |                                  -------------------------------------^ doesn't have a size known at compile-time
+   |                                  |
+   |                                  this can't be annotated with `?` because it has type `Result<_, std::boxed::Box<(dyn StdError + std::marker::Send + Sync + 'static)>>`
+   |
+   = help: the trait `Sized` is not implemented for `dyn StdError + std::marker::Send + Sync`
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required for `std::boxed::Box<dyn StdError + std::marker::Send + Sync>` to implement `StdError`
+   = note: required for `anyhow::Error` to implement `std::convert::From<std::boxed::Box<dyn StdError + std::marker::Send + Sync>>`
+
+error[E0061]: this function takes 3 arguments but 1 argument was supplied
+   --> src\models\candle_models.rs:108:32
+    |
+108 |         let weights = unsafe { candle_core::pickle::read_pth_tensor_info(&model_file)? };
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^------------- two arguments of type `bool` and `std::option::Option<&str>` are missing
+    |
+note: function defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-core-0.8.4\src\pickle.rs:646:8
+    |
+646 | pub fn read_pth_tensor_info<P: AsRef<std::path::Path>>(
+    |        ^^^^^^^^^^^^^^^^^^^^
+help: provide the arguments
+    |
+108 |         let weights = unsafe { candle_core::pickle::read_pth_tensor_info(&model_file, /* bool */, /* std::option::Option<&str> */)? };
+    |                                                                                     +++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0277]: the trait bound `Vec<candle_core::pickle::TensorInfo>: AsRef<std::path::Path>` is not satisfied
+   --> src\models\candle_models.rs:109:49
+    |
+109 |         let var_builder = VarBuilder::from_pth(&weights, DTYPE, &device)?;
+    |                           --------------------  ^^^^^^^ the trait `AsRef<std::path::Path>` is not implemented for `Vec<candle_core::pickle::TensorInfo>`
+    |                           |
+    |                           required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `AsRef<T>`:
+              `Vec<<T as zerovec::ule::AsULE>::ULE>` implements `AsRef<zerovec::zerovec::slice::ZeroSlice<T>>`
+              `Vec<T, A>` implements `AsRef<Vec<T, A>>`
+              `Vec<T, A>` implements `AsRef<[T]>`
+    = note: required for `&Vec<candle_core::pickle::TensorInfo>` to implement `AsRef<std::path::Path>`
+note: required by a bound in `VarBuilderArgs::<'a, std::boxed::Box<(dyn SimpleBackend + 'a)>>::from_pth`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-nn-0.8.4\src\var_builder.rs:543:24
+    |
+543 |     pub fn from_pth<P: AsRef<std::path::Path>>(p: P, dtype: DType, dev: &Device) -> Result<Self> {
+    |                        ^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `VarBuilderArgs::<'a, Box<dyn SimpleBackend>>::from_pth`
+
+error[E0308]: mismatched types
+   --> src\models\candle_models.rs:112:37
+    |
+112 |         let model = BertModel::load(&var_builder, &bert_config)?;
+    |                     --------------- ^^^^^^^^^^^^ expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+    = note: expected struct `VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+            found reference `&VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+note: associated function defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:466:12
+    |
+466 |     pub fn load(vb: VarBuilder, config: &Config) -> Result<Self> {
+    |            ^^^^
+help: consider removing the borrow
+    |
+112 -         let model = BertModel::load(&var_builder, &bert_config)?;
+112 +         let model = BertModel::load(var_builder, &bert_config)?;
+    |
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:147:98
+    |
+146 |         let input_tensor = Tensor::new(input_ids, &self.device)
+    |                            ------------------------------------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+147 |             .map_err(|e| GraphError::ModelError(format!("Failed to create input tensor: {}", e)))?;
+    |              ------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:150:98
+    |
+149 |         let input_tensor = input_tensor.unsqueeze(0)
+    |                                         ------------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+150 |             .map_err(|e| GraphError::ModelError(format!("Failed to add batch dimension: {}", e)))?;
+    |              ------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src\models\candle_models.rs:153:40
+    |
+153 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ^^^^^^^--------------- two arguments of type `&candle_core::Tensor` and `std::option::Option<&candle_core::Tensor>` are missing
+    |
+note: method defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:495:12
+    |
+495 |     pub fn forward(
+    |            ^^^^^^^
+help: provide the arguments
+    |
+153 |         let hidden_states = self.model.forward(&input_tensor, /* &candle_core::Tensor */, /* std::option::Option<&candle_core::Tensor> */)
+    |                                                             +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:154:93
+    |
+153 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ---------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+154 |             .map_err(|e| GraphError::ModelError(format!("BERT forward pass failed: {}", e)))?;
+    |              -------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:158:90
+    |
+157 |         let logits = self.classifier.forward(&hidden_states)
+    |                                      ----------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+158 |             .map_err(|e| GraphError::ModelError(format!("Classification failed: {}", e)))?;
+    |              ----------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:162:83
+    |
+161 |         let probabilities = candle_nn::ops::softmax(&logits, 2)
+    |                             ----------------------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+162 |             .map_err(|e| GraphError::ModelError(format!("Softmax failed: {}", e)))?;
+    |              ---------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:166:82
+    |
+165 |         let predictions = probabilities.argmax(2)
+    |                                         --------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+166 |             .map_err(|e| GraphError::ModelError(format!("Argmax failed: {}", e)))?;
+    |              --------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:170:98
+    |
+169 |         let pred_values: Vec<u32> = predictions.to_vec1()
+    |                                                 --------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+170 |             .map_err(|e| GraphError::ModelError(format!("Failed to extract predictions: {}", e)))?;
+    |              ------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:175:104
+    |
+174 |             let max_probs = probabilities.max(2)
+    |                                           ------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+175 |                 .map_err(|e| GraphError::ModelError(format!("Failed to get max probabilities: {}", e)))?
+    |                  --------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |                  |
+    |                  this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0616]: field `0` of struct `candle_core::Tensor` is private
+   --> src\models\candle_models.rs:176:18
+    |
+176 |                 .0; // Extract values, ignore indices
+    |                  ^ private field
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:200:88
+    |
+199 |         let encoding = self.tokenizer.encode(text, true)
+    |                                       ------------------ this can't be annotated with `?` because it has type `Result<_, std::boxed::Box<(dyn StdError + std::marker::Send + Sync + 'static)>>`
+200 |             .map_err(|e| GraphError::ModelError(format!("Tokenization failed: {}", e)))?;
+    |              --------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0308]: mismatched types
+   --> src\models\candle_models.rs:377:37
+    |
+377 |         let model = BertModel::load(&var_builder, &bert_config)?;
+    |                     --------------- ^^^^^^^^^^^^ expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+    = note: expected struct `VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+            found reference `&VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+note: associated function defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:466:12
+    |
+466 |     pub fn load(vb: VarBuilder, config: &Config) -> Result<Self> {
+    |            ^^^^
+help: consider removing the borrow
+    |
+377 -         let model = BertModel::load(&var_builder, &bert_config)?;
+377 +         let model = BertModel::load(var_builder, &bert_config)?;
+    |
+
+error[E0599]: no function or associated item named `from_pretrained` found for struct `tokenizers::Tokenizer` in the current scope
+   --> src\models\candle_models.rs:387:24
+    |
+387 |             Tokenizer::from_pretrained("bert-base-uncased", None)
+    |                        ^^^^^^^^^^^^^^^ function or associated item not found in `Tokenizer`
+    |
+note: if you're trying to build a new `tokenizers::Tokenizer` consider using one of the following associated functions:
+      tokenizers::Tokenizer::new
+      tokenizers::Tokenizer::from_file
+      tokenizers::Tokenizer::from_bytes
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tokenizers-0.20.4\src\tokenizer\mod.rs:420:5
+    |
+420 |     pub fn new(model: impl Into<ModelWrapper>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+436 |     pub fn from_file<P: AsRef<Path>>(file: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+441 |     pub fn from_bytes<P: AsRef<[u8]>>(bytes: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is an associated function `from_file` with a similar name
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tokenizers-0.20.4\src\tokenizer\mod.rs:436:5
+    |
+436 |     pub fn from_file<P: AsRef<Path>>(file: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:417:93
+    |
+416 |         let encoding = self.tokenizer.encode(text, true)
+    |                                       ------------------ this can't be annotated with `?` because it has type `Result<_, std::boxed::Box<(dyn StdError + std::marker::Send + Sync + 'static)>>`
+417 |             .map_err(|e| GraphError::ModelError(format!("Fast tokenization failed: {}", e)))?;
+    |              -------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: the trait bound `&Vec<u32>: NdArray` is not satisfied
+   --> src\models\candle_models.rs:427:40
+    |
+427 |         let input_tensor = Tensor::new(&input_ids, &self.device)
+    |                            ----------- ^^^^^^^^^^ the trait `WithDType` is not implemented for `&Vec<u32>`
+    |                            |
+    |                            required by a bound introduced by this call
+    |
+    = note: required for `&Vec<u32>` to implement `NdArray`
+note: required by a bound in `candle_core::Tensor::new`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-core-0.8.4\src\tensor.rs:366:19
+    |
+366 |     pub fn new<A: crate::device::NdArray>(array: A, device: &Device) -> Result<Self> {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Tensor::new`
+help: consider dereferencing here
+    |
+427 |         let input_tensor = Tensor::new(&*input_ids, &self.device)
+    |                                         +
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:428:91
+    |
+427 |         let input_tensor = Tensor::new(&input_ids, &self.device)
+    |                            ------------------------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+428 |             .map_err(|e| GraphError::ModelError(format!("Tensor creation failed: {}", e)))?;
+    |              -----------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:430:91
+    |
+429 |         let input_tensor = input_tensor.unsqueeze(0)
+    |                                         ------------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+430 |             .map_err(|e| GraphError::ModelError(format!("Batch dimension failed: {}", e)))?;
+    |              -----------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src\models\candle_models.rs:433:40
+    |
+433 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ^^^^^^^--------------- two arguments of type `&candle_core::Tensor` and `std::option::Option<&candle_core::Tensor>` are missing
+    |
+note: method defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:495:12
+    |
+495 |     pub fn forward(
+    |            ^^^^^^^
+help: provide the arguments
+    |
+433 |         let hidden_states = self.model.forward(&input_tensor, /* &candle_core::Tensor */, /* std::option::Option<&candle_core::Tensor> */)
+    |                                                             +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:434:93
+    |
+433 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ---------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+434 |             .map_err(|e| GraphError::ModelError(format!("Fast BERT forward failed: {}", e)))?;
+    |              -------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:437:95
+    |
+436 |         let logits = self.classifier.forward(&hidden_states)
+    |                                      ----------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+437 |             .map_err(|e| GraphError::ModelError(format!("Fast classification failed: {}", e)))?;
+    |              ---------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:440:88
+    |
+439 |         let probabilities = candle_nn::ops::softmax(&logits, 2)
+    |                             ----------------------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+440 |             .map_err(|e| GraphError::ModelError(format!("Fast softmax failed: {}", e)))?;
+    |              --------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:443:87
+    |
+442 |         let predictions = probabilities.argmax(2)
+    |                                         --------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+443 |             .map_err(|e| GraphError::ModelError(format!("Fast argmax failed: {}", e)))?;
+    |              -------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:446:102
+    |
+445 |         let pred_values: Vec<u32> = predictions.to_vec1()
+    |                                                 --------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+446 |             .map_err(|e| GraphError::ModelError(format!("Fast prediction extraction failed: {}", e)))?;
+    |              ----------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:450:106
+    |
+449 |             let max_probs = probabilities.max(2)
+    |                                           ------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+450 |                 .map_err(|e| GraphError::ModelError(format!("Fast confidence extraction failed: {}", e)))?
+    |                  ----------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |                  |
+    |                  this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0616]: field `0` of struct `candle_core::Tensor` is private
+   --> src\models\candle_models.rs:451:18
+    |
+451 |                 .0;
+    |                  ^ private field
+
+error[E0308]: mismatched types
+   --> src\models\candle_models.rs:592:37
+    |
+592 |         let model = BertModel::load(&var_builder, &bert_config)?;
+    |                     --------------- ^^^^^^^^^^^^ expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+    = note: expected struct `VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+            found reference `&VarBuilderArgs<'_, std::boxed::Box<dyn SimpleBackend>>`
+note: associated function defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:466:12
+    |
+466 |     pub fn load(vb: VarBuilder, config: &Config) -> Result<Self> {
+    |            ^^^^
+help: consider removing the borrow
+    |
+592 -         let model = BertModel::load(&var_builder, &bert_config)?;
+592 +         let model = BertModel::load(var_builder, &bert_config)?;
+    |
+
+error[E0599]: no function or associated item named `from_pretrained` found for struct `tokenizers::Tokenizer` in the current scope
+   --> src\models\candle_models.rs:596:24
+    |
+596 |             Tokenizer::from_pretrained("sentence-transformers/all-MiniLM-L6-v2", None)
+    |                        ^^^^^^^^^^^^^^^ function or associated item not found in `Tokenizer`
+    |
+note: if you're trying to build a new `tokenizers::Tokenizer` consider using one of the following associated functions:
+      tokenizers::Tokenizer::new
+      tokenizers::Tokenizer::from_file
+      tokenizers::Tokenizer::from_bytes
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tokenizers-0.20.4\src\tokenizer\mod.rs:420:5
+    |
+420 |     pub fn new(model: impl Into<ModelWrapper>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+436 |     pub fn from_file<P: AsRef<Path>>(file: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+441 |     pub fn from_bytes<P: AsRef<[u8]>>(bytes: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is an associated function `from_file` with a similar name
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tokenizers-0.20.4\src\tokenizer\mod.rs:436:5
+    |
+436 |     pub fn from_file<P: AsRef<Path>>(file: P) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:616:95
+    |
+615 |         let encoding = self.tokenizer.encode(text, true)
+    |                                       ------------------ this can't be annotated with `?` because it has type `Result<_, std::boxed::Box<(dyn StdError + std::marker::Send + Sync + 'static)>>`
+616 |             .map_err(|e| GraphError::ModelError(format!("MiniLM tokenization failed: {}", e)))?;
+    |              ---------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: the trait bound `&Vec<u32>: NdArray` is not satisfied
+   --> src\models\candle_models.rs:621:40
+    |
+621 |         let input_tensor = Tensor::new(&input_ids, &self.device)
+    |                            ----------- ^^^^^^^^^^ the trait `WithDType` is not implemented for `&Vec<u32>`
+    |                            |
+    |                            required by a bound introduced by this call
+    |
+    = note: required for `&Vec<u32>` to implement `NdArray`
+note: required by a bound in `candle_core::Tensor::new`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-core-0.8.4\src\tensor.rs:366:19
+    |
+366 |     pub fn new<A: crate::device::NdArray>(array: A, device: &Device) -> Result<Self> {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Tensor::new`
+help: consider dereferencing here
+    |
+621 |         let input_tensor = Tensor::new(&*input_ids, &self.device)
+    |                                         +
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:622:98
+    |
+621 |         let input_tensor = Tensor::new(&input_ids, &self.device)
+    |                            ------------------------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+622 |             .map_err(|e| GraphError::ModelError(format!("MiniLM tensor creation failed: {}", e)))?;
+    |              ------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:624:98
+    |
+623 |         let input_tensor = input_tensor.unsqueeze(0)
+    |                                         ------------ this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+624 |             .map_err(|e| GraphError::ModelError(format!("MiniLM batch dimension failed: {}", e)))?;
+    |              ------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0061]: this method takes 3 arguments but 1 argument was supplied
+   --> src\models\candle_models.rs:627:40
+    |
+627 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ^^^^^^^--------------- two arguments of type `&candle_core::Tensor` and `std::option::Option<&candle_core::Tensor>` are missing
+    |
+note: method defined here
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\candle-transformers-0.8.4\src\models\bert.rs:495:12
+    |
+495 |     pub fn forward(
+    |            ^^^^^^^
+help: provide the arguments
+    |
+627 |         let hidden_states = self.model.forward(&input_tensor, /* &candle_core::Tensor */, /* std::option::Option<&candle_core::Tensor> */)
+    |                                                             +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:628:95
+    |
+627 |         let hidden_states = self.model.forward(&input_tensor)
+    |                                        ---------------------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+628 |             .map_err(|e| GraphError::ModelError(format!("MiniLM forward pass failed: {}", e)))?;
+    |              ---------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0599]: no method named `expect` found for opaque type `impl futures::Future<Output = std::result::Result<FederationCoordinator, GraphError>>` in the current scope
+   --> src\test_support\builders.rs:442:42
+    |
+442 |     FederationCoordinator::new(registry).expect("Failed to create federation coordinator")
+    |                                          ^^^^^^ method not found in `impl Future<Output = Result<FederationCoordinator, GraphError>>`
+    |
+help: consider `await`ing on the `Future` and calling the method on its `Output`
+    |
+442 |     FederationCoordinator::new(registry).await.expect("Failed to create federation coordinator")
+    |                                          ++++++
+
+warning: variable does not need to be mutable
+  --> src\test_support\test_utils.rs:16:13
+   |
+16 |         let mut engine_write = engine.write().await;
+   |             ----^^^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+error[E0063]: missing field `input_data` in initializer of `NeuralRequest`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:246:26
+    |
+246 |     let neural_request = NeuralRequest {
+    |                          ^^^^^^^^^^^^^ missing `input_data`
+
+error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:252:39
+    |
+252 |     let neural_result = neural_server.process_request(neural_request).await
+    |                                       ^^^^^^^^^^^^^^^ method not found in `&Arc<NeuralProcessingServer>`
+
+error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:267:95
+    |
+267 |     enhanced_metadata.insert("reasoning_strategy".to_string(), reasoning_result.strategy_used.to_string());
+    |                                                                                               ^^^^^^^^^ `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- method `to_string` not found for this enum because it doesn't satisfy `_: Display` or `cognitive::types::ReasoningStrategy: ToString`
+    |
+    = note: the following trait bounds were not satisfied:
+            `cognitive::types::ReasoningStrategy: std::fmt::Display`
+            which is required by `cognitive::types::ReasoningStrategy: ToString`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\fmt\mod.rs:984:1
+note: the method `to_string` exists on the type `cognitive::types::CognitivePatternType`
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\alloc\src\string.rs:2764:5
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+            candidate #1: `ToString`
+
+error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:271:96
+    |
+271 |     enhanced_metadata.insert("reasoning_quality".to_string(), reasoning_result.quality_metrics.reasoning_quality.to_string());
+    |                                                                                                ^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:319:66
+    |
+319 |             "reasoning_strategy": reasoning_result.strategy_used.to_string(),
+    |                                                                  ^^^^^^^^^ `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- method `to_string` not found for this enum because it doesn't satisfy `_: Display` or `cognitive::types::ReasoningStrategy: ToString`
+    |
+    = note: the following trait bounds were not satisfied:
+            `cognitive::types::ReasoningStrategy: std::fmt::Display`
+            which is required by `cognitive::types::ReasoningStrategy: ToString`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\fmt\mod.rs:984:1
+note: the method `to_string` exists on the type `cognitive::types::CognitivePatternType`
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\alloc\src\string.rs:2764:5
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+            candidate #1: `ToString`
+
+error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:322:68
+    |
+322 |             "validation_quality": reasoning_result.quality_metrics.reasoning_quality,
+    |                                                                    ^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0277]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:336:9
+    |
+336 |         reasoning_result.strategy_used,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `cognitive::types::ReasoningStrategy`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `format` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:338:42
+    |
+338 |         reasoning_result.quality_metrics.reasoning_quality
+    |                                          ^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+warning: unused variable: `cognitive_orchestrator`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:353:5
+    |
+353 |     cognitive_orchestrator: &Arc<CognitiveOrchestrator>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cognitive_orchestrator`
+
+warning: unused variable: `neural_server`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:354:5
+    |
+354 |     neural_server: &Arc<NeuralProcessingServer>,
+    |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+error[E0599]: no variant or associated item named `Divergent` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:388:43
+    |
+388 |         "divergent" => ReasoningStrategy::Divergent,
+    |                                           ^^^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Divergent` not found for this enum
+
+error[E0599]: no variant or associated item named `Lateral` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:389:41
+    |
+389 |         "lateral" => ReasoningStrategy::Lateral,
+    |                                         ^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Lateral` not found for this enum
+
+error[E0599]: no variant or associated item named `Systems` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:390:41
+    |
+390 |         "systems" => ReasoningStrategy::Systems,
+    |                                         ^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Systems` not found for this enum
+
+error[E0599]: no variant or associated item named `Critical` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:391:42
+    |
+391 |         "critical" => ReasoningStrategy::Critical,
+    |                                          ^^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Critical` not found for this enum
+
+error[E0599]: no variant or associated item named `Adaptive` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:392:42
+    |
+392 |         "adaptive" => ReasoningStrategy::Adaptive,
+    |                                          ^^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Adaptive` not found for this enum
+
+error[E0599]: no variant or associated item named `Convergent` found for enum `cognitive::types::ReasoningStrategy` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:393:33
+    |
+393 |         _ => ReasoningStrategy::Convergent,
+    |                                 ^^^^^^^^^^ variant or associated item not found in `ReasoningStrategy`
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- variant or associated item `Convergent` not found for this enum
+
+error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:433:61
+    |
+433 |             "strategy_used": reasoning_result.strategy_used.to_string(),
+    |                                                             ^^^^^^^^^ `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+    |
+   ::: src\cognitive\types.rs:147:1
+    |
+147 | pub enum ReasoningStrategy {
+    | -------------------------- method `to_string` not found for this enum because it doesn't satisfy `_: Display` or `cognitive::types::ReasoningStrategy: ToString`
+    |
+    = note: the following trait bounds were not satisfied:
+            `cognitive::types::ReasoningStrategy: std::fmt::Display`
+            which is required by `cognitive::types::ReasoningStrategy: ToString`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\fmt\mod.rs:984:1
+note: the method `to_string` exists on the type `cognitive::types::CognitivePatternType`
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\alloc\src\string.rs:2764:5
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+            candidate #1: `ToString`
+
+error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:434:67
+    |
+434 |             "reasoning_quality": reasoning_result.quality_metrics.reasoning_quality,
+    |                                                                   ^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0609]: no field `coherence_score` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:435:65
+    |
+435 |             "coherence_score": reasoning_result.quality_metrics.coherence_score,
+    |                                                                 ^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0277]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:455:23
+    |
+455 |         strategy_str, reasoning_result.strategy_used,
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `cognitive::types::ReasoningStrategy`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `format` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:459:42
+    |
+459 |         reasoning_result.quality_metrics.reasoning_quality,
+    |                                          ^^^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0609]: no field `coherence_score` on type `cognitive::types::QualityMetrics`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:460:42
+    |
+460 |         reasoning_result.quality_metrics.coherence_score,
+    |                                          ^^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `overall_confidence`, `consistency_score`, `completeness_score`, `novelty_score`, `efficiency_score`
+
+error[E0063]: missing field `input_data` in initializer of `NeuralRequest`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:528:26
+    |
+528 |     let neural_request = NeuralRequest {
+    |                          ^^^^^^^^^^^^^ missing `input_data`
+
+error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:538:41
+    |
+538 |     let training_result = neural_server.process_request(neural_request).await
+    |                                         ^^^^^^^^^^^^^^^ method not found in `&Arc<NeuralProcessingServer>`
+
+error[E0063]: missing field `input_data` in initializer of `NeuralRequest`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:636:26
+    |
+636 |     let neural_request = NeuralRequest {
+    |                          ^^^^^^^^^^^^^ missing `input_data`
+
+error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:642:43
+    |
+642 |     let prediction_result = neural_server.process_request(neural_request).await
+    |                                           ^^^^^^^^^^^^^^^ method not found in `&Arc<NeuralProcessingServer>`
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> src\mcp\llm_friendly_server\handlers\query.rs:119:18
+    |
+119 |     let intent = QuestionParser::parse(question);
+    |                  ^^^^^^^^^^^^^^^^^^^^^ -------- argument #1 of type `&QuestionParser` is missing
+    |
+note: method defined here
+   --> src\core\question_parser.rs:724:18
+    |
+724 |     pub async fn parse(&self, question: &str) -> Result<CognitiveQuestionIntent> {
+    |                  ^^^^^ -----
+help: provide the argument
+    |
+119 |     let intent = QuestionParser::parse(/* &QuestionParser */, question);
+    |                                        ++++++++++++++++++++++
+
+error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:121:15
+    |
+121 |     if intent.entities.is_empty() {
+    |               ^^^^^^^^ unknown field
+
+error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:129:27
+    |
+129 |     for entity in &intent.entities {
+    |                           ^^^^^^^^ unknown field
+
+error[E0599]: no method named `clone` found for opaque type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>` in the current scope
+   --> src\mcp\llm_friendly_server\handlers\query.rs:166:71
+    |
+166 |     let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+    |                                                                       ^^^^^ method not found in `impl Future<Output = Result<CognitiveQuestionIntent, GraphError>>`
+
+error[E0061]: this function takes 4 arguments but 2 arguments were supplied
+   --> src\mcp\llm_friendly_server\handlers\query.rs:166:18
+    |
+166 |     let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----------------------------- two arguments of type `&[relationship_extractor::CognitiveRelationship]` and `&CognitiveQuestionIntent` are missing
+    |
+note: expected `&AnswerGenerator`, found `Vec<Triple>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:166:51
+    |
+166 |     let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+    |                                                   ^^^^^^^^^^^
+    = note: expected reference `&AnswerGenerator`
+                  found struct `Vec<Triple>`
+note: method defined here
+   --> src\core\answer_generator.rs:605:18
+    |
+605 |     pub async fn generate_answer(
+    |                  ^^^^^^^^^^^^^^^
+606 |         &self,
+    |         -----
+607 |         _entities: &[crate::core::entity_extractor::CognitiveEntity],
+608 |         _relationships: &[crate::core::relationship_extractor::CognitiveRelationship],
+    |         -----------------------------------------------------------------------------
+609 |         _intent: &CognitiveQuestionIntent,
+    |         ---------------------------------
+help: provide the arguments
+    |
+166 -     let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+166 +     let answer = AnswerGenerator::generate_answer(/* &AnswerGenerator */, intent.clone(), /* &[relationship_extractor::CognitiveRelationship] */, /* &CognitiveQuestionIntent */);
+    |
+
+error[E0609]: no field `facts` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:168:41
+    |
+168 |     let relevant_facts: Vec<_> = answer.facts.iter().take(max_results).map(|t| {
+    |                                         ^^^^^ unknown field
+
+error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:180:28
+    |
+180 |         "entities": answer.entities,
+    |                            ^^^^^^^^ unknown field
+
+error[E0609]: no field `question_type` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:181:49
+    |
+181 |         "question_type": format!("{:?}", intent.question_type),
+    |                                                 ^^^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `expected_answer_type` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:182:56
+    |
+182 |         "expected_answer_type": format!("{:?}", intent.expected_answer_type),
+    |                                                        ^^^^^^^^^^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:184:26
+    |
+184 |         "answer": answer.text,
+    |                          ^^^^ unknown field
+
+error[E0609]: no field `confidence` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:185:30
+    |
+185 |         "confidence": answer.confidence
+    |                              ^^^^^^^^^^ unknown field
+
+error[E0609]: no field `facts` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:188:29
+    |
+188 |     let message = if answer.facts.is_empty() {
+    |                             ^^^^^ unknown field
+
+error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:189:16
+    |
+189 |         answer.text.clone()
+    |                ^^^^ unknown field
+
+error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:191:52
+    |
+191 |         format!("{}\n\nConfidence: {:.0}%", answer.text, answer.confidence * 100.0)
+    |                                                    ^^^^ unknown field
+
+error[E0609]: no field `confidence` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\mcp\llm_friendly_server\handlers\query.rs:191:65
+    |
+191 |         format!("{}\n\nConfidence: {:.0}%", answer.text, answer.confidence * 100.0)
+    |                                                                 ^^^^^^^^^^ unknown field
+
+warning: unused variable: `context_str`
+   --> src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:182:9
+    |
+182 |     let context_str = params.get("context").and_then(|v| v.as_str());
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context_str`
+
+error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`
+  --> src\mcp\federated_server.rs:34:55
+   |
+34 |         let federation_manager = Arc::new(RwLock::new(FederationManager::new()?));
+   |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `impl futures::Future<Output = std::result::Result<FederationManager, GraphError>>`
+   |
+   = help: the trait `std::ops::Try` is not implemented for `impl futures::Future<Output = std::result::Result<FederationManager, GraphError>>`
+help: consider `await`ing on the `Future`
+   |
+34 |         let federation_manager = Arc::new(RwLock::new(FederationManager::new().await?));
+   |                                                                               ++++++
+
+error[E0277]: `RefCell<rusqlite::inner_connection::InnerConnection>` cannot be shared between threads safely
+   --> src\federation\database_connection.rs:280:29
+    |
+280 | impl DatabaseConnection for SQLiteConnection {
+    |                             ^^^^^^^^^^^^^^^^ `RefCell<rusqlite::inner_connection::InnerConnection>` cannot be shared between threads safely
+    |
+    = help: within `SQLiteConnection`, the trait `Sync` is not implemented for `RefCell<rusqlite::inner_connection::InnerConnection>`
+    = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: required because it appears within the type `rusqlite::Connection`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\rusqlite-0.30.0\src\lib.rs:377:12
+    |
+377 | pub struct Connection {
+    |            ^^^^^^^^^^
+note: required because it appears within the type `std::option::Option<rusqlite::Connection>`
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\option.rs:589:10
+note: required because it appears within the type `SQLiteConnection`
+   --> src\federation\database_connection.rs:65:12
+    |
+65  | pub struct SQLiteConnection {
+    |            ^^^^^^^^^^^^^^^^
+note: required by a bound in `database_connection::DatabaseConnection`
+   --> src\federation\database_connection.rs:41:38
+    |
+41  | pub trait DatabaseConnection: Send + Sync {
+    |                                      ^^^^ required by this bound in `DatabaseConnection`
+
+error[E0277]: `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>` cannot be shared between threads safely
+   --> src\federation\database_connection.rs:280:29
+    |
+280 | impl DatabaseConnection for SQLiteConnection {
+    |                             ^^^^^^^^^^^^^^^^ `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>` cannot be shared between threads safely
+    |
+    = help: within `SQLiteConnection`, the trait `Sync` is not implemented for `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>`
+    = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: required because it appears within the type `rusqlite::cache::StatementCache`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\rusqlite-0.30.0\src\cache.rs:61:12
+    |
+61  | pub struct StatementCache(RefCell<LruCache<Arc<str>, RawStatement>>);
+    |            ^^^^^^^^^^^^^^
+note: required because it appears within the type `rusqlite::Connection`
+   --> C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\rusqlite-0.30.0\src\lib.rs:377:12
+    |
+377 | pub struct Connection {
+    |            ^^^^^^^^^^
+note: required because it appears within the type `std::option::Option<rusqlite::Connection>`
+   --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\option.rs:589:10
+note: required because it appears within the type `SQLiteConnection`
+   --> src\federation\database_connection.rs:65:12
+    |
+65  | pub struct SQLiteConnection {
+    |            ^^^^^^^^^^^^^^^^
+note: required by a bound in `database_connection::DatabaseConnection`
+   --> src\federation\database_connection.rs:41:38
+    |
+41  | pub trait DatabaseConnection: Send + Sync {
+    |                                      ^^^^ required by this bound in `DatabaseConnection`
+
+error[E0592]: duplicate definitions with name `focus_attention_on_text`
+   --> src\cognitive\attention_manager.rs:899:5
+    |
+839 | /     pub async fn focus_attention_on_text(
+840 | |         &self,
+841 | |         _text: &str,
+842 | |         _attention_type: AttentionType,
+843 | |     ) -> Result<()> {
+    | |___________________- other definition for `focus_attention_on_text`
+...
+899 | /     pub async fn focus_attention_on_text(
+900 | |         &self,
+901 | |         text: &str,
+902 | |         focus_keywords: Vec<String>,
+903 | |     ) -> Result<Vec<f32>> {
+    | |_________________________^ duplicate definitions for `focus_attention_on_text`
+
+error[E0689]: can't call method `max` on ambiguous numeric type `{float}`
+    --> src\core\relationship_extractor.rs:1537:55
+     |
+1537 |             max_federation_conf = max_federation_conf.max(rel.federation_confidence);
+     |                                                       ^^^
+     |
+help: you must specify a type for this binding, like `f32`
+     |
+1532 |         let mut max_federation_conf: f32 = 0.0;
+     |                                    +++++
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+    --> src\core\relationship_extractor.rs:1742:20
+     |
+1742 |         confidence.min(0.98).max(0.5)
+     |                    ^^^
+     |
+help: you must specify a type for this binding, like `f32`
+     |
+1721 |         let mut confidence: f32 = 0.85; // Base confidence
+     |                           +++++
+
+error[E0599]: no method named `len` found for struct `parking_lot::lock_api::RwLock` in the current scope
+   --> src\storage\persistent_mmap.rs:401:54
+    |
+401 |         if start + size <= self.quantized_embeddings.len() {
+    |                                                      ^^^ method not found in `RwLock<RawRwLock, Vec<u8>>`
+
+error[E0608]: cannot index into a value of type `parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<u8>>`
+   --> src\storage\persistent_mmap.rs:402:44
+    |
+402 |             Some(&self.quantized_embeddings[start..start + size])
+    |                                            ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+   --> src\storage\persistent_mmap.rs:424:23
+    |
+424 |         for entity in &self.entities {
+    |                       ^^^^^^^^^^^^^^ `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+    |
+    = help: the trait `Iterator` is not implemented for `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>`
+    = note: required for `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` to implement `IntoIterator`
+
+error[E0308]: mismatched types
+   --> src\storage\persistent_mmap.rs:511:26
+    |
+511 |         self.auto_sync = enabled;
+    |         --------------   ^^^^^^^ expected `AtomicBool`, found `bool`
+    |         |
+    |         expected due to the type of this binding
+    |
+help: call `Into::into` on this expression to convert `bool` into `AtomicBool`
+    |
+511 |         self.auto_sync = enabled.into();
+    |                                 +++++++
+
+error[E0277]: `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+   --> src\storage\persistent_mmap.rs:527:23
+    |
+527 |         for entity in &mut self.entities {
+    |                       ^^^^^^^^^^^^^^^^^^ `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+    |
+    = help: the trait `Iterator` is not implemented for `parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>`
+    = note: required for `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` to implement `Iterator`
+    = note: required for `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` to implement `IntoIterator`
+
+error[E0599]: no method named `len` found for struct `parking_lot::lock_api::RwLock` in the current scope
+   --> src\storage\persistent_mmap.rs:531:69
+    |
+531 |             if old_offset + codes_size <= self.quantized_embeddings.len() {
+    |                                                                     ^^^ method not found in `RwLock<RawRwLock, Vec<u8>>`
+
+error[E0308]: mismatched types
+   --> src\storage\persistent_mmap.rs:537:37
+    |
+537 |         self.quantized_embeddings = new_embeddings;
+    |         -------------------------   ^^^^^^^^^^^^^^ expected `RwLock<RawRwLock, Vec<u8>>`, found `Vec<_>`
+    |         |
+    |         expected due to the type of this binding
+    |
+    = note: expected struct `parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<u8>>`
+               found struct `Vec<_>`
+help: call `Into::into` on this expression to convert `Vec<_>` into `parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<u8>>`
+    |
+537 |         self.quantized_embeddings = new_embeddings.into();
+    |                                                   +++++++
+
+error[E0308]: mismatched types
+   --> src\storage\persistent_mmap.rs:539:12
+    |
+539 |         if self.auto_sync {
+    |            ^^^^^^^^^^^^^^ expected `bool`, found `AtomicBool`
+
+error: future cannot be sent between threads safely
+   --> src\federation\database_connection.rs:281:46
+    |
+281 |       async fn is_alive(&self) -> Result<bool> {
+    |  ______________________________________________^
+282 | |         if let Some(conn) = &self.connection {
+283 | |             conn.execute("SELECT 1", [])
+284 | |                 .map(|_| true)
+...   |
+289 | |     }
+    | |_____^ future created by async block is not `Send`
+    |
+    = help: within `SQLiteConnection`, the trait `Sync` is not implemented for `RefCell<rusqlite::inner_connection::InnerConnection>`
+    = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: captured value is not `Send` because `&` references cannot be sent unless their referent is `Sync`
+   --> src\federation\database_connection.rs:281:24
+    |
+281 |     async fn is_alive(&self) -> Result<bool> {
+    |                        ^^^^ has type `&SQLiteConnection` which is not `Send`, because `SQLiteConnection` is not `Sync`
+    = note: required for the cast from `Pin<std::boxed::Box<{async block@src\federation\database_connection.rs:281:46: 289:6}>>` to `Pin<Box<dyn Future<Output = Result<bool, GraphError>> + Send>>`
+    = note: the full name for the type has been written to 'C:\code\LLMKG\target\debug\deps\llmkg.long-type-15788646504918468271.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error: future cannot be sent between threads safely
+   --> src\federation\database_connection.rs:281:46
+    |
+281 |       async fn is_alive(&self) -> Result<bool> {
+    |  ______________________________________________^
+282 | |         if let Some(conn) = &self.connection {
+283 | |             conn.execute("SELECT 1", [])
+284 | |                 .map(|_| true)
+...   |
+289 | |     }
+    | |_____^ future created by async block is not `Send`
+    |
+    = help: within `SQLiteConnection`, the trait `Sync` is not implemented for `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>`
+    = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock` instead
+note: captured value is not `Send` because `&` references cannot be sent unless their referent is `Sync`
+   --> src\federation\database_connection.rs:281:24
+    |
+281 |     async fn is_alive(&self) -> Result<bool> {
+    |                        ^^^^ has type `&SQLiteConnection` which is not `Send`, because `SQLiteConnection` is not `Sync`
+    = note: required for the cast from `Pin<std::boxed::Box<{async block@src\federation\database_connection.rs:281:46: 289:6}>>` to `Pin<Box<dyn Future<Output = Result<bool, GraphError>> + Send>>`
+    = note: the full name for the type has been written to 'C:\code\LLMKG\target\debug\deps\llmkg.long-type-15788646504918468271.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0063]: missing fields `distilbert_ner`, `minilm_embedder`, `model_loader` and 2 other fields in initializer of `NeuralProcessingServer`
+   --> src\neural\neural_server.rs:655:9
+    |
+655 |         Self {
+    |         ^^^^ missing `distilbert_ner`, `minilm_embedder`, `model_loader` and 2 other fields
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+    --> src\cognitive\attention_manager.rs:1071:19
+     |
+1071 |         relevance.min(1.0)
+     |                   ^^^
+     |
+help: you must specify a type for this binding, like `f32`
+     |
+1063 |         let mut relevance: f32 = 0.0;
+     |                          +++++
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+    --> src\cognitive\attention_manager.rs:1095:25
+     |
+1095 |         indicator_score.min(1.0)
+     |                         ^^^
+     |
+help: you must specify a type for this binding, like `f32`
+     |
+1087 |         let mut indicator_score: f32 = 0.0;
+     |                                +++++
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:652:88
+    |
+651 |         let mean_pooled = hidden_states.mean(1)
+    |                                         ------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+652 |             .map_err(|e| GraphError::ModelError(format!("Mean pooling failed: {}", e)))?;
+    |              --------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0277]: `?` couldn't convert the error to `ModelError`
+   --> src\models\candle_models.rs:655:100
+    |
+654 |         let pooled_vec: Vec<f32> = mean_pooled.to_vec1()
+    |                                                --------- this can't be annotated with `?` because it has type `Result<_, candle_core::Error>`
+655 |             .map_err(|e| GraphError::ModelError(format!("Failed to extract pooled vector: {}", e)))?;
+    |              --------------------------------------------------------------------------------------^ the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+    |              |
+    |              this can't be annotated with `?` because it has type `Result<_, GraphError>`
+    |
+note: `ModelError` needs to implement `From<GraphError>`
+   --> src\models\mod.rs:73:1
+    |
+73  | pub enum ModelError {
+    | ^^^^^^^^^^^^^^^^^^^
+note: alternatively, `GraphError` needs to implement `Into<ModelError>`
+   --> src\error.rs:4:1
+    |
+4   | pub enum GraphError {
+    | ^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+
+error[E0061]: this function takes 2 arguments but 0 arguments were supplied
+  --> src\mcp\production_server.rs:46:47
+   |
+46 |         let cognitive_orchestrator = Arc::new(CognitiveOrchestrator::new());
+   |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^-- two arguments of type `Arc<BrainEnhancedKnowledgeGraph>` and `CognitiveOrchestratorConfig` are missing
+   |
+note: associated function defined here
+  --> src\cognitive\orchestrator.rs:62:18
+   |
+62 |     pub async fn new(
+   |                  ^^^
+63 |         brain_graph: Arc<BrainEnhancedKnowledgeGraph>,
+   |         ---------------------------------------------
+64 |         config: CognitiveOrchestratorConfig,
+   |         -----------------------------------
+help: provide the arguments
+   |
+46 |         let cognitive_orchestrator = Arc::new(CognitiveOrchestrator::new(/* Arc<BrainEnhancedKnowledgeGraph> */, /* CognitiveOrchestratorConfig */));
+   |                                                                          +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 1 argument but 0 arguments were supplied
+   --> src\mcp\production_server.rs:50:47
+    |
+50  |         let federation_coordinator = Arc::new(FederationCoordinator::new());
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^-- argument #1 of type `Arc<DatabaseRegistry>` is missing
+    |
+note: associated function defined here
+   --> src\federation\coordinator.rs:172:18
+    |
+172 |     pub async fn new(registry: Arc<DatabaseRegistry>) -> Result<Self> {
+    |                  ^^^ -------------------------------
+help: provide the argument
+    |
+50  |         let federation_coordinator = Arc::new(FederationCoordinator::new(/* Arc<DatabaseRegistry> */));
+    |                                                                          +++++++++++++++++++++++++++
+
+error[E0308]: arguments to this function are incorrect
+  --> src\mcp\production_server.rs:52:28
+   |
+52 |         let inner_server = LLMFriendlyMCPServer::new(
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: expected `Arc<CognitiveOrchestrator>`, found `Arc<impl Future<Output = ...>>`
+  --> src\mcp\production_server.rs:54:13
+   |
+54 |             cognitive_orchestrator,
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   = note: expected struct `Arc<CognitiveOrchestrator>`
+              found struct `Arc<impl futures::Future<Output = std::result::Result<CognitiveOrchestrator, GraphError>>>`
+note: expected `Arc<FederationCoordinator>`, found `Arc<impl Future<Output = ...>>`
+  --> src\mcp\production_server.rs:56:13
+   |
+56 |             federation_coordinator,
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   = note: expected struct `Arc<FederationCoordinator>`
+              found struct `Arc<impl futures::Future<Output = std::result::Result<FederationCoordinator, GraphError>>>`
+note: associated function defined here
+  --> src\mcp\llm_friendly_server\mod.rs:55:12
+   |
+55 |     pub fn new(
+   |            ^^^
+56 |         knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
+57 |         cognitive_orchestrator: Arc<CognitiveOrchestrator>,
+   |         --------------------------------------------------
+58 |         neural_server: Arc<NeuralProcessingServer>,
+59 |         federation_coordinator: Arc<FederationCoordinator>,
+   |         --------------------------------------------------
+
+warning: unused variable: `entities`
+   --> src\core\relationship_extractor.rs:471:60
+    |
+471 | ...onships(&self, text: &str, entities: &[crate::core::entity_extractor::CognitiveEntity]) -> Result<Vec<CognitiveRelationship>> {
+    |                               ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `start_pos`
+   --> src\core\relationship_extractor.rs:519:9
+    |
+519 |         start_pos: usize,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_start_pos`
+
+warning: unused variable: `end_pos`
+   --> src\core\relationship_extractor.rs:520:9
+    |
+520 |         end_pos: usize,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_end_pos`
+
+warning: unused variable: `verb`
+   --> src\core\relationship_extractor.rs:820:35
+    |
+820 |     fn get_verb_confidence(&self, verb: &str, rel_type: &CognitiveRelationshipType) -> f32 {
+    |                                   ^^^^ help: if this is intentional, prefix it with an underscore: `_verb`
+
+warning: unused variable: `text`
+   --> src\models\rust_bert_models.rs:428:31
+    |
+428 |     fn decode_entities(&self, text: &str, tokenized: &TokenizedInput, predictions: &[usize]) -> Result<Vec<Entity>> {
+    |                               ^^^^ help: if this is intentional, prefix it with an underscore: `_text`
+
+warning: unused variable: `text`
+   --> src\models\rust_bert_models.rs:547:31
+    |
+547 |     fn decode_entities(&self, text: &str, tokenized: &TokenizedInput, predictions: &[usize]) -> Result<Vec<Entity>> {
+    |                               ^^^^ help: if this is intentional, prefix it with an underscore: `_text`
+
+Some errors have detailed explanations: E0004, E0061, E0063, E0277, E0308, E0382, E0560, E0592, E0599...
+For more information about an error, try `rustc --explain E0004`.
+warning: `llmkg` (lib) generated 75 warnings
+error: could not compile `llmkg` (lib) due to 130 previous errors; 75 warnings emitted

@@ -1,0 +1,105 @@
+warning: file `C:\code\LLMKG\examples\federation_demo.rs` found to be present in multiple build targets:
+  * `bin` target `federation_demo`
+  * `example` target `federation_demo`
+warning: unused key `env` in [target] config table `cfg(windows)`
+    Checking llmkg v0.1.0 (C:\code\LLMKG)
+src\core\entity_extractor.rs:26:21: warning: unused imports: `RustBertNER` and `RustTinyBertNER`
+src\core\answer_generator.rs:20:70: warning: unused import: `ReasoningStrategy`
+src\core\cognitive_question_answering.rs:15:86: warning: unused import: `CognitiveQuestionType`
+src\core\cognitive_question_answering.rs:19:72: warning: unused import: `QueryContext`
+src\federation\two_phase_commit.rs:10:27: warning: unused import: `Mutex`
+src\federation\test_federation.rs:5:5: warning: unused import: `std::collections::HashMap`
+src\federation\test_federation.rs:7:29: warning: unused import: `Duration`
+src\neural\neural_server.rs:10:48: warning: unused import: `ModelLoaderConfig`
+src\neural\neural_server.rs:11:21: warning: unused imports: `RustBertNER`, `RustMiniLM`, and `RustTinyBertNER`
+src\cognitive\types.rs:9:27: warning: unused import: `Instant`
+src\tools\migration.rs:6:49: warning: unused import: `TripleQuery`
+src\models\rust_bert_models.rs:3:5: warning: unused import: `std::collections::HashMap`
+src\models\rust_bert_models.rs:6:21: warning: unused imports: `ModelError` and `ModelType`
+src\models\rust_t5_models.rs:4:52: warning: unused import: `TokenizedInput`
+src\models\rust_t5_models.rs:6:21: warning: unused import: `ModelError`
+src\models\rust_embeddings.rs:3:5: warning: unused import: `std::sync::Arc`
+src\models\rust_embeddings.rs:4:37: warning: unused imports: `RustTokenizer` and `TokenizedInput`
+src\models\rust_embeddings.rs:5:62: warning: unused imports: `EmbeddingLayer`, `FeedForward`, and `SelfAttention`
+src\models\rust_embeddings.rs:6:21: warning: unused import: `ModelError`
+src\models\model_loader.rs:14:32: warning: unused import: `ModelError`
+src\models\model_loader.rs:17:5: warning: unused import: `crate::models::rust_tokenizer::RustTokenizer`
+src\mcp\llm_friendly_server\handlers\storage.rs:7:5: warning: unused import: `crate::core::relationship_extractor::CognitiveRelationshipExtractor`
+src\mcp\llm_friendly_server\handlers\storage.rs:12:5: warning: unused import: `crate::federation::coordinator::FederationCoordinator`
+src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:10:17: warning: unused import: `LlmkgResult`
+src\core\entity_extractor.rs:627:13: warning: unused variable: `cognitive_metrics`: help: if this is intentional, prefix it with an underscore: `_cognitive_metrics`
+src\core\entity_extractor.rs:659:21: warning: unused variable: `interned_name`: help: if this is intentional, prefix it with an underscore: `_interned_name`
+src\core\entity_extractor.rs:660:21: warning: unused variable: `interned_type`: help: if this is intentional, prefix it with an underscore: `_interned_type`
+src\core\relationship_extractor.rs:925:17: error[E0560]: struct `federation::coordinator::TransactionMetadata` has no field named `timeout_seconds`: `federation::coordinator::TransactionMetadata` does not have this field
+src\core\relationship_extractor.rs:926:17: error[E0560]: struct `federation::coordinator::TransactionMetadata` has no field named `application_context`: `federation::coordinator::TransactionMetadata` does not have this field
+src\core\relationship_extractor.rs:1041:21: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\relationship_extractor.rs:1043:17: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\relationship_extractor.rs:1137:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\relationship_extractor.rs:1248:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\relationship_extractor.rs:1423:14: warning: unused variable: `key`: help: if this is intentional, prefix it with an underscore: `_key`
+src\core\relationship_extractor.rs:1606:18: warning: unused variable: `i`: help: if this is intentional, prefix it with an underscore: `_i`
+src\core\relationship_extractor.rs:1696:21: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\relationship_extractor.rs:1700:17: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\relationship_extractor.rs:2009:17: error[E0599]: no method named `deduplicate_relationships` found for reference `&CognitiveRelationshipExtractor` in the current scope
+src\core\relationship_extractor.rs:2065:38: error[E0308]: mismatched types: expected `f32`, found `Option<{float}>`
+src\core\relationship_extractor.rs:2067:25: error[E0560]: struct `NeuralParameters` has no field named `max_length`: `NeuralParameters` does not have this field
+src\core\relationship_extractor.rs:2072:37: error[E0599]: no method named `process` found for reference `&Arc<NeuralProcessingServer>` in the current scope: method not found in `&Arc<NeuralProcessingServer>`
+src\core\relationship_extractor.rs:2224:9: warning: unused variable: `transaction_id`: help: if this is intentional, prefix it with an underscore: `_transaction_id`
+src\core\relationship_extractor.rs:2285:33: error[E0599]: no method named `store_with_attention` found for struct `Arc<WorkingMemorySystem>` in the current scope
+src\core\question_parser.rs:861:13: warning: unused variable: `metrics`: help: if this is intentional, prefix it with an underscore: `_metrics`
+src\core\question_parser.rs:886:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:892:13: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\question_parser.rs:1209:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1286:9: warning: unused variable: `question`: help: if this is intentional, prefix it with an underscore: `_question`
+src\core\question_parser.rs:1287:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:1301:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1302:9: warning: unused variable: `reasoning_result`: help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+src\core\question_parser.rs:1346:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1390:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1463:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:1494:9: warning: unused variable: `reasoning_result`: help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+src\core\answer_generator.rs:879:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\answer_generator.rs:885:13: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\answer_generator.rs:1099:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\answer_generator.rs:1102:13: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\answer_generator.rs:1179:9: warning: unused variable: `subtype`: help: if this is intentional, prefix it with an underscore: `_subtype`
+src\core\answer_generator.rs:1349:9: warning: unused variable: `subtype`: help: if this is intentional, prefix it with an underscore: `_subtype`
+src\core\answer_generator.rs:1374:9: warning: unused variable: `subtype`: help: if this is intentional, prefix it with an underscore: `_subtype`
+src\core\answer_generator.rs:1399:9: warning: unused variable: `subtype`: help: if this is intentional, prefix it with an underscore: `_subtype`
+src\core\answer_generator.rs:1424:9: warning: unused variable: `subtype`: help: if this is intentional, prefix it with an underscore: `_subtype`
+src\core\answer_generator.rs:1546:70: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\core\answer_generator.rs:1691:69: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\core\answer_generator.rs:1723:9: warning: unused variable: `attention_weights`: help: if this is intentional, prefix it with an underscore: `_attention_weights`
+src\core\answer_generator.rs:1735:9: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\core\cognitive_question_answering.rs:183:9: warning: unused variable: `context`: help: if this is intentional, prefix it with an underscore: `_context`
+src\core\cognitive_question_answering.rs:296:21: warning: unused variable: `federation`: help: if this is intentional, prefix it with an underscore: `_federation`
+src\core\cognitive_question_answering.rs:369:17: error[E0596]: cannot borrow `entry` as mutable, as it is not declared as mutable: cannot borrow as mutable
+src\storage\integration_test.rs:60:13: warning: unused variable: `interned_props`: help: if this is intentional, prefix it with an underscore: `_interned_props`
+src\storage\integration_test.rs:74:13: warning: variable does not need to be mutable
+src\federation\two_phase_commit.rs:157:9: warning: unused variable: `metadata`: help: if this is intentional, prefix it with an underscore: `_metadata`
+src\federation\two_phase_commit.rs:188:28: warning: unused variable: `phase_completed`: help: if this is intentional, prefix it with an underscore: `_phase_completed`
+src\federation\two_phase_commit.rs:480:9: warning: unused variable: `participant_results`: help: if this is intentional, prefix it with an underscore: `_participant_results`
+src\neural\neural_server.rs:562:55: warning: unused variable: `dataset`: help: if this is intentional, prefix it with an underscore: `_dataset`
+src\neural\neural_server.rs:592:17: warning: unused variable: `num_words`: help: if this is intentional, prefix it with an underscore: `_num_words`
+src\neural\neural_server.rs:623:14: warning: unused variable: `i`: help: if this is intentional, prefix it with an underscore: `_i`
+src\neural\neural_server.rs:664:26: warning: multiple patterns overlap on their endpoints: ... with this range
+src\neural\neural_server.rs:755:13: warning: unused variable: `vocab_size`: help: if this is intentional, prefix it with an underscore: `_vocab_size`
+src\neural\neural_server.rs:850:62: warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+src\cognitive\orchestrator.rs:1402:13: warning: variable does not need to be mutable
+src\cognitive\orchestrator.rs:1403:13: warning: variable does not need to be mutable
+src\cognitive\working_memory.rs:1010:13: warning: unused variable: `item`: help: if this is intentional, prefix it with an underscore: `_item`
+src\tools\migration.rs:536:13: warning: unused variable: `migration_result`: help: if this is intentional, prefix it with an underscore: `_migration_result`
+src\tools\migration.rs:728:9: warning: unused variable: `legacy_storage`: help: if this is intentional, prefix it with an underscore: `_legacy_storage`
+src\test_support\test_utils.rs:16:13: warning: variable does not need to be mutable
+src\mcp\llm_friendly_server\handlers\storage.rs:359:5: warning: unused variable: `cognitive_orchestrator`: help: if this is intentional, prefix it with an underscore: `_cognitive_orchestrator`
+src\mcp\llm_friendly_server\handlers\storage.rs:360:5: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:182:9: warning: unused variable: `context_str`: help: if this is intentional, prefix it with an underscore: `_context_str`
+src\core\relationship_extractor.rs:472:60: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\relationship_extractor.rs:520:9: warning: unused variable: `start_pos`: help: if this is intentional, prefix it with an underscore: `_start_pos`
+src\core\relationship_extractor.rs:521:9: warning: unused variable: `end_pos`: help: if this is intentional, prefix it with an underscore: `_end_pos`
+src\core\relationship_extractor.rs:821:35: warning: unused variable: `verb`: help: if this is intentional, prefix it with an underscore: `_verb`
+src\core\relationship_extractor.rs:2342:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\models\rust_bert_models.rs:428:31: warning: unused variable: `text`: help: if this is intentional, prefix it with an underscore: `_text`
+src\models\rust_bert_models.rs:547:31: warning: unused variable: `text`: help: if this is intentional, prefix it with an underscore: `_text`
+warning: `llmkg` (lib) generated 90 warnings
+error: could not compile `llmkg` (lib) due to 8 previous errors; 90 warnings emitted

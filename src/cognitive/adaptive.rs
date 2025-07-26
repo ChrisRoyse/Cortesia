@@ -205,6 +205,7 @@ impl CognitivePattern for AdaptiveThinking {
                     info
                 },
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     
@@ -590,6 +591,7 @@ impl AdaptiveThinking {
                 total_energy: 0.5,
                 additional_info: AHashMap::new(),
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
 }

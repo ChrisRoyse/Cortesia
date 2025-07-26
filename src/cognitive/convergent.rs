@@ -969,6 +969,7 @@ impl CognitivePattern for ConvergentThinking {
                     info
                 },
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     

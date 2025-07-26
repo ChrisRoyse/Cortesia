@@ -1,0 +1,881 @@
+warning: file `C:\code\LLMKG\examples\federation_demo.rs` found to be present in multiple build targets:
+  * `bin` target `federation_demo`
+  * `example` target `federation_demo`
+warning: unused key `env` in [target] config table `cfg(windows)`
+    Checking llmkg v0.1.0 (C:\code\LLMKG)
+warning: unused imports: `RustBertNER` and `RustTinyBertNER`
+  --> src\core\entity_extractor.rs:26:21
+   |
+26 | use crate::models::{RustBertNER, RustTinyBertNER, RustMiniLM};
+   |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `ReasoningStrategy`
+  --> src\core\answer_generator.rs:20:70
+   |
+20 | use crate::cognitive::types::{CognitivePatternType, ReasoningResult, ReasoningStrategy};
+   |                                                                      ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Mutex`
+  --> src\federation\two_phase_commit.rs:10:27
+   |
+10 | use tokio::sync::{RwLock, Mutex};
+   |                           ^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src\federation\test_federation.rs:5:5
+  |
+5 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Duration`
+ --> src\federation\test_federation.rs:7:29
+  |
+7 | use std::time::{SystemTime, Duration};
+  |                             ^^^^^^^^
+
+warning: unused import: `ModelLoaderConfig`
+  --> src\neural\neural_server.rs:10:48
+   |
+10 | use crate::models::model_loader::{ModelLoader, ModelLoaderConfig};
+   |                                                ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `RustBertNER`, `RustMiniLM`, and `RustTinyBertNER`
+  --> src\neural\neural_server.rs:11:21
+   |
+11 | use crate::models::{RustBertNER, RustTinyBertNER, RustMiniLM, RustT5Small};
+   |                     ^^^^^^^^^^^  ^^^^^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `Instant`
+ --> src\cognitive\types.rs:9:27
+  |
+9 | use std::time::{Duration, Instant};
+  |                           ^^^^^^^
+
+warning: unused import: `TripleQuery`
+ --> src\tools\migration.rs:6:49
+  |
+6 | use crate::core::knowledge_types::{MemoryStats, TripleQuery};
+  |                                                 ^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src\models\rust_bert_models.rs:3:5
+  |
+3 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `ModelError` and `ModelType`
+ --> src\models\rust_bert_models.rs:6:21
+  |
+6 | use crate::models::{ModelType, ModelError, Result};
+  |                     ^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `TokenizedInput`
+ --> src\models\rust_t5_models.rs:4:52
+  |
+4 | use crate::models::rust_tokenizer::{RustTokenizer, TokenizedInput};
+  |                                                    ^^^^^^^^^^^^^^
+
+warning: unused import: `ModelError`
+ --> src\models\rust_t5_models.rs:6:21
+  |
+6 | use crate::models::{ModelError, Result};
+  |                     ^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src\models\rust_embeddings.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused imports: `RustTokenizer` and `TokenizedInput`
+ --> src\models\rust_embeddings.rs:4:37
+  |
+4 | use crate::models::rust_tokenizer::{RustTokenizer, TokenizedInput};
+  |                                     ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+
+warning: unused imports: `EmbeddingLayer`, `FeedForward`, and `SelfAttention`
+ --> src\models\rust_embeddings.rs:5:62
+  |
+5 | use crate::models::rust_bert_models::{Matrix, RustBertModel, EmbeddingLayer, SelfAttention, FeedForward};
+  |                                                              ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused import: `ModelError`
+ --> src\models\rust_embeddings.rs:6:21
+  |
+6 | use crate::models::{ModelError, Result};
+  |                     ^^^^^^^^^^
+
+warning: unused import: `ModelError`
+  --> src\models\model_loader.rs:14:32
+   |
+14 | use crate::models::{ModelType, ModelError};
+   |                                ^^^^^^^^^^
+
+warning: unused import: `crate::models::rust_tokenizer::RustTokenizer`
+  --> src\models\model_loader.rs:17:5
+   |
+17 | use crate::models::rust_tokenizer::RustTokenizer;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::core::relationship_extractor::CognitiveRelationshipExtractor`
+ --> src\mcp\llm_friendly_server\handlers\storage.rs:7:5
+  |
+7 | use crate::core::relationship_extractor::CognitiveRelationshipExtractor;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::federation::coordinator::FederationCoordinator`
+  --> src\mcp\llm_friendly_server\handlers\storage.rs:12:5
+   |
+12 | use crate::federation::coordinator::FederationCoordinator;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `LlmkgResult`
+  --> src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:10:17
+   |
+10 |     LlmkgError, LlmkgResult, HandlerResult,
+   |                 ^^^^^^^^^^^
+
+warning: unused variable: `cognitive_metrics`
+   --> src\core\entity_extractor.rs:618:13
+    |
+618 |         let cognitive_metrics = CognitiveMetrics {
+    |             ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cognitive_metrics`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `interned_name`
+   --> src\core\entity_extractor.rs:650:21
+    |
+650 |                 let interned_name = string_interner.intern(&entity.name);
+    |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interned_name`
+
+warning: unused variable: `interned_type`
+   --> src\core\entity_extractor.rs:651:21
+    |
+651 |                 let interned_type = string_interner.intern(&format!("{:?}", entity.entity_type));
+    |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_interned_type`
+
+error[E0308]: mismatched types
+    --> src\core\entity_extractor.rs:1188:33
+     |
+1188 |             match minilm.encode(entity_context).await {
+     |                          ------ ^^^^^^^^^^^^^^ expected `&[&str]`, found `&str`
+     |                          |
+     |                          arguments to this method are incorrect
+     |
+     = note: expected reference `&[&str]`
+                found reference `&str`
+note: method defined here
+    --> src\models\rust_embeddings.rs:203:12
+     |
+203  |     pub fn encode(&self, texts: &[&str]) -> Result<Vec<Vec<f32>>> {
+     |            ^^^^^^        --------------
+
+error[E0277]: `std::result::Result<Vec<Vec<f32>>, ModelError>` is not a future
+    --> src\core\entity_extractor.rs:1188:49
+     |
+1188 |             match minilm.encode(entity_context).await {
+     |                                                -^^^^^
+     |                                                ||
+     |                                                |`std::result::Result<Vec<Vec<f32>>, ModelError>` is not a future
+     |                                                help: remove the `.await`
+     |
+     = help: the trait `futures::Future` is not implemented for `std::result::Result<Vec<Vec<f32>>, ModelError>`
+     = note: std::result::Result<Vec<Vec<f32>>, ModelError> must be a future or must implement `IntoFuture` to be awaited
+     = note: required for `std::result::Result<Vec<Vec<f32>>, ModelError>` to implement `std::future::IntoFuture`
+
+warning: unused variable: `neural_server`
+    --> src\core\relationship_extractor.rs:1001:21
+     |
+1001 |         if let Some(neural_server) = &self.neural_server {
+     |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\relationship_extractor.rs:1003:17
+     |
+1003 |             let neural_request = crate::neural::neural_server::NeuralRequest {
+     |                 ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+error[E0614]: type `relationship_extractor::CognitiveRelationshipType` cannot be dereferenced
+    --> src\core\relationship_extractor.rs:1117:39
+     |
+1117 |                     let rel_type = if *hint_type != CognitiveRelationshipType::Unknown {
+     |                                       ^^^^^^^^^^ can't be dereferenced
+
+warning: unused variable: `entities`
+    --> src\core\relationship_extractor.rs:1208:9
+     |
+1208 |         entities: &[crate::core::entity_extractor::CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `key`
+    --> src\core\relationship_extractor.rs:1383:14
+     |
+1383 |         for (key, group) in grouped {
+     |              ^^^ help: if this is intentional, prefix it with an underscore: `_key`
+
+warning: unused variable: `i`
+    --> src\core\relationship_extractor.rs:1566:18
+     |
+1566 |             for (i, prediction) in predictions.iter().enumerate() {
+     |                  ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: unused variable: `neural_server`
+    --> src\core\relationship_extractor.rs:1656:21
+     |
+1656 |         if let Some(neural_server) = &self.neural_server {
+     |                     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\relationship_extractor.rs:1660:17
+     |
+1660 |             let neural_request = crate::neural::neural_server::NeuralRequest {
+     |                 ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `metrics`
+   --> src\core\question_parser.rs:861:13
+    |
+861 |         let metrics = CognitiveParsingMetrics {
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `neural_server`
+   --> src\core\question_parser.rs:886:9
+    |
+886 |         neural_server: &NeuralProcessingServer,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+   --> src\core\question_parser.rs:892:13
+    |
+892 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1209:9
+     |
+1209 |         entities: &[CognitiveEntity]
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `question`
+    --> src\core\question_parser.rs:1286:9
+     |
+1286 |         question: &str,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_question`
+
+warning: unused variable: `neural_server`
+    --> src\core\question_parser.rs:1287:9
+     |
+1287 |         neural_server: &NeuralProcessingServer
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1301:9
+     |
+1301 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `reasoning_result`
+    --> src\core\question_parser.rs:1302:9
+     |
+1302 |         reasoning_result: &ReasoningResult,
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1346:9
+     |
+1346 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `entities`
+    --> src\core\question_parser.rs:1390:9
+     |
+1390 |         entities: &[CognitiveEntity],
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `neural_server`
+    --> src\core\question_parser.rs:1463:9
+     |
+1463 |         neural_server: &NeuralProcessingServer,
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `reasoning_result`
+    --> src\core\question_parser.rs:1494:9
+     |
+1494 |         reasoning_result: &ReasoningResult,
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+
+warning: unused variable: `neural_server`
+   --> src\core\answer_generator.rs:879:9
+    |
+879 |         neural_server: &NeuralProcessingServer,
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+   --> src\core\answer_generator.rs:885:13
+    |
+885 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+error[E0061]: this function takes 4 arguments but 2 arguments were supplied
+   --> src\core\answer_generator.rs:980:29
+    |
+980 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----------------------------- two arguments of type `&[relationship_extractor::CognitiveRelationship]` and `&CognitiveQuestionIntent` are missing
+    |
+note: expected `&AnswerGenerator`, found `Vec<Triple>`
+   --> src\core\answer_generator.rs:980:62
+    |
+980 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                                                              ^^^^^^^^^^^^
+    = note: expected reference `&AnswerGenerator`
+                  found struct `Vec<Triple>`
+note: expected `&[CognitiveEntity]`, found `QuestionIntent`
+   --> src\core\answer_generator.rs:980:76
+    |
+980 |         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+    |                                                                            ^^^^^^^^^^^^^
+    = note: expected reference `&[entity_extractor::CognitiveEntity]`
+                  found struct `QuestionIntent`
+note: method defined here
+   --> src\core\answer_generator.rs:615:18
+    |
+615 |     pub async fn generate_answer(
+    |                  ^^^^^^^^^^^^^^^
+616 |         &self,
+    |         -----
+617 |         _entities: &[crate::core::entity_extractor::CognitiveEntity],
+    |         ------------------------------------------------------------
+618 |         _relationships: &[crate::core::relationship_extractor::CognitiveRelationship],
+    |         -----------------------------------------------------------------------------
+619 |         _intent: &CognitiveQuestionIntent,
+    |         ---------------------------------
+help: provide the arguments
+    |
+980 -         let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+980 +         let legacy_answer = AnswerGenerator::generate_answer(/* &AnswerGenerator */, /* &[entity_extractor::CognitiveEntity] */, /* &[relationship_extractor::CognitiveRelationship] */, /* &CognitiveQuestionIntent */);
+    |
+
+error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+   --> src\core\answer_generator.rs:984:28
+    |
+984 |             &legacy_answer.text,
+    |                            ^^^^ unknown field
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:992:13
+     |
+991  |         let enhanced_confidence = self.calculate_cognitive_answer_confidence(
+     |                                        ------------------------------------- arguments to this method are incorrect
+992  |             &legacy_answer,
+     |             ^^^^^^^^^^^^^^ expected `&Answer`, found `&impl Future<Output = Result<..., ...>>`
+     |
+     = note: expected reference `&Answer`
+                found reference `&impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`
+note: method defined here
+    --> src\core\answer_generator.rs:1629:14
+     |
+1629 |     async fn calculate_cognitive_answer_confidence(
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1630 |         &self,
+1631 |         legacy_answer: &Answer,
+     |         ----------------------
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1030:17
+     |
+1030 |                 self.generate_factual_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1033:17
+     |
+1033 |                 self.generate_explanatory_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1036:17
+     |
+1036 |                 self.generate_comparative_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1039:17
+     |
+1039 |                 self.generate_temporal_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+error[E0308]: mismatched types
+    --> src\core\answer_generator.rs:1042:17
+     |
+1042 |                 self.generate_causal_answer(subtype, facts, intent).await
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `Result<CognitiveAnswer, GraphError>`
+     |
+     = note: expected struct `std::string::String`
+                  found enum `std::result::Result<CognitiveAnswer, GraphError>`
+
+warning: unused variable: `neural_server`
+    --> src\core\answer_generator.rs:1084:9
+     |
+1084 |         neural_server: &NeuralProcessingServer,
+     |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `neural_request`
+    --> src\core\answer_generator.rs:1087:13
+     |
+1087 |         let neural_request = crate::neural::neural_server::NeuralRequest {
+     |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_request`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1164:9
+     |
+1164 |         subtype: &FactualSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1334:9
+     |
+1334 |         subtype: &ExplanatorySubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1359:9
+     |
+1359 |         subtype: &ComparativeSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1384:9
+     |
+1384 |         subtype: &TemporalSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `subtype`
+    --> src\core\answer_generator.rs:1409:9
+     |
+1409 |         subtype: &CausalSubtype,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_subtype`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1531:70
+     |
+1531 |     async fn generate_complex_answer(&self, facts: &[CognitiveFact], intent: &CognitiveQuestionIntent) -> String {
+     |                                                                      ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1676:69
+     |
+1676 |     async fn assess_answer_quality(&self, answer: &CognitiveAnswer, intent: &CognitiveQuestionIntent) -> AnswerQualityMetrics {
+     |                                                                     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+warning: unused variable: `attention_weights`
+    --> src\core\answer_generator.rs:1708:9
+     |
+1708 |         attention_weights: &[f32],
+     |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_attention_weights`
+
+warning: unused variable: `intent`
+    --> src\core\answer_generator.rs:1720:9
+     |
+1720 |         intent: &CognitiveQuestionIntent,
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent`
+
+error[E0599]: `InternedString` doesn't implement `std::fmt::Display`
+  --> src\storage\integration_test.rs:66:28
+   |
+66 |             interned_props.to_string(),
+   |                            ^^^^^^^^^ `InternedString` cannot be formatted with the default formatter
+   |
+  ::: src\storage\string_interner.rs:12:1
+   |
+12 | pub struct InternedString(pub u32);
+   | ------------------------- method `to_string` not found for this struct because it doesn't satisfy `InternedString: ToString` or `InternedString: std::fmt::Display`
+   |
+   = note: the following trait bounds were not satisfied:
+           `InternedString: std::fmt::Display`
+           which is required by `InternedString: ToString`
+   = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+  --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\fmt\mod.rs:984:1
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+           candidate #1: `ToString`
+
+error[E0382]: use of moved value: `decision`
+   --> src\federation\transaction_log.rs:200:35
+    |
+178 |         decision: TransactionDecision,
+    |         -------- move occurs because `decision` has type `TransactionDecision`, which does not implement the `Copy` trait
+...
+198 |             record.decision = Some(decision);
+    |                                    -------- value moved here
+199 |             record.end_time = Some(SystemTime::now());
+200 |             record.status = match decision {
+    |                                   ^^^^^^^^ value used here after move
+    |
+help: consider cloning the value if the performance cost is acceptable
+    |
+198 |             record.decision = Some(decision.clone());
+    |                                            ++++++++
+
+warning: unused variable: `metadata`
+   --> src\federation\two_phase_commit.rs:157:9
+    |
+157 |         metadata: TransactionMetadata,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metadata`
+
+warning: unused variable: `phase_completed`
+   --> src\federation\two_phase_commit.rs:188:28
+    |
+188 |         let (all_prepared, phase_completed) = match prepare_result {
+    |                            ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_phase_completed`
+
+warning: unused variable: `participant_results`
+   --> src\federation\two_phase_commit.rs:480:9
+    |
+480 |         participant_results: &mut HashMap<DatabaseId, ParticipantResult>,
+    |         ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_participant_results`
+
+error[E0382]: use of moved value: `model_guard`
+   --> src\neural\neural_server.rs:360:14
+    |
+350 |         let model_guard = self.distilbert_ner.lock().await;
+    |             ----------- move occurs because `model_guard` has type `tokio::sync::MutexGuard<'_, std::option::Option<Arc<RealDistilBertNER>>>`, which does not implement the `Copy` trait
+351 |         if model_guard.is_none() {
+352 |             drop(model_guard);
+    |                  ----------- value moved here
+...
+360 |         drop(model_guard);
+    |              ^^^^^^^^^^^ value used here after move
+
+error[E0382]: use of moved value: `model_guard`
+   --> src\neural\neural_server.rs:440:14
+    |
+434 |         let model_guard = self.t5_generator.lock().await;
+    |             ----------- move occurs because `model_guard` has type `tokio::sync::MutexGuard<'_, std::option::Option<Arc<RustT5Small>>>`, which does not implement the `Copy` trait
+435 |         if model_guard.is_none() {
+436 |             drop(model_guard);
+    |                  ----------- value moved here
+...
+440 |         drop(model_guard);
+    |              ^^^^^^^^^^^ value used here after move
+
+error[E0382]: use of moved value: `model_guard`
+   --> src\neural\neural_server.rs:486:14
+    |
+477 |         let model_guard = self.minilm_embedder.lock().await;
+    |             ----------- move occurs because `model_guard` has type `tokio::sync::MutexGuard<'_, std::option::Option<Arc<RealMiniLM>>>`, which does not implement the `Copy` trait
+478 |         if model_guard.is_none() {
+479 |             drop(model_guard);
+    |                  ----------- value moved here
+...
+486 |         drop(model_guard);
+    |              ^^^^^^^^^^^ value used here after move
+
+warning: unused variable: `dataset`
+   --> src\neural\neural_server.rs:556:55
+    |
+556 |     async fn simulate_training(&self, model_id: &str, dataset: &str, epochs: u32) -> Result<(f32, std::collections::HashMap<String, f32>)> {
+    |                                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dataset`
+
+error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`
+   --> src\neural\neural_server.rs:665:25
+    |
+665 |         let generated = model.generate(&prompt, 50)?;
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `std::string::String`
+    |
+    = help: the trait `std::ops::Try` is not implemented for `std::string::String`
+
+warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+   --> src\neural\neural_server.rs:764:62
+    |
+764 |             request_id: format!("req_{}", chrono::Utc::now().timestamp_nanos()),
+    |                                                              ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+error[E0308]: mismatched types
+    --> src\cognitive\orchestrator.rs:1238:25
+     |
+1238 |             if *score > 0.3 {
+     |                         ^^^ expected `&f32`, found floating-point number
+     |
+help: consider dereferencing the borrow
+     |
+1238 |             if **score > 0.3 {
+     |                +
+
+warning: variable does not need to be mutable
+    --> src\cognitive\orchestrator.rs:1397:13
+     |
+1397 |         let mut cache_hits = 0;
+     |             ----^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+    --> src\cognitive\orchestrator.rs:1398:13
+     |
+1398 |         let mut cache_misses = 0;
+     |             ----^^^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: unused variable: `item`
+    --> src\cognitive\working_memory.rs:1010:13
+     |
+1010 |         for item in &all_items {
+     |             ^^^^ help: if this is intentional, prefix it with an underscore: `_item`
+
+error[E0382]: borrow of moved value: `items_to_consolidate`
+    --> src\cognitive\working_memory.rs:1070:40
+     |
+1039 |         let items_to_consolidate: Vec<_> = consolidation_candidates
+     |             -------------------- move occurs because `items_to_consolidate` has type `Vec<MemoryItem>`, which does not implement the `Copy` trait
+...
+1044 |         for item in items_to_consolidate {
+     |                     -------------------- `items_to_consolidate` moved due to this implicit call to `.into_iter()`
+...
+1070 |         buffers.episodic_buffer.retain(|item| {
+     |                                        ^^^^^^ value borrowed here after move
+1071 |             !items_to_consolidate.iter().any(|consolidated| {
+     |              -------------------- borrow occurs due to use in closure
+     |
+note: `std::iter::IntoIterator::into_iter` takes ownership of the receiver `self`, which moves `items_to_consolidate`
+    --> /rustc/6b00bc3880198600130e1cf62b8f8a93494488cc\library\core\src\iter\traits\collect.rs:313:18
+help: consider iterating over a slice of the `Vec<MemoryItem>`'s content to avoid moving into the `for` loop
+     |
+1044 |         for item in &items_to_consolidate {
+     |                     +
+
+error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+  --> src\cognitive\inhibitory\integration.rs:57:11
+   |
+57 |     match cognitive_pattern {
+   |           ^^^^^^^^^^^^^^^^^ patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+   |
+note: `cognitive::types::CognitivePatternType` defined here
+  --> src\cognitive\types.rs:66:10
+   |
+66 | pub enum CognitivePatternType {
+   |          ^^^^^^^^^^^^^^^^^^^^
+...
+76 |     Analytical,
+   |     ---------- not covered
+77 |     PatternRecognition,
+   |     ------------------ not covered
+78 |     Linguistic,
+   |     ---------- not covered
+79 |     Creative,
+   |     -------- not covered
+80 |     Ensemble,
+   |     -------- not covered
+   = note: the matched value is of type `cognitive::types::CognitivePatternType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern as shown, or multiple match arms
+   |
+101~         },
+102+         _ => todo!()
+   |
+
+error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+   --> src\cognitive\phase3_integration.rs:782:28
+    |
+782 |         let result = match pattern {
+    |                            ^^^^^^^ patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+    |
+note: `cognitive::types::CognitivePatternType` defined here
+   --> src\cognitive\types.rs:66:10
+    |
+66  | pub enum CognitivePatternType {
+    |          ^^^^^^^^^^^^^^^^^^^^
+...
+76  |     Analytical,
+    |     ---------- not covered
+77  |     PatternRecognition,
+    |     ------------------ not covered
+78  |     Linguistic,
+    |     ---------- not covered
+79  |     Creative,
+    |     -------- not covered
+80  |     Ensemble,
+    |     -------- not covered
+    = note: the matched value is of type `cognitive::types::CognitivePatternType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern as shown, or multiple match arms
+    |
+847 ~             },
+848 +             _ => todo!()
+    |
+
+warning: unused variable: `migration_result`
+   --> src\tools\migration.rs:536:13
+    |
+536 |         let migration_result = self.migrate_entities_with_cognitive_enhancement(
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_migration_result`
+
+warning: unused variable: `legacy_storage`
+   --> src\tools\migration.rs:728:9
+    |
+728 |         legacy_storage: &dyn LegacyStorage,
+    |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_legacy_storage`
+
+error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied
+   --> src\models\model_loader.rs:194:46
+    |
+115 | pub trait NeuralModel: Send + Sync {
+    | ---------------------------------- doesn't satisfy `dyn NeuralModel: NeuralModelExt` or `dyn NeuralModel: Sized`
+...
+194 |             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
+    |                                              ^^^^^^ method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+    |
+   ::: C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dashmap-5.5.3\src\mapref\one.rs:8:1
+    |
+8   | pub struct Ref<'a, K, V, S = RandomState> {
+    | ----------------------------------------- doesn't satisfy `_: NeuralModelExt` or `_: NeuralModel`
+    |
+note: the following trait bounds were not satisfied:
+      `Arc<dyn NeuralModel>: NeuralModel`
+      `dashmap::mapref::one::Ref<'_, ModelType, Arc<(dyn NeuralModel + 'static)>>: NeuralModel`
+      `dyn NeuralModel: Sized`
+   --> src\models\model_loader.rs:440:6
+    |
+440 | impl<T: NeuralModel + 'static> NeuralModelExt for T {
+    |      ^  ^^^^^^^^^^^            --------------     -
+    |      |  |
+    |      |  unsatisfied trait bound introduced here
+    |      unsatisfied trait bound introduced here
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `NeuralModelExt` defines an item `as_any`, perhaps you need to implement it
+   --> src\models\model_loader.rs:436:1
+    |
+436 | pub trait NeuralModelExt {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider relaxing the type parameter's implicit `Sized` bound
+    |
+440 | impl<T: ?Sized + NeuralModel + 'static> NeuralModelExt for T {
+    |         ++++++++
+
+error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied
+   --> src\models\model_loader.rs:210:46
+    |
+115 | pub trait NeuralModel: Send + Sync {
+    | ---------------------------------- doesn't satisfy `dyn NeuralModel: NeuralModelExt` or `dyn NeuralModel: Sized`
+...
+210 |             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
+    |                                              ^^^^^^ method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+    |
+   ::: C:\Users\hotra\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dashmap-5.5.3\src\mapref\one.rs:8:1
+    |
+8   | pub struct Ref<'a, K, V, S = RandomState> {
+    | ----------------------------------------- doesn't satisfy `_: NeuralModelExt` or `_: NeuralModel`
+    |
+note: the following trait bounds were not satisfied:
+      `Arc<dyn NeuralModel>: NeuralModel`
+      `dashmap::mapref::one::Ref<'_, ModelType, Arc<(dyn NeuralModel + 'static)>>: NeuralModel`
+      `dyn NeuralModel: Sized`
+   --> src\models\model_loader.rs:440:6
+    |
+440 | impl<T: NeuralModel + 'static> NeuralModelExt for T {
+    |      ^  ^^^^^^^^^^^            --------------     -
+    |      |  |
+    |      |  unsatisfied trait bound introduced here
+    |      unsatisfied trait bound introduced here
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `NeuralModelExt` defines an item `as_any`, perhaps you need to implement it
+   --> src\models\model_loader.rs:436:1
+    |
+436 | pub trait NeuralModelExt {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider relaxing the type parameter's implicit `Sized` bound
+    |
+440 | impl<T: ?Sized + NeuralModel + 'static> NeuralModelExt for T {
+    |         ++++++++
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `tokio_test`
+   --> src\test_support\builders.rs:442:5
+    |
+442 |     tokio_test::block_on(FederationCoordinator::new(registry)).expect("Failed to create federation coordinator")
+    |     ^^^^^^^^^^ use of unresolved module or unlinked crate `tokio_test`
+    |
+    = help: if you wanted to use a crate named `tokio_test`, use `cargo add tokio_test` to add it to your `Cargo.toml`
+
+warning: variable does not need to be mutable
+  --> src\test_support\test_utils.rs:16:13
+   |
+16 |         let mut engine_write = engine.write().await;
+   |             ----^^^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: unused variable: `cognitive_orchestrator`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:359:5
+    |
+359 |     cognitive_orchestrator: &Arc<CognitiveOrchestrator>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cognitive_orchestrator`
+
+warning: unused variable: `neural_server`
+   --> src\mcp\llm_friendly_server\handlers\storage.rs:360:5
+    |
+360 |     neural_server: &Arc<NeuralProcessingServer>,
+    |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_server`
+
+warning: unused variable: `context_str`
+   --> src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:182:9
+    |
+182 |     let context_str = params.get("context").and_then(|v| v.as_str());
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context_str`
+
+warning: unused variable: `entities`
+   --> src\core\relationship_extractor.rs:471:60
+    |
+471 | ...onships(&self, text: &str, entities: &[crate::core::entity_extractor::CognitiveEntity]) -> Result<Vec<CognitiveRelationship>> {
+    |                               ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `start_pos`
+   --> src\core\relationship_extractor.rs:519:9
+    |
+519 |         start_pos: usize,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_start_pos`
+
+warning: unused variable: `end_pos`
+   --> src\core\relationship_extractor.rs:520:9
+    |
+520 |         end_pos: usize,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_end_pos`
+
+warning: unused variable: `verb`
+   --> src\core\relationship_extractor.rs:820:35
+    |
+820 |     fn get_verb_confidence(&self, verb: &str, rel_type: &CognitiveRelationshipType) -> f32 {
+    |                                   ^^^^ help: if this is intentional, prefix it with an underscore: `_verb`
+
+warning: unused variable: `text`
+   --> src\models\rust_bert_models.rs:428:31
+    |
+428 |     fn decode_entities(&self, text: &str, tokenized: &TokenizedInput, predictions: &[usize]) -> Result<Vec<Entity>> {
+    |                               ^^^^ help: if this is intentional, prefix it with an underscore: `_text`
+
+warning: unused variable: `text`
+   --> src\models\rust_bert_models.rs:547:31
+    |
+547 |     fn decode_entities(&self, text: &str, tokenized: &TokenizedInput, predictions: &[usize]) -> Result<Vec<Entity>> {
+    |                               ^^^^ help: if this is intentional, prefix it with an underscore: `_text`
+
+Some errors have detailed explanations: E0004, E0061, E0277, E0308, E0382, E0433, E0599, E0609, E0614.
+For more information about an error, try `rustc --explain E0004`.
+warning: `llmkg` (lib) generated 77 warnings
+error: could not compile `llmkg` (lib) due to 24 previous errors; 77 warnings emitted

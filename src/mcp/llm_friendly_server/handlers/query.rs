@@ -5,6 +5,7 @@ use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::TripleQuery;
 use crate::core::question_parser::QuestionParser;
 use crate::core::answer_generator::AnswerGenerator;
+use crate::core::cognitive_question_answering::CognitiveQuestionAnsweringEngine;
 use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use std::sync::Arc;
@@ -97,7 +98,100 @@ pub async fn handle_find_facts(
     }
 }
 
-/// Handle ask_question request
+/// Handle ask_question request with cognitive enhancements
+pub async fn handle_ask_question_cognitive(
+    cognitive_qa_engine: &Arc<CognitiveQuestionAnsweringEngine>,
+    usage_stats: &Arc<RwLock<UsageStats>>,
+    params: Value,
+) -> std::result::Result<(Value, String, Vec<String>), String> {
+    let question = params.get("question").and_then(|v| v.as_str())
+        .ok_or("Missing required field: question")?;
+    let context = params.get("context").and_then(|v| v.as_str());
+    let max_results = params.get("max_results")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(5)
+        .min(20) as usize;
+    
+    if question.is_empty() {
+        return Err("Question cannot be empty".to_string());
+    }
+    
+    // Use cognitive question answering engine
+    match cognitive_qa_engine.answer_question_cognitive(question, context).await {
+        Ok(cognitive_answer) => {
+            let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 20).await;
+            
+            // Convert cognitive answer to MCP response format
+            let relevant_facts: Vec<_> = cognitive_answer.supporting_facts.iter()
+                .take(max_results)
+                .map(|f| {
+                    json!({
+                        "subject": &f.subject,
+                        "predicate": &f.predicate,
+                        "object": &f.object,
+                        "confidence": f.confidence,
+                        "cognitive_relevance": f.cognitive_relevance,
+                        "neural_salience": f.neural_salience
+                    })
+                })
+                .collect();
+            
+            let data = json!({
+                "question": question,
+                "context": context,
+                "entities": cognitive_answer.supporting_facts.iter()
+                    .flat_map(|f| vec![f.subject.clone(), f.object.clone()])
+                    .collect::<std::collections::HashSet<_>>()
+                    .into_iter()
+                    .collect::<Vec<_>>(),
+                "question_type": format!("{:?}", cognitive_answer.answer_type),
+                "relevant_facts": relevant_facts,
+                "answer": cognitive_answer.text,
+                "confidence": cognitive_answer.confidence,
+                "relevance_score": cognitive_answer.answer_quality_metrics.relevance_score,
+                "cognitive_patterns_used": cognitive_answer.cognitive_patterns_used
+                    .iter()
+                    .map(|p| format!("{:?}", p))
+                    .collect::<Vec<_>>(),
+                "neural_models_used": cognitive_answer.neural_models_used,
+                "processing_time_ms": cognitive_answer.processing_time_ms,
+                "quality_metrics": {
+                    "relevance": cognitive_answer.answer_quality_metrics.relevance_score,
+                    "completeness": cognitive_answer.answer_quality_metrics.completeness_score,
+                    "coherence": cognitive_answer.answer_quality_metrics.coherence_score,
+                    "factual_accuracy": cognitive_answer.answer_quality_metrics.factual_accuracy,
+                    "neural_confidence": cognitive_answer.answer_quality_metrics.neural_confidence,
+                    "cognitive_consistency": cognitive_answer.answer_quality_metrics.cognitive_consistency
+                }
+            });
+            
+            let message = format!(
+                "{}\n\nConfidence: {:.0}% | Relevance: {:.0}%",
+                cognitive_answer.text,
+                cognitive_answer.confidence * 100.0,
+                cognitive_answer.answer_quality_metrics.relevance_score * 100.0
+            );
+            
+            let suggestions = vec![
+                "Try rephrasing your question for different cognitive insights".to_string(),
+                "Add more context to improve neural processing".to_string(),
+                format!(
+                    "Answer generated using {} cognitive patterns in {}ms",
+                    cognitive_answer.cognitive_patterns_used.len(),
+                    cognitive_answer.processing_time_ms
+                ),
+            ];
+            
+            Ok((data, message, suggestions))
+        }
+        Err(e) => {
+            log::error!("Cognitive Q&A failed: {}", e);
+            Err(format!("Failed to generate cognitive answer: {}", e))
+        }
+    }
+}
+
+/// Handle ask_question request (legacy version for backward compatibility)
 pub async fn handle_ask_question(
     knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
@@ -116,7 +210,7 @@ pub async fn handle_ask_question(
     }
     
     // Parse the question using enhanced parser
-    let intent = QuestionParser::parse(question);
+    let intent = QuestionParser::parse_static(question);
     
     if intent.entities.is_empty() {
         return Err("Could not extract meaningful entities from the question".to_string());
@@ -163,7 +257,7 @@ pub async fn handle_ask_question(
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 15).await;
     
     // Generate answer using enhanced answer generator
-    let answer = AnswerGenerator::generate_answer(all_results, intent.clone());
+    let answer = AnswerGenerator::generate_answer_static(all_results, intent.clone());
     
     let relevant_facts: Vec<_> = answer.facts.iter().take(max_results).map(|t| {
         json!({

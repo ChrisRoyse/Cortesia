@@ -127,8 +127,12 @@ impl LLMFriendlyMCPServer {
                 ).await
             }
             "ask_question" => {
-                handlers::query::handle_ask_question(
+                // Use cognitive-enhanced question answering
+                handlers::cognitive_query::handle_ask_question_cognitive_enhanced(
                     &self.knowledge_engine,
+                    &self.cognitive_orchestrator,
+                    &self.neural_server,
+                    &self.federation_coordinator,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -156,8 +160,6 @@ impl LLMFriendlyMCPServer {
                 // This one has an enhanced version
                 handlers::enhanced_search::handle_hybrid_search_enhanced(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -228,40 +230,32 @@ impl LLMFriendlyMCPServer {
                 ).await
             }
             
-            // Branching operations (COGNITIVE ENHANCED)
+            // Branching operations (using regular handlers - no enhanced versions exist)
             "create_branch" => {
-                handlers::temporal::handle_create_branch_enhanced(
+                handlers::temporal::handle_create_branch(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                     self.version_manager.clone(),
                 ).await
             }
             "list_branches" => {
-                handlers::temporal::handle_list_branches_enhanced(
+                handlers::temporal::handle_list_branches(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "compare_branches" => {
-                handlers::temporal::handle_compare_branches_enhanced(
+                handlers::temporal::handle_compare_branches(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
             }
             "merge_branches" => {
-                handlers::temporal::handle_merge_branches_enhanced(
+                handlers::temporal::handle_merge_branches(
                     &self.knowledge_engine,
-                    &self.cognitive_orchestrator,
-                    &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
                 ).await
@@ -273,21 +267,21 @@ impl LLMFriendlyMCPServer {
                     &self.cognitive_orchestrator,
                     &self.usage_stats,
                     params.clone(),
-                ).await
+                ).await.map_err(|e| e.to_string())
             }
             "neural_train_model" => {
                 handlers::storage::handle_neural_train_model(
                     &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
-                ).await
+                ).await.map_err(|e| e.to_string())
             }
             "neural_predict" => {
                 handlers::storage::handle_neural_predict(
                     &self.neural_server,
                     &self.usage_stats,
                     params.clone(),
-                ).await
+                ).await.map_err(|e| e.to_string())
             }
 
             // Unknown method

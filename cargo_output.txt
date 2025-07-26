@@ -1,0 +1,224 @@
+warning: file `C:\code\LLMKG\examples\federation_demo.rs` found to be present in multiple build targets:
+  * `bin` target `federation_demo`
+  * `example` target `federation_demo`
+warning: unused key `env` in [target] config table `cfg(windows)`
+    Checking llmkg v0.1.0 (C:\code\LLMKG)
+src\core\entity_extractor.rs:26:21: warning: unused imports: `RustBertNER` and `RustTinyBertNER`
+src\core\answer_generator.rs:20:70: warning: unused import: `ReasoningStrategy`
+src\federation\two_phase_commit.rs:10:27: warning: unused import: `Mutex`
+src\neural\neural_server.rs:10:48: warning: unused import: `ModelLoaderConfig`
+src\neural\neural_server.rs:11:21: warning: unused imports: `RustBertNER`, `RustMiniLM`, and `RustTinyBertNER`
+src\cognitive\types.rs:9:27: warning: unused import: `Instant`
+src\tools\migration.rs:6:49: warning: unused import: `TripleQuery`
+src\models\rust_bert_models.rs:3:5: warning: unused import: `std::collections::HashMap`
+src\models\rust_bert_models.rs:6:21: warning: unused imports: `ModelError` and `ModelType`
+src\models\rust_t5_models.rs:4:52: warning: unused import: `TokenizedInput`
+src\models\rust_t5_models.rs:6:21: warning: unused import: `ModelError`
+src\models\rust_embeddings.rs:3:5: warning: unused import: `std::sync::Arc`
+src\models\rust_embeddings.rs:4:37: warning: unused imports: `RustTokenizer` and `TokenizedInput`
+src\models\rust_embeddings.rs:5:62: warning: unused imports: `EmbeddingLayer`, `FeedForward`, and `SelfAttention`
+src\models\rust_embeddings.rs:6:21: warning: unused import: `ModelError`
+src\models\model_loader.rs:14:32: warning: unused import: `ModelError`
+src\models\model_loader.rs:17:5: warning: unused import: `crate::models::rust_tokenizer::RustTokenizer`
+src\models\candle_models.rs:7:5: warning: unused import: `std::path::Path`
+src\models\candle_models.rs:8:35: warning: unused import: `DType`
+src\models\candle_models.rs:9:25: warning: unused import: `Embedding`
+src\models\candle_models.rs:17:21: warning: unused import: `ModelType`
+src\mcp\llm_friendly_server\handlers\storage.rs:7:5: warning: unused import: `crate::core::relationship_extractor::CognitiveRelationshipExtractor`
+src\mcp\llm_friendly_server\handlers\storage.rs:10:50: warning: unused import: `CognitivePatternType`
+src\mcp\llm_friendly_server\handlers\storage.rs:12:5: warning: unused import: `crate::federation::coordinator::FederationCoordinator`
+src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:10:17: warning: unused import: `LlmkgResult`
+src\core\entity_extractor.rs:618:13: warning: unused variable: `cognitive_metrics`: help: if this is intentional, prefix it with an underscore: `_cognitive_metrics`
+src\core\entity_extractor.rs:671:41: error[E0308]: mismatched types: expected `&str`, found `&[&str; 1]`
+src\core\entity_extractor.rs:672:25: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\entity_extractor.rs:684:25: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\entity_extractor.rs:1225:33: error[E0308]: mismatched types: expected `&str`, found `&[&str; 1]`
+src\core\entity_extractor.rs:1226:17: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\entity_extractor.rs:1236:17: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\entity_extractor.rs:1319:33: error[E0308]: mismatched types: expected `&str`, found `&[&str; 1]`
+src\core\entity_extractor.rs:1320:17: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\entity_extractor.rs:1344:17: error[E0308]: mismatched types: expected future, found `Result<_, _>`
+src\core\relationship_extractor.rs:1001:21: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\relationship_extractor.rs:1003:17: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\relationship_extractor.rs:1117:52: error[E0308]: mismatched types: expected `CognitiveRelationshipType`, found `&CognitiveRelationshipType`
+src\core\relationship_extractor.rs:1208:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\relationship_extractor.rs:1383:14: warning: unused variable: `key`: help: if this is intentional, prefix it with an underscore: `_key`
+src\core\relationship_extractor.rs:1566:18: warning: unused variable: `i`: help: if this is intentional, prefix it with an underscore: `_i`
+src\core\relationship_extractor.rs:1656:21: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\relationship_extractor.rs:1660:17: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\question_parser.rs:715:51: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\question_parser.rs:822:56: error[E0599]: no method named `compute_attention_distribution` found for struct `Arc<AttentionManager>` in the current scope
+src\core\question_parser.rs:886:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:892:13: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\question_parser.rs:940:29: error[E0061]: this function takes 2 arguments but 1 argument was supplied
+src\core\question_parser.rs:944:28: error[E0609]: no field `question_type` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`: unknown field
+src\core\question_parser.rs:1209:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1286:9: warning: unused variable: `question`: help: if this is intentional, prefix it with an underscore: `_question`
+src\core\question_parser.rs:1287:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:1301:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1302:9: warning: unused variable: `reasoning_result`: help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+src\core\question_parser.rs:1346:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1390:9: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\question_parser.rs:1463:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\question_parser.rs:1494:9: warning: unused variable: `reasoning_result`: help: if this is intentional, prefix it with an underscore: `_reasoning_result`
+src\core\answer_generator.rs:587:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:598:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:599:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:617:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:628:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:629:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:647:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:658:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `confidence_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:659:17: error[E0560]: struct `AnswerQualityMetrics` has no field named `citation_score`: `AnswerQualityMetrics` does not have this field
+src\core\answer_generator.rs:861:9: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\core\answer_generator.rs:867:13: warning: unused variable: `neural_request`: help: if this is intentional, prefix it with an underscore: `_neural_request`
+src\core\answer_generator.rs:962:29: error[E0061]: this function takes 4 arguments but 2 arguments were supplied
+src\core\answer_generator.rs:966:28: error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\core\answer_generator.rs:974:13: error[E0308]: mismatched types: expected `&Answer`, found `&impl Future<Output = Result<..., ...>>`
+src\core\answer_generator.rs:1012:17: error[E0308]: mismatched types: expected `String`, found `Result<CognitiveAnswer, GraphError>`
+src\core\answer_generator.rs:1015:17: error[E0308]: mismatched types: expected `String`, found `Result<CognitiveAnswer, GraphError>`
+src\core\answer_generator.rs:1018:17: error[E0308]: mismatched types: expected `String`, found `Result<CognitiveAnswer, GraphError>`
+src\core\answer_generator.rs:1021:17: error[E0308]: mismatched types: expected `String`, found `Result<CognitiveAnswer, GraphError>`
+src\core\answer_generator.rs:1024:17: error[E0308]: mismatched types: expected `String`, found `Result<CognitiveAnswer, GraphError>`
+src\core\answer_generator.rs:1096:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1155:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1302:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1327:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1352:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1377:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1402:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\core\answer_generator.rs:1513:70: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\core\answer_generator.rs:1658:69: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\core\answer_generator.rs:1690:9: warning: unused variable: `attention_weights`: help: if this is intentional, prefix it with an underscore: `_attention_weights`
+src\core\answer_generator.rs:1702:9: warning: unused variable: `intent`: help: if this is intentional, prefix it with an underscore: `_intent`
+src\storage\integration_test.rs:66:28: error[E0599]: `InternedString` doesn't implement `std::fmt::Display`: `InternedString` cannot be formatted with the default formatter
+src\federation\transaction_log.rs:200:35: error[E0382]: use of moved value: `decision`: value used here after move
+src\federation\two_phase_commit.rs:157:9: warning: unused variable: `metadata`: help: if this is intentional, prefix it with an underscore: `_metadata`
+src\federation\two_phase_commit.rs:188:28: warning: unused variable: `phase_completed`: help: if this is intentional, prefix it with an underscore: `_phase_completed`
+src\federation\two_phase_commit.rs:480:9: warning: unused variable: `participant_results`: help: if this is intentional, prefix it with an underscore: `_participant_results`
+src\neural\neural_server.rs:318:62: warning: use of deprecated method `chrono::DateTime::<Tz>::timestamp_nanos`: use `timestamp_nanos_opt()` instead
+src\neural\neural_server.rs:482:39: error[E0599]: no method named `generate` found for reference `&Arc<RustT5Small>` in the current scope
+src\cognitive\working_memory.rs:1010:13: warning: unused variable: `item`: help: if this is intentional, prefix it with an underscore: `_item`
+src\cognitive\working_memory.rs:1070:40: error[E0382]: borrow of moved value: `items_to_consolidate`: value borrowed here after move
+src\cognitive\inhibitory\integration.rs:57:11: error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\cognitive\phase3_integration.rs:782:28: error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\tools\migration.rs:536:13: warning: unused variable: `migration_result`: help: if this is intentional, prefix it with an underscore: `_migration_result`
+src\tools\migration.rs:728:9: warning: unused variable: `legacy_storage`: help: if this is intentional, prefix it with an underscore: `_legacy_storage`
+src\models\model_loader.rs:194:46: error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied: method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+src\models\model_loader.rs:210:46: error[E0599]: the method `as_any` exists for struct `Ref<'_, ModelType, Arc<dyn NeuralModel>>`, but its trait bounds were not satisfied: method cannot be called on `Ref<'_, ModelType, Arc<dyn NeuralModel>>` due to unsatisfied trait bounds
+src\models\candle_models.rs:94:71: error[E0277]: `?` couldn't convert the error: `dyn StdError + std::marker::Send + Sync: Sized` is not satisfied: doesn't have a size known at compile-time
+src\models\candle_models.rs:108:32: error[E0061]: this function takes 3 arguments but 1 argument was supplied
+src\models\candle_models.rs:109:49: error[E0277]: the trait bound `Vec<candle_core::pickle::TensorInfo>: AsRef<std::path::Path>` is not satisfied: the trait `AsRef<std::path::Path>` is not implemented for `Vec<candle_core::pickle::TensorInfo>`
+src\models\candle_models.rs:112:37: error[E0308]: mismatched types: expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+src\models\candle_models.rs:147:98: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:150:98: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:153:40: error[E0061]: this method takes 3 arguments but 1 argument was supplied
+src\models\candle_models.rs:154:93: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:158:90: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:162:83: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:166:82: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:170:98: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:175:104: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:176:18: error[E0616]: field `0` of struct `candle_core::Tensor` is private: private field
+src\models\candle_models.rs:200:88: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:377:37: error[E0308]: mismatched types: expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+src\models\candle_models.rs:387:24: error[E0599]: no function or associated item named `from_pretrained` found for struct `tokenizers::Tokenizer` in the current scope: function or associated item not found in `Tokenizer`
+src\models\candle_models.rs:417:93: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:427:40: error[E0277]: the trait bound `&Vec<u32>: NdArray` is not satisfied: the trait `WithDType` is not implemented for `&Vec<u32>`
+src\models\candle_models.rs:428:91: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:430:91: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:433:40: error[E0061]: this method takes 3 arguments but 1 argument was supplied
+src\models\candle_models.rs:434:93: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:437:95: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:440:88: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:443:87: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:446:102: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:450:106: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:451:18: error[E0616]: field `0` of struct `candle_core::Tensor` is private: private field
+src\models\candle_models.rs:592:37: error[E0308]: mismatched types: expected `VarBuilderArgs<'_, Box<...>>`, found `&VarBuilderArgs<'_, Box<...>>`
+src\models\candle_models.rs:596:24: error[E0599]: no function or associated item named `from_pretrained` found for struct `tokenizers::Tokenizer` in the current scope: function or associated item not found in `Tokenizer`
+src\models\candle_models.rs:616:95: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:621:40: error[E0277]: the trait bound `&Vec<u32>: NdArray` is not satisfied: the trait `WithDType` is not implemented for `&Vec<u32>`
+src\models\candle_models.rs:622:98: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:624:98: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:627:40: error[E0061]: this method takes 3 arguments but 1 argument was supplied
+src\models\candle_models.rs:628:95: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\test_support\builders.rs:442:42: error[E0599]: no method named `expect` found for opaque type `impl futures::Future<Output = std::result::Result<FederationCoordinator, GraphError>>` in the current scope: method not found in `impl Future<Output = Result<FederationCoordinator, GraphError>>`
+src\test_support\test_utils.rs:16:13: warning: variable does not need to be mutable
+src\mcp\llm_friendly_server\handlers\storage.rs:246:26: error[E0063]: missing field `input_data` in initializer of `NeuralRequest`: missing `input_data`
+src\mcp\llm_friendly_server\handlers\storage.rs:252:39: error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope: method not found in `&Arc<NeuralProcessingServer>`
+src\mcp\llm_friendly_server\handlers\storage.rs:267:95: error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`: `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+src\mcp\llm_friendly_server\handlers\storage.rs:271:96: error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:319:66: error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`: `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+src\mcp\llm_friendly_server\handlers\storage.rs:322:68: error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:336:9: error[E0277]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`: `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+src\mcp\llm_friendly_server\handlers\storage.rs:338:42: error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:353:5: warning: unused variable: `cognitive_orchestrator`: help: if this is intentional, prefix it with an underscore: `_cognitive_orchestrator`
+src\mcp\llm_friendly_server\handlers\storage.rs:354:5: warning: unused variable: `neural_server`: help: if this is intentional, prefix it with an underscore: `_neural_server`
+src\mcp\llm_friendly_server\handlers\storage.rs:388:43: error[E0599]: no variant or associated item named `Divergent` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:389:41: error[E0599]: no variant or associated item named `Lateral` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:390:41: error[E0599]: no variant or associated item named `Systems` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:391:42: error[E0599]: no variant or associated item named `Critical` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:392:42: error[E0599]: no variant or associated item named `Adaptive` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:393:33: error[E0599]: no variant or associated item named `Convergent` found for enum `cognitive::types::ReasoningStrategy` in the current scope: variant or associated item not found in `ReasoningStrategy`
+src\mcp\llm_friendly_server\handlers\storage.rs:433:61: error[E0599]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`: `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+src\mcp\llm_friendly_server\handlers\storage.rs:434:67: error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:435:65: error[E0609]: no field `coherence_score` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:455:23: error[E0277]: `cognitive::types::ReasoningStrategy` doesn't implement `std::fmt::Display`: `cognitive::types::ReasoningStrategy` cannot be formatted with the default formatter
+src\mcp\llm_friendly_server\handlers\storage.rs:459:42: error[E0609]: no field `reasoning_quality` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:460:42: error[E0609]: no field `coherence_score` on type `cognitive::types::QualityMetrics`: unknown field
+src\mcp\llm_friendly_server\handlers\storage.rs:528:26: error[E0063]: missing field `input_data` in initializer of `NeuralRequest`: missing `input_data`
+src\mcp\llm_friendly_server\handlers\storage.rs:538:41: error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope: method not found in `&Arc<NeuralProcessingServer>`
+src\mcp\llm_friendly_server\handlers\storage.rs:636:26: error[E0063]: missing field `input_data` in initializer of `NeuralRequest`: missing `input_data`
+src\mcp\llm_friendly_server\handlers\storage.rs:642:43: error[E0599]: no method named `process_request` found for reference `&Arc<NeuralProcessingServer>` in the current scope: method not found in `&Arc<NeuralProcessingServer>`
+src\mcp\llm_friendly_server\handlers\query.rs:119:18: error[E0061]: this function takes 2 arguments but 1 argument was supplied
+src\mcp\llm_friendly_server\handlers\query.rs:121:15: error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:129:27: error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:166:71: error[E0599]: no method named `clone` found for opaque type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>` in the current scope: method not found in `impl Future<Output = Result<CognitiveQuestionIntent, GraphError>>`
+src\mcp\llm_friendly_server\handlers\query.rs:166:18: error[E0061]: this function takes 4 arguments but 2 arguments were supplied
+src\mcp\llm_friendly_server\handlers\query.rs:168:41: error[E0609]: no field `facts` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:180:28: error[E0609]: no field `entities` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:181:49: error[E0609]: no field `question_type` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:182:56: error[E0609]: no field `expected_answer_type` on type `impl futures::Future<Output = std::result::Result<CognitiveQuestionIntent, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:184:26: error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:185:30: error[E0609]: no field `confidence` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:188:29: error[E0609]: no field `facts` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:189:16: error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:191:52: error[E0609]: no field `text` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\query.rs:191:65: error[E0609]: no field `confidence` on type `impl futures::Future<Output = std::result::Result<CognitiveAnswer, GraphError>>`: unknown field
+src\mcp\llm_friendly_server\handlers\cognitive_preview.rs:182:9: warning: unused variable: `context_str`: help: if this is intentional, prefix it with an underscore: `_context_str`
+src\mcp\federated_server.rs:34:55: error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`: the `?` operator cannot be applied to type `impl futures::Future<Output = std::result::Result<FederationManager, GraphError>>`
+src\federation\database_connection.rs:280:29: error[E0277]: `RefCell<rusqlite::inner_connection::InnerConnection>` cannot be shared between threads safely: `RefCell<rusqlite::inner_connection::InnerConnection>` cannot be shared between threads safely
+src\federation\database_connection.rs:280:29: error[E0277]: `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>` cannot be shared between threads safely: `RefCell<hashlink::lru_cache::LruCache<Arc<str>, rusqlite::raw_statement::RawStatement>>` cannot be shared between threads safely
+src\cognitive\attention_manager.rs:899:5: error[E0592]: duplicate definitions with name `focus_attention_on_text`: duplicate definitions for `focus_attention_on_text`
+src\core\relationship_extractor.rs:1537:55: error[E0689]: can't call method `max` on ambiguous numeric type `{float}`
+src\core\relationship_extractor.rs:1742:20: error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+src\core\answer_generator.rs:146:47: error[E0599]: no function or associated item named `default` found for struct `cognitive::types::ReasoningResult` in the current scope: function or associated item not found in `ReasoningResult`
+src\storage\persistent_mmap.rs:401:54: error[E0599]: no method named `len` found for struct `parking_lot::lock_api::RwLock` in the current scope: method not found in `RwLock<RawRwLock, Vec<u8>>`
+src\storage\persistent_mmap.rs:402:44: error[E0608]: cannot index into a value of type `parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<u8>>`
+src\storage\persistent_mmap.rs:424:23: error[E0277]: `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator: `&parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+src\storage\persistent_mmap.rs:511:26: error[E0308]: mismatched types: expected `AtomicBool`, found `bool`
+src\storage\persistent_mmap.rs:527:23: error[E0277]: `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator: `&mut parking_lot::lock_api::RwLock<parking_lot::RawRwLock, Vec<MMapEntity>>` is not an iterator
+src\storage\persistent_mmap.rs:531:69: error[E0599]: no method named `len` found for struct `parking_lot::lock_api::RwLock` in the current scope: method not found in `RwLock<RawRwLock, Vec<u8>>`
+src\storage\persistent_mmap.rs:537:37: error[E0308]: mismatched types: expected `RwLock<RawRwLock, Vec<u8>>`, found `Vec<_>`
+src\storage\persistent_mmap.rs:539:12: error[E0308]: mismatched types: expected `bool`, found `AtomicBool`
+src\federation\database_connection.rs:281:46: error: future cannot be sent between threads safely: future created by async block is not `Send`
+src\neural\neural_server.rs:655:9: error[E0063]: missing fields `distilbert_ner`, `minilm_embedder`, `model_loader` and 2 other fields in initializer of `NeuralProcessingServer`: missing `distilbert_ner`, `minilm_embedder`, `model_loader` and 2 other fields
+src\cognitive\attention_manager.rs:1071:19: error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+src\cognitive\attention_manager.rs:1095:25: error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+src\models\candle_models.rs:652:88: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\models\candle_models.rs:655:100: error[E0277]: `?` couldn't convert the error to `ModelError`: the trait `std::convert::From<GraphError>` is not implemented for `ModelError`
+src\mcp\production_server.rs:41:28: error[E0061]: this function takes 4 arguments but 1 argument was supplied
+src\core\relationship_extractor.rs:471:60: warning: unused variable: `entities`: help: if this is intentional, prefix it with an underscore: `_entities`
+src\core\relationship_extractor.rs:519:9: warning: unused variable: `start_pos`: help: if this is intentional, prefix it with an underscore: `_start_pos`
+src\core\relationship_extractor.rs:520:9: warning: unused variable: `end_pos`: help: if this is intentional, prefix it with an underscore: `_end_pos`
+src\core\relationship_extractor.rs:820:35: warning: unused variable: `verb`: help: if this is intentional, prefix it with an underscore: `_verb`
+src\cognitive\types.rs:604:15: error[E0004]: non-exhaustive patterns: `&cognitive::types::CognitivePatternType::Analytical`, `&cognitive::types::CognitivePatternType::PatternRecognition`, `&cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `&cognitive::types::CognitivePatternType::Analytical`, `&cognitive::types::CognitivePatternType::PatternRecognition`, `&cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\cognitive\orchestrator.rs:431:42: error[E0004]: non-exhaustive patterns: `&cognitive::types::CognitivePatternType::Analytical`, `&cognitive::types::CognitivePatternType::PatternRecognition`, `&cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `&cognitive::types::CognitivePatternType::Analytical`, `&cognitive::types::CognitivePatternType::PatternRecognition`, `&cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\cognitive\orchestrator.rs:452:15: error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\cognitive\inhibitory\integration.rs:113:11: error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+src\models\rust_bert_models.rs:428:31: warning: unused variable: `text`: help: if this is intentional, prefix it with an underscore: `_text`
+src\models\rust_bert_models.rs:547:31: warning: unused variable: `text`: help: if this is intentional, prefix it with an underscore: `_text`
+src\test_support\data.rs:258:15: error[E0004]: non-exhaustive patterns: `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered: patterns `cognitive::types::CognitivePatternType::Analytical`, `cognitive::types::CognitivePatternType::PatternRecognition`, `cognitive::types::CognitivePatternType::Linguistic` and 3 more not covered
+warning: `llmkg` (lib) generated 67 warnings
+error: could not compile `llmkg` (lib) due to 151 previous errors; 67 warnings emitted

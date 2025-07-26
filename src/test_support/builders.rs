@@ -439,7 +439,10 @@ pub async fn build_test_neural_server() -> NeuralProcessingServer {
 pub async fn build_test_federation_coordinator() -> FederationCoordinator {
     use crate::federation::registry::DatabaseRegistry;
     let registry = Arc::new(DatabaseRegistry::new().expect("Failed to create registry"));
-    FederationCoordinator::new(registry).expect("Failed to create federation coordinator")
+    
+    // Use tokio runtime directly since this is test support
+    let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+    runtime.block_on(FederationCoordinator::new(registry)).expect("Failed to create federation coordinator")
 }
 
 /// Create a lightweight brain enhanced knowledge graph for benchmarking

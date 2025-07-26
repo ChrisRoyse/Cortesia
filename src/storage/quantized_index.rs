@@ -287,7 +287,7 @@ impl QuantizedIndex {
         ];
 
         let quantizer = self.quantizer.read();
-        quantizer.decode(compressed_codes)
+        quantizer.decode(&compressed_codes)
     }
 }
 

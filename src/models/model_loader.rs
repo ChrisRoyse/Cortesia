@@ -190,7 +190,8 @@ impl ModelLoader {
         T: NeuralModel + 'static,
     {
         // Check cache first
-        if let Some(model) = self.model_cache.get(&model_type) {
+        if let Some(model_ref) = self.model_cache.get(&model_type) {
+            let model = model_ref.value();
             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
                 return Ok(typed_model.clone());
             }
@@ -206,7 +207,8 @@ impl ModelLoader {
         let _guard = lock.write().await;
 
         // Double-check cache after acquiring lock
-        if let Some(model) = self.model_cache.get(&model_type) {
+        if let Some(model_ref) = self.model_cache.get(&model_type) {
+            let model = model_ref.value();
             if let Some(typed_model) = model.as_any().downcast_ref::<Arc<T>>() {
                 return Ok(typed_model.clone());
             }
@@ -438,6 +440,12 @@ pub trait NeuralModelExt {
 }
 
 impl<T: NeuralModel + 'static> NeuralModelExt for T {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+impl NeuralModelExt for Arc<dyn NeuralModel> {
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }

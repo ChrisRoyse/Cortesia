@@ -63,7 +63,7 @@ impl IntegratedStorage {
         let entity_key = EntityKey::from_raw(entity_id as u64);
         let entity_data = EntityData::new(
             interned_name.0 as u16,
-            interned_props.to_string(),
+            properties.to_string(),  // Use original string, not interned
             embedding.clone(),
         );
         

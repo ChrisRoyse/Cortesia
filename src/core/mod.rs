@@ -31,6 +31,7 @@ pub mod entity_extractor;
 pub mod relationship_extractor;
 pub mod question_parser;
 pub mod answer_generator;
+pub mod cognitive_question_answering;
 
 pub use phase1_integration::Phase1IntegrationLayer;
 pub use phase1_types::{Phase1Config, QueryResult, CognitiveQueryResult, Phase1Statistics};

@@ -47,7 +47,7 @@ impl EmbeddingStore {
         
         let codes = &self.quantized_bank[start..end];
         let quantizer = self.quantizer.read();
-        quantizer.decode(codes)
+        quantizer.decode(&codes)
     }
     
     pub fn asymmetric_distance(&self, query: &[f32], offset: u32) -> Result<f32> {

@@ -63,9 +63,9 @@ pub trait DatabaseConnection: Send + Sync {
 
 /// SQLite database connection
 pub struct SQLiteConnection {
-    connection: Option<rusqlite::Connection>,
+    connection: Option<Arc<Mutex<rusqlite::Connection>>>,
     database_id: DatabaseId,
-    active_transactions: HashMap<TransactionId, TransactionState>,
+    active_transactions: Arc<Mutex<HashMap<TransactionId, TransactionState>>>,
 }
 
 /// PostgreSQL database connection (stub for now)
@@ -269,9 +269,9 @@ impl SQLiteConnection {
         ).map_err(|e| GraphError::DatabaseConnectionError(format!("Failed to create transaction log table: {}", e)))?;
         
         Ok(Self {
-            connection: Some(conn),
+            connection: Some(Arc::new(Mutex::new(conn))),
             database_id,
-            active_transactions: HashMap::new(),
+            active_transactions: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 }
@@ -279,7 +279,8 @@ impl SQLiteConnection {
 #[async_trait]
 impl DatabaseConnection for SQLiteConnection {
     async fn is_alive(&self) -> Result<bool> {
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             conn.execute("SELECT 1", [])
                 .map(|_| true)
                 .map_err(|e| GraphError::DatabaseConnectionError(format!("Connection check failed: {}", e)))
@@ -289,13 +290,15 @@ impl DatabaseConnection for SQLiteConnection {
     }
     
     async fn begin_transaction(&mut self, transaction_id: &TransactionId) -> Result<()> {
-        if self.active_transactions.contains_key(transaction_id) {
+        let mut active_transactions = self.active_transactions.lock().await;
+        if active_transactions.contains_key(transaction_id) {
             return Err(GraphError::TransactionError(
                 format!("Transaction {} already exists", transaction_id.as_str())
             ));
         }
         
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             let savepoint_name = format!("sp_{}", transaction_id.as_str());
             conn.execute(&format!("SAVEPOINT {}", savepoint_name), [])
                 .map_err(|e| GraphError::TransactionError(format!("Failed to begin transaction: {}", e)))?;
@@ -306,7 +309,7 @@ impl DatabaseConnection for SQLiteConnection {
                 [transaction_id.as_str()],
             ).map_err(|e| GraphError::TransactionError(format!("Failed to log transaction begin: {}", e)))?;
             
-            self.active_transactions.insert(
+            active_transactions.insert(
                 transaction_id.clone(),
                 TransactionState {
                     transaction_id: transaction_id.clone(),
@@ -321,7 +324,8 @@ impl DatabaseConnection for SQLiteConnection {
     }
     
     async fn prepare(&mut self, transaction_id: &TransactionId) -> Result<bool> {
-        let state = self.active_transactions.get_mut(transaction_id)
+        let mut active_transactions = self.active_transactions.lock().await;
+        let state = active_transactions.get_mut(transaction_id)
             .ok_or_else(|| GraphError::TransactionError(
                 format!("Transaction {} not found", transaction_id.as_str())
             ))?;
@@ -335,7 +339,8 @@ impl DatabaseConnection for SQLiteConnection {
         state.status = TransactionPhase::Preparing;
         
         // SQLite doesn't have explicit prepare phase, but we can validate operations
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             // Check if all operations are valid
             for op in &state.operations {
                 // Try to prepare statement to validate SQL
@@ -357,7 +362,8 @@ impl DatabaseConnection for SQLiteConnection {
     }
     
     async fn commit(&mut self, transaction_id: &TransactionId) -> Result<()> {
-        let state = self.active_transactions.get_mut(transaction_id)
+        let mut active_transactions = self.active_transactions.lock().await;
+        let state = active_transactions.get_mut(transaction_id)
             .ok_or_else(|| GraphError::TransactionError(
                 format!("Transaction {} not found", transaction_id.as_str())
             ))?;
@@ -370,7 +376,8 @@ impl DatabaseConnection for SQLiteConnection {
         
         state.status = TransactionPhase::Committing;
         
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             if let Some(savepoint_name) = &state.savepoint_name {
                 conn.execute(&format!("RELEASE SAVEPOINT {}", savepoint_name), [])
                     .map_err(|e| GraphError::TransactionError(
@@ -386,19 +393,21 @@ impl DatabaseConnection for SQLiteConnection {
         }
         
         state.status = TransactionPhase::Committed;
-        self.active_transactions.remove(transaction_id);
+        active_transactions.remove(transaction_id);
         Ok(())
     }
     
     async fn rollback(&mut self, transaction_id: &TransactionId) -> Result<()> {
-        let state = self.active_transactions.get_mut(transaction_id)
+        let mut active_transactions = self.active_transactions.lock().await;
+        let state = active_transactions.get_mut(transaction_id)
             .ok_or_else(|| GraphError::TransactionError(
                 format!("Transaction {} not found", transaction_id.as_str())
             ))?;
         
         state.status = TransactionPhase::Aborting;
         
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             if let Some(savepoint_name) = &state.savepoint_name {
                 conn.execute(&format!("ROLLBACK TO SAVEPOINT {}", savepoint_name), [])
                     .map_err(|e| GraphError::TransactionError(
@@ -418,12 +427,13 @@ impl DatabaseConnection for SQLiteConnection {
         }
         
         state.status = TransactionPhase::Aborted;
-        self.active_transactions.remove(transaction_id);
+        active_transactions.remove(transaction_id);
         Ok(())
     }
     
     async fn execute(&mut self, transaction_id: &TransactionId, sql: &str, params: Vec<serde_json::Value>) -> Result<()> {
-        let state = self.active_transactions.get_mut(transaction_id)
+        let mut active_transactions = self.active_transactions.lock().await;
+        let state = active_transactions.get_mut(transaction_id)
             .ok_or_else(|| GraphError::TransactionError(
                 format!("Transaction {} not found", transaction_id.as_str())
             ))?;
@@ -457,7 +467,8 @@ impl DatabaseConnection for SQLiteConnection {
             operation_type,
         });
         
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             // Convert JSON values to rusqlite params
             let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
                 .map(|v| match v {
@@ -487,13 +498,16 @@ impl DatabaseConnection for SQLiteConnection {
     }
     
     async fn query(&mut self, transaction_id: &TransactionId, sql: &str, params: Vec<serde_json::Value>) -> Result<Vec<HashMap<String, serde_json::Value>>> {
-        if !self.active_transactions.contains_key(transaction_id) {
+        let active_transactions = self.active_transactions.lock().await;
+        if !active_transactions.contains_key(transaction_id) {
             return Err(GraphError::TransactionError(
                 format!("Transaction {} not found", transaction_id.as_str())
             ));
         }
+        drop(active_transactions);
         
-        if let Some(conn) = &self.connection {
+        if let Some(conn_arc) = &self.connection {
+            let conn = conn_arc.lock().await;
             // Convert JSON values to rusqlite params
             let rusqlite_params: Vec<rusqlite::types::Value> = params.into_iter()
                 .map(|v| match v {

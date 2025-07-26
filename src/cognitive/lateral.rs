@@ -704,6 +704,7 @@ impl CognitivePattern for LateralThinking {
                     info
                 },
             },
+            quality_scores: QualityMetrics::default(),
         })
     }
     

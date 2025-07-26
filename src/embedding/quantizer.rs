@@ -412,7 +412,7 @@ impl ProductQuantizer {
     /// Batch decode multiple quantized embeddings efficiently
     pub fn batch_decode(&self, codes: &[Vec<u8>]) -> Result<Vec<Vec<f32>>> {
         codes.iter()
-            .map(|code| self.decode(code))
+            .map(|code| self.decode(&code))
             .collect()
     }
     

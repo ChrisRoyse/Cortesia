@@ -265,6 +265,12 @@ impl TestDataProvider {
             CognitivePatternType::Adaptive => self.queries.relational.iter().copied().collect(),
             CognitivePatternType::ChainOfThought => self.queries.analytical.iter().copied().collect(),
             CognitivePatternType::TreeOfThoughts => self.queries.creative.iter().copied().collect(),
+            CognitivePatternType::Analytical => self.queries.analytical.iter().copied().collect(),
+            CognitivePatternType::PatternRecognition => self.queries.relational.iter().copied().collect(),
+            CognitivePatternType::Linguistic => self.queries.analytical.iter().copied().collect(),
+            CognitivePatternType::Creative => self.queries.creative.iter().copied().collect(),
+            CognitivePatternType::Ensemble => self.queries.analytical.iter().copied().collect(),
+            CognitivePatternType::Unknown => self.queries.analytical.iter().copied().collect(),
         }
     }
 

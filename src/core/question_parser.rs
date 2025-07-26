@@ -819,7 +819,7 @@ impl CognitiveQuestionParser {
         
         // Use attention manager for computing attention weights
         let attention_start = Instant::now();
-        let attention_weights = self.attention_manager.compute_attention_distribution(question).await
+        let attention_weights = self.attention_manager.compute_attention(question).await
             .map_err(|e| crate::error::GraphError::InvalidData(format!("Attention computation failed: {}", e)))?;
         let attention_time = attention_start.elapsed();
 
@@ -937,7 +937,7 @@ impl CognitiveQuestionParser {
         let entities = self.entity_extractor.extract_entities(question).await?;
 
         // Use legacy parser for basic classification
-        let legacy_intent = QuestionParser::parse(question);
+        let legacy_intent = QuestionParser::parse_static(question);
 
         // Enhance with cognitive question type analysis
         let cognitive_question_type = self.enhance_question_type_classification(

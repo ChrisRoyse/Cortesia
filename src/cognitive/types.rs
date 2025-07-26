@@ -115,6 +115,7 @@ pub struct PatternResult {
     pub confidence: f32,
     pub reasoning_trace: Vec<ActivationStep>,
     pub metadata: ResultMetadata,
+    pub quality_scores: QualityMetrics,
 }
 
 /// Metadata about pattern execution results
@@ -509,8 +510,22 @@ pub struct ReasoningResult {
     pub query: String,
     pub final_answer: String,
     pub strategy_used: ReasoningStrategy,
+    pub patterns_executed: Vec<CognitivePatternType>,
     pub execution_metadata: ExecutionMetadata,
     pub quality_metrics: QualityMetrics,
+}
+
+impl Default for ReasoningResult {
+    fn default() -> Self {
+        Self {
+            query: String::new(),
+            final_answer: String::new(),
+            strategy_used: ReasoningStrategy::Automatic,
+            patterns_executed: Vec::new(),
+            execution_metadata: ExecutionMetadata::default(),
+            quality_metrics: QualityMetrics::default(),
+        }
+    }
 }
 
 /// Metadata about reasoning execution
@@ -524,6 +539,19 @@ pub struct ExecutionMetadata {
     pub cache_misses: usize,
 }
 
+impl Default for ExecutionMetadata {
+    fn default() -> Self {
+        Self {
+            total_time_ms: 0,
+            patterns_executed: Vec::new(),
+            nodes_activated: 0,
+            energy_consumed: 0.0,
+            cache_hits: 0,
+            cache_misses: 0,
+        }
+    }
+}
+
 /// Quality metrics for reasoning results
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityMetrics {
@@ -532,6 +560,20 @@ pub struct QualityMetrics {
     pub completeness_score: f32,
     pub novelty_score: f32,
     pub efficiency_score: f32,
+    pub coherence_score: f32,
+}
+
+impl Default for QualityMetrics {
+    fn default() -> Self {
+        Self {
+            overall_confidence: 0.0,
+            consistency_score: 1.0,
+            completeness_score: 0.0,
+            coherence_score: 0.8,
+            novelty_score: 0.0,
+            efficiency_score: 0.5,
+        }
+    }
 }
 
 /// Error types specific to cognitive processing
@@ -611,6 +653,12 @@ impl std::fmt::Display for CognitivePatternType {
             CognitivePatternType::Adaptive => write!(f, "Adaptive"),
             CognitivePatternType::ChainOfThought => write!(f, "ChainOfThought"),
             CognitivePatternType::TreeOfThoughts => write!(f, "TreeOfThoughts"),
+            CognitivePatternType::Analytical => write!(f, "Analytical"),
+            CognitivePatternType::PatternRecognition => write!(f, "PatternRecognition"),
+            CognitivePatternType::Linguistic => write!(f, "Linguistic"),
+            CognitivePatternType::Creative => write!(f, "Creative"),
+            CognitivePatternType::Ensemble => write!(f, "Ensemble"),
+            CognitivePatternType::Unknown => write!(f, "Unknown"),
         }
     }
 }

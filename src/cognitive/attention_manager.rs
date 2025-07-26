@@ -835,17 +835,6 @@ impl AttentionManager {
         })
     }
 
-    /// Focus attention on text content (test compatibility method)
-    pub async fn focus_attention_on_text(
-        &self,
-        _text: &str,
-        _attention_type: AttentionType,
-    ) -> Result<()> {
-        // Placeholder implementation for test compatibility
-        // In a real implementation, this would parse the text for entities
-        // and focus attention on them
-        Ok(())
-    }
 
     /// Get current attention state (test compatibility method)
     pub async fn get_current_attention_state(&self) -> Result<AttentionState> {
@@ -1060,7 +1049,7 @@ impl AttentionManager {
         ];
         
         let segment_lower = segment.to_lowercase();
-        let mut relevance = 0.0;
+        let mut relevance: f32 = 0.0;
         
         for keyword in IMPORTANT_KEYWORDS {
             if segment_lower.contains(keyword) {
@@ -1068,7 +1057,7 @@ impl AttentionManager {
             }
         }
         
-        relevance.min(1.0)
+        relevance.min(1.0f32)
     }
 
     fn detect_relationship_indicators(&self, segment: &str) -> f32 {
@@ -1084,7 +1073,7 @@ impl AttentionManager {
         ];
         
         let segment_lower = segment.to_lowercase();
-        let mut indicator_score = 0.0;
+        let mut indicator_score: f32 = 0.0;
         
         for pattern in RELATIONSHIP_PATTERNS {
             if segment_lower.contains(pattern) {
@@ -1092,7 +1081,7 @@ impl AttentionManager {
             }
         }
         
-        indicator_score.min(1.0)
+        indicator_score.min(1.0f32)
     }
 
     fn calculate_context_relevance(&self, segment: &str, entity_name: &str) -> f32 {
@@ -1121,7 +1110,7 @@ impl AttentionManager {
             relevance += pronoun_count * 0.1;
         }
         
-        relevance.min(1.0)
+        relevance.min(1.0f32)
     }
 
     fn apply_softmax(&self, scores: &[f32]) -> Vec<f32> {

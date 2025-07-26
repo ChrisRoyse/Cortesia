@@ -8,11 +8,12 @@ use tokio::time::Instant;
 use llmkg::models::model_loader::ModelLoader;
 use llmkg::neural::neural_server::NeuralProcessingServer;
 use llmkg::core::entity_extractor::CognitiveEntityExtractor;
-use llmkg::cognitive::orchestrator::CognitiveOrchestrator;
+use llmkg::cognitive::orchestrator::{CognitiveOrchestrator, CognitiveOrchestratorConfig};
 use llmkg::cognitive::attention_manager::AttentionManager;
 use llmkg::cognitive::working_memory::WorkingMemorySystem;
 use llmkg::monitoring::brain_metrics_collector::BrainMetricsCollector;
 use llmkg::monitoring::performance::PerformanceMonitor;
+use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -226,12 +227,16 @@ async fn test_embeddings() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn test_cognitive_extraction() -> Result<(), Box<dyn std::error::Error>> {
+    // Create brain graph for cognitive components
+    let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(384)?); // 384 for MiniLM embedding size
+    
     // Create cognitive components
-    let cognitive_orchestrator = Arc::new(CognitiveOrchestrator::new().await?);
-    let attention_manager = Arc::new(AttentionManager::new().await?);
-    let working_memory = Arc::new(WorkingMemorySystem::new(1000).await?);
-    let metrics_collector = Arc::new(BrainMetricsCollector::new().await?);
-    let performance_monitor = Arc::new(PerformanceMonitor::new()?);
+    let cognitive_config = CognitiveOrchestratorConfig::default();
+    let cognitive_orchestrator = Arc::new(CognitiveOrchestrator::new(brain_graph.clone(), cognitive_config).await?);
+    let attention_manager = Arc::new(AttentionManager::new(brain_graph.clone()).await?);
+    let working_memory = Arc::new(WorkingMemorySystem::new(brain_graph.clone(), 1000).await?);
+    let metrics_collector = Arc::new(BrainMetricsCollector::new(brain_graph.clone()).await?);
+    let performance_monitor = Arc::new(PerformanceMonitor::new_with_defaults().await?);
     
     // Create neural server
     let neural_server = Arc::new(NeuralProcessingServer::new("localhost:9000".to_string()).await?);

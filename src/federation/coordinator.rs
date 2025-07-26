@@ -201,18 +201,23 @@ impl FederationCoordinator {
         })
     }
 
-    /// Begin a new cross-database transaction
+    /// Begin a new cross-database transaction with enhanced validation and 2PC setup
     pub async fn begin_transaction(
         &self,
         databases: Vec<DatabaseId>,
         metadata: TransactionMetadata,
     ) -> Result<TransactionId> {
+        // Validate input
+        if databases.is_empty() {
+            return Err(GraphError::InvalidInput("No databases specified for transaction".to_string()));
+        }
+        
         let transaction_id = TransactionId::new();
         let timeout_at = SystemTime::now() + self.transaction_timeout;
         
-        // Verify all databases are registered and create connection pools if needed
+        // Verify all databases are registered and accessible
+        let registered_dbs = self.registry.list_databases().await;
         for db_id in &databases {
-            let registered_dbs = self.registry.list_databases().await;
             if !registered_dbs.iter().any(|db| db.id == *db_id) {
                 return Err(GraphError::InvalidInput(format!("Database not registered: {}", db_id.as_str())));
             }
@@ -220,36 +225,85 @@ impl FederationCoordinator {
             // Create connection pool if it doesn't exist
             let mut pools = self.connection_pools.write().await;
             if !pools.contains_key(db_id) {
+                // Determine database type based on ID or configuration
+                let database_type = match db_id.as_str() {
+                    id if id.contains("memory") => DatabaseType::InMemory,
+                    id if id.contains("postgres") => DatabaseType::PostgreSQL,
+                    _ => DatabaseType::SQLite,
+                };
+                
+                let connection_string = match database_type {
+                    DatabaseType::SQLite => format!("federation_{}.db", db_id.as_str()),
+                    DatabaseType::PostgreSQL => format!("postgresql://user:pass@localhost/{}", db_id.as_str()),
+                    DatabaseType::InMemory => ":memory:".to_string(),
+                };
+                
                 let db_config = DatabaseConfig {
                     id: db_id.clone(),
-                    connection_string: format!("federation_{}.db", db_id.as_str()),
-                    database_type: DatabaseType::SQLite, // Use real SQLite databases
+                    connection_string,
+                    database_type,
                     max_connections: 10,
                     connection_timeout: Duration::from_secs(5),
                     query_timeout: Duration::from_secs(30),
                 };
                 
-                // Register with 2PC coordinator
+                // Register with 2PC coordinator first
                 self.two_phase_coordinator.register_database(db_config.clone()).await?;
                 
+                // Create and test connection pool
                 let pool = Arc::new(DatabaseConnectionPool::new(db_config).await?);
+                
+                // Test connection to ensure database is accessible
+                let test_conn = pool.get_connection().await
+                    .map_err(|e| GraphError::DatabaseConnectionError(
+                        format!("Failed to connect to database {}: {}", db_id.as_str(), e)
+                    ))?;
+                {
+                    let conn_guard = test_conn.lock().await;
+                    conn_guard.is_alive().await
+                        .map_err(|e| GraphError::DatabaseConnectionError(
+                            format!("Database {} is not accessible: {}", db_id.as_str(), e)
+                        ))?;
+                }
+                pool.return_connection(test_conn).await;
+                
                 pools.insert(db_id.clone(), pool);
             }
         }
         
+        // Create transaction with proper 2PC initialization
         let transaction = CrossDatabaseTransaction {
             transaction_id: transaction_id.clone(),
             involved_databases: databases.clone(),
             operations: Vec::new(),
-            status: TransactionStatus::Preparing,
+            status: TransactionStatus::Pending, // Start as pending, not preparing
             created_at: SystemTime::now(),
             timeout_at,
-            metadata,
+            metadata: metadata.clone(),
         };
         
-        // Log transaction begin
-        self.transaction_log.log_begin(transaction_id.clone(), databases).await?;
+        // Log transaction begin with enhanced logging
+        self.transaction_log.log_begin(transaction_id.clone(), databases.clone()).await?;
         
+        // Initialize transaction state on all databases
+        for db_id in &databases {
+            let pools = self.connection_pools.read().await;
+            if let Some(pool) = pools.get(db_id) {
+                let conn = pool.get_connection().await?;
+                let mut conn_guard = conn.lock().await;
+                
+                // Begin transaction on each database
+                conn_guard.begin_transaction(&transaction_id).await
+                    .map_err(|e| GraphError::TransactionError(
+                        format!("Failed to begin transaction on {}: {}", db_id.as_str(), e)
+                    ))?;
+                
+                drop(conn_guard);
+                pool.return_connection(conn).await;
+            }
+        }
+        
+        // Store active transaction
         let mut active_transactions = self.active_transactions.write().await;
         active_transactions.insert(transaction_id.clone(), transaction);
         
@@ -276,40 +330,95 @@ impl FederationCoordinator {
         }
     }
 
-    /// Prepare a transaction (2-phase commit phase 1)
+    /// Prepare a transaction (2-phase commit phase 1) with enhanced error handling
     pub async fn prepare_transaction(&self, transaction_id: &TransactionId) -> Result<bool> {
-        let active_transactions = self.active_transactions.read().await;
+        // Get transaction and validate state
+        let mut active_transactions = self.active_transactions.write().await;
+        let transaction = active_transactions.get_mut(transaction_id)
+            .ok_or_else(|| GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))?;
         
-        if let Some(transaction) = active_transactions.get(transaction_id) {
-            // Use real 2PC coordinator
-            let operations = transaction.operations.clone();
-            let databases = transaction.involved_databases.clone();
-            let metadata = transaction.metadata.clone();
-            
-            drop(active_transactions); // Release lock before 2PC
-            
-            let result = self.two_phase_coordinator.execute_transaction(
-                transaction_id.clone(),
-                databases,
-                operations,
-                metadata,
-            ).await?;
-            
-            // Update transaction status based on result
-            let mut active_transactions = self.active_transactions.write().await;
-            if let Some(transaction) = active_transactions.get_mut(transaction_id) {
-                if result.success && result.phase_completed == crate::federation::two_phase_commit::CommitPhase::Commit {
+        // Check current status
+        match transaction.status {
+            TransactionStatus::Pending => {
+                transaction.status = TransactionStatus::Preparing;
+            }
+            TransactionStatus::Preparing => {
+                return Err(GraphError::TransactionError("Transaction is already being prepared".to_string()));
+            }
+            TransactionStatus::Prepared => {
+                return Ok(true); // Already prepared
+            }
+            _ => {
+                return Err(GraphError::TransactionError(
+                    format!("Transaction is in invalid state for prepare: {:?}", transaction.status)
+                ));
+            }
+        }
+        
+        // Check for timeout
+        if SystemTime::now() > transaction.timeout_at {
+            transaction.status = TransactionStatus::Failed;
+            return Err(GraphError::TransactionError("Transaction has timed out".to_string()));
+        }
+        
+        // Get transaction data for 2PC
+        let operations = transaction.operations.clone();
+        let databases = transaction.involved_databases.clone();
+        let metadata = transaction.metadata.clone();
+        
+        drop(active_transactions); // Release lock before 2PC
+        
+        // Execute 2PC prepare phase using the coordinator
+        let result = match self.two_phase_coordinator.execute_transaction(
+            transaction_id.clone(),
+            databases.clone(),
+            operations,
+            metadata,
+        ).await {
+            Ok(result) => result,
+            Err(e) => {
+                // Update transaction status on error
+                let mut active_transactions = self.active_transactions.write().await;
+                if let Some(transaction) = active_transactions.get_mut(transaction_id) {
+                    transaction.status = TransactionStatus::Failed;
+                }
+                return Err(GraphError::TransactionError(
+                    format!("2PC execution failed: {}", e)
+                ));
+            }
+        };
+        
+        // Update transaction status based on 2PC result
+        let mut active_transactions = self.active_transactions.write().await;
+        if let Some(transaction) = active_transactions.get_mut(transaction_id) {
+            match result.phase_completed {
+                crate::federation::two_phase_commit::CommitPhase::Prepare => {
+                    if result.success {
+                        transaction.status = TransactionStatus::Prepared;
+                        Ok(true)
+                    } else {
+                        transaction.status = TransactionStatus::Aborted;
+                        Ok(false)
+                    }
+                }
+                crate::federation::two_phase_commit::CommitPhase::Commit => {
                     transaction.status = TransactionStatus::Committed;
                     Ok(true)
-                } else {
+                }
+                crate::federation::two_phase_commit::CommitPhase::Abort => {
                     transaction.status = TransactionStatus::Aborted;
                     Ok(false)
                 }
-            } else {
-                Ok(result.success)
+                _ => {
+                    transaction.status = TransactionStatus::Failed;
+                    Err(GraphError::TransactionError(
+                        format!("Unexpected 2PC phase: {:?}", result.phase_completed)
+                    ))
+                }
             }
         } else {
-            Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
+            // Transaction was removed during 2PC - return result anyway
+            Ok(result.success)
         }
     }
     
@@ -386,61 +495,107 @@ impl FederationCoordinator {
         }
     }
 
-    /// Commit a transaction (2-phase commit phase 2)
+    /// Commit a transaction (2-phase commit phase 2) with proper completion handling
     pub async fn commit_transaction(&self, transaction_id: &TransactionId) -> Result<TransactionResult> {
         let start_time = std::time::Instant::now();
         
-        // Note: The actual 2PC is handled in prepare_transaction
-        // This method is for explicit commit after prepare
+        let mut active_transactions = self.active_transactions.write().await;
+        let transaction = active_transactions.get_mut(transaction_id)
+            .ok_or_else(|| GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))?;
         
-        let active_transactions = self.active_transactions.read().await;
-        if let Some(transaction) = active_transactions.get(transaction_id) {
-            let status = transaction.status.clone();
-            let operations_count = transaction.operations.len();
-            drop(active_transactions);
-            
-            match status {
-                TransactionStatus::Committed => {
-                    // Already committed
-                    Ok(TransactionResult {
-                        transaction_id: transaction_id.clone(),
-                        success: true,
-                        committed_operations: operations_count,
-                        failed_operations: 0,
-                        execution_time_ms: start_time.elapsed().as_millis() as u64,
-                        error_details: None,
-                    })
-                }
-                TransactionStatus::Prepared => {
-                    // Need to complete commit phase
-                    let mut active_transactions = self.active_transactions.write().await;
-                    if let Some(transaction) = active_transactions.get_mut(transaction_id) {
-                        // Log final commit
-                        self.transaction_log.log_decision(transaction_id, TransactionDecision::Commit).await?;
-                        
-                        transaction.status = TransactionStatus::Committed;
-                        let result = TransactionResult {
-                            transaction_id: transaction_id.clone(),
-                            success: true,
-                            committed_operations: transaction.operations.len(),
-                            failed_operations: 0,
-                            execution_time_ms: start_time.elapsed().as_millis() as u64,
-                            error_details: None,
-                        };
-                        
-                        // Remove from active transactions
-                        active_transactions.remove(transaction_id);
-                        Ok(result)
-                    } else {
-                        Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
+        let status = transaction.status.clone();
+        let operations_count = transaction.operations.len();
+        let databases = transaction.involved_databases.clone();
+        
+        match status {
+            TransactionStatus::Committed => {
+                // Already committed - return success
+                let result = TransactionResult {
+                    transaction_id: transaction_id.clone(),
+                    success: true,
+                    committed_operations: operations_count,
+                    failed_operations: 0,
+                    execution_time_ms: start_time.elapsed().as_millis() as u64,
+                    error_details: None,
+                };
+                drop(active_transactions);
+                Ok(result)
+            }
+            TransactionStatus::Prepared => {
+                // Execute commit phase on all databases
+                transaction.status = TransactionStatus::Committing;
+                drop(active_transactions); // Release lock for database operations
+                
+                // Send commit requests to all databases
+                let mut commit_errors = Vec::new();
+                let pools = self.connection_pools.read().await;
+                
+                for db_id in &databases {
+                    if let Some(pool) = pools.get(db_id) {
+                        match pool.get_connection().await {
+                            Ok(conn) => {
+                                let mut conn_guard = conn.lock().await;
+                                if let Err(e) = conn_guard.commit(transaction_id).await {
+                                    commit_errors.push(format!("Database {}: {}", db_id.as_str(), e));
+                                }
+                                drop(conn_guard);
+                                pool.return_connection(conn).await;
+                            }
+                            Err(e) => {
+                                commit_errors.push(format!("Connection to {}: {}", db_id.as_str(), e));
+                            }
+                        }
                     }
                 }
-                _ => {
-                    Err(GraphError::InvalidInput(format!("Transaction not in committable state: {:?}", status)))
+                
+                drop(pools);
+                
+                // Log final commit decision
+                self.transaction_log.log_decision(transaction_id, TransactionDecision::Commit).await?;
+                
+                // Update transaction status
+                let mut active_transactions = self.active_transactions.write().await;
+                if let Some(transaction) = active_transactions.get_mut(transaction_id) {
+                    transaction.status = TransactionStatus::Committed;
+                    
+                    let result = TransactionResult {
+                        transaction_id: transaction_id.clone(),
+                        success: commit_errors.is_empty(),
+                        committed_operations: operations_count,
+                        failed_operations: if commit_errors.is_empty() { 0 } else { databases.len() },
+                        execution_time_ms: start_time.elapsed().as_millis() as u64,
+                        error_details: if commit_errors.is_empty() {
+                            None
+                        } else {
+                            Some(format!("Commit errors: {}", commit_errors.join("; ")))
+                        },
+                    };
+                    
+                    // Remove from active transactions
+                    active_transactions.remove(transaction_id);
+                    Ok(result)
+                } else {
+                    Err(GraphError::TransactionError("Transaction removed during commit".to_string()))
                 }
             }
-        } else {
-            Err(GraphError::InvalidInput(format!("Transaction not found: {}", transaction_id.as_str())))
+            TransactionStatus::Aborted => {
+                let result = TransactionResult {
+                    transaction_id: transaction_id.clone(),
+                    success: false,
+                    committed_operations: 0,
+                    failed_operations: operations_count,
+                    execution_time_ms: start_time.elapsed().as_millis() as u64,
+                    error_details: Some("Transaction was aborted".to_string()),
+                };
+                drop(active_transactions);
+                Ok(result)
+            }
+            _ => {
+                drop(active_transactions);
+                Err(GraphError::TransactionError(
+                    format!("Transaction not in committable state: {:?}", status)
+                ))
+            }
         }
     }
 
@@ -486,22 +641,177 @@ impl FederationCoordinator {
         active_transactions.values().cloned().collect()
     }
 
-    /// Clean up expired transactions
+    /// Clean up expired transactions with proper rollback
     pub async fn cleanup_expired_transactions(&self) -> Result<usize> {
         let mut active_transactions = self.active_transactions.write().await;
         let now = SystemTime::now();
-        let mut expired_count = 0;
+        let mut expired_transactions = Vec::new();
         
-        active_transactions.retain(|_, transaction| {
+        // Collect expired transactions
+        active_transactions.retain(|tx_id, transaction| {
             if transaction.timeout_at < now {
-                expired_count += 1;
+                expired_transactions.push((tx_id.clone(), transaction.clone()));
                 false
             } else {
                 true
             }
         });
         
-        Ok(expired_count)
+        drop(active_transactions); // Release lock before cleanup
+        
+        // Clean up expired transactions
+        let mut cleaned_count = 0;
+        for (tx_id, transaction) in expired_transactions {
+            // Attempt to rollback on all involved databases
+            for db_id in &transaction.involved_databases {
+                let pools = self.connection_pools.read().await;
+                if let Some(pool) = pools.get(db_id) {
+                    if let Ok(conn) = pool.get_connection().await {
+                        let mut conn_guard = conn.lock().await;
+                        let _ = conn_guard.rollback(&tx_id).await; // Best effort rollback
+                        drop(conn_guard);
+                        pool.return_connection(conn).await;
+                    }
+                }
+            }
+            
+            // Log transaction expiry
+            let _ = self.transaction_log.log_decision(&tx_id, TransactionDecision::Abort).await;
+            cleaned_count += 1;
+        }
+        
+        Ok(cleaned_count)
+    }
+    
+    /// Recover from coordinator failure by processing pending transactions
+    pub async fn recover_from_coordinator_failure(&self) -> Result<RecoveryReport> {
+        let start_time = std::time::Instant::now();
+        let mut recovery_report = RecoveryReport {
+            recovered_transactions: 0,
+            committed_transactions: 0,
+            aborted_transactions: 0,
+            failed_recoveries: 0,
+            recovery_time_ms: 0,
+            errors: Vec::new(),
+        };
+        
+        // Get pending transactions from log
+        let pending_transactions = self.transaction_log.recover_pending_transactions().await?;
+        
+        for tx_id in pending_transactions {
+            match self.recover_single_transaction(&tx_id, &mut recovery_report).await {
+                Ok(_) => recovery_report.recovered_transactions += 1,
+                Err(e) => {
+                    recovery_report.failed_recoveries += 1;
+                    recovery_report.errors.push(format!("Failed to recover {}: {}", tx_id.as_str(), e));
+                }
+            }
+        }
+        
+        // Use 2PC coordinator recovery as well
+        if let Ok(recovered_2pc) = self.two_phase_coordinator.recover().await {
+            recovery_report.recovered_transactions += recovered_2pc;
+        }
+        
+        recovery_report.recovery_time_ms = start_time.elapsed().as_millis() as u64;
+        Ok(recovery_report)
+    }
+    
+    /// Recover a single transaction
+    async fn recover_single_transaction(
+        &self,
+        tx_id: &TransactionId,
+        recovery_report: &mut RecoveryReport,
+    ) -> Result<()> {
+        // Check if there's a decision logged
+        match self.transaction_log.get_transaction_decision(tx_id).await {
+            Some(TransactionDecision::Commit) => {
+                // Ensure commit is completed on all databases
+                self.complete_commit_recovery(tx_id).await?;
+                recovery_report.committed_transactions += 1;
+            }
+            Some(TransactionDecision::Abort) => {
+                // Ensure abort is completed on all databases
+                self.complete_abort_recovery(tx_id).await?;
+                recovery_report.aborted_transactions += 1;
+            }
+            Some(TransactionDecision::Pending) | None => {
+                // No decision was made, default to abort for safety
+                self.complete_abort_recovery(tx_id).await?;
+                self.transaction_log.log_decision(tx_id, TransactionDecision::Abort).await?;
+                recovery_report.aborted_transactions += 1;
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Complete commit recovery for a transaction
+    async fn complete_commit_recovery(&self, tx_id: &TransactionId) -> Result<()> {
+        // Get all registered databases that might be involved
+        let registered_dbs = self.registry.list_databases().await;
+        let pools = self.connection_pools.read().await;
+        
+        for db_desc in &registered_dbs {
+            if let Some(pool) = pools.get(&db_desc.id) {
+                // Try to commit on this database (idempotent operation)
+                if let Ok(conn) = pool.get_connection().await {
+                    let mut conn_guard = conn.lock().await;
+                    // Best effort commit - may fail if already committed or never started
+                    let _ = conn_guard.commit(tx_id).await;
+                    drop(conn_guard);
+                    pool.return_connection(conn).await;
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Complete abort recovery for a transaction
+    async fn complete_abort_recovery(&self, tx_id: &TransactionId) -> Result<()> {
+        // Get all registered databases that might be involved
+        let registered_dbs = self.registry.list_databases().await;
+        let pools = self.connection_pools.read().await;
+        
+        for db_desc in &registered_dbs {
+            if let Some(pool) = pools.get(&db_desc.id) {
+                // Try to rollback on this database (idempotent operation)
+                if let Ok(conn) = pool.get_connection().await {
+                    let mut conn_guard = conn.lock().await;
+                    // Best effort rollback - may fail if already rolled back or never started
+                    let _ = conn_guard.rollback(tx_id).await;
+                    drop(conn_guard);
+                    pool.return_connection(conn).await;
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Monitor and auto-recover failed transactions (requires Arc wrapper)
+    pub fn start_recovery_monitor(
+        coordinator: Arc<FederationCoordinator>,
+        check_interval: Duration,
+    ) -> tokio::task::JoinHandle<()> {
+        tokio::spawn(async move {
+            let mut interval_timer = tokio::time::interval(check_interval);
+            
+            loop {
+                interval_timer.tick().await;
+                
+                // Clean up expired transactions
+                if let Err(e) = coordinator.cleanup_expired_transactions().await {
+                    eprintln!("Failed to cleanup expired transactions: {}", e);
+                }
+                
+                // Perform recovery check
+                if let Err(e) = coordinator.recover_from_coordinator_failure().await {
+                    eprintln!("Failed to perform recovery check: {}", e);
+                }
+            }
+        })
     }
 
     /// Ensure consistency across databases
@@ -548,6 +858,115 @@ impl FederationCoordinator {
             relationships_synchronized: 0,
             conflicts_resolved: 0,
             execution_time_ms: 0,
+        })
+    }
+
+    /// Execute cross-database query with distributed coordination
+    pub async fn execute_cross_database_query(
+        &self,
+        databases: Vec<DatabaseId>,
+        query: &str,
+        params: Vec<serde_json::Value>,
+        query_metadata: QueryMetadata,
+    ) -> Result<CrossDatabaseQueryResult> {
+        let start_time = std::time::Instant::now();
+        let query_id = format!("query_{}", uuid::Uuid::new_v4());
+        
+        // Validate databases exist
+        let registered_dbs = self.registry.list_databases().await;
+        for db_id in &databases {
+            if !registered_dbs.iter().any(|db| db.id == *db_id) {
+                return Err(GraphError::InvalidInput(format!("Database not registered: {}", db_id.as_str())));
+            }
+        }
+        
+        // Execute query on all databases in parallel
+        let pools = self.connection_pools.read().await;
+        let mut query_futures = Vec::new();
+        
+        for db_id in &databases {
+            if let Some(pool) = pools.get(db_id) {
+                let db_id_clone = db_id.clone();
+                let query_clone = query.to_string();
+                let params_clone = params.clone();
+                let pool_clone = pool.clone();
+                let tx_id = TransactionId::new(); // Temporary transaction for query
+                
+                let future = async move {
+                    let conn = pool_clone.get_connection().await?;
+                    let mut conn_guard = conn.lock().await;
+                    
+                    // Begin temporary transaction for query isolation
+                    conn_guard.begin_transaction(&tx_id).await?;
+                    
+                    let result = conn_guard.query(&tx_id, &query_clone, params_clone).await;
+                    
+                    // Always rollback the temporary transaction
+                    let _ = conn_guard.rollback(&tx_id).await;
+                    
+                    drop(conn_guard);
+                    pool_clone.return_connection(conn).await;
+                    
+                    result.map(|rows| (db_id_clone, rows))
+                };
+                
+                query_futures.push(tokio::time::timeout(Duration::from_secs(30), future));
+            }
+        }
+        
+        drop(pools);
+        
+        // Wait for all query results
+        let results = futures::future::join_all(query_futures).await;
+        let mut database_results = HashMap::new();
+        let mut errors = Vec::new();
+        
+        for (i, result) in results.into_iter().enumerate() {
+            let db_id = &databases[i];
+            
+            match result {
+                Ok(Ok((_, rows))) => {
+                    database_results.insert(db_id.clone(), DatabaseQueryResult {
+                        database_id: db_id.clone(),
+                        rows,
+                        execution_time_ms: 0, // Individual timing would need per-database measurement
+                        success: true,
+                        error: None,
+                    });
+                }
+                Ok(Err(e)) => {
+                    errors.push(format!("Database {}: {}", db_id.as_str(), e));
+                    database_results.insert(db_id.clone(), DatabaseQueryResult {
+                        database_id: db_id.clone(),
+                        rows: Vec::new(),
+                        execution_time_ms: 0,
+                        success: false,
+                        error: Some(e.to_string()),
+                    });
+                }
+                Err(_) => {
+                    let error_msg = "Query timeout".to_string();
+                    errors.push(format!("Database {}: {}", db_id.as_str(), error_msg));
+                    database_results.insert(db_id.clone(), DatabaseQueryResult {
+                        database_id: db_id.clone(),
+                        rows: Vec::new(),
+                        execution_time_ms: 0,
+                        success: false,
+                        error: Some(error_msg),
+                    });
+                }
+            }
+        }
+        
+        Ok(CrossDatabaseQueryResult {
+            query_id,
+            query: query.to_string(),
+            databases_queried: databases,
+            results: database_results,
+            total_execution_time_ms: start_time.elapsed().as_millis() as u64,
+            success: errors.is_empty(),
+            errors,
+            metadata: query_metadata,
         })
     }
 
@@ -665,6 +1084,69 @@ pub struct SynchronizationResult {
     pub relationships_synchronized: usize,
     pub conflicts_resolved: usize,
     pub execution_time_ms: u64,
+}
+
+/// Metadata for cross-database queries
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryMetadata {
+    pub initiator: Option<String>,
+    pub query_type: QueryType,
+    pub priority: QueryPriority,
+    pub timeout_ms: u64,
+    pub require_consistency: bool,
+}
+
+/// Types of cross-database queries
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum QueryType {
+    Read,
+    Aggregate,
+    Join,
+    Search,
+    Analytics,
+}
+
+/// Priority levels for queries
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum QueryPriority {
+    Low,
+    Normal,
+    High,
+    Critical,
+}
+
+/// Result of a cross-database query
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrossDatabaseQueryResult {
+    pub query_id: String,
+    pub query: String,
+    pub databases_queried: Vec<DatabaseId>,
+    pub results: HashMap<DatabaseId, DatabaseQueryResult>,
+    pub total_execution_time_ms: u64,
+    pub success: bool,
+    pub errors: Vec<String>,
+    pub metadata: QueryMetadata,
+}
+
+/// Result from a single database in a cross-database query
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseQueryResult {
+    pub database_id: DatabaseId,
+    pub rows: Vec<HashMap<String, serde_json::Value>>,
+    pub execution_time_ms: u64,
+    pub success: bool,
+    pub error: Option<String>,
+}
+
+/// Report from coordinator failure recovery
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecoveryReport {
+    pub recovered_transactions: usize,
+    pub committed_transactions: usize,
+    pub aborted_transactions: usize,
+    pub failed_recoveries: usize,
+    pub recovery_time_ms: u64,
+    pub errors: Vec<String>,
 }
 
 #[cfg(test)]

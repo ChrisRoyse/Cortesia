@@ -16,6 +16,9 @@ use crate::production::{
     ProductionSystem, ProductionConfig, create_production_system_with_config
 };
 use crate::error::Result;
+use crate::cognitive::orchestrator::CognitiveOrchestratorConfig;
+use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
+use crate::federation::registry::DatabaseRegistry;
 
 /// Production-ready MCP server with comprehensive production features
 pub struct ProductionMCPServer {
@@ -37,8 +40,38 @@ impl ProductionMCPServer {
     ) -> Result<Self> {
         let config = config.unwrap_or_default();
         
-        // Create the inner MCP server
-        let inner_server = LLMFriendlyMCPServer::new(knowledge_engine.clone())?;
+        // Create the inner MCP server with required dependencies
+        // TODO: These should be passed in or created properly
+        use crate::cognitive::orchestrator::CognitiveOrchestrator;
+        use crate::neural::neural_server::NeuralProcessingServer;
+        use crate::federation::coordinator::FederationCoordinator;
+        
+        // Create BrainEnhancedKnowledgeGraph
+        let brain_graph = Arc::new(BrainEnhancedKnowledgeGraph::new(768)?); // 768 is standard BERT embedding size
+        
+        // Create CognitiveOrchestrator
+        let cognitive_config = CognitiveOrchestratorConfig::default();
+        let cognitive_orchestrator = Arc::new(
+            futures::executor::block_on(CognitiveOrchestrator::new(brain_graph, cognitive_config))?
+        );
+        
+        // Create NeuralProcessingServer
+        let neural_server = Arc::new(futures::executor::block_on(
+            NeuralProcessingServer::new("127.0.0.1:50051".to_string())
+        )?);
+        
+        // Create DatabaseRegistry and FederationCoordinator
+        let registry = Arc::new(DatabaseRegistry::new()?);
+        let federation_coordinator = Arc::new(
+            futures::executor::block_on(FederationCoordinator::new(registry))?
+        );
+        
+        let inner_server = LLMFriendlyMCPServer::new(
+            knowledge_engine.clone(),
+            cognitive_orchestrator,
+            neural_server,
+            federation_coordinator,
+        )?;
         
         // Create the production system
         let production_system = Arc::new(create_production_system_with_config(

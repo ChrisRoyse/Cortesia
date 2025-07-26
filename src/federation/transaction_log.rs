@@ -195,7 +195,7 @@ impl DistributedTransactionLog {
         let mut active_logs = self.active_logs.write().await;
         if let Some(record) = active_logs.get_mut(transaction_id) {
             record.log_entries.push(entry.clone());
-            record.decision = Some(decision);
+            record.decision = Some(decision.clone());
             record.end_time = Some(SystemTime::now());
             record.status = match decision {
                 TransactionDecision::Commit => TransactionStatus::Committed,

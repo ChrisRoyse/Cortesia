@@ -119,6 +119,8 @@ pub struct AnswerQualityMetrics {
     pub neural_confidence: f32,
     pub cognitive_consistency: f32,
     pub source_reliability: f32,
+    pub confidence_score: f32,
+    pub citation_score: f32,
 }
 
 impl Default for AnswerQualityMetrics {
@@ -131,6 +133,8 @@ impl Default for AnswerQualityMetrics {
             neural_confidence: 0.6,
             cognitive_consistency: 0.8,
             source_reliability: 0.7,
+            confidence_score: 0.0,
+            citation_score: 0.0,
         }
     }
 }
@@ -158,6 +162,8 @@ impl CognitiveAnswer {
                 neural_confidence: 0.0,
                 cognitive_consistency: 0.5,
                 source_reliability: 0.0,
+                confidence_score: 0.0,
+                citation_score: 0.0,
             },
         }
     }
@@ -595,6 +601,10 @@ impl AnswerGenerator {
                 relevance_score: 0.9,
                 completeness_score: 0.7,
                 coherence_score: 0.8,
+                factual_accuracy: 0.8,
+                neural_confidence: 0.7,
+                cognitive_consistency: 0.8,
+                source_reliability: 0.8,
                 confidence_score: 0.8,
                 citation_score: 0.6,
             },
@@ -625,6 +635,10 @@ impl AnswerGenerator {
                 relevance_score: 0.9,
                 completeness_score: 0.7,
                 coherence_score: 0.8,
+                factual_accuracy: 0.8,
+                neural_confidence: 0.7,
+                cognitive_consistency: 0.8,
+                source_reliability: 0.8,
                 confidence_score: 0.8,
                 citation_score: 0.6,
             },
@@ -655,6 +669,10 @@ impl AnswerGenerator {
                 relevance_score: 0.9,
                 completeness_score: 0.7,
                 coherence_score: 0.8,
+                factual_accuracy: 0.8,
+                neural_confidence: 0.7,
+                cognitive_consistency: 0.8,
+                source_reliability: 0.8,
                 confidence_score: 0.8,
                 citation_score: 0.6,
             },
@@ -959,7 +977,7 @@ impl CognitiveAnswerGenerator {
         };
 
         // Use legacy generator for basic answer generation
-        let legacy_answer = AnswerGenerator::generate_answer(legacy_facts, legacy_intent);
+        let legacy_answer = AnswerGenerator::generate_answer_static(legacy_facts, legacy_intent);
 
         // Enhance with cognitive question type-specific improvements
         let enhanced_text = self.enhance_answer_with_cognitive_patterns(
@@ -1009,19 +1027,34 @@ impl CognitiveAnswerGenerator {
 
         match question_type {
             CognitiveQuestionType::Factual(subtype) => {
-                self.generate_factual_answer(subtype, facts, intent).await
+                match self.generate_factual_answer(subtype, facts, intent).await {
+                    Ok(answer) => answer.text,
+                    Err(_) => "Failed to generate factual answer".to_string()
+                }
             }
             CognitiveQuestionType::Explanatory(subtype) => {
-                self.generate_explanatory_answer(subtype, facts, intent).await
+                match self.generate_explanatory_answer(subtype, facts, intent).await {
+                    Ok(answer) => answer.text,
+                    Err(_) => "Failed to generate explanatory answer".to_string()
+                }
             }
             CognitiveQuestionType::Comparative(subtype) => {
-                self.generate_comparative_answer(subtype, facts, intent).await
+                match self.generate_comparative_answer(subtype, facts, intent).await {
+                    Ok(answer) => answer.text,
+                    Err(_) => "Failed to generate comparative answer".to_string()
+                }
             }
             CognitiveQuestionType::Temporal(subtype) => {
-                self.generate_temporal_answer(subtype, facts, intent).await
+                match self.generate_temporal_answer(subtype, facts, intent).await {
+                    Ok(answer) => answer.text,
+                    Err(_) => "Failed to generate temporal answer".to_string()
+                }
             }
             CognitiveQuestionType::Causal(subtype) => {
-                self.generate_causal_answer(subtype, facts, intent).await
+                match self.generate_causal_answer(subtype, facts, intent).await {
+                    Ok(answer) => answer.text,
+                    Err(_) => "Failed to generate causal answer".to_string()
+                }
             }
             // Fallback to legacy types
             CognitiveQuestionType::Who => self.generate_who_answer(facts).await,
