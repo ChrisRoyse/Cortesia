@@ -34,6 +34,7 @@ path = "src/bin/llmkg_mcp_server.rs"
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+toml = "0.8"
 ahash = "0.8"
 slotmap = { version = "1.0", features = ["serde"] }
 bumpalo = "3.16"
@@ -88,34 +89,43 @@ tokio-tungstenite = "0.20"
 warp = "0.3"
 futures-util = "0.3"
 reqwest = { version = "0.11", features = ["json"] }
+axum = { version = "0.7", optional = true }
+tower = { version = "0.4", optional = true }
+tower-http = { version = "0.5", features = ["cors", "compression"], optional = true }
+axum-server = { version = "0.6", optional = true }
+jsonwebtoken = "9.3"
+bcrypt = "0.15"
+utoipa = { version = "4.2", features = ["axum_extras"], optional = true }
+utoipa-swagger-ui = { version = "7.1", features = ["axum"], optional = true }
 
 # Math and SIMD
 num-traits = "0.2"
 nalgebra = { version = "0.33", optional = true }
 
 # AI/ML Dependencies for Real Components
-candle-core = "0.6"
-candle-nn = "0.6" 
-candle-transformers = "0.6"
-tokenizers = "0.19"
-hf-hub = "0.3"
-ort = { version = "2.0", optional = true }  # ONNX Runtime
+candle-core = { version = "0.6", optional = true }
+candle-nn = { version = "0.6", optional = true }
+candle-transformers = { version = "0.6", optional = true }
+tokenizers = { version = "0.19", optional = true }
+hf-hub = { version = "0.3", optional = true }
+ort = { version = "2.0.0-rc.10", optional = true }  # ONNX Runtime
 ndarray = "0.15"
 linfa = { version = "0.7", optional = true }
 smartcore = { version = "0.3", optional = true }
 
-# Embedding and similarity computation
-faiss = { version = "0.12", optional = true }
-hnswlib = { version = "0.1", optional = true }
+# Embedding and similarity computation (commented out due to version conflicts)
+# faiss = { version = "0.12", optional = true }
+# hnswlib = { version = "0.1", optional = true }  # Currently unavailable
 
 # Text processing and NLP
 unicode-segmentation = "1.10"
 whatlang = "0.16"
-lingua = { version = "1.6", optional = true }
+# lingua = { version = "1.6", optional = true }  # Commented out due to version conflicts
 
 # LRU Cache for intelligent caching
 lru = "0.12"
 redis = { version = "0.24", optional = true }
+flate2 = "1.0"  # For compression in L2 cache
 
 web-sys = { version = "0.3", features = ["console", "Performance", "WorkerGlobalScope"], optional = true }
 
@@ -129,7 +139,6 @@ getrandom = { version = "0.2", features = ["js"], optional = true }
 
 # Additional dependencies needed by tests
 sha2 = "0.10"
-tower = "0.4"
 num_cpus = "1.16"
 
 # Code analysis and monitoring dependencies
@@ -142,8 +151,6 @@ dirs = "5.0"
 
 # Test infrastructure dependencies (optional)
 rusqlite = { version = "0.30", features = ["bundled"], optional = true }
-axum = { version = "0.7", optional = true }
-tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
 handlebars = { version = "5.0", optional = true }
 
 [dev-dependencies]
@@ -151,8 +158,6 @@ proptest = "1.5"
 tokio-test = "0.4"
 tempfile = "3.12"
 rusqlite = { version = "0.30", features = ["bundled"] }
-axum = "0.7"
-tower-http = { version = "0.5", features = ["cors", "fs"] }
 handlebars = "5.0"
 bincode = "1.3"
 dotenv = "0.15"
@@ -170,13 +175,15 @@ strip = true
 opt-level = "s"
 
 [features]
-default = ["native"]
+default = ["native", "api", "ai"]
 wasm = ["wasm-bindgen", "wasm-bindgen-futures", "console_error_panic_hook", "wee_alloc", "js-sys", "web-sys", "getrandom"]
 native = ["nalgebra"]
+api = ["axum", "tower", "tower-http", "axum-server", "utoipa", "utoipa-swagger-ui"]
+ai = ["candle-core", "candle-nn", "candle-transformers", "tokenizers", "hf-hub"]
+ai-full = ["ai", "ort", "linfa", "smartcore"]
 simd = []
 cuda = []
 mcp = []
-ai-full = ["ort", "linfa", "smartcore", "faiss", "hnswlib", "lingua", "redis"]
 ai-minimal = ["redis"]
 
 [[bench]]

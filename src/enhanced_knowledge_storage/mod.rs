@@ -10,7 +10,10 @@ pub mod hierarchical_storage;
 pub mod retrieval_system;
 pub mod types;
 pub mod logging;
+pub mod production;
+pub mod ai_components;
 
 // Re-export commonly used types and traits
 pub use types::*;
 pub use model_management::*;
+pub use production::caching::*;

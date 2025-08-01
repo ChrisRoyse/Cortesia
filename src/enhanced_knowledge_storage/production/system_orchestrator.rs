@@ -10,18 +10,28 @@ use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use sha2::{Sha256, Digest};
+use tracing::{info, debug, warn, error};
 
+use crate::enhanced_knowledge_storage::ai_components::{
+    AIModelBackend, RealEntityExtractor, RealSemanticChunker, RealReasoningEngine,
+    EntityExtractionConfig, SemanticChunkingConfig, ReasoningConfig,
+    PerformanceMonitor as AIPerformanceMonitor
+};
 use crate::enhanced_knowledge_storage::knowledge_processing::{
-    IntelligentProcessor, EntityExtractor, SemanticChunker, RelationshipMapper
+    IntelligentKnowledgeProcessor, AdvancedRelationshipMapper
 };
 use crate::enhanced_knowledge_storage::hierarchical_storage::{
-    HierarchicalIndex, KnowledgeLayers
+    HierarchicalIndexManager, KnowledgeLayerManager
 };
 use crate::enhanced_knowledge_storage::retrieval_system::{
     RetrievalEngine, MultiHopReasoner
 };
-use crate::core::types::{EntityId, Triple};
-use super::{ProductionConfig, PerformanceMonitor, SystemErrorHandler, IntelligentCachingLayer};
+use crate::core::types::EntityKey;
+use crate::core::triple::Triple;
+use super::{ProductionConfig, PerformanceMonitor, SystemErrorHandler, MultiLevelCache};
+
+/// Type alias for entity IDs in the production system
+pub type EntityId = String;
 
 /// Production Knowledge System State
 #[derive(Debug, Clone, PartialEq)]
@@ -36,20 +46,26 @@ pub enum SystemState {
 
 /// Main Production Knowledge System
 pub struct ProductionKnowledgeSystem {
-    // Core AI components
-    intelligent_processor: Arc<IntelligentProcessor>,
-    entity_extractor: Arc<EntityExtractor>,
-    semantic_chunker: Arc<SemanticChunker>,
-    relationship_mapper: Arc<RelationshipMapper>,
+    // Shared AI backend for all components
+    ai_backend: Arc<AIModelBackend>,
+    
+    // Real AI components
+    entity_extractor: Arc<RealEntityExtractor>,
+    semantic_chunker: Arc<RealSemanticChunker>,
+    reasoning_engine: Arc<RealReasoningEngine>,
+    
+    // Supporting components
+    intelligent_processor: Arc<IntelligentKnowledgeProcessor>,
+    relationship_mapper: Arc<AdvancedRelationshipMapper>,
     
     // Storage and retrieval systems
-    hierarchical_index: Arc<HierarchicalIndex>,
-    knowledge_layers: Arc<KnowledgeLayers>,
+    hierarchical_index: Arc<HierarchicalIndexManager>,
+    knowledge_layers: Arc<KnowledgeLayerManager>,
     retrieval_engine: Arc<RetrievalEngine>,
     multi_hop_reasoner: Arc<MultiHopReasoner>,
     
     // Infrastructure components
-    caching_layer: Arc<IntelligentCachingLayer>,
+    caching_layer: Arc<MultiLevelCache>,
     performance_monitor: Arc<PerformanceMonitor>,
     error_handler: Arc<SystemErrorHandler>,
     
@@ -198,20 +214,50 @@ impl ProductionKnowledgeSystem {
     pub async fn new(config: ProductionConfig) -> Result<Self, SystemError> {
         let start_time = Instant::now();
         
-        // Initialize AI components with configuration
-        let intelligent_processor = Arc::new(
-            IntelligentProcessor::new(config.model_config.clone()).await
-                .map_err(|e| SystemError::InitializationError(format!("Intelligent processor: {}", e)))?
+        // Initialize shared AI backend first using production config
+        let ai_backend_config = crate::enhanced_knowledge_storage::ai_components::AIBackendConfig {
+            max_loaded_models: config.ai_backend_config.max_loaded_models,
+            memory_threshold: config.ai_backend_config.memory_threshold,
+            load_timeout: config.ai_backend_config.load_timeout,
+            enable_quantization: config.ai_backend_config.enable_quantization,
+            cache_dir: config.ai_backend_config.cache_dir.clone(),
+            enable_distributed: config.ai_backend_config.enable_distributed,
+        };
+        
+        let ai_backend = Arc::new(
+            AIModelBackend::new(ai_backend_config).await
+                .map_err(|e| SystemError::InitializationError(format!("AI backend: {}", e)))?
         );
         
+        // Initialize performance monitor
+        let ai_performance_monitor = Arc::new(AIPerformanceMonitor::new());
+        
+        // Initialize real AI components with their own configurations
         let entity_extractor = Arc::new(
-            EntityExtractor::new(config.entity_extraction_config.clone()).await
-                .map_err(|e| SystemError::InitializationError(format!("Entity extractor: {}", e)))?
+            RealEntityExtractor::new(
+                Self::create_entity_extraction_config(&config)
+            ).await
+                .map_err(|e| SystemError::InitializationError(format!("Real entity extractor: {}", e)))?
         );
         
         let semantic_chunker = Arc::new(
-            SemanticChunker::new(config.chunking_config.clone()).await
-                .map_err(|e| SystemError::InitializationError(format!("Semantic chunker: {}", e)))?
+            RealSemanticChunker::new(
+                Self::create_semantic_chunking_config(&config)
+            ).await
+                .map_err(|e| SystemError::InitializationError(format!("Real semantic chunker: {}", e)))?
+        );
+        
+        let reasoning_engine = Arc::new(
+            RealReasoningEngine::new(
+                Self::create_reasoning_config(&config)
+            ).await
+                .map_err(|e| SystemError::InitializationError(format!("Real reasoning engine: {}", e)))?
+        );
+        
+        // Initialize supporting components
+        let intelligent_processor = Arc::new(
+            IntelligentProcessor::new(config.model_config.clone()).await
+                .map_err(|e| SystemError::InitializationError(format!("Intelligent processor: {}", e)))?
         );
         
         let relationship_mapper = Arc::new(
@@ -257,9 +303,11 @@ impl ProductionKnowledgeSystem {
         );
         
         let system = Self {
-            intelligent_processor,
+            ai_backend,
             entity_extractor,
             semantic_chunker,
+            reasoning_engine,
+            intelligent_processor,
             relationship_mapper,
             hierarchical_index,
             knowledge_layers,
@@ -301,12 +349,12 @@ impl ProductionKnowledgeSystem {
             return Ok(cached_result);
         }
         
-        // Phase 1: Intelligent semantic chunking
+        // Phase 1: Intelligent semantic chunking using real AI
         let chunking_start = Instant::now();
         let chunks = self.semantic_chunker
-            .create_semantic_chunks(content, title)
+            .create_chunks(content)
             .await
-            .map_err(|e| self.error_handler.handle_chunking_error(e, &document_id))?;
+            .map_err(|e| self.error_handler.handle_chunking_error(e.to_string(), &document_id))?;
         let chunking_duration = chunking_start.elapsed();
         
         // Phase 2: Parallel entity extraction and analysis
@@ -318,11 +366,29 @@ impl ProductionKnowledgeSystem {
         for (i, chunk) in chunks.iter().enumerate() {
             let chunk_id = format!("{}_{}", document_id, i);
             
-            // Extract entities with AI
+            // Extract entities with real AI
             let entities = self.entity_extractor
-                .extract_entities_enhanced(&chunk.content, &chunk.semantic_context)
+                .extract_entities(&chunk.content)
                 .await
-                .map_err(|e| self.error_handler.handle_extraction_error(e, i))?;
+                .map_err(|e| self.error_handler.handle_extraction_error(e.to_string(), i))?
+                .into_iter()
+                .map(|entity| ExtractedEntity {
+                    id: Uuid::new_v4().to_string(),
+                    name: entity.name,
+                    entity_type: entity.entity_type.to_string(),
+                    description: entity.context,
+                    confidence: entity.confidence,
+                    attributes: entity.attributes.into_iter()
+                        .map(|(k, v)| EntityAttribute {
+                            key: k,
+                            value: v,
+                            confidence: 0.9,
+                            source: "AI".to_string(),
+                        })
+                        .collect(),
+                    source_chunks: vec![chunk_id.clone()],
+                })
+                .collect::<Vec<_>>();
             
             // Map relationships with AI
             let relationships = self.relationship_mapper
@@ -430,8 +496,31 @@ impl ProductionKnowledgeSystem {
             *count += 1;
         }
         
-        // Record performance metrics
+        // Record performance metrics from both production monitor and AI components
         self.performance_monitor.record_document_processing(&result).await;
+        
+        // Collect metrics from AI components
+        let entity_metrics = self.entity_extractor.get_metrics().await;
+        let semantic_metrics = if let Ok(chunker_metrics) = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            async {
+                // Note: RealSemanticChunker might not have get_metrics method
+                // This is a placeholder for when it's implemented
+                Ok::<_, String>(crate::enhanced_knowledge_storage::ai_components::AIPerformanceMetrics::default())
+            }
+        ).await {
+            chunker_metrics.unwrap_or_default()
+        } else {
+            crate::enhanced_knowledge_storage::ai_components::AIPerformanceMetrics::default()
+        };
+        
+        // Log AI component performance
+        if entity_metrics.success_rate() < 90.0 {
+            warn!("Entity extraction performance degraded: {}%", entity_metrics.success_rate());
+        }
+        if semantic_metrics.success_rate() < 90.0 {
+            warn!("Semantic chunking performance degraded: {}%", semantic_metrics.success_rate());
+        }
         
         // Update state back to ready
         self.update_state(SystemState::Ready).await;
@@ -465,11 +554,11 @@ impl ProductionKnowledgeSystem {
         // Phase 3: Extract entities relevant to the query
         let relevant_entities = self.extract_query_relevant_entities(&relevant_docs, &query_analysis).await?;
         
-        // Phase 4: Perform multi-hop reasoning
-        let reasoning_result = self.multi_hop_reasoner
-            .reason_with_context(query, &relevant_entities, &relevant_docs)
+        // Phase 4: Perform multi-hop reasoning with real AI
+        let reasoning_result = self.reasoning_engine
+            .reason(query)
             .await
-            .map_err(|e| self.error_handler.handle_reasoning_error(e))?;
+            .map_err(|e| self.error_handler.handle_reasoning_error(e.to_string()))?;
         
         // Phase 5: Generate comprehensive response
         let response = self.intelligent_processor
@@ -502,8 +591,15 @@ impl ProductionKnowledgeSystem {
         
         let result = ReasoningQueryResult {
             query: query.to_string(),
-            reasoning_chain: reasoning_result.steps,
-            confidence: reasoning_result.overall_confidence,
+            reasoning_chain: reasoning_result.reasoning_chain.into_iter().map(|step| ReasoningStep {
+                step_number: step.step_number as usize,
+                operation: step.inference,
+                input: step.hypothesis,
+                output: step.evidence.join("; "),
+                confidence: step.confidence,
+                supporting_evidence: step.evidence,
+            }).collect(),
+            confidence: reasoning_result.confidence,
             response,
             supporting_documents,
             retrieved_entities: relevant_entities,
@@ -519,8 +615,16 @@ impl ProductionKnowledgeSystem {
             *count += 1;
         }
         
-        // Record performance metrics
+        // Record performance metrics from both production monitor and AI components
         self.performance_monitor.record_query_processing(&result).await;
+        
+        // Collect metrics from reasoning engine
+        let reasoning_metrics = self.reasoning_engine.get_metrics().await;
+        
+        // Log AI component performance
+        if reasoning_metrics.success_rate() < 90.0 {
+            warn!("Reasoning engine performance degraded: {}%", reasoning_metrics.success_rate());
+        }
         
         Ok(result)
     }
@@ -552,18 +656,18 @@ impl ProductionKnowledgeSystem {
     }
     
     async fn validate_system_integrity(&self) -> Result<(), SystemError> {
+        // Validate shared AI backend
+        if let Err(e) = self.ai_backend.health_check().await {
+            return Err(SystemError::InitializationError(format!("AI backend not healthy: {}", e)));
+        }
+        
         // Validate all components are properly initialized
         if !self.intelligent_processor.is_ready().await {
             return Err(SystemError::InitializationError("Intelligent processor not ready".to_string()));
         }
         
-        if !self.entity_extractor.is_ready().await {
-            return Err(SystemError::InitializationError("Entity extractor not ready".to_string()));
-        }
-        
-        if !self.semantic_chunker.is_ready().await {
-            return Err(SystemError::InitializationError("Semantic chunker not ready".to_string()));
-        }
+        // Note: Real AI components don't have is_ready() method, they're validated during construction
+        // The fact that they were created successfully means they're ready
         
         if !self.hierarchical_index.is_healthy().await {
             return Err(SystemError::InitializationError("Hierarchical index not healthy".to_string()));
@@ -727,6 +831,57 @@ impl ProductionKnowledgeSystem {
             knowledge_layers: self.knowledge_layers.health_check().await,
             retrieval_engine: self.retrieval_engine.health_check().await,
             multi_hop_reasoner: self.multi_hop_reasoner.health_check().await,
+        }
+    }
+    
+    // Factory methods for creating AI component configurations
+    
+    /// Create entity extraction configuration from production config
+    fn create_entity_extraction_config(config: &ProductionConfig) -> EntityExtractionConfig {
+        EntityExtractionConfig {
+            model_name: config.entity_extraction_config.model_name.clone(),
+            min_confidence: config.entity_extraction_config.confidence_threshold,
+            max_sequence_length: 512,
+            batch_size: config.entity_extraction_config.batch_size,
+            labels: vec![
+                "O".to_string(),
+                "B-PER".to_string(),
+                "I-PER".to_string(),
+                "B-ORG".to_string(),
+                "I-ORG".to_string(),
+                "B-LOC".to_string(),
+                "I-LOC".to_string(),
+                "B-MISC".to_string(),
+                "I-MISC".to_string(),
+            ],
+            device: "auto".to_string(),
+            cache_embeddings: true,
+            enable_context_expansion: config.entity_extraction_config.use_coreference_resolution,
+        }
+    }
+    
+    /// Create semantic chunking configuration from production config
+    fn create_semantic_chunking_config(config: &ProductionConfig) -> SemanticChunkingConfig {
+        SemanticChunkingConfig {
+            model_name: "sentence-transformers/all-MiniLM-L6-v2".to_string(),
+            max_chunk_size: config.chunking_config.max_chunk_size,
+            min_chunk_size: config.chunking_config.min_chunk_size,
+            overlap_size: config.chunking_config.overlap_size,
+            similarity_threshold: config.chunking_config.semantic_similarity_threshold,
+            min_coherence: 0.6,
+            preserve_sentence_boundaries: config.chunking_config.use_sentence_boundaries,
+            enable_topic_modeling: false,
+        }
+    }
+    
+    /// Create reasoning configuration from production config
+    fn create_reasoning_config(config: &ProductionConfig) -> ReasoningConfig {
+        ReasoningConfig {
+            max_path_length: config.reasoning_config.max_reasoning_steps,
+            confidence_threshold: config.reasoning_config.confidence_threshold,
+            max_reasoning_time: config.reasoning_config.reasoning_timeout,
+            enable_caching: true,
+            reasoning_strategy: crate::enhanced_knowledge_storage::ai_components::ReasoningStrategy::MultiHop,
         }
     }
 }
