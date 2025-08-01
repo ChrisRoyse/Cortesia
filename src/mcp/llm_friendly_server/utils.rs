@@ -64,7 +64,7 @@ pub fn generate_helpful_info(method: &str) -> String {
         }
         "find_facts" => {
             "Tip: Use wildcards by leaving fields empty. \
-             Try 'get_suggestions' for ideas on what to search for."
+             Leave fields empty to use them as wildcards."
         }
         "ask_question" => {
             "Tip: Be specific in your questions. \
@@ -73,14 +73,6 @@ pub fn generate_helpful_info(method: &str) -> String {
         "explore_connections" => {
             "Tip: Start with max_depth=2 for faster results. \
              Increase depth carefully as it exponentially increases search space."
-        }
-        "get_suggestions" => {
-            "Tip: Use 'knowledge_gaps' to find missing information. \
-             'potential_connections' helps discover implicit relationships."
-        }
-        "generate_graph_query" => {
-            "Tip: Start with simple queries to learn the syntax. \
-             The generated queries work with standard graph databases."
         }
         "hybrid_search" => {
             "Tip: Use filters to narrow results. \
@@ -117,10 +109,6 @@ pub fn generate_error_help(method: &str) -> String {
             "start_entity is required. \
              Entity names must match exactly as stored."
         }
-        "generate_graph_query" => {
-            "natural_query is required. \
-             Specify a clear intent (find, connect, path, etc.)."
-        }
         _ => "Check that all required parameters are provided and within limits."
     }.to_string()
 }
@@ -146,45 +134,10 @@ pub fn generate_error_suggestions(method: &str) -> Vec<String> {
         _ => vec![
             "Check the examples in the tool definition".to_string(),
             "Try a simpler query first".to_string(),
-            "Use 'get_suggestions' for ideas".to_string(),
         ],
     }
 }
 
-/// Generate suggestions based on current state
-pub fn generate_suggestions(suggestion_type: &str, _focus_area: Option<&str>) -> Vec<String> {
-    match suggestion_type {
-        "missing_facts" => vec![
-            "Consider adding birth/death dates for people".to_string(),
-            "Add location information for places and events".to_string(),
-            "Include temporal information (when things happened)".to_string(),
-            "Add categorical information (type, category, genre)".to_string(),
-            "Include quantitative data (size, population, value)".to_string(),
-        ],
-        "interesting_questions" => vec![
-            "What are the connections between X and Y?".to_string(),
-            "Who influenced whom in this field?".to_string(),
-            "What events happened in the same time period?".to_string(),
-            "What are the most connected entities?".to_string(),
-            "What patterns emerge from the relationships?".to_string(),
-        ],
-        "potential_connections" => vec![
-            "People who lived in the same era might have met".to_string(),
-            "Entities in the same location might be related".to_string(),
-            "Similar concepts might have common origins".to_string(),
-            "Events in sequence might have causal relationships".to_string(),
-            "Entities with similar properties might be grouped".to_string(),
-        ],
-        "knowledge_gaps" => vec![
-            "Missing biographical information for people".to_string(),
-            "Incomplete temporal sequences".to_string(),
-            "Entities without categorical classification".to_string(),
-            "Relationships without confidence scores".to_string(),
-            "Facts without source attribution".to_string(),
-        ],
-        _ => vec!["No specific suggestions available".to_string()],
-    }
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum StatsOperation {

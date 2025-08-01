@@ -2,7 +2,7 @@
 
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::core::knowledge_types::TripleQuery;
-use crate::mcp::llm_friendly_server::utils::{update_usage_stats, generate_suggestions, StatsOperation};
+use crate::mcp::llm_friendly_server::utils::{update_usage_stats, StatsOperation};
 use crate::mcp::llm_friendly_server::types::UsageStats;
 use crate::error::Result;
 use std::sync::Arc;
@@ -130,64 +130,6 @@ pub async fn handle_explore_connections(
     }
 }
 
-/// Handle get_suggestions request
-pub async fn handle_get_suggestions(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
-    usage_stats: &Arc<RwLock<UsageStats>>,
-    params: Value,
-) -> std::result::Result<(Value, String, Vec<String>), String> {
-    let suggestion_type = params.get("suggestion_type").and_then(|v| v.as_str())
-        .ok_or("Missing required field: suggestion_type")?;
-    let focus_area = params.get("focus_area").and_then(|v| v.as_str());
-    let limit = params.get("limit")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(5)
-        .min(10) as usize;
-    
-    // Validate suggestion type
-    if !["missing_facts", "interesting_questions", "potential_connections", "knowledge_gaps"]
-        .contains(&suggestion_type) {
-        return Err("Invalid suggestion_type. Must be one of: missing_facts, interesting_questions, potential_connections, knowledge_gaps".to_string());
-    }
-    
-    let engine = knowledge_engine.read().await;
-    let suggestions = match suggestion_type {
-        "missing_facts" => generate_missing_facts_suggestions(&*engine, focus_area, limit).await?,
-        "interesting_questions" => generate_interesting_questions(&*engine, focus_area, limit).await?,
-        "potential_connections" => generate_potential_connections(&*engine, focus_area, limit).await?,
-        "knowledge_gaps" => generate_knowledge_gaps(&*engine, focus_area, limit).await?,
-        _ => vec![]
-    };
-    
-    let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 15).await;
-    
-    let data = json!({
-        "suggestion_type": suggestion_type,
-        "focus_area": focus_area,
-        "suggestions": suggestions,
-        "count": suggestions.len()
-    });
-    
-    let message = format!(
-        "Generated {} {} suggestion{}{}:\n\n{}",
-        suggestions.len(),
-        suggestion_type.replace('_', " "),
-        if suggestions.len() == 1 { "" } else { "s" },
-        if let Some(area) = focus_area { format!(" for {}", area) } else { "".to_string() },
-        suggestions.iter()
-            .enumerate()
-            .map(|(i, s)| format!("{}. {}", i + 1, s))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-    
-    let next_steps = vec![
-        "Use these suggestions to add more knowledge".to_string(),
-        "Run 'validate_knowledge' to check data quality".to_string(),
-    ];
-    
-    Ok((data, message, next_steps))
-}
 
 /// Find paths between two entities
 async fn find_paths_between(
@@ -318,86 +260,6 @@ async fn explore_from_entity(
     Ok(connections)
 }
 
-/// Generate missing facts suggestions
-async fn generate_missing_facts_suggestions(
-    engine: &KnowledgeEngine,
-    focus_area: Option<&str>,
-    limit: usize,
-) -> Result<Vec<String>> {
-    let mut suggestions = Vec::new();
-    
-    if let Some(entity) = focus_area {
-        // Check what's missing for this specific entity
-        let query = TripleQuery {
-            subject: Some(entity.to_string()),
-            predicate: None,
-            object: None,
-            limit: 100,
-            min_confidence: 0.0,
-            include_chunks: false,
-        };
-        
-        if let Ok(facts) = engine.query_triples(query) {
-            let predicates: HashSet<_> = facts.iter().map(|t| &t.predicate).collect();
-            
-            // Suggest common missing predicates
-            if !predicates.contains(&"born_in".to_string()) && !predicates.contains(&"born_on".to_string()) {
-                suggestions.push(format!("Add birth information for {}", entity));
-            }
-            if !predicates.contains(&"type".to_string()) && !predicates.contains(&"is".to_string()) {
-                suggestions.push(format!("Specify what type of entity {} is", entity));
-            }
-            if !predicates.contains(&"description".to_string()) {
-                suggestions.push(format!("Add a description for {}", entity));
-            }
-        }
-    } else {
-        // General suggestions
-        suggestions.extend(generate_suggestions("missing_facts", None));
-    }
-    
-    suggestions.truncate(limit);
-    Ok(suggestions)
-}
-
-/// Generate interesting questions
-async fn generate_interesting_questions(
-    _engine: &KnowledgeEngine,
-    focus_area: Option<&str>,
-    limit: usize,
-) -> Result<Vec<String>> {
-    let mut questions = generate_suggestions("interesting_questions", focus_area);
-    
-    if let Some(entity) = focus_area {
-        // Add entity-specific questions
-        questions.insert(0, format!("What are all the connections of {}?", entity));
-        questions.insert(1, format!("How is {} related to other entities?", entity));
-        questions.insert(2, format!("What facts do we know about {}?", entity));
-    }
-    
-    questions.truncate(limit);
-    Ok(questions)
-}
-
-/// Generate potential connections
-async fn generate_potential_connections(
-    _engine: &KnowledgeEngine,
-    focus_area: Option<&str>,
-    limit: usize,
-) -> Result<Vec<String>> {
-    let suggestions = generate_suggestions("potential_connections", focus_area);
-    Ok(suggestions.into_iter().take(limit).collect())
-}
-
-/// Generate knowledge gaps
-async fn generate_knowledge_gaps(
-    _engine: &KnowledgeEngine,
-    focus_area: Option<&str>,
-    limit: usize,
-) -> Result<Vec<String>> {
-    let gaps = generate_suggestions("knowledge_gaps", focus_area);
-    Ok(gaps.into_iter().take(limit).collect())
-}
 
 /// Format a path for display
 fn format_path(path: &[(String, String)]) -> String {

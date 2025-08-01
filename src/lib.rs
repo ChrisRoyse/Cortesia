@@ -26,6 +26,7 @@ pub mod graph;
 pub mod api;
 pub mod models;
 pub mod cli;
+pub mod enhanced_knowledge_storage;
 
 #[cfg(feature = "native")]
 pub mod production;

@@ -114,22 +114,8 @@ impl LLMFriendlyMCPServer {
 
             // Exploration operations
             // "explore_connections" => migration (now part of analyze_graph)
-            "get_suggestions" => {
-                handlers::exploration::handle_get_suggestions(
-                    &self.knowledge_engine,
-                    &self.usage_stats,
-                    params.clone(),
-                ).await
-            }
 
             // Advanced operations
-            "generate_graph_query" => {
-                handlers::advanced::handle_generate_graph_query(
-                    &self.knowledge_engine,
-                    &self.usage_stats,
-                    params.clone(),
-                ).await
-            }
             "hybrid_search" => {
                 handlers::advanced::handle_hybrid_search(
                     &self.knowledge_engine,
@@ -153,13 +139,6 @@ impl LLMFriendlyMCPServer {
             }
 
             // Tier 1 Advanced Cognitive Tools
-            "importance_scoring" => {
-                handlers::cognitive::handle_importance_scoring(
-                    &self.knowledge_engine,
-                    &self.usage_stats,
-                    params.clone(),
-                ).await
-            }
             "divergent_thinking_engine" => {
                 handlers::cognitive::handle_divergent_thinking_engine(
                     &self.knowledge_engine,

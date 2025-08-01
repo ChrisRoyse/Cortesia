@@ -409,50 +409,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         },
         
         LLMMCPTool {
-            name: "get_suggestions".to_string(),
-            description: "Get intelligent suggestions for what knowledge to add next, what questions to ask, or what connections to explore. Helps you build a comprehensive knowledge graph.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "suggestion_type": {
-                        "type": "string",
-                        "description": "Type of suggestions wanted",
-                        "enum": ["missing_facts", "interesting_questions", "potential_connections", "knowledge_gaps"]
-                    },
-                    "focus_area": {
-                        "type": "string",
-                        "description": "Area to focus suggestions on (optional)",
-                        "maxLength": 100
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Number of suggestions to return (default: 5)",
-                        "minimum": 1,
-                        "maximum": 10,
-                        "default": 5
-                    }
-                },
-                "required": ["suggestion_type"]
-            }),
-            examples: vec![
-                LLMExample {
-                    description: "Get suggestions for missing facts about Einstein".to_string(),
-                    input: json!({
-                        "suggestion_type": "missing_facts",
-                        "focus_area": "Einstein",
-                        "limit": 3
-                    }),
-                    expected_output: "Suggested facts to add:\n1. Einstein's birth date (we have death date but not birth)\n2. Einstein's education (no university information found)\n3. Einstein's nationality (birthplace is Germany but citizenship unclear)".to_string(),
-                }
-            ],
-            tips: vec![
-                "Use 'knowledge_gaps' to find areas that need more information".to_string(),
-                "Use 'potential_connections' to discover missing links between entities".to_string(),
-                "Focus suggestions on specific topics with focus_area".to_string(),
-            ],
-        },
-        
-        LLMMCPTool {
             name: "get_stats".to_string(),
             description: "Get statistics about the knowledge graph including size, coverage, and usage patterns. Useful for understanding the current state of your knowledge base.".to_string(),
             input_schema: json!({
@@ -477,48 +433,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 "Check stats regularly to monitor growth".to_string(),
                 "Use include_details=true for category breakdowns".to_string(),
                 "Memory efficiency shows how well data is compressed".to_string(),
-            ],
-        },
-        
-        LLMMCPTool {
-            name: "generate_graph_query".to_string(),
-            description: "Convert natural language to graph query languages (Cypher, SPARQL, Gremlin). Helps you learn graph query languages or integrate with other systems.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "natural_query": {
-                        "type": "string",
-                        "description": "Your query in natural language",
-                        "maxLength": 500
-                    },
-                    "query_language": {
-                        "type": "string",
-                        "description": "Target query language",
-                        "enum": ["cypher", "sparql", "gremlin"],
-                        "default": "cypher"
-                    },
-                    "include_explanation": {
-                        "type": "boolean",
-                        "description": "Include explanation of the query (default: true)",
-                        "default": true
-                    }
-                },
-                "required": ["natural_query"]
-            }),
-            examples: vec![
-                LLMExample {
-                    description: "Generate Cypher query".to_string(),
-                    input: json!({
-                        "natural_query": "Find all scientists who won a Nobel Prize",
-                        "query_language": "cypher"
-                    }),
-                    expected_output: "Cypher Query:\n```\nMATCH (s:Entity)-[:is]->(t:Entity {name: 'scientist'})\nMATCH (s)-[:won]->(n:Entity {name: 'Nobel_Prize'})\nRETURN s.name\n```\n\nExplanation: This query finds entities that have an 'is' relationship to 'scientist' AND a 'won' relationship to 'Nobel_Prize'".to_string(),
-                }
-            ],
-            tips: vec![
-                "Use this to learn graph query languages".to_string(),
-                "Generated queries can be used in Neo4j, Blazegraph, etc.".to_string(),
-                "Start with simple queries and build complexity".to_string(),
             ],
         },
         
@@ -601,42 +515,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         },
         
         // ========= SPECIALIZED TOOLS =========
-        
-        LLMMCPTool {
-            name: "importance_scoring".to_string(),
-            description: "Content importance and quality assessment using heuristic methods. Determines if content should be stored and provides quality metrics.".to_string(),
-            input_schema: json!({
-                "type": "object",
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "description": "Text content to analyze for importance and quality",
-                        "maxLength": 10000
-                    },
-                    "context": {
-                        "type": "string", 
-                        "description": "Optional context to improve scoring accuracy",
-                        "maxLength": 1000
-                    }
-                },
-                "required": ["text"]
-            }),
-            examples: vec![
-                LLMExample {
-                    description: "Assess importance of scientific content".to_string(),
-                    input: json!({
-                        "text": "Einstein's theory of general relativity revolutionized our understanding of gravity by describing it as curvature in spacetime caused by mass and energy.",
-                        "context": "physics education"
-                    }),
-                    expected_output: "Heuristic Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
-                }
-            ],
-            tips: vec![
-                "Use importance scores > 0.7 for high-priority content".to_string(),
-                "Combine with context for better accuracy".to_string(),
-                "Monitor quality levels for content curation".to_string(),
-            ],
-        },
         
         LLMMCPTool {
             name: "divergent_thinking_engine".to_string(),

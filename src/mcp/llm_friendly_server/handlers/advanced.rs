@@ -439,63 +439,6 @@ pub async fn handle_knowledge_quality_metrics(
     Ok((data, message, suggestions))
 }
 
-/// Handle generate_graph_query request
-pub async fn handle_generate_graph_query(
-    _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
-    usage_stats: &Arc<RwLock<UsageStats>>,
-    params: Value,
-) -> std::result::Result<(Value, String, Vec<String>), String> {
-    use crate::mcp::llm_friendly_server::query_generation_native::generate_native_query;
-    
-    let natural_query = params.get("natural_query").and_then(|v| v.as_str())
-        .ok_or("Missing required field: natural_query")?;
-    
-    if natural_query.is_empty() {
-        return Err("natural_query cannot be empty".to_string());
-    }
-    
-    // Generate native LLMKG query
-    let query_result = generate_native_query(natural_query)
-        .map_err(|e| format!("Failed to generate query: {}", e))?;
-    
-    let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 5).await;
-    
-    let query_type = query_result["query_type"].as_str().unwrap_or("unknown");
-    let params = &query_result["params"];
-    
-    let data = json!({
-        "natural_query": natural_query,
-        "query_type": query_type,
-        "query_params": params,
-        "executable": true
-    });
-    
-    let message = format!(
-        "Native LLMKG Query Generated:\n\nType: {}\nParameters:\n{}",
-        query_type,
-        serde_json::to_string_pretty(params).unwrap_or_default()
-    );
-    
-    let suggestions = match query_type {
-        "triple_query" => vec![
-            "This will search for triples matching the pattern".to_string(),
-            "Results include facts stored as subject-predicate-object".to_string(),
-        ],
-        "path_query" => vec![
-            "This will find paths between two entities".to_string(),
-            "Adjust max_depth to control search distance".to_string(),
-        ],
-        "hybrid_search" => vec![
-            "This searches across triples, chunks, and entities".to_string(),
-            "Best for open-ended queries".to_string(),
-        ],
-        _ => vec![
-            "Query ready to execute against LLMKG".to_string(),
-        ]
-    };
-    
-    Ok((data, message, suggestions))
-}
 
 /// Handle hybrid_search request - now delegates to enhanced version
 pub async fn handle_hybrid_search(
