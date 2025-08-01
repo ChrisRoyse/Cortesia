@@ -11,7 +11,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Set concept activation level for an entity
     pub fn set_concept_activation(&self, entity_key: EntityKey, activation: f32) -> Result<()> {
         if !self.contains_entity(entity_key) {
-            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {:?}", entity_key)));
+            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {entity_key:?}")));
         }
 
         // Use async runtime to call the async method
@@ -27,7 +27,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Boost concept activation level for an entity
     pub fn boost_concept_activation(&self, entity_key: EntityKey, boost_amount: f32) -> Result<()> {
         if !self.contains_entity(entity_key) {
-            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {:?}", entity_key)));
+            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {entity_key:?}")));
         }
 
         // Use async runtime to call the async method
@@ -254,7 +254,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Get connections for a specific concept
     pub fn get_concept_connections(&self, entity_key: EntityKey) -> Result<Vec<EntityKey>> {
         if !self.contains_entity(entity_key) {
-            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {:?}", entity_key)));
+            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {entity_key:?}")));
         }
 
         let connections = self.get_neighbors(entity_key);
@@ -283,7 +283,7 @@ impl BrainEnhancedKnowledgeGraph {
 
                 // Calculate attention distribution
                 let high_activation_count = activations.values().filter(|&&v| v > 0.7).count();
-                let attention_distribution = if activations.len() > 0 {
+                let attention_distribution = if !activations.is_empty() {
                     high_activation_count as f32 / activations.len() as f32
                 } else {
                     0.0
@@ -375,7 +375,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Recall related memories
     pub fn recall_related_memories(&self, query_entity: EntityKey) -> Result<MemoryRecallResult> {
         if !self.contains_entity(query_entity) {
-            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {:?}", query_entity)));
+            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {query_entity:?}")));
         }
 
         let result = tokio::task::block_in_place(|| {
@@ -400,7 +400,7 @@ impl BrainEnhancedKnowledgeGraph {
                 }
 
                 let recall_success = !related_memories.is_empty();
-                let average_recall_strength = if related_memories.len() > 0 {
+                let average_recall_strength = if !related_memories.is_empty() {
                     total_recall_strength / related_memories.len() as f32
                 } else {
                     0.0
@@ -420,7 +420,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Analyze entity role within the graph
     pub fn analyze_entity_role(&self, entity_key: EntityKey) -> Result<EntityRole> {
         if !self.contains_entity(entity_key) {
-            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {:?}", entity_key)));
+            return Err(crate::error::GraphError::InvalidInput(format!("Entity not found: {entity_key:?}")));
         }
 
         let neighbors = self.get_neighbors(entity_key);
@@ -639,8 +639,8 @@ impl BrainEnhancedKnowledgeGraph {
         };
         
         // Store split concepts
-        let concept1_name = format!("{}_part1", concept_name);
-        let concept2_name = format!("{}_part2", concept_name);
+        let concept1_name = format!("{concept_name}_part1");
+        let concept2_name = format!("{concept_name}_part2");
         
         self.store_concept_structure(concept1_name, concept1.clone()).await;
         self.store_concept_structure(concept2_name, concept2.clone()).await;

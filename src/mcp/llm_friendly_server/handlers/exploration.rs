@@ -41,7 +41,7 @@ pub async fn handle_explore_connections(
     if let Some(target) = end_entity {
         // Find paths between two entities
         let paths = find_paths_between(
-            &*engine,
+            &engine,
             start_entity,
             target,
             max_depth,
@@ -68,8 +68,7 @@ pub async fn handle_explore_connections(
         });
         
         let message = if paths.is_empty() {
-            format!("No connection found between '{}' and '{}' within {} steps", 
-                start_entity, target, max_depth)
+            format!("No connection found between '{start_entity}' and '{target}' within {max_depth} steps")
         } else {
             format!("Found {} path{} between '{}' and '{}':\n{}",
                 paths.len(),
@@ -89,7 +88,7 @@ pub async fn handle_explore_connections(
     } else {
         // Explore all connections from start entity
         let connections = explore_from_entity(
-            &*engine,
+            &engine,
             start_entity,
             max_depth,
             relationship_types.as_ref(),
@@ -269,7 +268,7 @@ fn format_path(path: &[(String, String)]) -> String {
         if i == 0 {
             result.push_str(entity);
         } else {
-            result.push_str(&format!(" -> {} -> {}", relationship, entity));
+            result.push_str(&format!(" -> {relationship} -> {entity}"));
         }
     }
     

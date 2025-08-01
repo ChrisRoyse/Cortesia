@@ -36,7 +36,7 @@ impl ZeroCopyKnowledgeEngine {
     /// Insert an entity into the base engine 
     pub async fn insert_entity(&self, entity_id: u32, entity: EntityData) -> Result<()> {
         // For now, store using the store_entity method
-        let entity_name = format!("entity_{}", entity_id);
+        let entity_name = format!("entity_{entity_id}");
         self.base_engine.store_entity(
             entity_name,
             format!("type_{}", entity.type_id),
@@ -283,7 +283,7 @@ impl ZeroCopyKnowledgeEngine {
             .map(|e| e.properties.len() + e.embedding.len() * 4 + 16) // 16 bytes overhead
             .sum::<usize>();
         
-        let relationship_size = relationships.len() * std::mem::size_of::<Relationship>();
+        let relationship_size = std::mem::size_of_val(relationships);
         
         entity_size + relationship_size
     }
@@ -364,7 +364,7 @@ mod tests {
     fn test_serialize_entities_to_zero_copy_multiple_entities() {
         let engine = create_test_engine(8);
         let entities = (0..5).map(|i| {
-            create_test_entity(i, i as u16 % 3, &format!("entity_{}", i), 8)
+            create_test_entity(i, i as u16 % 3, &format!("entity_{i}"), 8)
         }).collect::<Vec<_>>();
         
         let result = engine.serialize_entities_to_zero_copy(entities);
@@ -384,7 +384,7 @@ mod tests {
     fn test_serialize_entities_to_zero_copy_large_entities() {
         let engine = create_test_engine(512);
         let entities = (0..100).map(|i| {
-            create_test_entity(i, i as u16 % 10, &format!("large_entity_{}", i), 512)
+            create_test_entity(i, i as u16 % 10, &format!("large_entity_{i}"), 512)
         }).collect::<Vec<_>>();
         
         let result = engine.serialize_entities_to_zero_copy(entities);
@@ -508,7 +508,7 @@ mod tests {
     fn test_get_entity_zero_copy_multiple_valid_entities() {
         let engine = create_test_engine(8);
         let entities = (0..10).map(|i| {
-            create_test_entity(i, i as u16, &format!("entity_{}", i), 8)
+            create_test_entity(i, i as u16, &format!("entity_{i}"), 8)
         }).collect::<Vec<_>>();
         
         // Serialize and load data
@@ -581,7 +581,7 @@ mod tests {
     fn test_similarity_search_zero_copy_multiple_entities_ranking() {
         let engine = create_test_engine(4);
         let entities = (0..10).map(|i| {
-            let mut entity = create_test_entity(i, i as u16, &format!("entity_{}", i), 4);
+            let mut entity = create_test_entity(i, i as u16, &format!("entity_{i}"), 4);
             // Create embeddings with different similarities to query [0.5, 0.5, 0.5, 0.5]
             entity.embedding = vec![i as f32 / 10.0; 4];
             entity
@@ -613,7 +613,7 @@ mod tests {
     fn test_similarity_search_zero_copy_limit_enforcement() {
         let engine = create_test_engine(4);
         let entities = (0..20).map(|i| {
-            create_test_entity(i, i as u16, &format!("entity_{}", i), 4)
+            create_test_entity(i, i as u16, &format!("entity_{i}"), 4)
         }).collect::<Vec<_>>();
         
         // Serialize and load data
@@ -658,7 +658,7 @@ mod tests {
         
         let similarity = result.unwrap();
         assert!(similarity.is_finite());
-        assert!(similarity >= -1.0 && similarity <= 1.0);
+        assert!((-1.0..=1.0).contains(&similarity));
     }
 
     #[test]
@@ -672,7 +672,7 @@ mod tests {
         
         let similarity = result.unwrap();
         assert!(similarity.is_finite());
-        assert!(similarity >= -1.0 && similarity <= 1.0);
+        assert!((-1.0..=1.0).contains(&similarity));
     }
 
     #[test]
@@ -736,7 +736,7 @@ mod tests {
     fn test_serialize_deserialize_performance_stress() {
         let engine = create_test_engine(128);
         let entities = (0..1000).map(|i| {
-            create_test_entity(i, i as u16 % 50, &format!("stress_entity_{}", i), 128)
+            create_test_entity(i, i as u16 % 50, &format!("stress_entity_{i}"), 128)
         }).collect::<Vec<_>>();
         
         // Measure serialization time
@@ -763,7 +763,7 @@ mod tests {
     fn test_batch_entity_access_performance() {
         let engine = create_test_engine(64);
         let entities = (0..500).map(|i| {
-            create_test_entity(i, i as u16 % 20, &format!("batch_entity_{}", i), 64)
+            create_test_entity(i, i as u16 % 20, &format!("batch_entity_{i}"), 64)
         }).collect::<Vec<_>>();
         
         // Setup data
@@ -790,7 +790,7 @@ mod tests {
     fn test_similarity_search_performance_stress() {
         let engine = create_test_engine(256);
         let entities = (0..2000).map(|i| {
-            let mut entity = create_test_entity(i, i as u16 % 100, &format!("search_entity_{}", i), 256);
+            let mut entity = create_test_entity(i, i as u16 % 100, &format!("search_entity_{i}"), 256);
             // Create diverse embeddings for better search testing
             entity.embedding = (0..256).map(|j| (i as f32 * j as f32).sin() / 100.0).collect();
             entity
@@ -801,12 +801,10 @@ mod tests {
         engine.load_zero_copy_data(data).unwrap();
         
         // Test search performance with different query patterns
-        let queries = vec![
-            vec![0.1; 256],
+        let queries = [vec![0.1; 256],
             vec![0.5; 256],
             vec![0.9; 256],
-            (0..256).map(|i| (i as f32).sin() / 100.0).collect(),
-        ];
+            (0..256).map(|i| (i as f32).sin() / 100.0).collect()];
         
         for (i, query) in queries.iter().enumerate() {
             let start = Instant::now();
@@ -818,7 +816,7 @@ mod tests {
             assert!(results.iter().all(|r| r.entity_id < 2000));
             
             // Performance should be reasonable even with large dataset
-            assert!(search_time.as_millis() < 200, "Query {} took too long: {:?}", i, search_time);
+            assert!(search_time.as_millis() < 200, "Query {i} took too long: {search_time:?}");
             
             // Verify similarity ordering
             for j in 1..results.len() {
@@ -836,7 +834,7 @@ mod tests {
         
         // Add entities and check memory usage increases
         let entities = (0..100).map(|i| {
-            create_test_entity(i, i as u16 % 10, &format!("memory_entity_{}", i), 32)
+            create_test_entity(i, i as u16 % 10, &format!("memory_entity_{i}"), 32)
         }).collect::<Vec<_>>();
         
         let data = engine.serialize_entities_to_zero_copy(entities).unwrap();
@@ -905,7 +903,7 @@ mod tests {
         for i in 0..10 {
             let entity = EntityData {
                 type_id: i as u16,
-                properties: format!("entity_{}", i),
+                properties: format!("entity_{i}"),
                 embedding: vec![i as f32 / 10.0; 4],
             };
             zero_copy_engine.insert_entity(i, entity).await.unwrap();
@@ -935,7 +933,7 @@ mod tests {
         for i in 0..1000 {
             let entity = EntityData {
                 type_id: (i % 10) as u16,
-                properties: format!("benchmark_entity_{}", i),
+                properties: format!("benchmark_entity_{i}"),
                 embedding: (0..96).map(|j| (i + j) as f32 / 1000.0).collect(),
             };
             zero_copy_engine.insert_entity(i, entity).await.unwrap();
@@ -944,7 +942,7 @@ mod tests {
         // Serialize entities
         let entities: Vec<EntityData> = (0..1000).map(|i| EntityData {
             type_id: (i % 10) as u16,
-            properties: format!("benchmark_entity_{}", i),
+            properties: format!("benchmark_entity_{i}"),
             embedding: (0..96).map(|j| (i + j) as f32 / 1000.0).collect(),
         }).collect();
         

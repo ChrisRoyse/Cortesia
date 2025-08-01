@@ -286,7 +286,7 @@ mod tests {
         let mut entity_keys = Vec::new();
         
         for (i, strength) in strengths.into_iter().enumerate() {
-            let entity = EntityKey::from_hash(&format!("entity_{}", i));
+            let entity = EntityKey::from_hash(&format!("entity_{i}"));
             activations.insert(entity, strength);
             entity_keys.push(entity);
         }
@@ -499,7 +499,7 @@ mod tests {
             ..Default::default()
         };
         
-        let result = apply_semantic_competition(&mut pattern, &group, &config).await.unwrap();
+        let _result = apply_semantic_competition(&mut pattern, &group, &config).await.unwrap();
         
         // Should use soft competition since winner < threshold
         assert!(pattern.activations[&entities[1]] > 0.0);

@@ -88,7 +88,7 @@ Assign numeric IDs, compute embeddings (same model as embed).
 
 Batch append to CSR & embedding bank; periodically delta-merge generations.
 
-The entire ETL can stay Rust-native by using [ruvnet/claude-flow] style task graphs (back-pressure, async streams).
+The entire ETL can stay Rust-native by using task graphs with back-pressure and async streams.
 
 7 Build & Deployment Steps
 Phase	Details	Tooling
@@ -639,11 +639,11 @@ impl LockFreeGraph {
 }
 ```
 
-## **9. Integration with Claude-Flow Patterns**
+## **9. Integration with Task Flow Patterns**
 
 ### **9.1 Adaptive Resource Management**
 
-Inspired by claude-flow's intelligent resource allocation[21]:
+Inspired by intelligent resource allocation patterns:
 
 ```rust
 pub struct AdaptiveGraphManager {
@@ -677,7 +677,7 @@ impl AdaptiveGraphManager {
 
 ### **9.2 Memory Persistence Architecture**
 
-Following claude-flow's SQLite memory system[21]:
+Following SQLite-based memory persistence patterns:
 
 ```rust
 pub struct PersistentGraphMemory {

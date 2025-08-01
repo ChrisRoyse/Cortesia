@@ -59,7 +59,7 @@ pub async fn handle_hierarchical_clustering(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: false,
-    }).map_err(|e| format!("Failed to get graph data: {}", e))?;
+    }).map_err(|e| format!("Failed to get graph data: {e}"))?;
     drop(engine);
     
     let start_time = std::time::Instant::now();
@@ -69,7 +69,7 @@ pub async fn handle_hierarchical_clustering(
         "leiden" => execute_leiden_clustering(&all_triples, resolution, min_cluster_size, max_clusters).await,
         "louvain" => execute_louvain_clustering(&all_triples, resolution, min_cluster_size, max_clusters).await,
         "hierarchical" => execute_hierarchical_clustering(&all_triples, min_cluster_size, max_clusters).await,
-        _ => return Err(format!("Unknown clustering algorithm: {}", algorithm))
+        _ => return Err(format!("Unknown clustering algorithm: {algorithm}"))
     };
     
     let clustering_time = start_time.elapsed();
@@ -166,7 +166,7 @@ pub async fn handle_cognitive_reasoning_chains(
         limit: 1000,
         min_confidence: 0.0,
         include_chunks: true,
-    }).map_err(|e| format!("Failed to get relevant knowledge: {}", e))?;
+    }).map_err(|e| format!("Failed to get relevant knowledge: {e}"))?;
     drop(engine);
     
     let start_time = std::time::Instant::now();
@@ -177,7 +177,7 @@ pub async fn handle_cognitive_reasoning_chains(
         "inductive" => execute_inductive_reasoning(premise, &relevant_knowledge, max_chain_length, confidence_threshold).await,
         "abductive" => execute_abductive_reasoning(premise, &relevant_knowledge, max_chain_length, confidence_threshold).await,
         "analogical" => execute_analogical_reasoning(premise, &relevant_knowledge, max_chain_length, confidence_threshold).await,
-        _ => return Err(format!("Unknown reasoning type: {}", reasoning_type))
+        _ => return Err(format!("Unknown reasoning type: {reasoning_type}"))
     };
     
     let reasoning_time = start_time.elapsed();
@@ -267,7 +267,7 @@ pub async fn handle_approximate_similarity_search(
         vector
     } else if let Some(text) = query_text {
         generate_text_embedding(text).await
-            .map_err(|e| format!("Failed to generate embedding: {}", e))?
+            .map_err(|e| format!("Failed to generate embedding: {e}"))?
     } else {
         return Err("Must provide either 'query_text' or 'query_vector'".to_string());
     };
@@ -376,7 +376,7 @@ pub async fn handle_knowledge_quality_metrics(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: true,
-    }).map_err(|e| format!("Failed to get knowledge data: {}", e))?;
+    }).map_err(|e| format!("Failed to get knowledge data: {e}"))?;
     drop(engine);
     
     let start_time = std::time::Instant::now();
@@ -387,7 +387,7 @@ pub async fn handle_knowledge_quality_metrics(
         "entities" => execute_entity_quality_assessment(&all_knowledge).await,
         "relationships" => execute_relationship_quality_assessment(&all_knowledge).await,
         "content" => execute_content_quality_assessment(&all_knowledge).await,
-        _ => return Err(format!("Unknown assessment scope: {}", assessment_scope))
+        _ => return Err(format!("Unknown assessment scope: {assessment_scope}"))
     };
     
     let assessment_time = start_time.elapsed();
@@ -479,19 +479,19 @@ async fn handle_hybrid_search_legacy(
     
     // Perform different types of searches
     let semantic_results = if ["semantic", "hybrid"].contains(&search_type) {
-        perform_semantic_search(&*engine, query, limit).await?
+        perform_semantic_search(&engine, query, limit).await?
     } else {
         vec![]
     };
     
     let structural_results = if ["structural", "hybrid"].contains(&search_type) {
-        perform_structural_search(&*engine, query, limit).await?
+        perform_structural_search(&engine, query, limit).await?
     } else {
         vec![]
     };
     
     let keyword_results = if ["keyword", "hybrid"].contains(&search_type) {
-        perform_keyword_search(&*engine, query, limit).await?
+        perform_keyword_search(&engine, query, limit).await?
     } else {
         vec![]
     };
@@ -607,12 +607,12 @@ pub async fn handle_validate_knowledge(
     };
     
     let triples = engine.query_triples(query)
-        .map_err(|e| format!("Failed to query triples: {}", e))?;
+        .map_err(|e| format!("Failed to query triples: {e}"))?;
     
     // Perform validations
     if ["consistency", "all"].contains(&validation_type) {
         let consistency_result = validate_consistency(&triples.triples, &triples.triples).await
-            .map_err(|e| format!("Consistency validation failed: {}", e))?;
+            .map_err(|e| format!("Consistency validation failed: {e}"))?;
         validation_results.insert("consistency".to_string(), json!({
             "passed": consistency_result.is_valid,
             "confidence": consistency_result.confidence,
@@ -623,7 +623,7 @@ pub async fn handle_validate_knowledge(
     if ["conflicts", "all"].contains(&validation_type) {
         // Check for conflicts (using consistency check)
         let conflicts_result = validate_consistency(&triples.triples, &triples.triples).await
-            .map_err(|e| format!("Conflict validation failed: {}", e))?;
+            .map_err(|e| format!("Conflict validation failed: {e}"))?;
         validation_results.insert("conflicts".to_string(), json!({
             "found": conflicts_result.conflicts.len(),
             "conflicts": conflicts_result.conflicts
@@ -637,7 +637,7 @@ pub async fn handle_validate_knowledge(
         
         for triple in &triples.triples {
             let triple_validation = validate_triple(triple).await
-                .map_err(|e| format!("Triple validation failed: {}", e))?;
+                .map_err(|e| format!("Triple validation failed: {e}"))?;
             quality_score *= triple_validation.confidence;
             quality_issues.extend(triple_validation.validation_notes);
         }
@@ -650,7 +650,7 @@ pub async fn handle_validate_knowledge(
     
     if ["completeness", "all"].contains(&validation_type) && entity.is_some() {
         let missing = validate_completeness(entity.unwrap(), &triples.triples).await
-            .map_err(|e| format!("Completeness validation failed: {}", e))?;
+            .map_err(|e| format!("Completeness validation failed: {e}"))?;
         validation_results.insert("completeness".to_string(), json!({
             "missing_info": missing,
             "is_complete": missing.is_empty()
@@ -689,7 +689,7 @@ pub async fn handle_validate_knowledge(
     
     let message = format!(
         "Validation Results{}:\n\n{}",
-        if let Some(e) = entity { format!(" for {}", e) } else { String::new() },
+        if let Some(e) = entity { format!(" for {e}") } else { String::new() },
         format_validation_results(&validation_results)
     );
     
@@ -978,8 +978,8 @@ async fn generate_quality_metrics(
 ) -> std::result::Result<Value, String> {
     let mut importance_scores = Vec::new();
     let mut below_threshold_entities = Vec::new();
-    let content_quality;
-    let knowledge_density;
+    
+    
     
     // Calculate importance scores for entities
     let mut entity_connections: HashMap<String, usize> = HashMap::new();
@@ -990,10 +990,10 @@ async fn generate_quality_metrics(
         *entity_connections.entry(triple.object.clone()).or_insert(0) += 1;
         
         entity_confidence.entry(triple.subject.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(triple.confidence);
         entity_confidence.entry(triple.object.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(triple.confidence);
     }
     
@@ -1003,7 +1003,7 @@ async fn generate_quality_metrics(
             .map(|v| v.iter().sum::<f32>() / v.len() as f32)
             .unwrap_or(0.0);
         
-        let importance = (connections.clone() as f32 / 10.0).min(1.0) * avg_confidence;
+        let importance = (*connections as f32 / 10.0).min(1.0) * avg_confidence;
         
         importance_scores.push(json!({
             "entity": entity,
@@ -1040,7 +1040,7 @@ async fn generate_quality_metrics(
         0.0
     };
     
-    content_quality = json!({
+    let content_quality = json!({
         "total_facts": total_triples,
         "high_quality_facts": high_confidence_triples,
         "average_confidence": avg_confidence,
@@ -1072,7 +1072,7 @@ async fn generate_quality_metrics(
         }))
         .collect::<Vec<_>>();
     
-    knowledge_density = json!({
+    let knowledge_density = json!({
         "average_connections": avg_connections,
         "total_entities": entity_connections.len(),
         "density_score": (avg_connections / 10.0).min(1.0),
@@ -1101,7 +1101,7 @@ async fn generate_quality_metrics(
                              else { "Poor" },
             "entities_below_threshold": below_threshold_entities.len(),
             "improvement_priority": if below_threshold_entities.len() > 5 { "High" }
-                                  else if below_threshold_entities.len() > 0 { "Medium" }
+                                  else if !below_threshold_entities.is_empty() { "Medium" }
                                   else { "Low" }
         }
     }))
@@ -1249,7 +1249,7 @@ fn format_validation_results(results: &HashMap<String, Value>) -> String {
     
     if let Some(conflicts) = results.get("conflicts") {
         let count = conflicts["found"].as_u64().unwrap_or(0);
-        output.push_str(&format!("\n**Conflicts**: {} issues found\n", count));
+        output.push_str(&format!("\n**Conflicts**: {count} issues found\n"));
         if let Some(conflict_list) = conflicts["conflicts"].as_array() {
             for (i, conflict) in conflict_list.iter().take(3).enumerate() {
                 output.push_str(&format!("  {}. {}\n", i + 1, conflict.as_str().unwrap_or("")));

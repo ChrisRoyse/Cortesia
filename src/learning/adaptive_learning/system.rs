@@ -120,7 +120,7 @@ impl AdaptiveLearningSystem {
                 target_type: LearningTargetType::BehaviorModification,
                 importance: 0.8,
                 feasibility: 0.7,
-                description: format!("Improve {}", problem_area),
+                description: format!("Improve {problem_area}"),
                 expected_impact: 0.2,
             });
         }
@@ -132,7 +132,7 @@ impl AdaptiveLearningSystem {
                     target_type: LearningTargetType::PatternImprovement,
                     importance: correlation.abs(),
                     feasibility: 0.8,
-                    description: format!("Optimize correlation between {} and {}", metric1, metric2),
+                    description: format!("Optimize correlation between {metric1} and {metric2}"),
                     expected_impact: correlation.abs() * 0.3,
                 });
             }
@@ -416,11 +416,11 @@ impl AdaptiveLearningSystem {
         report.push_str(&format!("Completed Adaptations: {}\n", status.completed_adaptations));
         
         // Performance monitoring report
-        report.push_str("\n");
+        report.push('\n');
         report.push_str(&self.performance_monitor.generate_report()?);
         
         // Scheduler report
-        report.push_str("\n");
+        report.push('\n');
         report.push_str(&self.learning_scheduler.generate_report());
         
         // Adaptation history summary
@@ -682,7 +682,7 @@ mod tests {
         
         // Average improvement should be (0.2 + 0.05) / 2 = 0.125
         assert!((improvement - 0.125).abs() < 0.001, 
-               "Performance improvement calculation incorrect: expected ~0.125, got {}", improvement);
+               "Performance improvement calculation incorrect: expected ~0.125, got {improvement}");
     }
 
     #[test]
@@ -761,7 +761,7 @@ mod tests {
                 performance_before: 0.6,
                 performance_after: 0.8,
                 success: true,
-                impact_assessment: format!("Test adaptation {}", i),
+                impact_assessment: format!("Test adaptation {i}"),
             });
         }
         

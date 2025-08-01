@@ -163,7 +163,7 @@ impl Triple {
         let word_count = predicate.split('_').count();
         if word_count > 3 {
             return Err(GraphError::SerializationError(
-                format!("Predicate has too many words: {} > 3", word_count)
+                format!("Predicate has too many words: {word_count} > 3")
             ));
         }
         
@@ -300,7 +300,7 @@ impl KnowledgeNode {
         
         if total_size > MAX_CHUNK_SIZE_BYTES {
             return Err(GraphError::SerializationError(
-                format!("Entity data too large: {} > {}", total_size, MAX_CHUNK_SIZE_BYTES)
+                format!("Entity data too large: {total_size} > {MAX_CHUNK_SIZE_BYTES}")
             ));
         }
         
@@ -360,14 +360,13 @@ impl KnowledgeNode {
                 format!("FACT: {}", triple.to_natural_language())
             },
             NodeContent::Chunk { text, word_count, .. } => {
-                format!("KNOWLEDGE ({} words): {}", word_count, text)
+                format!("KNOWLEDGE ({word_count} words): {text}")
             },
             NodeContent::Entity { name, description, entity_type, .. } => {
-                format!("ENTITY: {} ({})\nDescription: {}", name, entity_type, description)
+                format!("ENTITY: {name} ({entity_type})\nDescription: {description}")
             },
             NodeContent::Relationship { predicate, description, domain, range } => {
-                format!("RELATIONSHIP: {} (from {} to {})\nDescription: {}", 
-                       predicate, domain, range, description)
+                format!("RELATIONSHIP: {predicate} (from {domain} to {range})\nDescription: {description}")
             },
         }
     }
@@ -375,7 +374,7 @@ impl KnowledgeNode {
     /// Calculate quality score based on usage and content
     pub fn calculate_quality_score(&mut self) {
         let recency_factor = 1.0 - ((current_timestamp() - self.metadata.created_at) as f32 / (86400.0 * 365.0)); // Decay over year
-        let usage_factor = ((self.metadata.access_count as f32).ln() as f32).max(0.0) / 10.0; // Log scale
+        let usage_factor = (self.metadata.access_count as f32).ln().max(0.0) / 10.0; // Log scale
         let size_efficiency = 1.0 - (self.metadata.size_bytes as f32 / MAX_CHUNK_SIZE_BYTES as f32).min(1.0f32);
         
         self.metadata.quality_score = (recency_factor * 0.3 + usage_factor * 0.5 + size_efficiency * 0.2).clamp(0.0, 1.0);
@@ -1125,7 +1124,7 @@ mod tests {
         // Default should be equivalent to new()
         assert_eq!(vocab1.predicates.len(), vocab2.predicates.len());
         
-        for (key, _) in &vocab1.predicates {
+        for key in vocab1.predicates.keys() {
             assert!(vocab2.predicates.contains_key(key));
         }
     }

@@ -99,8 +99,7 @@ Return as JSON:
   "ambiguities": ["ambiguity1", "ambiguity2"]
 }}
 
-JSON Response:"#,
-            query = query
+JSON Response:"#
         );
         
         let task = ProcessingTask::new(ComplexityLevel::Medium, &prompt);
@@ -119,7 +118,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| RetrievalError::QueryProcessingError(format!("JSON parse error: {}", e)))?;
+            .map_err(|e| RetrievalError::QueryProcessingError(format!("JSON parse error: {e}")))?;
         
         let intent = match parsed["intent"].as_str().unwrap_or("factual_lookup") {
             "factual_lookup" => QueryIntent::FactualLookup,
@@ -226,7 +225,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| RetrievalError::QueryProcessingError(format!("JSON parse error: {}", e)))?;
+            .map_err(|e| RetrievalError::QueryProcessingError(format!("JSON parse error: {e}")))?;
         
         let expanded_terms = if let Some(terms_array) = parsed["expanded_terms"].as_array() {
             terms_array
@@ -342,7 +341,7 @@ JSON Response:"#,
     /// Generate query embedding for semantic search
     async fn generate_query_embedding(&self, query: &str) -> RetrievalResult2<Vec<f32>> {
         // Use embedding model to generate query embedding
-        let prompt = format!("Generate embedding for query: {}", query);
+        let prompt = format!("Generate embedding for query: {query}");
         let task = ProcessingTask::new(ComplexityLevel::Low, &prompt);
         
         let result = self.model_manager

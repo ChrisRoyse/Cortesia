@@ -17,6 +17,12 @@ pub struct VersionGraph {
     entity_nodes: Arc<RwLock<HashMap<String, HashSet<VersionNodeId>>>>,
 }
 
+impl Default for VersionGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VersionGraph {
     pub fn new() -> Self {
         Self {
@@ -30,7 +36,7 @@ impl VersionGraph {
     /// Add a database to the version graph
     pub fn add_database(&mut self, database_id: DatabaseId) -> Result<()> {
         let mut database_nodes = futures::executor::block_on(self.database_nodes.write());
-        database_nodes.entry(database_id).or_insert_with(HashSet::new);
+        database_nodes.entry(database_id).or_default();
         Ok(())
     }
 
@@ -158,7 +164,7 @@ impl VersionGraph {
             // Group versions by database
             for node_id in node_ids {
                 if let Some(node) = nodes.get(node_id) {
-                    database_versions.entry(node.database_id.clone()).or_insert_with(Vec::new).push(node);
+                    database_versions.entry(node.database_id.clone()).or_default().push(node);
                 }
             }
             
@@ -196,7 +202,7 @@ impl VersionGraph {
         let edges = self.edges.read().await;
         
         let node = nodes.get(node_id)
-            .ok_or_else(|| GraphError::InvalidInput(format!("Version node not found: {:?}", node_id)))?;
+            .ok_or_else(|| GraphError::InvalidInput(format!("Version node not found: {node_id:?}")))?;
         
         let mut ancestors = Vec::new();
         let mut descendants = Vec::new();

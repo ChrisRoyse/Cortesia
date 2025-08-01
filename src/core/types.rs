@@ -19,7 +19,7 @@ impl EntityKey {
 
 impl std::fmt::Display for EntityKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -121,7 +121,7 @@ pub struct Weight(f32);
 
 impl Weight {
     pub fn new(value: f32) -> crate::error::Result<Self> {
-        if value < 0.0 || value > 1.0 || value.is_nan() || value.is_infinite() {
+        if !(0.0..=1.0).contains(&value) || value.is_nan() || value.is_infinite() {
             return Err(crate::error::GraphError::InvalidWeight(value));
         }
         Ok(Weight(value))
@@ -273,6 +273,14 @@ impl CompactEntity {
 
 // Unsafe but ultra-fast neighbor access
 impl NeighborSlice {
+    /// Creates a new NeighborSlice from a raw pointer.
+    /// 
+    /// # Safety
+    /// 
+    /// The caller must ensure that:
+    /// - `ptr` is valid for reads for `len` consecutive `u32` values
+    /// - The memory referenced by `ptr` remains valid for the lifetime of the returned slice
+    /// - No mutable references to the same memory exist while this slice is in use
     pub unsafe fn new(ptr: *const u32, len: u16) -> Self {
         Self { data: ptr, len }
     }
@@ -284,9 +292,20 @@ impl NeighborSlice {
     pub fn len(&self) -> usize {
         self.len as usize
     }
+    
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 }
 
 impl QueryParams {
+    /// Creates new QueryParams from an embedding slice.
+    /// 
+    /// # Safety
+    /// 
+    /// The caller must ensure that:
+    /// - The `embedding` slice remains valid for the lifetime of this QueryParams
+    /// - No mutations occur to the embedding data while this QueryParams exists
     pub unsafe fn new(embedding: &[f32], max_entities: usize, max_depth: u8) -> Self {
         Self {
             embedding: embedding.as_ptr(),
@@ -297,6 +316,12 @@ impl QueryParams {
         }
     }
     
+    /// Returns the embedding as a slice.
+    /// 
+    /// # Safety
+    /// 
+    /// The caller must ensure that the original embedding data is still valid
+    /// and has not been deallocated or moved since this QueryParams was created.
     pub unsafe fn embedding_slice(&self) -> &[f32] {
         std::slice::from_raw_parts(self.embedding, self.embedding_dim as usize)
     }
@@ -328,8 +353,8 @@ mod tests {
         // EntityKey is a slotmap key type, so we can't construct it directly
         // but we can test the Display implementation through debug formatting
         let key = EntityKey::default();
-        let display_str = format!("{}", key);
-        let debug_str = format!("{:?}", key);
+        let display_str = format!("{key}");
+        let debug_str = format!("{key:?}");
         assert_eq!(display_str, debug_str);
     }
 
@@ -502,7 +527,7 @@ mod tests {
         fn test_relationship_type_clone_and_copy() {
             let rel_type = RelationshipType::Directed;
             let copied = rel_type;
-            let cloned = rel_type.clone();
+            let cloned = rel_type;
             
             assert_eq!(rel_type, copied);
             assert_eq!(rel_type, cloned);
@@ -666,7 +691,7 @@ mod tests {
         fn test_weight_clone_and_copy() {
             let weight = Weight::new(0.5).unwrap();
             let copied = weight;
-            let cloned = weight.clone();
+            let cloned = weight;
             
             assert_eq!(weight.value(), copied.value());
             assert_eq!(weight.value(), cloned.value());
@@ -712,7 +737,7 @@ mod tests {
                 last_accessed: std::time::Instant::now(),
             };
 
-            let cloned = meta.clone();
+            let cloned = meta;
             assert_eq!(meta.type_id, cloned.type_id);
             assert_eq!(meta.embedding_offset, cloned.embedding_offset);
             assert_eq!(meta.property_offset, cloned.property_offset);
@@ -888,7 +913,7 @@ mod tests {
 
         #[test]
         fn test_neighbor_slice_creation_and_access() {
-            let data = vec![1u32, 2u32, 3u32, 4u32];
+            let data = [1u32, 2u32, 3u32, 4u32];
             let slice = unsafe { NeighborSlice::new(data.as_ptr(), 4) };
 
             assert_eq!(slice.len(), 4);
@@ -907,7 +932,7 @@ mod tests {
 
         #[test]
         fn test_neighbor_slice_len_conversion() {
-            let data = vec![1u32, 2u32];
+            let data = [1u32, 2u32];
             let slice = unsafe { NeighborSlice::new(data.as_ptr(), 2) };
 
             assert_eq!(slice.len(), 2);

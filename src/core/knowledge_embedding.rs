@@ -188,7 +188,7 @@ impl EmbeddingGenerator {
         // Simple entity detection based on capitalization patterns
         let words: Vec<&str> = text.split_whitespace().collect();
         let entity_count = words.iter()
-            .filter(|word| word.chars().next().map_or(false, |c| c.is_uppercase()))
+            .filter(|word| word.chars().next().is_some_and(|c| c.is_uppercase()))
             .count();
         
         entity_count as f32 / words.len().max(1) as f32

@@ -157,7 +157,7 @@ pub fn deprecation_warning(old_tool: &str) -> String {
         "knowledge_quality_metrics" => {
             "Tool 'knowledge_quality_metrics' is deprecated. Use 'validate_knowledge' with scope='comprehensive' instead.".to_string()
         },
-        _ => format!("Tool '{}' may be deprecated.", old_tool)
+        _ => format!("Tool '{old_tool}' may be deprecated.")
     }
 }
 

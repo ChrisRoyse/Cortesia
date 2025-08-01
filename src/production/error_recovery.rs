@@ -166,6 +166,12 @@ pub struct OperationStats {
     pub avg_execution_time_ms: AtomicU64,
 }
 
+impl Default for ErrorRecoveryManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ErrorRecoveryManager {
     pub fn new() -> Self {
         Self {
@@ -202,7 +208,7 @@ impl ErrorRecoveryManager {
         // Get or create operation stats
         let stats = self.operation_stats
             .entry(operation_name.to_string())
-            .or_insert_with(OperationStats::default);
+            .or_default();
         
         stats.total_attempts.fetch_add(1, Ordering::Relaxed);
 
@@ -211,7 +217,7 @@ impl ErrorRecoveryManager {
             if !circuit_breaker.can_execute() {
                 stats.circuit_breaker_trips.fetch_add(1, Ordering::Relaxed);
                 return Err(GraphError::ResourceExhausted {
-                    resource: format!("Circuit breaker open for operation: {}", operation_name),
+                    resource: format!("Circuit breaker open for operation: {operation_name}"),
                 });
             }
         }
@@ -390,8 +396,7 @@ impl ErrorRecoveryManager {
             // Validate consistency - successful + failed should equal total
             if successful + failed != total {
                 log::warn!(
-                    "Inconsistent stats for operation: total={}, successful={}, failed={}", 
-                    total, successful, failed
+                    "Inconsistent stats for operation: total={total}, successful={successful}, failed={failed}"
                 );
             }
             

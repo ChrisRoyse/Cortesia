@@ -26,6 +26,12 @@ pub struct QuantizedEmbeddingStorage {
     pub memory_usage: usize,
 }
 
+impl Default for QuantizedEmbeddingStorage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl QuantizedEmbeddingStorage {
     pub fn new() -> Self {
         Self {
@@ -222,11 +228,10 @@ impl ProductQuantizer {
             current_distortion /= subvectors.len() as f32;
             
             // Early stopping if converged
-            if !changed || (prev_distortion - current_distortion).abs() < 1e-6 {
-                if iter > 5 { // Ensure minimum iterations
+            if (!changed || (prev_distortion - current_distortion).abs() < 1e-6)
+                && iter > 5 { // Ensure minimum iterations
                     break;
                 }
-            }
             prev_distortion = current_distortion;
             
             // Update step
@@ -350,7 +355,7 @@ impl ProductQuantizer {
             let centroid_end = centroid_start + self.subvector_size;
             let centroid = &self.codebooks[m][centroid_start..centroid_end];
             
-            for (_i, (&q, &c)) in chunk.iter().zip(centroid.iter()).enumerate() {
+            for (&q, &c) in chunk.iter().zip(centroid.iter()) {
                 let diff = q - c;
                 distance += diff * diff;
             }
@@ -565,7 +570,7 @@ mod tests {
             .sum();
         
         // Error should be reasonable (this is lossy compression)
-        assert!(error < 100.0, "Reconstruction error too high: {}", error);
+        assert!(error < 100.0, "Reconstruction error too high: {error}");
     }
 
     #[test]
@@ -610,7 +615,7 @@ mod tests {
                 .sum::<f32>() / embedding.len() as f32;
             
             // For simple constant embeddings, reconstruction should be quite accurate
-            assert!(mse < 1.0, "Mean squared error too high: {} for embedding {:?}", mse, embedding);
+            assert!(mse < 1.0, "Mean squared error too high: {mse} for embedding {embedding:?}");
         }
     }
 
@@ -758,7 +763,7 @@ mod tests {
         let elapsed = start.elapsed();
         
         assert!(quantizer.is_trained());
-        assert!(elapsed.as_secs() < 10, "Adaptive training took too long: {:?}", elapsed);
+        assert!(elapsed.as_secs() < 10, "Adaptive training took too long: {elapsed:?}");
     }
 
     #[test]

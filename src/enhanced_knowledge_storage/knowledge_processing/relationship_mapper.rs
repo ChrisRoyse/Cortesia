@@ -146,9 +146,7 @@ Return results as a JSON array with this exact format:
 Text to analyze:
 {text}
 
-JSON Response:"#,
-            entity_list = entity_list,
-            text = text
+JSON Response:"#
         )
     }
     
@@ -166,7 +164,7 @@ JSON Response:"#,
         
         // Parse JSON response
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let mut relationships = Vec::new();
         
@@ -310,7 +308,7 @@ JSON Response:"#,
         let context_occurrences = text.matches(&relationship.context).count();
         if context_occurrences > 1 {
             relationship.supporting_evidence.push(
-                format!("Context appears {} times in text", context_occurrences)
+                format!("Context appears {context_occurrences} times in text")
             );
         }
         

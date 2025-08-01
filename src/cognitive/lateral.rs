@@ -118,12 +118,12 @@ impl LateralThinking {
     
     /// Activate a single concept for lateral thinking
     async fn activate_concept(&self, concept: &str) -> Result<ActivationPattern> {
-        let mut activation_pattern = ActivationPattern::new(format!("lateral_{}", concept));
+        let mut activation_pattern = ActivationPattern::new(format!("lateral_{concept}"));
         
         let matching_entities = self.find_concept_entities(concept).await?;
         
         if matching_entities.is_empty() {
-            return Err(GraphError::ProcessingError(format!("No entities found for concept: {}", concept)));
+            return Err(GraphError::ProcessingError(format!("No entities found for concept: {concept}")));
         }
         
         // Set activations with creativity boost for lateral thinking
@@ -448,7 +448,7 @@ impl LateralThinking {
         let mut matches = Vec::new();
         
         for (key, _entity_data, _) in &all_entities {
-            let concept_id = format!("entity_{:?}", key);
+            let concept_id = format!("entity_{key:?}");
             let relevance = self.calculate_concept_relevance(&concept_id, concept);
             if relevance > 0.2 {
                 matches.push((*key, relevance));
@@ -464,7 +464,7 @@ impl LateralThinking {
             .find(|(k, _, _)| k == &entity_key)
             .map(|(_, data, activation)| BrainInspiredEntity {
                 id: entity_key,
-                concept_id: format!("entity_{:?}", entity_key),
+                concept_id: format!("entity_{entity_key:?}"),
                 direction: EntityDirection::Input,
                 properties: HashMap::new(),
                 embedding: data.embedding.clone(),
@@ -717,7 +717,7 @@ impl LateralThinking {
                         let mut new_path = path.clone();
                         new_path.push(next_entity);
                         let mut new_concepts = concepts.clone();
-                        new_concepts.push(format!("concept_{}", i));
+                        new_concepts.push(format!("concept_{i}"));
                         queue.push_back((new_path, new_concepts));
                     }
                 }
@@ -750,7 +750,7 @@ impl CognitivePattern for LateralThinking {
         
         // Generate answer from lateral connections
         let answer = if result.bridges.is_empty() {
-            format!("No creative connections found between {} and {}", concept_a, concept_b)
+            format!("No creative connections found between {concept_a} and {concept_b}")
         } else {
             let best_bridge = &result.bridges[0];
             format!(
@@ -833,7 +833,7 @@ impl LateralThinking {
                     step_id: trace.len(),
                     entity_key,
                     concept_id: bridge.intermediate_concepts.get(j)
-                        .unwrap_or(&format!("bridge_{}_{}", i, j)).clone(),
+                        .unwrap_or(&format!("bridge_{i}_{j}")).clone(),
                     activation_level: bridge.novelty_score * (1.0 - 0.1 * j as f32),
                     operation_type: if j == 0 {
                         ActivationOperation::Initialize

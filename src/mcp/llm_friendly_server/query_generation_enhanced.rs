@@ -330,11 +330,11 @@ fn generate_fallback_query(entities: &[String], query_language: &str) -> (String
                 )
             } else {
                 let filters = entities.iter()
-                    .map(|e| format!("STR(?s) = '{}' || STR(?o) = '{}'", e, e))
+                    .map(|e| format!("STR(?s) = '{e}' || STR(?o) = '{e}'"))
                     .collect::<Vec<_>>()
                     .join(" || ");
                 (
-                    format!("SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER({}) }}", filters),
+                    format!("SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER({filters}) }}"),
                     format!("Finding triples involving: {}", entities.join(", "))
                 )
             }
@@ -505,16 +505,16 @@ mod tests {
         // Test facts template
         let (query, explanation) = match_query_template(
             "find all facts about Einstein",
-            &vec!["Einstein".to_string()],
+            &["Einstein".to_string()],
             "cypher"
         );
         assert!(query.contains("Einstein"));
         assert!(explanation.contains("find_facts_about_entity"));
         
         // Test relationship template
-        let (query, explanation) = match_query_template(
+        let (query, _explanation) = match_query_template(
             "show the connection between Einstein and Newton",
-            &vec!["Einstein".to_string(), "Newton".to_string()],
+            &["Einstein".to_string(), "Newton".to_string()],
             "cypher"
         );
         assert!(query.contains("Einstein"));
@@ -524,14 +524,14 @@ mod tests {
     
     #[test]
     fn test_fallback_query_empty_entities() {
-        let (query, explanation) = generate_fallback_query(&vec![], "cypher");
+        let (query, explanation) = generate_fallback_query(&[], "cypher");
         assert!(query.contains("LIMIT"));
         assert!(explanation.contains("no specific entities"));
     }
     
     #[test]
     fn test_fallback_query_single_entity() {
-        let (query, explanation) = generate_fallback_query(&vec!["Einstein".to_string()], "cypher");
+        let (query, explanation) = generate_fallback_query(&["Einstein".to_string()], "cypher");
         assert!(query.contains("Einstein"));
         assert!(query.contains("MATCH"));
         assert!(explanation.contains("connections"));
@@ -540,7 +540,7 @@ mod tests {
     #[test]
     fn test_fallback_query_multiple_entities() {
         let (query, explanation) = generate_fallback_query(
-            &vec!["Einstein".to_string(), "Tesla".to_string()], 
+            &["Einstein".to_string(), "Tesla".to_string()], 
             "cypher"
         );
         assert!(query.contains("Einstein"));

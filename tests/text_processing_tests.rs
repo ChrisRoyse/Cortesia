@@ -84,7 +84,7 @@ async fn test_importance_scorer_with_context() {
     assert!(score <= 1.0);
     
     // Test without context for comparison
-    let score_no_context = scorer.calculate_importance("pattern recognition", None);
+    let _score_no_context = scorer.calculate_importance("pattern recognition", None);
     assert!(score > 0.0);
     assert!(score <= 1.0);
 }
@@ -121,7 +121,7 @@ async fn test_structure_predictor_basic() {
     // Verify operation types
     for operation in &operations {
         match operation {
-            GraphOperation::CreateNode { id, node_type, properties } => {
+            GraphOperation::CreateNode { id, node_type, properties: _ } => {
                 assert!(!id.is_empty());
                 assert!(!node_type.is_empty());
             },
@@ -292,7 +292,7 @@ async fn test_concurrent_usage() {
         let predictor = predictor.clone();
         
         let handle = tokio::spawn(async move {
-            let text = format!("Test text number {}", i);
+            let text = format!("Test text number {i}");
             let normalized = normalizer.normalize(&text).unwrap();
             let _score = scorer.calculate_importance(&normalized, None);
             let operations = predictor.predict_structure(&normalized).await.unwrap();

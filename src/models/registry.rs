@@ -195,7 +195,7 @@ impl ModelRegistry {
         
         let mut size_distribution = HashMap::new();
         for metadata in self.models.values() {
-            *size_distribution.entry(metadata.size_category.clone()).or_insert(0) += 1;
+            *size_distribution.entry(metadata.size_category).or_insert(0) += 1;
         }
 
         let mut capability_stats = CapabilityStatistics::default();

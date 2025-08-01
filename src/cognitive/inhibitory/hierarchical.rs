@@ -76,7 +76,7 @@ fn create_hierarchical_layers(
     
     // Group entities by level
     for (entity, level) in abstraction_levels {
-        layers_map.entry(*level).or_insert_with(Vec::new).push(*entity);
+        layers_map.entry(*level).or_default().push(*entity);
     }
     
     // Create layer structures
@@ -221,7 +221,7 @@ mod tests {
         let mut entity_keys = Vec::new();
         
         for (i, strength) in strengths.into_iter().enumerate() {
-            let entity = EntityKey::from_hash(&format!("entity_{}", i));
+            let entity = EntityKey::from_hash(&format!("entity_{i}"));
             activations.insert(entity, strength);
             entity_keys.push(entity);
         }

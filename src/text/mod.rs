@@ -68,7 +68,7 @@ impl TextCompressor {
         let total_words = words.len() as f32;
         for (word, freq) in word_freq {
             let tf = freq as f32 / total_words;
-            let idf = (total_words / (freq as f32 + 1.0)).ln() as f32;
+            let idf = (total_words / (freq as f32 + 1.0)).ln();
             scores.insert(word, tf * idf);
         }
         
@@ -77,7 +77,7 @@ impl TextCompressor {
 
     /// Fast sentence extraction
     fn extract_sentences<'a>(&self, text: &'a str) -> Vec<&'a str> {
-        text.split(|c| c == '.' || c == '!' || c == '?')
+        text.split(['.', '!', '?'])
             .filter(|s| !s.trim().is_empty())
             .collect()
     }
@@ -160,8 +160,7 @@ impl TextCompressor {
         let word_count = text.split_whitespace().count();
         if word_count > MAX_NODE_WORDS {
             return Err(crate::error::GraphError::InvalidInput(
-                format!("Text exceeds maximum word limit of {}. Found {} words. Please summarize before storing.", 
-                    MAX_NODE_WORDS, word_count)
+                format!("Text exceeds maximum word limit of {MAX_NODE_WORDS}. Found {word_count} words. Please summarize before storing.")
             ));
         }
         Ok(())
@@ -245,6 +244,6 @@ mod tests {
         
         // Should process 1000 compressions in under 5 seconds
         assert!(elapsed.as_millis() < 5000);
-        println!("1000 compressions took: {:?}", elapsed);
+        println!("1000 compressions took: {elapsed:?}");
     }
 }

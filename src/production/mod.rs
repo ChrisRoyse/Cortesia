@@ -182,7 +182,7 @@ impl ProductionSystem {
             LogLevel::Info,
             "operation_executor",
             operation_name,
-            &format!("Starting operation: {}", operation_name)
+            &format!("Starting operation: {operation_name}")
         ).await;
         
         // Execute with error recovery if enabled
@@ -199,20 +199,20 @@ impl ProductionSystem {
                     LogLevel::Info,
                     "operation_executor",
                     operation_name,
-                    &format!("Operation completed successfully: {}", operation_name)
+                    &format!("Operation completed successfully: {operation_name}")
                 ).await;
                 
-                self.monitor.increment_counter(&format!("{}_success", operation_name));
+                self.monitor.increment_counter(&format!("{operation_name}_success"));
             }
             Err(e) => {
                 self.monitor.log(
                     LogLevel::Error,
                     "operation_executor",
                     operation_name,
-                    &format!("Operation failed: {} - {}", operation_name, e)
+                    &format!("Operation failed: {operation_name} - {e}")
                 ).await;
                 
-                self.monitor.increment_counter(&format!("{}_error", operation_name));
+                self.monitor.increment_counter(&format!("{operation_name}_error"));
             }
         }
         
@@ -299,13 +299,13 @@ impl ProductionSystem {
                     LogLevel::Error,
                     "production_system",
                     "shutdown",
-                    &format!("Graceful shutdown failed: {}", e)
+                    &format!("Graceful shutdown failed: {e}")
                 ).await;
                 
                 // Attempt force shutdown
                 let _force_report = self.shutdown_manager.force_shutdown().await?;
                 Err(crate::error::GraphError::RecoveryFailed(
-                    format!("Graceful shutdown failed, force shutdown executed: {}", e)
+                    format!("Graceful shutdown failed, force shutdown executed: {e}")
                 ))
             }
         }
@@ -371,6 +371,7 @@ impl Clone for ProductionSystem {
 
 /// Configuration for individual operations
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct OperationConfig {
     pub rate_limit: Option<RateLimitConfig>,
     pub retry: Option<RetryConfig>,
@@ -378,16 +379,6 @@ pub struct OperationConfig {
     pub enable_health_check: bool,
 }
 
-impl Default for OperationConfig {
-    fn default() -> Self {
-        Self {
-            rate_limit: None,
-            retry: None,
-            circuit_breaker: None,
-            enable_health_check: false,
-        }
-    }
-}
 
 /// Helper function to create a production system with sensible defaults
 pub fn create_production_system(

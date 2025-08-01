@@ -211,11 +211,11 @@ pub struct InternerStats {
 
 impl std::fmt::Display for InternerStats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "String Interner Stats:\n")?;
-        write!(f, "  Unique strings: {}\n", self.unique_strings)?;
-        write!(f, "  Total references: {}\n", self.total_references)?;
-        write!(f, "  Memory used: {} bytes\n", self.total_memory_bytes)?;
-        write!(f, "  Deduplication ratio: {:.1}:1\n", self.deduplication_ratio)?;
+        writeln!(f, "String Interner Stats:")?;
+        writeln!(f, "  Unique strings: {}", self.unique_strings)?;
+        writeln!(f, "  Total references: {}", self.total_references)?;
+        writeln!(f, "  Memory used: {} bytes", self.total_memory_bytes)?;
+        writeln!(f, "  Deduplication ratio: {:.1}:1", self.deduplication_ratio)?;
         write!(f, "  Memory saved: {} bytes", self.memory_saved_bytes)
     }
 }
@@ -314,6 +314,12 @@ pub struct GlobalStringInterner {
     interner: StringInterner,
 }
 
+impl Default for GlobalStringInterner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlobalStringInterner {
     pub fn new() -> Self {
         Self {
@@ -323,7 +329,7 @@ impl GlobalStringInterner {
     
     pub fn get() -> &'static GlobalStringInterner {
         static INSTANCE: std::sync::OnceLock<GlobalStringInterner> = std::sync::OnceLock::new();
-        INSTANCE.get_or_init(|| GlobalStringInterner::new())
+        INSTANCE.get_or_init(GlobalStringInterner::new)
     }
     
     pub fn intern<S: AsRef<str>>(&self, s: S) -> InternedString {

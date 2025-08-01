@@ -74,7 +74,7 @@ impl LLMKGApiServer {
         // Start dashboard in background
         tokio::spawn(async move {
             if let Err(e) = dashboard.start().await {
-                eprintln!("Dashboard error: {}", e);
+                eprintln!("Dashboard error: {e}");
             }
         });
         

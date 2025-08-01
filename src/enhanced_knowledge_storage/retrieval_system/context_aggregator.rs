@@ -255,7 +255,7 @@ Synthesized answer:"#,
             let extracted = self.extract_relationships_from_content(&item.content);
             
             for (source, predicate, target) in extracted {
-                let key = format!("{}-{}-{}", source, predicate, target);
+                let key = format!("{source}-{predicate}-{target}");
                 if !seen.contains(&key) {
                     seen.insert(key);
                     

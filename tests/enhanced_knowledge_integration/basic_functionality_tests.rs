@@ -41,7 +41,7 @@ async fn test_basic_string_operations() {
     let predicate = "developed";
     let object = "theory of relativity";
     
-    let triple_string = format!("{} {} {}", subject, predicate, object);
+    let triple_string = format!("{subject} {predicate} {object}");
     assert!(triple_string.contains(subject));
     assert!(triple_string.contains(predicate));
     assert!(triple_string.contains(object));
@@ -101,7 +101,7 @@ async fn test_concurrent_operations() {
     assert_eq!(results.len(), task_count);
     for result in results {
         let (id, contains_einstein) = result.expect("Task should complete");
-        assert!(contains_einstein, "Task {} should find Einstein", id);
+        assert!(contains_einstein, "Task {id} should find Einstein");
     }
     
     println!("✓ Concurrent operations work correctly");
@@ -135,7 +135,7 @@ async fn test_memory_efficient_operations() {
     for i in 0..iterations {
         // Process content without accumulating memory
         let word_count = content.split_whitespace().count();
-        assert!(word_count > 0, "Iteration {} should process content", i);
+        assert!(word_count > 0, "Iteration {i} should process content");
         
         // Occasionally check we're not accumulating too much
         if i % 100 == 0 {
@@ -167,5 +167,5 @@ async fn test_timing_operations() {
     // Should complete quickly
     assert!(duration.as_millis() < 100, "Processing should be fast");
     
-    println!("✓ Timing operations work correctly: {:?}", duration);
+    println!("✓ Timing operations work correctly: {duration:?}");
 }

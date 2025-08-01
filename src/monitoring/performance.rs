@@ -173,7 +173,7 @@ impl PerformanceMonitor {
         let filtered_history: Vec<OperationMetrics> = history.iter()
             .filter_map(|snapshot| {
                 snapshot.operations.iter().find(|op| {
-                    operation_type.as_ref().map_or(true, |t| &op.operation_type == t)
+                    operation_type.as_ref().is_none_or(|t| &op.operation_type == t)
                 }).cloned()
             })
             .collect();

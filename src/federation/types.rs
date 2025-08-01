@@ -320,5 +320,5 @@ pub fn generate_query_id() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    format!("query_{}", timestamp)
+    format!("query_{timestamp}")
 }

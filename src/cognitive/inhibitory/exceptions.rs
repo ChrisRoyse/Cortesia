@@ -258,7 +258,7 @@ mod tests {
         let mut entity_keys = Vec::new();
         
         for (i, strength) in strengths.into_iter().enumerate() {
-            let entity = EntityKey::from_hash(&format!("entity_{}", i));
+            let entity = EntityKey::from_hash(&format!("entity_{i}"));
             activations.insert(entity, strength);
             entity_keys.push(entity);
         }
@@ -326,7 +326,8 @@ mod tests {
         assert!(result.is_ok());
         let result = result.unwrap();
         assert!(!result.pattern_modified || result.pattern_modified); // May or may not be modified
-        assert!(result.unresolved_conflicts.len() >= 0);
+        // Unresolved conflicts should be reasonable
+        assert!(result.unresolved_conflicts.len() < 1000);
     }
 
     #[tokio::test]
@@ -338,7 +339,8 @@ mod tests {
         
         // This function is currently simplified and doesn't add exceptions
         // In a full implementation, it would detect actual mutual exclusions
-        assert!(exceptions.len() >= 0);
+        // Exceptions should be reasonable
+        assert!(exceptions.len() < 1000);
     }
 
     #[tokio::test]
@@ -350,7 +352,8 @@ mod tests {
         detect_temporal_conflicts(&pattern, &competition_results, &mut exceptions);
         
         // This function is currently simplified
-        assert!(exceptions.len() >= 0);
+        // Exceptions should be reasonable
+        assert!(exceptions.len() < 1000);
     }
 
     #[tokio::test]

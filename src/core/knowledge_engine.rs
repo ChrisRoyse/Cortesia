@@ -145,7 +145,7 @@ impl KnowledgeEngine {
     /// Store an entity definition for better LLM context
     pub fn store_entity(&self, name: String, entity_type: String, description: String, properties: HashMap<String, String>) -> Result<String> {
         // Generate embedding for entity
-        let entity_text = format!("{} is a {} - {}", name, entity_type, description);
+        let entity_text = format!("{name} is a {entity_type} - {description}");
         let embedding = self.embedding_generator.generate_embedding_for_text(&entity_text)?;
         
         // Create entity node
@@ -443,7 +443,7 @@ impl KnowledgeEngine {
         {
             let mut subject_index = self.subject_index.write();
             subject_index.entry(triple.subject.clone())
-                .or_insert_with(HashSet::new)
+                .or_default()
                 .insert(node_id.to_string());
         }
         
@@ -451,7 +451,7 @@ impl KnowledgeEngine {
         {
             let mut predicate_index = self.predicate_index.write();
             predicate_index.entry(triple.predicate.clone())
-                .or_insert_with(HashSet::new)
+                .or_default()
                 .insert(node_id.to_string());
         }
         
@@ -459,7 +459,7 @@ impl KnowledgeEngine {
         {
             let mut object_index = self.object_index.write();
             object_index.entry(triple.object.clone())
-                .or_insert_with(HashSet::new)
+                .or_default()
                 .insert(node_id.to_string());
         }
         
@@ -473,7 +473,7 @@ impl KnowledgeEngine {
         let (worst_id, _) = nodes.iter()
             .min_by(|(_, a), (_, b)| a.metadata.quality_score.partial_cmp(&b.metadata.quality_score).unwrap())
             .map(|(id, node)| (id.clone(), node.clone()))
-            .ok_or_else(|| GraphError::IndexCorruption)?;
+            .ok_or(GraphError::IndexCorruption)?;
         
         // Remove from main storage
         if let Some(node) = nodes.remove(&worst_id) {
@@ -576,7 +576,7 @@ impl KnowledgeEngine {
         context_map.insert(entity_name.to_string(), EntityContext {
             entity_name: entity_name.to_string(),
             entity_type,
-            description: format!("Entity: {}", entity_name),
+            description: format!("Entity: {entity_name}"),
             related_triples,
             confidence_score: 1.0,
         });
@@ -600,11 +600,11 @@ impl KnowledgeEngine {
         let mut text_parts = vec![format!("{}: {}", title, content)];
         
         if let Some(cat) = category {
-            text_parts.push(format!("Category: {}", cat));
+            text_parts.push(format!("Category: {cat}"));
         }
         
         if let Some(src) = source {
-            text_parts.push(format!("Source: {}", src));
+            text_parts.push(format!("Source: {src}"));
         }
         
         let text = text_parts.join("\n");
@@ -697,7 +697,7 @@ mod tests {
         // Store enough triples to trigger eviction
         for i in 0..5 {
             let mut triple = create_test_triple();
-            triple.subject = format!("subject_{}", i);
+            triple.subject = format!("subject_{i}");
             let result = engine.store_triple(triple, None);
             assert!(result.is_ok());
         }
@@ -726,7 +726,7 @@ mod tests {
         let knowledge_result = result.unwrap();
         assert_eq!(knowledge_result.nodes.len(), 0);
         assert_eq!(knowledge_result.triples.len(), 0);
-        assert!(knowledge_result.query_time_ms >= 0);
+        assert!(knowledge_result.query_time_ms < 10000); // Query should complete in reasonable time
     }
 
     #[test]
@@ -856,7 +856,7 @@ mod tests {
         // Store multiple triples
         for i in 0..5 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Alice_{}", i);
+            triple.subject = format!("Alice_{i}");
             engine.store_triple(triple, None).unwrap();
         }
         
@@ -906,7 +906,7 @@ mod tests {
         
         let knowledge_result = result.unwrap();
         assert_eq!(knowledge_result.nodes.len(), 0);
-        assert!(knowledge_result.query_time_ms >= 0);
+        assert!(knowledge_result.query_time_ms < 10000); // Query should complete in reasonable time
     }
 
     #[test]
@@ -924,7 +924,7 @@ mod tests {
         let knowledge_result = result.unwrap();
         assert_eq!(knowledge_result.nodes.len(), 1);
         assert_eq!(knowledge_result.triples.len(), 1);
-        assert!(knowledge_result.query_time_ms >= 0);
+        assert!(knowledge_result.query_time_ms < 10000); // Query should complete in reasonable time
     }
 
     #[test]
@@ -934,7 +934,7 @@ mod tests {
         // Store multiple triples
         for i in 0..5 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Person_{}", i);
+            triple.subject = format!("Person_{i}");
             engine.store_triple(triple, None).unwrap();
         }
         
@@ -1275,8 +1275,8 @@ mod tests {
         // Store many triples
         for i in 0..100 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Subject_{}", i);
-            triple.object = format!("Object_{}", i);
+            triple.subject = format!("Subject_{i}");
+            triple.object = format!("Object_{i}");
             
             let result = engine.store_triple(triple, None);
             assert!(result.is_ok());
@@ -1308,7 +1308,7 @@ mod tests {
         // Store many triples for performance testing
         for i in 0..1000 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Subject_{}", i);
+            triple.subject = format!("Subject_{i}");
             engine.store_triple(triple, None).unwrap();
         }
         
@@ -1340,7 +1340,7 @@ mod tests {
         // Store many triples
         for i in 0..100 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Person_{}", i);
+            triple.subject = format!("Person_{i}");
             engine.store_triple(triple, None).unwrap();
         }
         
@@ -1364,8 +1364,8 @@ mod tests {
         // Store many triples to test memory management
         for i in 0..20 {
             let mut triple = create_test_triple();
-            triple.subject = format!("Subject_{}", i);
-            triple.object = format!("Object_{}", i);
+            triple.subject = format!("Subject_{i}");
+            triple.object = format!("Object_{i}");
             
             let result = engine.store_triple(triple, None);
             assert!(result.is_ok());

@@ -20,8 +20,7 @@ impl CognitiveAssertions for HashMap<EntityKey, f32> {
         let weight = self.get(target).copied().unwrap_or(0.0);
         assert!(
             weight >= min_weight,
-            "Expected attention weight for {:?} to be at least {}, but was {}",
-            target, min_weight, weight
+            "Expected attention weight for {target:?} to be at least {min_weight}, but was {weight}"
         );
     }
     
@@ -29,8 +28,7 @@ impl CognitiveAssertions for HashMap<EntityKey, f32> {
         let total: f32 = self.values().sum();
         assert!(
             (total - expected).abs() <= tolerance,
-            "Expected total weight to be approximately {} (±{}), but was {}",
-            expected, tolerance, total
+            "Expected total weight to be approximately {expected} (±{tolerance}), but was {total}"
         );
     }
     
@@ -43,8 +41,7 @@ impl CognitiveAssertions for HashMap<EntityKey, f32> {
         for (key, &weight) in self {
             assert!(
                 (weight - expected).abs() <= tolerance,
-                "Expected weight for {:?} to be approximately {} (±{}), but was {}",
-                key, expected, tolerance, weight
+                "Expected weight for {key:?} to be approximately {expected} (±{tolerance}), but was {weight}"
             );
         }
     }
@@ -187,8 +184,7 @@ impl PatternAssertions for crate::cognitive::DivergentResult {
         };
         assert!(
             avg_creativity >= min && avg_creativity <= max,
-            "Average creativity score {} not in expected range [{}, {}]",
-            avg_creativity, min, max
+            "Average creativity score {avg_creativity} not in expected range [{min}, {max}]"
         );
     }
     
@@ -198,8 +194,7 @@ impl PatternAssertions for crate::cognitive::DivergentResult {
         });
         assert!(
             found,
-            "Expected content '{}' not found in divergent explorations",
-            expected
+            "Expected content '{expected}' not found in divergent explorations"
         );
     }
     
@@ -276,12 +271,10 @@ pub fn create_assertion_message(
 ) -> String {
     match context {
         Some(ctx) => format!(
-            "Test '{}' failed in context '{}': expected '{}', got '{}'",
-            test_name, ctx, expected, actual
+            "Test '{test_name}' failed in context '{ctx}': expected '{expected}', got '{actual}'"
         ),
         None => format!(
-            "Test '{}' failed: expected '{}', got '{}'",
-            test_name, expected, actual
+            "Test '{test_name}' failed: expected '{expected}', got '{actual}'"
         ),
     }
 }

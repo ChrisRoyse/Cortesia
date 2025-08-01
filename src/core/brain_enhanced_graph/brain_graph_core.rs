@@ -309,15 +309,15 @@ impl BrainEnhancedKnowledgeGraph {
         let weights = self.synaptic_weights.read().await;
         for ((source, target), weight) in weights.iter() {
             if !self.contains_entity(*source) {
-                issues.push(format!("Synaptic weight found for non-existent source entity: {:?}", source));
+                issues.push(format!("Synaptic weight found for non-existent source entity: {source:?}"));
             }
             
             if !self.contains_entity(*target) {
-                issues.push(format!("Synaptic weight found for non-existent target entity: {:?}", target));
+                issues.push(format!("Synaptic weight found for non-existent target entity: {target:?}"));
             }
             
             if *weight < 0.0 || *weight > 1.0 {
-                issues.push(format!("Invalid synaptic weight {} between {:?} and {:?}", weight, source, target));
+                issues.push(format!("Invalid synaptic weight {weight} between {source:?} and {target:?}"));
             }
         }
         
@@ -326,7 +326,7 @@ impl BrainEnhancedKnowledgeGraph {
         for (concept_name, structure) in concepts.iter() {
             for entity in structure.get_all_entities() {
                 if !self.contains_entity(entity) {
-                    issues.push(format!("Concept '{}' references non-existent entity: {:?}", concept_name, entity));
+                    issues.push(format!("Concept '{concept_name}' references non-existent entity: {entity:?}"));
                 }
             }
         }
@@ -766,7 +766,7 @@ mod tests {
         
         // All results should be valid activation values
         for result in results {
-            assert!(result >= 0.0 && result <= 1.0);
+            assert!((0.0..=1.0).contains(&result));
         }
     }
 
@@ -1018,7 +1018,8 @@ mod tests {
         
         // Verify memory usage structure
         assert!(memory_usage.core_graph_bytes > 0);
-        assert!(memory_usage.sdr_storage_bytes >= 0);
+        // SDR storage should be initialized
+        assert!(memory_usage.sdr_storage_bytes < 1000000); // Reasonable upper bound
         assert!(memory_usage.activation_bytes > 0);
         assert!(memory_usage.synaptic_weights_bytes > 0);
         assert!(memory_usage.concept_structures_bytes > 0);
@@ -1029,7 +1030,7 @@ mod tests {
         let brain_graph = create_test_brain_graph().await.unwrap();
         
         // Test initial cache state
-        let (size, capacity) = brain_graph.get_cache_stats().await;
+        let (size, _capacity) = brain_graph.get_cache_stats().await;
         assert_eq!(size, 0);
         
         // Clear empty cache (should not fail)
@@ -1144,7 +1145,7 @@ mod tests {
         let handle3 = tokio::spawn(async move {
             // Concurrent concept creation
             for i in 0..10 {
-                let concept_name = format!("concept_{}", i);
+                let concept_name = format!("concept_{i}");
                 let concept = ConceptStructure::new();
                 graph3.store_concept_structure(concept_name, concept).await;
             }
@@ -1158,7 +1159,7 @@ mod tests {
         let issues = brain_graph.validate_consistency().await;
         // Should have no consistency issues from concurrent operations
         // (though there might be issues from non-existent entities)
-        println!("Consistency issues: {:?}", issues);
+        println!("Consistency issues: {issues:?}");
     }
 
     #[tokio::test]
@@ -1177,7 +1178,7 @@ mod tests {
         }
         
         // Simulate activation spread (simplified)
-        for step in 1..5 {
+        for _step in 1..5 {
             for i in 0..9 {
                 let source_activation = brain_graph.get_entity_activation(entities[i]).await;
                 let weight = brain_graph.get_synaptic_weight(entities[i], entities[i + 1]).await;

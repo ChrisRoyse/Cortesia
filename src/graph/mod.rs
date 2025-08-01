@@ -64,12 +64,12 @@ impl Graph {
 
     pub fn get_node(&self, id: NodeId) -> Result<&Node> {
         self.nodes.get(&id)
-            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Node {} not found", id)))
+            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Node {id} not found")))
     }
 
     pub fn get_edge(&self, id: EdgeId) -> Result<&Edge> {
         self.edges.get(&id)
-            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Edge {} not found", id)))
+            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Edge {id} not found")))
     }
 
     pub fn get_nodes(&self) -> impl Iterator<Item = &Node> {

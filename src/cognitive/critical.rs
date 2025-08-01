@@ -92,11 +92,11 @@ impl CriticalThinking {
         
         // Look for entities mentioned in the query
         for (entity_key, _entity_data, _activation) in &all_entities {
-            let entity_concept = format!("entity_{:?}", entity_key).to_lowercase();
-            if query_lower.contains(&entity_concept) || entity_concept.contains(&query_lower.split_whitespace().next().unwrap_or("")) {
+            let entity_concept = format!("entity_{entity_key:?}").to_lowercase();
+            if query_lower.contains(&entity_concept) || entity_concept.contains(query_lower.split_whitespace().next().unwrap_or("")) {
                 facts.push(FactInfo {
                     entity_key: *entity_key,
-                    fact_description: format!("Found relevant entity: {}", entity_concept),
+                    fact_description: format!("Found relevant entity: {entity_concept}"),
                     confidence: 0.6,
                     source: "fallback_search".to_string(),
                     timestamp: SystemTime::now(),
@@ -479,7 +479,7 @@ impl CriticalThinking {
         if !result.uncertainty_analysis.knowledge_gaps.is_empty() {
             answer.push_str("Knowledge Gaps:\n");
             for gap in &result.uncertainty_analysis.knowledge_gaps {
-                answer.push_str(&format!("  - {}\n", gap));
+                answer.push_str(&format!("  - {gap}\n"));
             }
         }
         

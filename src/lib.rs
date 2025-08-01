@@ -1,5 +1,10 @@
 #![cfg_attr(target_arch = "wasm32", no_std)]
 #![allow(dead_code)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::wildcard_in_or_patterns)]
+#![allow(clippy::manual_clamp)]
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::needless_late_init)]
 #![doc = include_str!("../docs/enhanced_knowledge_storage/README.md")]
 
 #[cfg(target_arch = "wasm32")]

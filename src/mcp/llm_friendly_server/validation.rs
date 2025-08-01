@@ -59,7 +59,7 @@ pub async fn validate_consistency(
     let mut fact_index: HashMap<(String, String), Vec<String>> = HashMap::new();
     for triple in existing_triples {
         fact_index.entry((triple.subject.clone(), triple.predicate.clone()))
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(triple.object.clone());
     }
     
@@ -142,11 +142,11 @@ pub async fn validate_sources(
         };
         
         if !is_valid_url {
-            validation_notes.push(format!("Source '{}' appears to be malformed", src));
+            validation_notes.push(format!("Source '{src}' appears to be malformed"));
         } else if is_reliable {
-            sources.push(format!("{} [reliable]", src));
+            sources.push(format!("{src} [reliable]"));
         } else if is_problematic {
-            sources.push(format!("{} [unverified]", src));
+            sources.push(format!("{src} [unverified]"));
             validation_notes.push("Source may require additional verification".to_string());
         } else {
             sources.push(src.to_string());
@@ -171,7 +171,7 @@ pub async fn validate_sources(
     
     // Add validation notes as special sources
     for note in validation_notes {
-        sources.push(format!("[Note: {}]", note));
+        sources.push(format!("[Note: {note}]"));
     }
     
     Ok(sources)
@@ -220,10 +220,10 @@ pub async fn validate_with_llm(
             if let Ok(year) = captures[1].parse::<i32>() {
                 // Check if birth/death year makes sense
                 if triple.predicate.contains("born") && year > 2024 {
-                    conflicts.push(format!("Future birth year {} is invalid", year));
+                    conflicts.push(format!("Future birth year {year} is invalid"));
                     confidence *= 0.1;
                 } else if triple.predicate.contains("died") && year > 2024 {
-                    validation_notes.push(format!("Death year {} is in the future", year));
+                    validation_notes.push(format!("Death year {year} is in the future"));
                     confidence *= 0.5;
                 }
                 
@@ -270,7 +270,7 @@ pub async fn validate_with_llm(
                         }
                     }
                     ("height", "cm") => {
-                        if value > 300.0 || value < 50.0 {
+                        if !(50.0..=300.0).contains(&value) {
                             validation_notes.push("Height value seems unusual".to_string());
                             confidence *= 0.6;
                         }
@@ -298,12 +298,12 @@ pub async fn validate_with_llm(
     if context_lower.contains(&subject_lower) {
         // Look for negative statements about the fact
         let negative_patterns = [
-            format!("{} is not", subject_lower),
-            format!("{} isn't", subject_lower),
-            format!("{} was not", subject_lower),
-            format!("{} wasn't", subject_lower),
-            format!("not {}", subject_lower),
-            format!("never {}", subject_lower),
+            format!("{subject_lower} is not"),
+            format!("{subject_lower} isn't"),
+            format!("{subject_lower} was not"),
+            format!("{subject_lower} wasn't"),
+            format!("not {subject_lower}"),
+            format!("never {subject_lower}"),
         ];
         
         for pattern in &negative_patterns {
@@ -404,7 +404,7 @@ pub async fn validate_completeness(
             let expected = get_expected_predicates(entity_type);
             for exp in expected {
                 if !predicates.contains(&exp) {
-                    missing_info.push(format!("Missing '{}' for {}", exp, entity));
+                    missing_info.push(format!("Missing '{exp}' for {entity}"));
                 }
             }
         }

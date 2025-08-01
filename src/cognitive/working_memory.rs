@@ -172,6 +172,12 @@ impl Default for MemoryDecayConfig {
     }
 }
 
+impl Default for MemoryBuffers {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryBuffers {
     pub fn new() -> Self {
         Self {
@@ -228,6 +234,12 @@ impl MemoryBuffers {
             capacity_utilization,
             average_importance,
         }
+    }
+}
+
+impl Default for CentralExecutive {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

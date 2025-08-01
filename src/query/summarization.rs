@@ -14,6 +14,12 @@ pub struct CommunitySummarizer {
     cache: Arc<RwLock<HashMap<u32, CommunitySummary>>>,
 }
 
+impl Default for CommunitySummarizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommunitySummarizer {
     pub fn new() -> Self {
         Self {

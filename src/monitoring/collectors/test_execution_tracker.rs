@@ -541,7 +541,7 @@ impl TestExecutionTracker {
         };
         
         let Some(suite) = suite else {
-            return Err(format!("Test suite '{}' not found", suite_name).into());
+            return Err(format!("Test suite '{suite_name}' not found").into());
         };
         
         // Create execution record
@@ -676,7 +676,7 @@ impl TestExecutionTracker {
             None
         };
         
-        let combined_output = format!("{}\n{}", stdout, stderr);
+        let combined_output = format!("{stdout}\n{stderr}");
         
         Ok((combined_output, test_result, coverage_data))
     }
@@ -708,7 +708,7 @@ impl TestExecutionTracker {
             None
         };
         
-        let combined_output = format!("{}\n{}", stdout, stderr);
+        let combined_output = format!("{stdout}\n{stderr}");
         
         Ok((combined_output, test_result, coverage_data))
     }

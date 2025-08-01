@@ -593,6 +593,12 @@ impl SynapticHomeostasis {
     }
 }
 
+impl Default for ActivityTracker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActivityTracker {
     pub fn new() -> Self {
         Self {
@@ -663,7 +669,7 @@ mod tests {
         let critical_thinking = Arc::new(crate::cognitive::critical::CriticalThinking::new(
             brain_graph.clone()
         ));
-        let inhibition_system = Arc::new(CompetitiveInhibitionSystem::new(
+        let _inhibition_system = Arc::new(CompetitiveInhibitionSystem::new(
             activation_engine.clone(),
             critical_thinking.clone()
         ));
@@ -873,7 +879,7 @@ mod tests {
             }
         ];
         for _ in 0..15 { // Many events
-            excessive_events.clone();
+            let _ = excessive_events.clone();
         }
         
         let analysis = homeostasis.analyze_recent_learning(entity_key, &excessive_events)
@@ -983,7 +989,7 @@ mod tests {
         let change = homeostasis.calculate_global_activity_change();
         
         assert!((change - 0.2).abs() < 0.001, 
-               "Should calculate correct global activity change: expected 0.2, got {}", change);
+               "Should calculate correct global activity change: expected 0.2, got {change}");
     }
 
     #[tokio::test]

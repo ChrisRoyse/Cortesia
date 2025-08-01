@@ -15,6 +15,12 @@ pub struct CSRGraph {
     edge_count: AtomicU32,
 }
 
+impl Default for CSRGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CSRGraph {
     pub fn new() -> Self {
         Self {
@@ -775,7 +781,7 @@ mod tests {
                 let neighbors = graph.get_neighbors(i);
                 for j in 1..neighbors.len() {
                     assert!(neighbors[j] >= neighbors[j-1], 
-                        "Neighbors of node {} should be sorted", i);
+                        "Neighbors of node {i} should be sorted");
                 }
             }
         }
@@ -803,8 +809,7 @@ mod tests {
                 for &neighbor in neighbors {
                     if let Some((_, neighbor_depth)) = result.iter().find(|(n, _)| *n == neighbor) {
                         assert!(*neighbor_depth <= depth + 1, 
-                            "BFS depth property violated: node {} at depth {} has neighbor {} at depth {}", 
-                            node, depth, neighbor, neighbor_depth);
+                            "BFS depth property violated: node {node} at depth {depth} has neighbor {neighbor} at depth {neighbor_depth}");
                     }
                 }
             }

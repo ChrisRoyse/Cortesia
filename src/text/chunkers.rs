@@ -303,7 +303,7 @@ mod tests {
         let text = "Chapter 1\n\nContent that is long enough to exceed the minimum chunk size.\n\nChapter 2\n\nMore content that is also long enough to ensure we get multiple chunks when processing.";
         let chunks = chunker.chunk(text).unwrap();
         
-        assert!(chunks.len() >= 1); // At least one chunk
+        assert!(!chunks.is_empty()); // At least one chunk
         // Check if we have chapter type chunks
         let has_chapter_chunk = chunks.iter().any(|c| c.metadata.get("chunk_type").map(|t| t == "chapter").unwrap_or(false));
         assert!(has_chapter_chunk || chunks.len() == 1); // Either we have chapters or it's a single chunk

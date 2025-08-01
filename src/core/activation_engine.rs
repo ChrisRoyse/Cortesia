@@ -118,8 +118,8 @@ impl ActivationPropagationEngine {
             // Step 1: Update entity activations based on incoming connections
             self.processors.update_entity_activations(
                 &mut current_activations,
-                &*entities,
-                &*relationships,
+                &entities,
+                &relationships,
                 &mut trace,
                 iteration,
             ).await?;
@@ -133,8 +133,8 @@ impl ActivationPropagationEngine {
             // Step 2: Process logic gates
             self.processors.process_logic_gates(
                 &mut current_activations,
-                &*entities,
-                &*gates,
+                &entities,
+                &gates,
                 &mut trace,
                 iteration,
             ).await?;
@@ -142,13 +142,13 @@ impl ActivationPropagationEngine {
             // Step 3: Apply inhibitory connections
             self.processors.apply_inhibitory_connections(
                 &mut current_activations,
-                &*relationships,
+                &relationships,
                 &mut trace,
                 iteration,
             ).await?;
             
             // Validate all activations are still finite after processing
-            for (_key, activation) in &mut current_activations {
+            for activation in current_activations.values_mut() {
                 if !activation.is_finite() {
                     // Clamp to valid range if NaN or Infinity
                     *activation = activation.clamp(0.0, 1.0);
@@ -159,7 +159,7 @@ impl ActivationPropagationEngine {
             }
 
             // Step 4: Apply temporal decay
-            self.processors.apply_temporal_decay(&mut current_activations, &*entities, &*relationships).await?;
+            self.processors.apply_temporal_decay(&mut current_activations, &entities, &relationships).await?;
 
             // Check for convergence
             if self.processors.has_converged(&previous_activations, &current_activations) {
@@ -291,7 +291,7 @@ mod tests {
 
         assert!(!result.final_activations.is_empty());
         assert!(result.converged || result.iterations_completed > 0);
-        assert!(result.final_activations.len() >= 1);
+        assert!(!result.final_activations.is_empty());
     }
 
     #[tokio::test]
@@ -603,7 +603,7 @@ mod tests {
             assert!(activations.contains_key(&output_key));
             
             let gate_output = activations[&gate_key];
-            assert!(gate_output >= 0.0 && gate_output <= 1.0);
+            assert!((0.0..=1.0).contains(&gate_output));
         }
 
         #[tokio::test]

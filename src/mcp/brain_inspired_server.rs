@@ -103,7 +103,7 @@ impl BrainInspiredMCPServer {
             properties: metadata.into_iter().map(|(k, v)| match v {
                 AttributeValue::String(s) => (k, crate::core::types::AttributeValue::String(s)),
                 AttributeValue::Number(n) => (k, crate::core::types::AttributeValue::Number(n)),
-                _ => (k, crate::core::types::AttributeValue::String(format!("{:?}", v))),
+                _ => (k, crate::core::types::AttributeValue::String(format!("{v:?}"))),
             }).collect(),
             embedding: vec![0.0; 384], // Default embedding
             activation_state: 0.0,
@@ -117,7 +117,7 @@ impl BrainInspiredMCPServer {
         Ok(MCPResponse {
             content: vec![MCPContent {
                 type_: "text".to_string(),
-                text: format!("Stored fact: {}", text),
+                text: format!("Stored fact: {text}"),
             }],
             is_error: false,
         })
@@ -167,12 +167,12 @@ impl BrainInspiredMCPServer {
                 }
             },
             _ => {
-                return Err(GraphError::InvalidInput(format!("Unknown query type: {}", query_type)));
+                return Err(GraphError::InvalidInput(format!("Unknown query type: {query_type}")));
             }
         }
         
         let response_text = if results.is_empty() {
-            format!("No results found for query: '{}'", query)
+            format!("No results found for query: '{query}'")
         } else {
             format!(
                 "Query Results for '{}' (type: {}):\n\n{}",

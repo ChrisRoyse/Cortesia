@@ -27,8 +27,8 @@ pub async fn handle_get_stats(
         log::debug!("handle_get_stats: Acquiring engine read lock");
         let engine = knowledge_engine.read().await;
         log::debug!("handle_get_stats: Got engine lock, calling collect_basic_stats");
-        let stats = collect_basic_stats(&*engine)
-            .map_err(|e| format!("Failed to collect statistics: {}", e))?;
+        let stats = collect_basic_stats(&engine)
+            .map_err(|e| format!("Failed to collect statistics: {e}"))?;
         log::debug!("handle_get_stats: collect_basic_stats completed");
         stats
     };
@@ -39,7 +39,7 @@ pub async fn handle_get_stats(
         log::debug!("handle_get_stats: Acquiring engine read lock for memory stats");
         let engine = knowledge_engine.read().await;
         log::debug!("handle_get_stats: Got engine lock, calling get_memory_stats");
-        let stats = get_memory_stats(&*engine);
+        let stats = get_memory_stats(&engine);
         log::debug!("handle_get_stats: get_memory_stats completed");
         stats
     };
@@ -107,8 +107,8 @@ pub async fn handle_get_stats(
     if include_details {
         let detailed_stats = {
             let engine = knowledge_engine.read().await;
-            collect_detailed_stats(&*engine)
-                .map_err(|e| format!("Failed to collect detailed statistics: {}", e))?
+            collect_detailed_stats(&engine)
+                .map_err(|e| format!("Failed to collect detailed statistics: {e}"))?
         };
         
         data["details"] = json!({
@@ -184,7 +184,7 @@ fn collect_basic_stats(engine: &KnowledgeEngine) -> Result<BasicStats> {
     let total_triples = memory_stats.total_triples;
     let total_nodes = memory_stats.total_nodes;
     
-    log::debug!("collect_basic_stats: Got {} triples from cache", total_triples);
+    log::debug!("collect_basic_stats: Got {total_triples} triples from cache");
     
     // Estimate entity and predicate counts based on typical ratios
     // In practice, this could be cached too, but for now we estimate
@@ -327,7 +327,7 @@ fn calculate_overall_health(
     usage_stats: &UsageStats,
 ) -> f64 {
     let size_score = if basic_stats.total_triples > 100 { 1.0 } else { 0.5 };
-    let efficiency_score = calculate_efficiency_score(memory_stats) as f64;
+    let efficiency_score = calculate_efficiency_score(memory_stats);
     let performance_score = calculate_query_performance(usage_stats);
     
     (size_score * 0.3 + efficiency_score * 0.4 + performance_score * 0.3).min(1.0)

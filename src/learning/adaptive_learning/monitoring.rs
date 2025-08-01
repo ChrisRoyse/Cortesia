@@ -142,7 +142,7 @@ impl PerformanceMonitor {
         
         // Cognitive patterns scores
         for (pattern, &success_rate) in &metrics.cognitive_metrics.pattern_success_rates {
-            scores.insert(format!("pattern_{:?}", pattern), success_rate);
+            scores.insert(format!("pattern_{pattern:?}"), success_rate);
         }
         
         // System components scores
@@ -199,7 +199,7 @@ impl PerformanceMonitor {
         // Check error rate bottlenecks
         for (error_type, &rate) in &metrics.system_metrics.error_rates {
             if rate > self.alert_thresholds.error_rate_threshold {
-                bottlenecks.push(format!("High {} error rate", error_type));
+                bottlenecks.push(format!("High {error_type} error rate"));
             }
         }
         
@@ -358,12 +358,12 @@ impl PerformanceMonitor {
         
         report.push_str("Component Scores:\n");
         for (component, score) in &snapshot.component_scores {
-            report.push_str(&format!("  {}: {:.2}\n", component, score));
+            report.push_str(&format!("  {component}: {score:.2}\n"));
         }
         
         report.push_str("\nCurrent Bottlenecks:\n");
         for bottleneck in &snapshot.bottlenecks {
-            report.push_str(&format!("  - {}\n", bottleneck));
+            report.push_str(&format!("  - {bottleneck}\n"));
         }
         
         report.push_str("\nPerformance Anomalies:\n");
@@ -378,7 +378,7 @@ impl PerformanceMonitor {
             } else {
                 "declining"
             };
-            report.push_str(&format!("Trend Direction: {}\n", trend_direction));
+            report.push_str(&format!("Trend Direction: {trend_direction}\n"));
         }
         
         Ok(report)

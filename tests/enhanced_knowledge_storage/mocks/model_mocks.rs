@@ -234,6 +234,12 @@ pub struct ModelTestDataBuilder {
     models: HashMap<String, (ModelInfo, u64)>, // model_id -> (info, memory_usage)
 }
 
+impl Default for ModelTestDataBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModelTestDataBuilder {
     pub fn new() -> Self {
         Self {
@@ -246,7 +252,7 @@ impl ModelTestDataBuilder {
             model_id.to_string(),
             (
                 ModelInfo {
-                    name: format!("Small-{}", model_id),
+                    name: format!("Small-{model_id}"),
                     parameters: 135_000_000,
                     memory_footprint: 270_000_000,
                     complexity_level: "Low".to_string(),
@@ -262,7 +268,7 @@ impl ModelTestDataBuilder {
             model_id.to_string(),
             (
                 ModelInfo {
-                    name: format!("Medium-{}", model_id),
+                    name: format!("Medium-{model_id}"),
                     parameters: 360_000_000,
                     memory_footprint: 720_000_000,
                     complexity_level: "Medium".to_string(),
@@ -278,7 +284,7 @@ impl ModelTestDataBuilder {
             model_id.to_string(),
             (
                 ModelInfo {
-                    name: format!("Large-{}", model_id),
+                    name: format!("Large-{model_id}"),
                     parameters: 1_700_000_000,
                     memory_footprint: 3_400_000_000,
                     complexity_level: "High".to_string(),

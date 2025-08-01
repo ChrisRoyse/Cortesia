@@ -554,20 +554,20 @@ impl BrainEnhancedKnowledgeGraph {
         report.push_str(&format!("Average Activation: {:.4}\n", stats.avg_activation));
         report.push_str(&format!("Clustering Coefficient: {:.4}\n", stats.clustering_coefficient));
         report.push_str(&format!("Average Path Length: {:.4}\n", stats.average_path_length));
-        report.push_str(&format!("Graph Efficiency: {:.4}\n", efficiency));
+        report.push_str(&format!("Graph Efficiency: {efficiency:.4}\n"));
         report.push_str(&format!("Concept Coherence: {:.4}\n", stats.concept_coherence));
         report.push_str(&format!("Learning Efficiency: {:.4}\n", stats.learning_efficiency));
         
         // Critical entities
         report.push_str("\nCritical Entities (by betweenness centrality):\n");
         for (entity_key, centrality) in critical_entities {
-            report.push_str(&format!("  {:?}: {:.4}\n", entity_key, centrality));
+            report.push_str(&format!("  {entity_key:?}: {centrality:.4}\n"));
         }
         
         // Most activated entities
         report.push_str("\nMost Activated Entities:\n");
         for (entity_key, activation) in most_activated {
-            report.push_str(&format!("  {:?}: {:.4}\n", entity_key, activation));
+            report.push_str(&format!("  {entity_key:?}: {activation:.4}\n"));
         }
         
         // Pattern analysis
@@ -577,12 +577,12 @@ impl BrainEnhancedKnowledgeGraph {
         // Activation distribution
         report.push_str("\nActivation Distribution:\n");
         for (level, count) in &stats.activation_distribution {
-            report.push_str(&format!("  {}: {}\n", level, count));
+            report.push_str(&format!("  {level}: {count}\n"));
         }
         
         // Health assessment
         let health_score = stats.graph_health_score();
-        report.push_str(&format!("\nOverall Health Score: {:.4}\n", health_score));
+        report.push_str(&format!("\nOverall Health Score: {health_score:.4}\n"));
         
         if health_score > 0.7 {
             report.push_str("Status: Healthy\n");
@@ -615,6 +615,12 @@ pub struct GraphPatternAnalysis {
     pub activation_clusters: HashMap<String, Vec<EntityKey>>,
 }
 
+impl Default for GraphPatternAnalysis {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GraphPatternAnalysis {
     pub fn new() -> Self {
         Self {
@@ -633,7 +639,7 @@ impl GraphPatternAnalysis {
     /// Check if graph has scale-free properties
     pub fn is_scale_free(&self) -> bool {
         // Simplified check: presence of hub entities suggests scale-free structure
-        self.hub_entities.len() > 0 && self.hub_entities.len() < self.degree_distribution.len() / 10
+        !self.hub_entities.is_empty() && self.hub_entities.len() < self.degree_distribution.len() / 10
     }
     
     /// Get most common degree
@@ -763,7 +769,7 @@ mod tests {
     #[tokio::test]
     async fn test_calculate_average_clustering_coefficient_single_entity() {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
-        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
+        let _entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
         
         let clustering = graph.calculate_average_clustering_coefficient().await;
         
@@ -793,7 +799,7 @@ mod tests {
     #[tokio::test]
     async fn test_calculate_average_path_length_single_entity() {
         let graph = BrainEnhancedKnowledgeGraph::new_for_test().unwrap();
-        let entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
+        let _entity = graph.core_graph.add_entity(EntityData::new(1, "single".to_string(), vec![0.0; 96])).unwrap();
         
         let avg_path = graph.calculate_average_path_length().await;
         
@@ -947,7 +953,7 @@ mod tests {
         
         // Connect hub to 12 entities (above hub threshold of 10)
         for i in 0..12 {
-            let entity = graph.core_graph.add_entity(EntityData::new(1, format!("spoke_{}", i), vec![0.0; 96])).unwrap();
+            let entity = graph.core_graph.add_entity(EntityData::new(1, format!("spoke_{i}"), vec![0.0; 96])).unwrap();
             let _ = graph.core_graph.add_relationship(hub, entity, 0.5);
         }
         
@@ -1070,7 +1076,7 @@ mod tests {
         
         // In a linear chain of 4 nodes, average path length should be around 2
         // (paths: A-B=1, A-C=2, A-D=3, B-C=1, B-D=2, C-D=1, average=(1+2+3+1+2+1)/6=1.67)
-        assert!(avg_path >= 1.0 && avg_path <= 3.0);
+        assert!((1.0..=3.0).contains(&avg_path));
     }
 
     #[tokio::test]

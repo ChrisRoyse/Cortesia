@@ -282,12 +282,12 @@ mod tests {
     
     fn create_test_model(id: &str, memory: u64) -> CachedModel {
         let metadata = ModelMetadata {
-            name: format!("Test Model {}", id),
+            name: format!("Test Model {id}"),
             parameters: 1000000,
             memory_footprint: memory,
             complexity_level: ComplexityLevel::Low,
             model_type: "Test".to_string(),
-            huggingface_id: format!("test/{}", id),
+            huggingface_id: format!("test/{id}"),
             supported_tasks: vec!["test".to_string()],
         };
         

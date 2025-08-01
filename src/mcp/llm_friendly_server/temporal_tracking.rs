@@ -32,6 +32,12 @@ pub struct TemporalIndex {
     global_timeline: Arc<StdRwLock<BTreeMap<DateTime<Utc>, Vec<TemporalTriple>>>>,
 }
 
+impl Default for TemporalIndex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TemporalIndex {
     pub fn new() -> Self {
         Self {
@@ -55,17 +61,17 @@ impl TemporalIndex {
         {
             let mut timelines = self.entity_timelines.write().unwrap();
             timelines.entry(triple.subject.clone())
-                .or_insert_with(BTreeMap::new)
+                .or_default()
                 .entry(timestamp)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(temporal_triple.clone());
             
             // Also track object if it's an entity
-            if triple.object.chars().next().map_or(false, |c| c.is_uppercase()) {
+            if triple.object.chars().next().is_some_and(|c| c.is_uppercase()) {
                 timelines.entry(triple.object.clone())
-                    .or_insert_with(BTreeMap::new)
+                    .or_default()
                     .entry(timestamp)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(temporal_triple.clone());
             }
         }
@@ -74,7 +80,7 @@ impl TemporalIndex {
         {
             let mut global = self.global_timeline.write().unwrap();
             global.entry(timestamp)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(temporal_triple);
         }
     }
@@ -144,8 +150,7 @@ pub async fn query_point_in_time(
         }
         
         // Convert current state to results
-        let changes: Vec<TemporalChange> = current_state.into_iter()
-            .map(|(_, t)| TemporalChange {
+        let changes: Vec<TemporalChange> = current_state.into_values().map(|t| TemporalChange {
                 triple: t.triple.clone(),
                 operation: t.operation.clone(),
                 version: t.version,
@@ -240,7 +245,7 @@ pub async fn detect_changes(
     
     for (timestamp, changes) in global_timeline.range(start_time..=end_time) {
         let filtered_changes: Vec<TemporalChange> = changes.iter()
-            .filter(|t| entity_filter.map_or(true, |e| t.triple.subject == e || t.triple.object == e))
+            .filter(|t| entity_filter.is_none_or(|e| t.triple.subject == e || t.triple.object == e))
             .map(|t| {
                 entities_affected.insert(t.triple.subject.clone());
                 entities_affected.insert(t.triple.object.clone());
@@ -261,7 +266,7 @@ pub async fn detect_changes(
             let mut entity_changes: HashMap<String, Vec<TemporalChange>> = HashMap::new();
             for change in filtered_changes {
                 entity_changes.entry(change.triple.subject.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(change);
             }
             
@@ -295,7 +300,7 @@ fn generate_evolution_insights(results: &[TemporalResultItem], entity: &str) -> 
     let mut insights = Vec::new();
     
     if results.is_empty() {
-        insights.push(format!("No historical data found for {}", entity));
+        insights.push(format!("No historical data found for {entity}"));
         return insights;
     }
     
@@ -314,8 +319,7 @@ fn generate_evolution_insights(results: &[TemporalResultItem], entity: &str) -> 
         }
     }
     
-    insights.push(format!("{} evolved through {} creates, {} updates, {} deletes", 
-        entity, creates, updates, deletes));
+    insights.push(format!("{entity} evolved through {creates} creates, {updates} updates, {deletes} deletes"));
     
     // Find most changed predicate
     let mut predicate_counts: HashMap<String, usize> = HashMap::new();
@@ -326,7 +330,7 @@ fn generate_evolution_insights(results: &[TemporalResultItem], entity: &str) -> 
     }
     
     if let Some((pred, count)) = predicate_counts.iter().max_by_key(|(_, c)| *c) {
-        insights.push(format!("Most frequently changed attribute: '{}' ({} times)", pred, count));
+        insights.push(format!("Most frequently changed attribute: '{pred}' ({count} times)"));
     }
     
     // Time span

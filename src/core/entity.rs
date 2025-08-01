@@ -8,6 +8,12 @@ pub struct EntityStore {
     property_offsets: Vec<u32>,
 }
 
+impl Default for EntityStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EntityStore {
     pub fn new() -> Self {
         Self {
@@ -166,7 +172,9 @@ mod tests {
         let store = EntityStore::new();
         assert_eq!(store.count(), 0);
         assert_eq!(store.capacity(), 0);
-        assert!(store.memory_usage() >= 0);
+        // Memory usage should be reasonable for empty store
+        let memory = store.memory_usage();
+        assert!(memory < 1024); // Empty store should use minimal memory
         
         // Test internal structure initialization
         assert_eq!(store.entities.len(), 0);
@@ -248,7 +256,7 @@ mod tests {
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
         
         // Insert entities with different property sizes
-        let props = vec!["short", "medium_length_prop", "very_long_property_string_here"];
+        let props = ["short", "medium_length_prop", "very_long_property_string_here"];
         let mut keys = Vec::new();
         let mut expected_offsets = vec![0];
         let mut cumulative_length = 0;
@@ -309,7 +317,7 @@ mod tests {
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
         
         // Insert multiple entities to test boundary conditions
-        let entities = vec!["", "a", "ab", "abc"];
+        let entities = ["", "a", "ab", "abc"];
         let mut keys = Vec::new();
         
         for (i, prop) in entities.iter().enumerate() {
@@ -526,7 +534,7 @@ mod tests {
         let mut store = EntityStore::new();
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
         
-        let properties = vec!["", "a", "ab", "abc", "abcd"];
+        let properties = ["", "a", "ab", "abc", "abcd"];
         let mut total_length = 0;
         
         for (i, prop) in properties.iter().enumerate() {
@@ -765,7 +773,7 @@ mod tests {
             assert_eq!(meta.type_id, i as u16);
             
             let properties = store.get_properties(meta).unwrap();
-            assert_eq!(properties, format!("entity:{}", i));
+            assert_eq!(properties, format!("entity:{i}"));
         }
     }
 

@@ -14,6 +14,12 @@ pub struct AlertManager {
     notification_channels: Arc<RwLock<Vec<Box<dyn NotificationChannel>>>>,
 }
 
+impl Default for AlertManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AlertManager {
     pub fn new() -> Self {
         Self {
@@ -203,7 +209,7 @@ impl AlertManager {
         
         for channel in channels.iter() {
             if let Err(e) = channel.send_notification(&notification).await {
-                eprintln!("Failed to send notification: {}", e);
+                eprintln!("Failed to send notification: {e}");
             }
         }
         

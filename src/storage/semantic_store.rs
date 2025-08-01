@@ -186,22 +186,22 @@ impl SemanticStore {
         let mut report = String::new();
         report.push_str("=== LLMKG Semantic Store Report ===\n\n");
         
-        report.push_str(&format!("📊 Storage Statistics:\n"));
+        report.push_str("📊 Storage Statistics:\n");
         report.push_str(&format!("  - Total entities: {}\n", stats.entity_count));
         report.push_str(&format!("  - Average bytes per entity: {} bytes\n", stats.avg_bytes_per_entity));
         report.push_str(&format!("  - Compression ratio: {:.1}x\n", stats.avg_compression_ratio));
         report.push_str(&format!("  - Total storage: {:.2} MB\n", 
                                 (stats.total_summary_bytes + stats.total_cache_bytes) as f64 / 1_048_576.0));
-        report.push_str("\n");
+        report.push('\n');
         
-        report.push_str(&format!("🤖 LLM Integration Quality:\n"));
+        report.push_str("🤖 LLM Integration Quality:\n");
         report.push_str(&format!("  - Average comprehension score: {:.2}/1.0\n", stats.avg_llm_comprehension_score));
         report.push_str(&format!("  - Semantic richness: {}\n", 
                                 if stats.avg_llm_comprehension_score > 0.8 { "Excellent" }
                                 else if stats.avg_llm_comprehension_score > 0.6 { "Good" }
                                 else { "Needs Improvement" }));
         
-        report.push_str("\n");
+        report.push('\n');
         report.push_str("🎯 Summary Quality Analysis:\n");
         
         // Sample a few entities for detailed analysis
@@ -213,11 +213,11 @@ impl SemanticStore {
             report.push_str(&format!("  Sample Entity {}:\n", i + 1));
             report.push_str(&format!("    - Features: {}\n", summary.key_features.len()));
             report.push_str(&format!("    - Context hints: {}\n", summary.context_hints.len()));
-            report.push_str(&format!("    - LLM comprehension: {:.2}\n", comprehension));
+            report.push_str(&format!("    - LLM comprehension: {comprehension:.2}\n"));
             report.push_str(&format!("    - Original size: {} bytes\n", summary.reconstruction_metadata.original_size));
         }
         
-        report.push_str("\n");
+        report.push('\n');
         report.push_str("✅ This semantic store provides detailed, LLM-friendly summaries that preserve\n");
         report.push_str("   essential semantic information while achieving efficient storage.\n");
         

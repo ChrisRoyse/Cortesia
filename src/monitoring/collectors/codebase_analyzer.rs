@@ -512,7 +512,7 @@ impl CodebaseAnalyzer {
         let without_semicolon = without_use.trim_end_matches(';').trim();
         
         let first_part = without_semicolon.split("::").next()?.split('{').next()?.trim();
-        Some(format!("external::{}", first_part))
+        Some(format!("external::{first_part}"))
     }
     
     fn parse_pub_mod(&self, line: &str) -> Option<String> {
@@ -528,9 +528,9 @@ impl CodebaseAnalyzer {
         let without_semicolon = without_pub_use.trim_end_matches(';').trim();
         
         if let Some(item) = without_semicolon.split("::").last() {
-            Some(format!("re-export: {}", item))
+            Some(format!("re-export: {item}"))
         } else {
-            Some(format!("re-export: {}", without_semicolon))
+            Some(format!("re-export: {without_semicolon}"))
         }
     }
     
@@ -557,7 +557,7 @@ impl CodebaseAnalyzer {
                         } else {
                             DependencyType::Import
                         },
-                        strength: self.calculate_dependency_strength(&module_info, import),
+                        strength: self.calculate_dependency_strength(module_info, import),
                     };
                     metrics.dependency_graph.edges.push(edge);
                 }
@@ -607,7 +607,7 @@ impl CodebaseAnalyzer {
 
     fn calculate_complexity_metrics(&self, metrics: &mut CodebaseMetrics) -> Result<(), Box<dyn std::error::Error>> {
         // TODO: Implement proper complexity calculations
-        for (func_name, _) in &metrics.function_map {
+        for func_name in metrics.function_map.keys() {
             metrics.complexity_metrics.cyclomatic_complexity.insert(func_name.clone(), 1);
             metrics.complexity_metrics.cognitive_complexity.insert(func_name.clone(), 1);
         }
@@ -635,7 +635,7 @@ impl CodebaseAnalyzer {
             while let Ok(_event) = rx.recv() {
                 // File system event occurred, re-analyze
                 if let Err(e) = analyzer.analyze_codebase().await {
-                    eprintln!("Error during codebase analysis: {}", e);
+                    eprintln!("Error during codebase analysis: {e}");
                 }
             }
         });

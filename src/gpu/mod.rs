@@ -26,6 +26,12 @@ pub struct CpuGraphProcessor {
     pub graph: Option<Arc<HashMap<u32, Vec<u32>>>>,
 }
 
+impl Default for CpuGraphProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CpuGraphProcessor {
     /// Create a new CPU graph processor
     pub fn new() -> Self {

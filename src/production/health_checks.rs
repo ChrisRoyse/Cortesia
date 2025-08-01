@@ -650,7 +650,7 @@ impl HealthCheckSystem {
                     HealthStatus::Healthy
                 };
 
-                let message = format!("Cache hit rate: {:.1}%", hit_rate);
+                let message = format!("Cache hit rate: {hit_rate:.1}%");
 
                 HealthCheckResult {
                     component: "cache".to_string(),
@@ -839,7 +839,7 @@ async fn check_memory_health() -> HealthCheckResult {
     HealthCheckResult {
         component: "memory".to_string(),
         status,
-        message: format!("Memory usage: {:.1}%", memory_usage),
+        message: format!("Memory usage: {memory_usage:.1}%"),
         details,
         timestamp: start_time,
         response_time_ms: 1,
@@ -866,7 +866,7 @@ async fn check_cpu_health() -> HealthCheckResult {
     HealthCheckResult {
         component: "cpu".to_string(),
         status,
-        message: format!("CPU usage: {:.1}%", cpu_usage),
+        message: format!("CPU usage: {cpu_usage:.1}%"),
         details,
         timestamp: start_time,
         response_time_ms: 1,

@@ -99,7 +99,7 @@ pub async fn handle_find_facts(
             
             Ok((data, message, suggestions))
         }
-        Err(e) => Err(format!("Query failed: {}", e))
+        Err(e) => Err(format!("Query failed: {e}"))
     }
 }
 
@@ -579,7 +579,7 @@ fn extract_key_terms(question: &str) -> Vec<String> {
     // Extract capitalized words (likely entities)
     for word in &words {
         let clean_word = word.trim_matches(|c: char| !c.is_alphanumeric());
-        if clean_word.chars().next().map_or(false, |c| c.is_uppercase()) {
+        if clean_word.chars().next().is_some_and(|c| c.is_uppercase()) {
             terms.push(clean_word.to_string());
         }
     }
@@ -603,14 +603,13 @@ fn extract_key_terms(question: &str) -> Vec<String> {
     // Look for question keywords and extract following terms
     let _question_lower = question.to_lowercase();
     for (i, word) in words.iter().enumerate() {
-        if matches!(word.to_lowercase().as_str(), "who" | "what" | "where" | "when" | "which") {
-            if i + 1 < words.len() {
+        if matches!(word.to_lowercase().as_str(), "who" | "what" | "where" | "when" | "which")
+            && i + 1 < words.len() {
                 let next_word = words[i + 1].trim_matches(|c: char| !c.is_alphanumeric());
                 if !next_word.is_empty() && !is_stop_word(next_word) {
                     terms.push(next_word.to_string());
                 }
             }
-        }
     }
     
     // Deduplicate

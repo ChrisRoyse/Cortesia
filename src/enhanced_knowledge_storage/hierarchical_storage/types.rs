@@ -286,21 +286,21 @@ impl std::fmt::Display for HierarchicalStorageError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             HierarchicalStorageError::LayerNotFound(id) => 
-                write!(f, "Knowledge layer not found: {}", id),
+                write!(f, "Knowledge layer not found: {id}"),
             HierarchicalStorageError::InvalidLayerStructure(msg) => 
-                write!(f, "Invalid layer structure: {}", msg),
+                write!(f, "Invalid layer structure: {msg}"),
             HierarchicalStorageError::IndexingError(msg) => 
-                write!(f, "Indexing error: {}", msg),
+                write!(f, "Indexing error: {msg}"),
             HierarchicalStorageError::SemanticAnalysisError(msg) => 
-                write!(f, "Semantic analysis error: {}", msg),
+                write!(f, "Semantic analysis error: {msg}"),
             HierarchicalStorageError::StorageError(msg) => 
-                write!(f, "Storage error: {}", msg),
+                write!(f, "Storage error: {msg}"),
             HierarchicalStorageError::RetrievalError(msg) => 
-                write!(f, "Retrieval error: {}", msg),
+                write!(f, "Retrieval error: {msg}"),
             HierarchicalStorageError::GraphError(msg) => 
-                write!(f, "Graph operation error: {}", msg),
+                write!(f, "Graph operation error: {msg}"),
             HierarchicalStorageError::ConfigurationError(msg) => 
-                write!(f, "Configuration error: {}", msg),
+                write!(f, "Configuration error: {msg}"),
         }
     }
 }

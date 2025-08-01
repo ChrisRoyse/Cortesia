@@ -125,11 +125,10 @@ impl GraphStructurePredictor {
             
             // Check if word matches known entity types
             for (entity_type, &weight) in &self.entity_types {
-                if normalized_word.contains(entity_type) || entity_type.contains(&normalized_word) {
-                    if weight > 0.5 {
+                if (normalized_word.contains(entity_type) || entity_type.contains(&normalized_word))
+                    && weight > 0.5 {
                         entities.insert(word.to_string(), self.classify_entity_type(word));
                     }
-                }
             }
             
             // Capitalize words are likely entities
@@ -141,7 +140,7 @@ impl GraphStructurePredictor {
             if i < words.len() - 1 {
                 let next_word = words[i + 1];
                 if next_word.chars().next().unwrap_or('a').is_uppercase() {
-                    let compound = format!("{} {}", word, next_word);
+                    let compound = format!("{word} {next_word}");
                     entities.insert(compound, "compound_entity".to_string());
                 }
             }
@@ -437,6 +436,6 @@ mod tests {
         
         // Should process 100 predictions in under 1 second
         assert!(elapsed.as_millis() < 1000);
-        println!("100 structure predictions took: {:?}", elapsed);
+        println!("100 structure predictions took: {elapsed:?}");
     }
 }

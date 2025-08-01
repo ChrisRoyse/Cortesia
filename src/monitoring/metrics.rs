@@ -322,7 +322,7 @@ impl MetricRegistry {
                 if i > 0 {
                     key.push(',');
                 }
-                key.push_str(&format!("{}=\"{}\"", k, v));
+                key.push_str(&format!("{k}=\"{v}\""));
             }
             key.push('}');
         }

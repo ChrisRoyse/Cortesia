@@ -9,7 +9,7 @@ static CLEANUP: Once = Once::new();
 pub fn cleanup_test_processes() {
     // Kill any lingering test processes before starting
     let _ = Command::new("taskkill")
-        .args(&["/F", "/IM", "llmkg*.exe"])
+        .args(["/F", "/IM", "llmkg*.exe"])
         .output();
 }
 

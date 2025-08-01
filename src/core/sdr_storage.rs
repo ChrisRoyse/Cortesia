@@ -477,7 +477,7 @@ mod tests {
         
         for i in 0..10 {
             let sdr = SDR::random(&storage.config);
-            let pattern = SDRPattern::new(format!("pattern_{}", i), sdr, format!("concept_{}", i));
+            let pattern = SDRPattern::new(format!("pattern_{i}"), sdr, format!("concept_{i}"));
             storage.store_pattern(pattern).await.unwrap();
         }
         
@@ -607,13 +607,13 @@ mod tests {
         
         let pattern_id1 = storage.store_dense_vector(
             entity1,
-            &vec![0.5; 10],
+            &[0.5; 10],
             "concept1".to_string(),
         ).await.unwrap();
         
         let pattern_id2 = storage.store_dense_vector(
             entity2,
-            &vec![0.7; 10],
+            &[0.7; 10],
             "concept2".to_string(),
         ).await.unwrap();
         
@@ -632,7 +632,7 @@ mod tests {
         let entity_key = create_test_entity_key();
         let pattern_id1 = storage.store_dense_vector(
             entity_key,
-            &vec![0.5; 10],
+            &[0.5; 10],
             "used_concept".to_string(),
         ).await.unwrap();
         
@@ -670,7 +670,7 @@ mod tests {
             storage.store_dense_vector(
                 entity_key,
                 &vec![0.5; 100],
-                format!("concept_{}", i),
+                format!("concept_{i}"),
             ).await.unwrap();
         }
         
@@ -724,8 +724,8 @@ mod tests {
             let entity_key = create_test_entity_key();
             storage.store_dense_vector(
                 entity_key,
-                &vec![i as f32 / 100.0; 50],
-                format!("concept_{}", i),
+                &[i as f32 / 100.0; 50],
+                format!("concept_{i}"),
             ).await.unwrap();
         }
         
@@ -781,7 +781,7 @@ mod tests {
     // Test mathematical invariants and edge cases
     #[test]
     fn test_sdr_mathematical_invariants() {
-        let config = SDRConfig::default();
+        let _config = SDRConfig::default();
         
         // Test sparsity calculation accuracy
         for active_count in [0, 1, 10, 100, 1000] {
@@ -835,7 +835,7 @@ mod tests {
                 storage_clone.store_dense_vector(
                     entity_key,
                     &vector,
-                    format!("concurrent_concept_{}", i),
+                    format!("concurrent_concept_{i}"),
                 ).await.unwrap();
                 entity_key
             });

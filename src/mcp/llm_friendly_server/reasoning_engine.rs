@@ -44,7 +44,7 @@ pub async fn execute_deductive_reasoning(
     if knowledge.triples.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No knowledge available for reasoning about '{}'", premise),
+            primary_conclusion: format!("No knowledge available for reasoning about '{premise}'"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -82,7 +82,7 @@ pub async fn execute_deductive_reasoning(
         let mut facts_by_subject_predicate: HashMap<(String, String), Vec<String>> = HashMap::new();
         for fact in &related_facts {
             let key = (fact.subject.clone(), fact.predicate.clone());
-            facts_by_subject_predicate.entry(key).or_insert_with(Vec::new).push(fact.object.clone());
+            facts_by_subject_predicate.entry(key).or_default().push(fact.object.clone());
         }
         
         for ((subj, pred), objects) in &facts_by_subject_predicate {
@@ -91,8 +91,7 @@ pub async fn execute_deductive_reasoning(
                 if pred.contains("not") || pred.contains("isn't") {
                     let positive_pred = pred.replace("_not", "").replace("isn't", "is");
                     if facts_by_subject_predicate.contains_key(&(subj.clone(), positive_pred.clone())) {
-                        contradictions.push(format!("Contradiction detected: {} {} and {} {}", 
-                            subj, positive_pred, subj, pred));
+                        contradictions.push(format!("Contradiction detected: {subj} {positive_pred} and {subj} {pred}"));
                     }
                 }
             }
@@ -107,7 +106,7 @@ pub async fn execute_deductive_reasoning(
             
             // Detect cycles - check if next_entity is already in the current chain
             if entities_in_chain.contains(next_entity.as_str()) {
-                let cycle_path = format!("{} -> {} (cycle detected)", current_entity, next_entity);
+                let cycle_path = format!("{current_entity} -> {next_entity} (cycle detected)");
                 cycle_paths.insert(cycle_path);
                 continue; // Skip this path to prevent infinite loop
             }
@@ -120,16 +119,14 @@ pub async fn execute_deductive_reasoning(
                     step_number: new_chain.len() + 1,
                     premise: current_entity.clone(),
                     inference: next_entity.clone(),
-                    justification: format!("Because: {}", relationship),
+                    justification: format!("Because: {relationship}"),
                     confidence: confidence * fact.confidence,
                 });
                 
                 if new_chain.len() >= 2 {
                     // Found a reasoning chain
                     let conclusion = format!(
-                        "If {} is true, then {} follows",
-                        premise,
-                        next_entity
+                        "If {premise} is true, then {next_entity} follows"
                     );
                     
                     chains.push(json!({
@@ -156,7 +153,7 @@ pub async fn execute_deductive_reasoning(
     
     // Generate primary conclusion
     let primary_conclusion = if chains.is_empty() {
-        format!("No deductive conclusions can be drawn from '{}'", premise)
+        format!("No deductive conclusions can be drawn from '{premise}'")
     } else {
         let best_chain = chains.iter()
             .max_by(|a, b| {
@@ -206,7 +203,7 @@ pub async fn execute_inductive_reasoning(
     if knowledge.triples.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No knowledge available for inductive reasoning about '{}'", premise),
+            primary_conclusion: format!("No knowledge available for inductive reasoning about '{premise}'"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -220,7 +217,7 @@ pub async fn execute_inductive_reasoning(
     // Find all instances similar to the premise
     let similar_entities: Vec<&str> = knowledge.triples.iter()
         .filter_map(|t| {
-            if t.predicate.contains(&premise) || t.subject.contains(&premise) || t.object.contains(&premise) {
+            if t.predicate.contains(premise) || t.subject.contains(premise) || t.object.contains(premise) {
                 Some(t.subject.as_str())
             } else {
                 None
@@ -234,7 +231,7 @@ pub async fn execute_inductive_reasoning(
     if similar_entities.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No similar instances found for inductive reasoning about '{}'", premise),
+            primary_conclusion: format!("No similar instances found for inductive reasoning about '{premise}'"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -250,7 +247,7 @@ pub async fn execute_inductive_reasoning(
         
         for fact in entity_facts {
             let pattern_key = format!("{} -> {}", fact.predicate, fact.object);
-            patterns.entry(pattern_key).or_insert_with(Vec::new).push(entity.to_string());
+            patterns.entry(pattern_key).or_default().push(entity.to_string());
         }
     }
     
@@ -290,7 +287,7 @@ pub async fn execute_inductive_reasoning(
     }
     
     let primary_conclusion = if chains.is_empty() {
-        format!("No patterns found for inductive reasoning from '{}'", premise)
+        format!("No patterns found for inductive reasoning from '{premise}'")
     } else {
         chains[0]["conclusion"].as_str().unwrap_or("").to_string()
     };
@@ -320,7 +317,7 @@ pub async fn execute_abductive_reasoning(
     if knowledge.triples.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No knowledge available for abductive reasoning about '{}'", premise),
+            primary_conclusion: format!("No knowledge available for abductive reasoning about '{premise}'"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -379,7 +376,7 @@ pub async fn execute_abductive_reasoning(
     }
     
     let primary_conclusion = if chains.is_empty() {
-        format!("No plausible explanations found for '{}'", premise)
+        format!("No plausible explanations found for '{premise}'")
     } else {
         chains[0]["explanation"].as_str().unwrap_or("").to_string()
     };
@@ -409,7 +406,7 @@ pub async fn execute_analogical_reasoning(
     if knowledge.triples.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No knowledge available for analogical reasoning about '{}'", premise),
+            primary_conclusion: format!("No knowledge available for analogical reasoning about '{premise}'"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -429,7 +426,7 @@ pub async fn execute_analogical_reasoning(
     if premise_properties.is_empty() {
         return ReasoningResult {
             chains: vec![],
-            primary_conclusion: format!("No properties found for '{}' to form analogies", premise),
+            primary_conclusion: format!("No properties found for '{premise}' to form analogies"),
             logical_validity: 0.0,
             confidence_scores: vec![],
             supporting_evidence: vec![],
@@ -474,7 +471,7 @@ pub async fn execute_analogical_reasoning(
                     entity,
                     premise,
                     analog_unique_props.iter()
-                        .map(|(p, o)| format!("{} {}", p, o))
+                        .map(|(p, o)| format!("{p} {o}"))
                         .collect::<Vec<_>>()
                         .join(", ")
                 );
@@ -507,7 +504,7 @@ pub async fn execute_analogical_reasoning(
     }
     
     let primary_conclusion = if chains.is_empty() {
-        format!("No suitable analogies found for '{}'", premise)
+        format!("No suitable analogies found for '{premise}'")
     } else {
         chains[0]["conclusion"].as_str().unwrap_or("").to_string()
     };
@@ -601,7 +598,7 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
     
     // Group facts by subject
     for triple in &knowledge.triples {
-        facts_by_subject.entry(triple.subject.clone()).or_insert_with(Vec::new).push(triple);
+        facts_by_subject.entry(triple.subject.clone()).or_default().push(triple);
     }
     
     // Check for contradictions
@@ -616,7 +613,7 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
                 .replace("doesn't", "does");
             
             predicates_map.entry(base_predicate.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(&triple.predicate);
         }
         
@@ -628,8 +625,7 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
                 
                 if has_positive && has_negative {
                     contradictions.push(format!(
-                        "Contradiction for '{}': both affirming and negating '{}'",
-                        subject, base_pred
+                        "Contradiction for '{subject}': both affirming and negating '{base_pred}'"
                     ));
                 }
             }
@@ -656,8 +652,7 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
                         if (obj1.contains(ex1) && obj2.contains(ex2)) || 
                            (obj1.contains(ex2) && obj2.contains(ex1)) {
                             contradictions.push(format!(
-                                "Contradiction for '{}': cannot be both '{}' and '{}'",
-                                subject, obj1, obj2
+                                "Contradiction for '{subject}': cannot be both '{obj1}' and '{obj2}'"
                             ));
                         }
                     }
@@ -728,7 +723,7 @@ fn generate_alternative_explanations(explanations: &[(String, f32, Vec<String>)]
     explanations.iter()
         .skip(1)
         .take(2)
-        .map(|(exp, conf, _)| format!("Alternative: {} (confidence: {:.2})", exp, conf))
+        .map(|(exp, conf, _)| format!("Alternative: {exp} (confidence: {conf:.2})"))
         .collect()
 }
 

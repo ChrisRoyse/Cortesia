@@ -120,6 +120,12 @@ pub struct RuntimeProfiler {
     profiling_enabled: Arc<RwLock<bool>>,
 }
 
+impl Default for RuntimeProfiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RuntimeProfiler {
     pub fn new() -> Self {
         let (event_sender, _) = broadcast::channel(1000);
@@ -151,7 +157,7 @@ impl RuntimeProfiler {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
-        let trace_id = format!("{}_{}", function_name, now);
+        let trace_id = format!("{function_name}_{now}");
         let thread_id = self.get_current_thread_id();
         
         let trace = ExecutionTrace {
@@ -409,7 +415,7 @@ impl RuntimeProfiler {
                     function_name: function_name.clone(),
                     bottleneck_type: BottleneckType::HighMemoryUsage,
                     severity: (*memory_usage as f32 / (1024.0 * 1024.0)).min(10.0),
-                    description: format!("Function {} uses high memory: {} bytes", function_name, memory_usage),
+                    description: format!("Function {function_name} uses high memory: {memory_usage} bytes"),
                     suggested_fix: "Consider memory optimization or streaming processing".to_string(),
                 });
             }

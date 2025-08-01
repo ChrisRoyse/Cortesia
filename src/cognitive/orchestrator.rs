@@ -125,11 +125,7 @@ impl CognitiveOrchestrator {
         context: Option<&str>,
         strategy: ReasoningStrategy,
     ) -> Result<ReasoningResult> {
-        let _trace = if let Some(profiler) = &self.runtime_profiler {
-            Some(trace_function!(profiler, "cognitive_reason", query.len(), context.map(|c| c.len()).unwrap_or(0)))
-        } else {
-            None
-        };
+        let _trace = self.runtime_profiler.as_ref().map(|profiler| trace_function!(profiler, "cognitive_reason", query.len(), context.map(|c| c.len()).unwrap_or(0)));
         
         let start_time = std::time::Instant::now();
         
@@ -159,7 +155,7 @@ impl CognitiveOrchestrator {
         // Record performance metrics
         if self.config.performance_tracking {
             let operation = Operation {
-                name: format!("cognitive_reasoning_{:?}", strategy),
+                name: format!("cognitive_reasoning_{strategy:?}"),
                 operation_type: "reasoning".to_string(),
                 custom_metrics: {
                     let mut metrics = std::collections::HashMap::new();
@@ -222,7 +218,7 @@ impl CognitiveOrchestrator {
         pattern_type: CognitivePatternType,
     ) -> Result<ReasoningResult> {
         let pattern = self.patterns.get(&pattern_type)
-            .ok_or(GraphError::PatternNotFound(format!("{:?}", pattern_type)))?;
+            .ok_or(GraphError::PatternNotFound(format!("{pattern_type:?}")))?;
         
         let pattern_result = pattern.execute(
             query,
@@ -299,11 +295,11 @@ impl CognitiveOrchestrator {
                 match task.await {
                     Ok(Ok(result)) => pattern_results.push((pattern_type, result)),
                     Ok(Err(e)) => {
-                        log::warn!("Pattern {:?} failed: {}", pattern_type, e);
+                        log::warn!("Pattern {pattern_type:?} failed: {e}");
                         // Continue with other patterns
                     }
                     Err(e) => {
-                        log::warn!("Pattern {:?} task failed: {}", pattern_type, e);
+                        log::warn!("Pattern {pattern_type:?} task failed: {e}");
                     }
                 }
             }
@@ -589,21 +585,21 @@ impl CognitiveOrchestrator {
         let metrics = self.performance_monitor.get_metrics().await?;
         
         Ok(PerformanceMetrics {
-            total_queries_processed: metrics.get("total_queries").unwrap_or(&0.0).clone() as u64,
-            average_response_time_ms: metrics.get("avg_response_time").unwrap_or(&0.0).clone() as f64,
+            total_queries_processed: *metrics.get("total_queries").unwrap_or(&0.0) as u64,
+            average_response_time_ms: *metrics.get("avg_response_time").unwrap_or(&0.0) as f64,
             pattern_usage_stats: {
                 let mut usage_stats = AHashMap::new();
                 for pattern_type in &self.get_available_patterns() {
-                    let usage_key = format!("pattern_{:?}_usage", pattern_type);
-                    let usage_count = metrics.get(&usage_key).unwrap_or(&0.0).clone() as u64;
+                    let usage_key = format!("pattern_{pattern_type:?}_usage");
+                    let usage_count = *metrics.get(&usage_key).unwrap_or(&0.0) as u64;
                     usage_stats.insert(*pattern_type, usage_count);
                 }
                 usage_stats
             },
-            success_rate: metrics.get("success_rate").unwrap_or(&0.95).clone() as f64,
-            cache_hit_rate: metrics.get("cache_hit_rate").unwrap_or(&0.0).clone() as f64,
-            memory_usage_mb: metrics.get("memory_usage_mb").unwrap_or(&0.0).clone() as f64,
-            active_entities: metrics.get("active_entities").unwrap_or(&0.0).clone() as u64,
+            success_rate: *metrics.get("success_rate").unwrap_or(&0.95) as f64,
+            cache_hit_rate: *metrics.get("cache_hit_rate").unwrap_or(&0.0) as f64,
+            memory_usage_mb: *metrics.get("memory_usage_mb").unwrap_or(&0.0) as f64,
+            active_entities: *metrics.get("active_entities").unwrap_or(&0.0) as u64,
         })
     }
 }

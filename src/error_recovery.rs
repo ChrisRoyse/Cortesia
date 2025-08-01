@@ -149,7 +149,7 @@ impl RetryPolicy {
                     last_error = Some(error);
                     
                     if attempt < self.max_attempts {
-                        if self.should_retry(&last_error.as_ref().unwrap()) {
+                        if self.should_retry(last_error.as_ref().unwrap()) {
                             tokio::time::sleep(delay).await;
                             delay = std::cmp::min(
                                 Duration::from_millis((delay.as_millis() as f64 * self.backoff_multiplier) as u64),

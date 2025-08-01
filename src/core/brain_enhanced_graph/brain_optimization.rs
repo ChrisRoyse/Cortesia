@@ -206,6 +206,12 @@ pub struct OptimizationResult {
     pub optimized_concepts: usize,
 }
 
+impl Default for OptimizationResult {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OptimizationResult {
     pub fn new() -> Self {
         Self {

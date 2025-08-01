@@ -290,7 +290,7 @@ impl LearningScheduler {
         for task in scheduled_tasks.iter_mut() {
             // Delay tasks if system is overloaded
             if system_load > 0.8 {
-                task.scheduled_time = task.scheduled_time + std::time::Duration::from_secs(300); // 5 minutes
+                task.scheduled_time += std::time::Duration::from_secs(300); // 5 minutes
             }
             
             // Expedite tasks if performance is poor
@@ -365,7 +365,7 @@ impl LearningScheduler {
         
         report.push_str("\nTask Type Distribution:\n");
         for (task_type, count) in &stats.task_type_distribution {
-            report.push_str(&format!("  {:?}: {}\n", task_type, count));
+            report.push_str(&format!("  {task_type:?}: {count}\n"));
         }
         
         report.push_str("\nNext Scheduled Tasks:\n");

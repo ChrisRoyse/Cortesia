@@ -276,7 +276,7 @@ impl LLMFriendlyMCPServer {
 
             // Unknown method
             _ => {
-                Err(format!("Unknown method: {}", method))
+                Err(format!("Unknown method: {method}"))
             }
         }
         }).await;

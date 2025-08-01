@@ -181,7 +181,7 @@ impl ActiveRequestGuard {
                 Ok(Self { progress })
             }
             _ => Err(GraphError::InvalidState(
-                format!("System is shutting down (phase: {})", current_phase)
+                format!("System is shutting down (phase: {current_phase})")
             )),
         }
     }
@@ -359,7 +359,7 @@ impl GracefulShutdownManager {
         self.progress.set_phase(ShutdownPhase::Terminated);
         
         let total_duration = shutdown_start.elapsed();
-        log::info!("Graceful shutdown completed in {:?}", total_duration);
+        log::info!("Graceful shutdown completed in {total_duration:?}");
         
         let phase_durations = self.progress.phase_durations.read().unwrap().clone();
         let checkpoints_count = self.shutdown_checkpoints.lock().await.len();
@@ -397,7 +397,7 @@ impl GracefulShutdownManager {
         self.progress.set_phase(ShutdownPhase::Terminated);
         
         let total_duration = shutdown_start.elapsed();
-        log::warn!("Force shutdown completed in {:?}", total_duration);
+        log::warn!("Force shutdown completed in {total_duration:?}");
         
         Ok(ShutdownReport {
             success: error_messages.is_empty(),
@@ -438,7 +438,7 @@ impl GracefulShutdownManager {
         while self.progress.get_active_requests() > 0 {
             if start_time.elapsed() > timeout {
                 let remaining = self.progress.get_active_requests();
-                log::warn!("Timeout waiting for {} active requests to complete", remaining);
+                log::warn!("Timeout waiting for {remaining} active requests to complete");
                 return Err(GraphError::OperationTimeout(
                     format!("Active requests did not complete within {}s", timeout.as_secs())
                 ));
@@ -458,7 +458,7 @@ impl GracefulShutdownManager {
         self.progress.total_checkpoints.store(total_handlers as u32, Ordering::Relaxed);
         self.progress.completed_checkpoints.store(0, Ordering::Relaxed);
         
-        log::info!("Saving state for {} components", total_handlers);
+        log::info!("Saving state for {total_handlers} components");
         
         // Create semaphore to limit concurrent saves
         let semaphore = Arc::new(tokio::sync::Semaphore::new(self.config.max_concurrent_saves as usize));
@@ -683,7 +683,7 @@ mod tests {
         
         // Add some test data to the engine first
         {
-            let mut engine = manager.knowledge_engine.write().await;
+            let _engine = manager.knowledge_engine.write().await;
             // In a real test, we would add some data to create a meaningful checkpoint
         }
         

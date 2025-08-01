@@ -518,7 +518,7 @@ mod tests {
         let (initial_size, capacity, initial_hit_rate) = graph.cache_stats();
         assert_eq!(initial_size, 0);
         assert_eq!(capacity, 1000);
-        assert!(initial_hit_rate >= 0.0 && initial_hit_rate <= 1.0);
+        assert!((0.0..=1.0).contains(&initial_hit_rate));
         
         // Test cache clearing (should be no-op on empty cache)
         graph.clear_caches();
@@ -572,7 +572,7 @@ mod tests {
     #[test]
     fn test_debug_implementation() {
         let graph = KnowledgeGraph::new_internal(96).unwrap();
-        let debug_string = format!("{:?}", graph);
+        let debug_string = format!("{graph:?}");
         
         // Verify debug output contains expected fields
         assert!(debug_string.contains("KnowledgeGraph"));

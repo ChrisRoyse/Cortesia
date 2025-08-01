@@ -357,21 +357,21 @@ impl std::fmt::Display for RetrievalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RetrievalError::QueryProcessingError(msg) => 
-                write!(f, "Query processing error: {}", msg),
+                write!(f, "Query processing error: {msg}"),
             RetrievalError::StorageAccessError(msg) => 
-                write!(f, "Storage access error: {}", msg),
+                write!(f, "Storage access error: {msg}"),
             RetrievalError::ReasoningError(msg) => 
-                write!(f, "Reasoning error: {}", msg),
+                write!(f, "Reasoning error: {msg}"),
             RetrievalError::ContextAggregationError(msg) => 
-                write!(f, "Context aggregation error: {}", msg),
+                write!(f, "Context aggregation error: {msg}"),
             RetrievalError::CacheError(msg) => 
-                write!(f, "Cache error: {}", msg),
+                write!(f, "Cache error: {msg}"),
             RetrievalError::ModelError(msg) => 
-                write!(f, "Model error: {}", msg),
+                write!(f, "Model error: {msg}"),
             RetrievalError::InvalidQuery(msg) => 
-                write!(f, "Invalid query: {}", msg),
+                write!(f, "Invalid query: {msg}"),
             RetrievalError::TimeoutError(msg) => 
-                write!(f, "Timeout error: {}", msg),
+                write!(f, "Timeout error: {msg}"),
         }
     }
 }

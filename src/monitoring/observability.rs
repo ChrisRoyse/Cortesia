@@ -12,6 +12,12 @@ pub struct ObservabilityEngine {
     log_aggregator: Arc<LogAggregator>,
 }
 
+impl Default for ObservabilityEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ObservabilityEngine {
     pub fn new() -> Self {
         Self {
@@ -26,7 +32,7 @@ impl ObservabilityEngine {
     }
 
     pub async fn start_trace(&self, operation: &str) -> Result<String> {
-        self.trace_exporter.start_span(&format!("trace_{}", operation), operation).await
+        self.trace_exporter.start_span(&format!("trace_{operation}"), operation).await
     }
 
     pub async fn log_event(&self, level: LogLevel, message: &str) -> Result<()> {
@@ -37,6 +43,12 @@ impl ObservabilityEngine {
 /// Metrics collector for performance data
 pub struct MetricsCollector {
     metrics: Arc<RwLock<HashMap<String, MetricData>>>,
+}
+
+impl Default for MetricsCollector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MetricsCollector {
@@ -105,6 +117,12 @@ pub struct TraceExporter {
     traces: Arc<RwLock<HashMap<String, TraceData>>>,
 }
 
+impl Default for TraceExporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TraceExporter {
     pub fn new() -> Self {
         Self {
@@ -162,6 +180,12 @@ impl TraceExporter {
 /// Log aggregator for centralized logging
 pub struct LogAggregator {
     logs: Arc<RwLock<Vec<LogEntry>>>,
+}
+
+impl Default for LogAggregator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LogAggregator {

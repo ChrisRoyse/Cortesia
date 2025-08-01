@@ -12,6 +12,12 @@ pub struct TestQueries {
     pub relational: Vec<&'static str>,
 }
 
+impl Default for TestQueries {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TestQueries {
     pub fn new() -> Self {
         Self {
@@ -62,13 +68,19 @@ pub struct PerformanceTestData {
     pub stress_dataset: Vec<EntityKey>,
 }
 
+impl Default for PerformanceTestData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PerformanceTestData {
     pub fn new() -> Self {
         Self {
-            small_dataset: (0..10).map(|i| EntityKey::from_hash(&format!("entity_{}", i))).collect(),
-            medium_dataset: (0..100).map(|i| EntityKey::from_hash(&format!("entity_{}", i))).collect(),
-            large_dataset: (0..1000).map(|i| EntityKey::from_hash(&format!("entity_{}", i))).collect(),
-            stress_dataset: (0..10000).map(|i| EntityKey::from_hash(&format!("entity_{}", i))).collect(),
+            small_dataset: (0..10).map(|i| EntityKey::from_hash(&format!("entity_{i}"))).collect(),
+            medium_dataset: (0..100).map(|i| EntityKey::from_hash(&format!("entity_{i}"))).collect(),
+            large_dataset: (0..1000).map(|i| EntityKey::from_hash(&format!("entity_{i}"))).collect(),
+            stress_dataset: (0..10000).map(|i| EntityKey::from_hash(&format!("entity_{i}"))).collect(),
         }
     }
 }
@@ -78,6 +90,12 @@ pub struct AttentionTestData {
     pub entity_attention_scores: HashMap<EntityKey, f32>,
     pub query_weights: HashMap<String, f32>,
     pub decay_factors: Vec<f32>,
+}
+
+impl Default for AttentionTestData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AttentionTestData {
@@ -106,6 +124,12 @@ impl AttentionTestData {
 pub struct PatternTestData {
     pub pattern_sequences: Vec<Vec<CognitivePatternType>>,
     pub expected_transitions: HashMap<(CognitivePatternType, CognitivePatternType), f32>,
+}
+
+impl Default for PatternTestData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PatternTestData {
@@ -137,6 +161,12 @@ pub struct EdgeCaseTestData {
     pub unicode_test_strings: Vec<&'static str>,
 }
 
+impl Default for EdgeCaseTestData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EdgeCaseTestData {
     pub fn new() -> Self {
         Self {
@@ -162,6 +192,12 @@ pub struct TemporalTestData {
     pub timestamps: Vec<u64>,
     pub time_intervals: Vec<std::time::Duration>,
     pub decay_curves: Vec<Vec<f32>>,
+}
+
+impl Default for TemporalTestData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TemporalTestData {
@@ -197,6 +233,12 @@ pub struct MemoryTestData {
     pub memory_traces: Vec<(EntityKey, f32, u64)>,
     pub reinforcement_patterns: Vec<Vec<f32>>,
     pub forgetting_curves: HashMap<String, Vec<f32>>,
+}
+
+impl Default for MemoryTestData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MemoryTestData {
@@ -239,6 +281,12 @@ pub struct TestDataProvider {
     pub memory: MemoryTestData,
 }
 
+impl Default for TestDataProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TestDataProvider {
     pub fn new() -> Self {
         Self {
@@ -256,15 +304,15 @@ impl TestDataProvider {
     /// Get test data for a specific cognitive pattern type
     pub fn get_queries_for_pattern(&self, pattern: CognitivePatternType) -> Vec<&str> {
         match pattern {
-            CognitivePatternType::Convergent => self.queries.analytical.iter().copied().collect(),
-            CognitivePatternType::Divergent => self.queries.creative.iter().copied().collect(),
-            CognitivePatternType::Lateral => self.queries.relational.iter().copied().collect(),
-            CognitivePatternType::Systems => self.queries.analytical.iter().copied().collect(),
-            CognitivePatternType::Critical => self.queries.analytical.iter().copied().collect(),
-            CognitivePatternType::Abstract => self.queries.creative.iter().copied().collect(),
-            CognitivePatternType::Adaptive => self.queries.relational.iter().copied().collect(),
-            CognitivePatternType::ChainOfThought => self.queries.analytical.iter().copied().collect(),
-            CognitivePatternType::TreeOfThoughts => self.queries.creative.iter().copied().collect(),
+            CognitivePatternType::Convergent => self.queries.analytical.to_vec(),
+            CognitivePatternType::Divergent => self.queries.creative.to_vec(),
+            CognitivePatternType::Lateral => self.queries.relational.to_vec(),
+            CognitivePatternType::Systems => self.queries.analytical.to_vec(),
+            CognitivePatternType::Critical => self.queries.analytical.to_vec(),
+            CognitivePatternType::Abstract => self.queries.creative.to_vec(),
+            CognitivePatternType::Adaptive => self.queries.relational.to_vec(),
+            CognitivePatternType::ChainOfThought => self.queries.analytical.to_vec(),
+            CognitivePatternType::TreeOfThoughts => self.queries.creative.to_vec(),
         }
     }
 
@@ -272,7 +320,7 @@ impl TestDataProvider {
     pub fn get_entities_with_scores(&self) -> Vec<(EntityKey, f32)> {
         self.attention.entity_attention_scores
             .iter()
-            .map(|(k, v)| (k.clone(), *v))
+            .map(|(k, v)| (*k, *v))
             .collect()
     }
 
@@ -297,7 +345,7 @@ pub mod generators {
     /// Generate random entity keys with consistent naming
     pub fn generate_entities(count: usize, prefix: &str) -> Vec<EntityKey> {
         (0..count)
-            .map(|i| EntityKey::from_hash(&format!("{}_{}", prefix, i)))
+            .map(|i| EntityKey::from_hash(&format!("{prefix}_{i}")))
             .collect()
     }
 
@@ -355,7 +403,7 @@ mod tests {
 
         let scores = generators::generate_attention_scores(10, 0.0, 1.0, 42);
         assert_eq!(scores.len(), 10);
-        assert!(scores.iter().all(|&s| s >= 0.0 && s <= 1.0));
+        assert!(scores.iter().all(|&s| (0.0..=1.0).contains(&s)));
 
         let decay = generators::generate_decay_curve(1.0, 0.9, 5);
         assert_eq!(decay.len(), 5);

@@ -116,7 +116,7 @@ impl VersionStore {
     pub async fn get_latest_version(&self, entity_id: &str) -> Result<VersionEntry> {
         let entity_versions = self.entity_versions.read().await;
         let versions = entity_versions.get(entity_id)
-            .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
+            .ok_or(GraphError::EntityNotFound { id: 0 })?;
 
         versions.last()
             .cloned()
@@ -224,8 +224,8 @@ impl VersionStore {
                     let should_keep = i < min_to_keep ||
                         (policy.preserve_anchors && version.is_anchor) ||
                         (policy.preserve_tagged_versions && !version.metadata.tags.is_empty()) ||
-                        (policy.max_versions_per_entity.map_or(true, |max| i < max)) ||
-                        (policy.max_age_days.map_or(true, |max_days| {
+                        (policy.max_versions_per_entity.is_none_or(|max| i < max)) ||
+                        (policy.max_age_days.is_none_or(|max_days| {
                             version.timestamp.elapsed().unwrap_or_default().as_secs() < (max_days as u64 * 24 * 3600)
                         }));
 

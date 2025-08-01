@@ -1,0 +1,796 @@
+    Checking llmkg v0.1.0 (C:\code\LLMKG)
+src\core\activation_processors.rs:191:45: warning: variables can be used directly in the `format!` string
+src\core\activation_engine.rs:121:17: warning: deref which would be done by auto-deref: help: try: `&entities`
+src\core\activation_engine.rs:122:17: warning: deref which would be done by auto-deref: help: try: `&relationships`
+src\core\activation_engine.rs:136:17: warning: deref which would be done by auto-deref: help: try: `&entities`
+src\core\activation_engine.rs:137:17: warning: deref which would be done by auto-deref: help: try: `&gates`
+src\core\activation_engine.rs:145:17: warning: deref which would be done by auto-deref: help: try: `&relationships`
+src\core\activation_engine.rs:151:39: warning: you seem to want to iterate on a map's values
+src\core\activation_engine.rs:162:76: warning: deref which would be done by auto-deref: help: try: `&entities`
+src\core\activation_engine.rs:162:88: warning: deref which would be done by auto-deref: help: try: `&relationships`
+src\core\sdr_index.rs:31:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\core\brain_enhanced_graph\brain_graph_core.rs:312:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_graph_core.rs:316:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_graph_core.rs:320:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_graph_core.rs:329:33: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_entity_manager.rs:194:45: warning: using `clone` on type `Relationship` which implements the `Copy` trait: help: try removing the `clone` call: `relationship`
+src\core\brain_enhanced_graph\brain_entity_manager.rs:435:52: warning: you seem to use `.enumerate()` and immediately discard the index
+src\core\brain_enhanced_graph\brain_entity_manager.rs:508:36: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_query_engine.rs:64:56: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_query_engine.rs:88:56: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_relationship_manager.rs:130:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_relationship_manager.rs:142:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_relationship_manager.rs:638:44: warning: using `clone` on type `Relationship` which implements the `Copy` trait: help: try dereferencing it: `*relationship`
+src\core\brain_enhanced_graph\brain_analytics.rs:298:30: warning: the loop variable `k` is only used to index `path`
+src\core\brain_enhanced_graph\brain_analytics.rs:557:26: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_analytics.rs:564:30: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_analytics.rs:570:30: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_analytics.rs:580:30: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_analytics.rs:585:26: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_analytics.rs:619:5: warning: you should consider adding a `Default` implementation for `GraphPatternAnalysis`
+src\core\brain_enhanced_graph\brain_analytics.rs:636:9: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!self.hub_entities.is_empty()`
+src\core\brain_enhanced_graph\brain_concept_ops.rs:14:63: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:30:63: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:257:63: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:286:49: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!activations.is_empty()`
+src\core\brain_enhanced_graph\brain_concept_ops.rs:378:63: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:403:50: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!related_memories.is_empty()`
+src\core\brain_enhanced_graph\brain_concept_ops.rs:423:63: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:642:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_concept_ops.rs:643:29: warning: variables can be used directly in the `format!` string
+src\core\brain_enhanced_graph\brain_optimization.rs:210:5: warning: you should consider adding a `Default` implementation for `OptimizationResult`
+src\core\memory.rs:16:5: warning: you should consider adding a `Default` implementation for `GraphArena`
+src\core\triple.rs:166:17: warning: variables can be used directly in the `format!` string
+src\core\triple.rs:303:17: warning: variables can be used directly in the `format!` string
+src\core\triple.rs:363:17: warning: variables can be used directly in the `format!` string
+src\core\triple.rs:366:17: warning: variables can be used directly in the `format!` string
+src\core\triple.rs:369:17: warning: variables can be used directly in the `format!` string
+src\core\triple.rs:378:28: warning: casting to the same type is unnecessary (`f32` -> `f32`): help: try: `(self.metadata.access_count as f32).ln()`
+src\core\knowledge_embedding.rs:191:28: warning: this `map_or` can be simplified
+src\core\knowledge_extraction.rs:7:5: warning: you should consider adding a `Default` implementation for `TripleExtractor`
+src\core\knowledge_engine.rs:148:27: warning: variables can be used directly in the `format!` string
+src\core\knowledge_engine.rs:446:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\core\knowledge_engine.rs:454:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\core\knowledge_engine.rs:462:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\core\knowledge_engine.rs:473:29: warning: unnecessary closure used to substitute value for `Option::None`
+src\core\knowledge_engine.rs:579:26: warning: variables can be used directly in the `format!` string
+src\core\knowledge_engine.rs:603:29: warning: variables can be used directly in the `format!` string
+src\core\knowledge_engine.rs:607:29: warning: variables can be used directly in the `format!` string
+src\core\semantic_summary.rs:200:48: warning: variables can be used directly in the `format!` string
+src\core\semantic_summary.rs:203:25: warning: variables can be used directly in the `format!` string
+src\core\semantic_summary.rs:205:25: warning: variables can be used directly in the `format!` string
+src\core\semantic_summary.rs:213:21: warning: variables can be used directly in the `format!` string
+src\core\semantic_summary.rs:452:18: warning: the loop variable `i` is used to index `result`
+src\core\zero_copy_types.rs:64:1: warning: non-canonical implementation of `partial_cmp` on an `Ord` type
+src\core\zero_copy_engine.rs:39:27: warning: variables can be used directly in the `format!` string
+src\core\zero_copy_engine.rs:286:33: warning: manual slice size calculation: help: try: `std::mem::size_of_val(relationships)`
+src\embedding\quantizer.rs:30:5: warning: you should consider adding a `Default` implementation for `QuantizedEmbeddingStorage`
+src\embedding\quantizer.rs:225:13: warning: this `if` statement can be collapsed
+src\embedding\quantizer.rs:353:35: warning: you seem to use `.enumerate()` and immediately discard the index
+src\embedding\similarity.rs:107:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\similarity.rs:160:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\similarity.rs:213:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\similarity.rs:243:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\similarity.rs:292:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\similarity.rs:303:22: warning: the loop variable `i` is used to index `results`
+src\embedding\similarity.rs:312:27: warning: the loop variable `entity_idx` is used to index `results`
+src\embedding\simd_search.rs:59:5: warning: unsafe function's docs are missing a `# Safety` section
+src\embedding\simd_search.rs:77:17: warning: unneeded late initialization: created here, initialised here
+src\storage\csr.rs:19:5: warning: you should consider adding a `Default` implementation for `CSRGraph`
+src\storage\bloom.rs:16:35: warning: manually reimplementing `div_ceil`: help: consider using `.div_ceil()`: `bit_count.div_ceil(64)`
+src\storage\bloom.rs:35:18: warning: the loop variable `i` is only used to index `hashes`
+src\storage\bloom.rs:46:18: warning: the loop variable `i` is only used to index `hashes`
+src\storage\bloom.rs:168:18: warning: the loop variable `i` is only used to index `hashes`
+src\storage\bloom.rs:179:18: warning: the loop variable `i` is only used to index `hashes`
+src\storage\bloom.rs:190:18: warning: the loop variable `i` is only used to index `hashes`
+src\storage\index.rs:240:1: error: you are implementing `Ord` explicitly but have derived `PartialOrd`
+src\storage\mmap_storage.rs:84:5: warning: unsafe function's docs are missing a `# Safety` section
+src\storage\mmap_storage.rs:266:1: warning: this `impl` can be derived
+src\storage\persistent_mmap.rs:67:1: warning: this `impl` can be derived
+src\storage\persistent_mmap.rs:438:25: warning: using `SeekFrom::Current` to start from current position: help: replace with: `file.stream_position()`
+src\storage\persistent_mmap.rs:458:38: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!self.entities.is_empty()`
+src\storage\persistent_mmap.rs:524:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\persistent_mmap.rs:525:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\persistent_mmap.rs:526:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\persistent_mmap.rs:527:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\persistent_mmap.rs:528:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\persistent_mmap.rs:529:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:214:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:215:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:216:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:217:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:218:9: warning: using `write!()` with a format string that ends in a single newline
+src\storage\string_interner.rs:318:5: warning: you should consider adding a `Default` implementation for `GlobalStringInterner`
+src\storage\string_interner.rs:326:30: warning: redundant closure: help: replace the closure with the function itself: `GlobalStringInterner::new`
+src\storage\hybrid_graph.rs:22:22: warning: very complex type used. Consider factoring parts into `type` definitions
+src\storage\spatial_index.rs:64:27: warning: parameter is only used in recursion
+src\storage\spatial_index.rs:217:25: warning: parameter is only used in recursion
+src\storage\spatial_index.rs:297:35: warning: parameter is only used in recursion
+src\storage\spatial_index.rs:324:32: warning: parameter is only used in recursion
+src\storage\flat_index.rs:142:9: warning: non-canonical implementation of `partial_cmp` on an `Ord` type
+src\storage\flat_index.rs:335:22: warning: the loop variable `i` is used to index `similarities`
+src\storage\hnsw.rs:50:1: warning: non-canonical implementation of `partial_cmp` on an `Ord` type
+src\storage\hnsw.rs:341:26: warning: the loop variable `layer` is used to index `layer_sizes`
+src\storage\lsh.rs:102:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\storage\quantized_index.rs:278:28: warning: unnecessary closure used to substitute value for `Option::None`
+src\storage\semantic_store.rs:189:26: warning: useless use of `format!`: help: consider using `.to_string()`: `"📊 Storage Statistics:\n".to_string()`
+src\storage\semantic_store.rs:195:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `report.push('\n')`
+src\storage\semantic_store.rs:197:26: warning: useless use of `format!`: help: consider using `.to_string()`: `"🤖 LLM Integration Quality:\n".to_string()`
+src\storage\semantic_store.rs:204:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `report.push('\n')`
+src\storage\semantic_store.rs:216:30: warning: variables can be used directly in the `format!` string
+src\storage\semantic_store.rs:220:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `report.push('\n')`
+src\storage\zero_copy.rs:98:5: warning: unsafe function's docs are missing a `# Safety` section
+src\storage\zero_copy.rs:277:5: warning: you should consider adding a `Default` implementation for `ZeroCopySerializer`
+src\storage\zero_copy.rs:462:41: warning: this bound is already specified as the supertrait of `ExactSizeIterator`
+src\storage\zero_copy.rs:489:5: warning: you should consider adding a `Default` implementation for `ZeroCopyMetrics`
+src\query\rag.rs:141:28: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [ContextEntity]`
+src\query\rag.rs:196:47: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [ContextEntity]`
+src\query\optimizer.rs:39:5: warning: you should consider adding a `Default` implementation for `QueryOptimizer`
+src\query\clustering.rs:141:18: warning: the loop variable `i` is used to index `node_to_community`
+src\query\clustering.rs:226:20: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `((edges_to_to - edges_to_from))`
+src\query\clustering.rs:226:59: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `total_edges`
+src\query\clustering.rs:227:28: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `node_degree`
+src\query\clustering.rs:227:49: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `((to_comm.total_degree - from_comm.total_degree))`
+src\query\clustering.rs:227:113: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `total_edges`
+src\query\clustering.rs:238:28: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [u32]`
+src\query\clustering.rs:343:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\query\summarization.rs:18:5: warning: you should consider adding a `Default` implementation for `CommunitySummarizer`
+src\query\two_tier.rs:357:12: warning: variables can be used directly in the `format!` string
+src\query\two_tier.rs:406:17: warning: variables can be used directly in the `format!` string
+src\query\two_tier.rs:409:17: warning: variables can be used directly in the `format!` string
+src\query\two_tier.rs:412:17: warning: variables can be used directly in the `format!` string
+src\query\two_tier.rs:488:31: warning: variables can be used directly in the `format!` string
+src\error_recovery.rs:152:46: warning: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `last_error.as_ref().unwrap()`
+src\federation\registry.rs:294:5: warning: you should consider adding a `Default` implementation for `DiscoveryManager`
+src\federation\types.rs:323:5: warning: variables can be used directly in the `format!` string
+src\versioning\version_store.rs:118:24: warning: unnecessary closure used to substitute value for `Option::None`
+src\versioning\version_store.rs:227:25: warning: this `map_or` can be simplified
+src\versioning\version_store.rs:228:25: warning: this `map_or` can be simplified
+src\versioning\version_graph.rs:21:5: warning: you should consider adding a `Default` implementation for `VersionGraph`
+src\versioning\version_graph.rs:33:43: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\version_graph.rs:161:71: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\version_graph.rs:199:53: warning: variables can be used directly in the `format!` string
+src\versioning\version_graph.rs:291:10: warning: parameter is only used in recursion
+src\versioning\version_graph.rs:294:9: warning: parameter is only used in recursion: help: if this is intentional, prefix it with an underscore: `_edges`
+src\versioning\version_graph.rs:314:10: warning: parameter is only used in recursion
+src\versioning\version_graph.rs:317:9: warning: parameter is only used in recursion: help: if this is intentional, prefix it with an underscore: `_edges`
+src\versioning\temporal_query.rs:305:9: warning: variables can be used directly in the `format!` string
+src\versioning\merger.rs:18:5: warning: you should consider adding a `Default` implementation for `VersionMerger`
+src\versioning\merger.rs:339:5: warning: this function has too many arguments (8/7)
+src\versioning\merger.rs:394:10: warning: very complex type used. Consider factoring parts into `type` definitions
+src\versioning\temporal_graph.rs:71:5: warning: you should consider adding a `Default` implementation for `BiTemporalIndex`
+src\versioning\temporal_graph.rs:83:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\temporal_graph.rs:89:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\temporal_graph.rs:95:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\temporal_graph.rs:119:5: warning: you should consider adding a `Default` implementation for `TemporalStore`
+src\versioning\temporal_graph.rs:130:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\temporal_graph.rs:142:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\versioning\temporal_graph.rs:202:13: warning: called `Iterator::last` on a `DoubleEndedIterator`; this will needlessly iterate the entire iterator
+src\versioning\temporal_graph.rs:289:9: warning: you are using an explicit closure for cloning elements: help: consider calling the dedicated `cloned` method: `store.entities.get(&entity_key).cloned()`
+src\versioning\temporal_graph.rs:291:53: warning: variables can be used directly in the `format!` string
+src\versioning\temporal_graph.rs:309:17: warning: called `Iterator::last` on a `DoubleEndedIterator`; this will needlessly iterate the entire iterator
+src\versioning\temporal_graph.rs:366:13: warning: manual implementation of an assign operation: help: replace it with: `current_time += interval`
+src\math\similarity.rs:14:5: warning: you should consider adding a `Default` implementation for `SimilarityEngine`
+src\math\similarity.rs:164:18: warning: the loop variable `i` is used to index `dp`
+src\math\similarity.rs:343:5: warning: this function has too many arguments (8/7)
+src\math\similarity.rs:344:10: warning: parameter is only used in recursion
+src\math\graph_algorithms.rs:12:5: warning: you should consider adding a `Default` implementation for `GraphAlgorithms`
+src\math\graph_algorithms.rs:89:5: warning: this function has too many arguments (10/7)
+src\math\graph_algorithms.rs:90:10: warning: parameter is only used in recursion
+src\math\graph_algorithms.rs:173:29: warning: you seem to want to iterate on a map's keys
+src\math\graph_algorithms.rs:355:5: warning: this function has too many arguments (9/7)
+src\math\graph_algorithms.rs:356:10: warning: parameter is only used in recursion
+src\math\graph_algorithms.rs:556:10: warning: parameter is only used in recursion
+src\math\distributed_math.rs:20:5: warning: you should consider adding a `Default` implementation for `DistributedMathEngine`
+src\math\distributed_math.rs:316:9: warning: unneeded `return` statement
+src\math\distributed_math.rs:521:5: warning: you should consider adding a `Default` implementation for `LoadBalancer`
+src\math\distributed_math.rs:608:28: warning: very complex type used. Consider factoring parts into `type` definitions
+src\math\distributed_math.rs:647:23: warning: very complex type used. Consider factoring parts into `type` definitions
+src\math\distributed_math.rs:714:5: warning: you should consider adding a `Default` implementation for `ComputationStats`
+src\extraction\advanced_nlp.rs:16:5: warning: you should consider adding a `Default` implementation for `AdvancedEntityExtractor`
+src\extraction\advanced_nlp.rs:426:5: warning: you should consider adding a `Default` implementation for `CoreferenceResolver`
+src\extraction\advanced_nlp.rs:442:47: warning: this manual char comparison can be written more succinctly: help: consider using an array of `char`: `['.', '!', '?']`
+src\extraction\advanced_nlp.rs:456:20: warning: this `map_or` can be simplified
+src\extraction\advanced_nlp.rs:486:51: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:487:51: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:488:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:489:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:493:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:494:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:495:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:496:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:500:51: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:501:51: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:502:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:503:52: warning: variables can be used directly in the `format!` string
+src\extraction\advanced_nlp.rs:743:9: warning: clamp-like pattern without using clamp function: help: replace with clamp: `score.clamp(0.0, 1.0)`
+src\extraction\mod.rs:38:16: warning: this `map_or` can be simplified
+src\streaming\update_handler.rs:178:13: warning: variables can be used directly in the `format!` string
+src\streaming\update_handler.rs:225:13: warning: variables can be used directly in the `format!` string
+src\streaming\incremental_indexing.rs:279:28: warning: variables can be used directly in the `format!` string
+src\streaming\incremental_indexing.rs:492:18: warning: the loop variable `i` is used to index `embedding`
+src\streaming\temporal_updates.rs:183:21: warning: variables can be used directly in the `format!` string
+src\gpu\mod.rs:31:5: warning: you should consider adding a `Default` implementation for `CpuGraphProcessor`
+src\validation\human_loop.rs:258:47: warning: `to_string` applied to a type that implements `Display` in `format!` args: help: remove this
+src\validation\human_loop.rs:271:5: warning: you should consider adding a `Default` implementation for `ValidationQueue`
+src\validation\human_loop.rs:390:1: warning: large size difference between variants: the entire enum is at least 256 bytes
+src\validation\human_loop.rs:407:1: warning: large size difference between variants: the entire enum is at least 264 bytes
+src\validation\feedback.rs:16:5: warning: you should consider adding a `Default` implementation for `FeedbackProcessor`
+src\validation\feedback.rs:107:5: warning: you should consider adding a `Default` implementation for `ActiveLearningEngine`
+src\monitoring\performance.rs:176:21: warning: this `map_or` can be simplified
+src\monitoring\observability.rs:16:5: warning: you should consider adding a `Default` implementation for `ObservabilityEngine`
+src\monitoring\observability.rs:29:41: warning: variables can be used directly in the `format!` string
+src\monitoring\observability.rs:43:5: warning: you should consider adding a `Default` implementation for `MetricsCollector`
+src\monitoring\observability.rs:109:5: warning: you should consider adding a `Default` implementation for `TraceExporter`
+src\monitoring\observability.rs:168:5: warning: you should consider adding a `Default` implementation for `LogAggregator`
+src\monitoring\alerts.rs:18:5: warning: you should consider adding a `Default` implementation for `AlertManager`
+src\monitoring\alerts.rs:206:17: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:189:1: warning: large size difference between variants: the entire enum is at least 648 bytes
+src\monitoring\dashboard.rs:395:65: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:400:65: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:1955:5: warning: you should consider adding a `Default` implementation for `WebSocketHandler`
+src\monitoring\dashboard.rs:2056:5: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2071:17: warning: the borrowed expression implements the required traits: help: change this to: `suite_name.replace("::", "_")`
+src\monitoring\dashboard.rs:2108:21: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2153:25: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2162:25: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2170:21: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2173:32: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2179:13: warning: variables can be used directly in the `format!` string
+src\monitoring\dashboard.rs:2182:24: warning: variables can be used directly in the `format!` string
+src\monitoring\metrics.rs:325:31: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\codebase_analyzer.rs:116:13: warning: this `match` can be collapsed into the outer `if let`
+src\monitoring\collectors\codebase_analyzer.rs:515:14: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\codebase_analyzer.rs:531:18: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\codebase_analyzer.rs:533:18: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\codebase_analyzer.rs:555:78: warning: this `if` has identical blocks
+src\monitoring\collectors\codebase_analyzer.rs:560:70: warning: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `module_info`
+src\monitoring\collectors\codebase_analyzer.rs:610:31: warning: you seem to want to iterate on a map's keys
+src\monitoring\collectors\codebase_analyzer.rs:638:21: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\runtime_profiler.rs:124:5: warning: you should consider adding a `Default` implementation for `RuntimeProfiler`
+src\monitoring\collectors\runtime_profiler.rs:154:24: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\runtime_profiler.rs:412:34: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\api_endpoint_monitor.rs:212:5: warning: you should consider adding a `Default` implementation for `ApiEndpointMonitor`
+src\monitoring\collectors\api_endpoint_monitor.rs:249:19: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\api_endpoint_monitor.rs:308:9: warning: calls to `push` immediately after creation: help: consider using the `vec![]` macro: `let endpoints = vec![..];`
+src\monitoring\collectors\api_endpoint_monitor.rs:352:9: warning: calls to `push` immediately after creation: help: consider using the `vec![]` macro: `let endpoints = vec![..];`
+src\monitoring\collectors\api_endpoint_monitor.rs:373:5: warning: this function has too many arguments (8/7)
+src\monitoring\collectors\api_endpoint_monitor.rs:543:21: warning: manual `Range::contains` implementation: help: use: `(200..400).contains(&status_code)`
+src\monitoring\collectors\test_execution_tracker.rs:544:24: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\test_execution_tracker.rs:679:31: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors\test_execution_tracker.rs:711:31: warning: variables can be used directly in the `format!` string
+src\monitoring\collectors.rs:429:28: warning: this operation has no effect: help: consider reducing it to: `1024`
+src\monitoring\collectors.rs:644:20: warning: very complex type used. Consider factoring parts into `type` definitions
+src\monitoring\exporters.rs:87:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:93:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:99:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:104:42: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:111:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:112:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:115:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:120:42: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:126:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:127:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:130:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:134:42: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:140:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:141:38: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:168:27: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:172:9: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:293:21: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:295:21: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:325:42: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:326:40: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:328:17: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:339:33: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:351:33: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:380:27: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:504:13: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:506:13: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:524:13: warning: unnecessary use of `.write(true)` because there is `.append(true)`: help: remove `.write(true)`
+src\monitoring\exporters.rs:550:9: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:571:33: warning: variables can be used directly in the `format!` string
+src\monitoring\exporters.rs:574:33: warning: variables can be used directly in the `format!` string
+src\text\mod.rs:71:23: warning: casting to the same type is unnecessary (`f32` -> `f32`): help: try: `(total_words / (freq as f32 + 1.0)).ln()`
+src\text\mod.rs:80:20: warning: this manual char comparison can be written more succinctly: help: consider using an array of `char`: `['.', '!', '?']`
+src\text\mod.rs:163:17: warning: variables can be used directly in the `format!` string
+src\text\importance.rs:190:12: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!text_words.is_empty()`
+src\text\structure_predictor.rs:128:17: warning: this `if` statement can be collapsed
+src\text\structure_predictor.rs:144:36: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:543:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:546:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:549:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:552:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:555:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:558:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:561:17: warning: variables can be used directly in the `format!` string
+src\cognitive\types.rs:632:5: warning: you should consider adding a `Default` implementation for `ExplorationMap`
+src\cognitive\types.rs:675:42: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\types.rs:676:40: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\types.rs:753:5: warning: you should consider adding a `Default` implementation for `HierarchyCache`
+src\cognitive\orchestrator.rs:128:22: warning: manual implementation of `Option::map`: help: try: `self.runtime_profiler.as_ref().map(|profiler| trace_function!(profiler, "cognitive_reason", query.len(), context.map(|c| c.len()).unwrap_or(0)))`
+src\cognitive\orchestrator.rs:162:23: warning: variables can be used directly in the `format!` string
+src\cognitive\orchestrator.rs:225:48: warning: variables can be used directly in the `format!` string
+src\cognitive\orchestrator.rs:302:25: warning: variables can be used directly in the `format!` string
+src\cognitive\orchestrator.rs:306:25: warning: variables can be used directly in the `format!` string
+src\cognitive\orchestrator.rs:592:38: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("total_queries").unwrap_or(&0.0)`
+src\cognitive\orchestrator.rs:593:39: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("avg_response_time").unwrap_or(&0.0)`
+src\cognitive\orchestrator.rs:597:37: warning: variables can be used directly in the `format!` string
+src\cognitive\orchestrator.rs:598:39: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get(&usage_key).unwrap_or(&0.0)`
+src\cognitive\orchestrator.rs:603:27: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("success_rate").unwrap_or(&0.95)`
+src\cognitive\orchestrator.rs:604:29: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("cache_hit_rate").unwrap_or(&0.0)`
+src\cognitive\orchestrator.rs:605:30: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("memory_usage_mb").unwrap_or(&0.0)`
+src\cognitive\orchestrator.rs:606:30: warning: using `clone` on type `f64` which implements the `Copy` trait: help: try dereferencing it: `*metrics.get("active_entities").unwrap_or(&0.0)`
+src\cognitive\convergent.rs:44:9: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:75:30: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:187:61: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:193:52: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:420:30: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:431:34: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:464:29: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:611:9: warning: clamp-like pattern without using clamp function: help: replace with clamp: `final_score.clamp(0.0, 1.0)`
+src\cognitive\convergent.rs:757:17: warning: clamp-like pattern without using clamp function: help: replace with clamp: `edit_sim.clamp(0.0, 0.5)`
+src\cognitive\convergent.rs:808:18: warning: the loop variable `i` is used to index `matrix`
+src\cognitive\convergent.rs:868:39: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:870:39: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:879:27: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent.rs:884:12: warning: variables can be used directly in the `format!` string
+src\cognitive\convergent_enhanced.rs:27:22: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:85:61: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:91:52: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:452:34: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:473:44: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:500:29: warning: variables can be used directly in the `format!` string
+src\cognitive\divergent.rs:550:9: warning: clamp-like pattern without using clamp function: help: replace with clamp: `final_score.clamp(0.0, 1.0)`
+src\cognitive\divergent.rs:665:24: warning: using `contains()` instead of `iter().any()` is more efficient: help: try: `entity_words.contains(&term)`
+src\cognitive\divergent.rs:681:24: warning: using `contains()` instead of `iter().any()` is more efficient: help: try: `query_words.contains(&term)`
+src\cognitive\divergent.rs:769:18: warning: the loop variable `i` is used to index `matrix`
+src\cognitive\divergent.rs:903:65: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:121:61: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:126:52: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:451:30: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:467:29: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:720:43: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:753:13: warning: variables can be used directly in the `format!` string
+src\cognitive\lateral.rs:836:37: warning: variables can be used directly in the `format!` string
+src\cognitive\systems.rs:108:36: warning: using `.iter().next()` on an array: help: try calling: `all_entities.first()`
+src\cognitive\systems.rs:198:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\systems.rs:226:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\systems.rs:445:26: warning: variables can be used directly in the `format!` string
+src\cognitive\systems.rs:450:34: warning: variables can be used directly in the `format!` string
+src\cognitive\systems.rs:558:21: warning: variables can be used directly in the `format!` string
+src\cognitive\systems.rs:653:13: warning: this `if` statement can be collapsed
+src\cognitive\critical.rs:95:34: warning: variables can be used directly in the `format!` string
+src\cognitive\critical.rs:96:81: warning: the borrowed expression implements the required traits: help: change this to: `query_lower.split_whitespace().next().unwrap_or("")`
+src\cognitive\critical.rs:99:39: warning: variables can be used directly in the `format!` string
+src\cognitive\critical.rs:482:34: warning: variables can be used directly in the `format!` string
+src\cognitive\abstract_pattern.rs:231:9: warning: unneeded late initialization: created here, initialised here
+src\cognitive\abstract_pattern.rs:251:9: warning: variables can be used directly in the `format!` string
+src\cognitive\abstract_pattern.rs:253:13: warning: variables can be used directly in the `format!` string
+src\cognitive\abstract_pattern.rs:319:33: warning: useless use of `format!`: help: consider using `.to_string()`: `"is_a_hierarchy_pattern".to_string()`
+src\cognitive\abstract_pattern.rs:320:25: warning: useless use of `format!`: help: consider using `.to_string()`: `"is_a_hierarchy_pattern".to_string()`
+src\cognitive\abstract_pattern.rs:332:33: warning: useless use of `format!`: help: consider using `.to_string()`: `"has_property_pattern".to_string()`
+src\cognitive\abstract_pattern.rs:333:25: warning: useless use of `format!`: help: consider using `.to_string()`: `"has_property_pattern".to_string()`
+src\cognitive\abstract_pattern.rs:651:26: warning: variables can be used directly in the `format!` string
+src\cognitive\adaptive.rs:133:9: warning: this `if` statement can be collapsed
+src\cognitive\adaptive.rs:254:35: warning: you seem to use `.enumerate()` and immediately discard the index
+src\cognitive\adaptive.rs:466:31: warning: using `clone` on type `CognitivePatternType` which implements the `Copy` trait: help: try dereferencing it: `*p`
+src\cognitive\adaptive.rs:497:21: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:137:37: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:138:29: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:157:29: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:158:21: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:197:33: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:198:25: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:203:34: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:399:33: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:400:25: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:428:33: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:429:25: warning: variables can be used directly in the `format!` string
+src\cognitive\pattern_detector.rs:459:19: warning: writing `&Vec` instead of `&[_]` involves a new object where a slice will do: help: change this to: `&[(EntityKey, crate::core::types::EntityData, f32)]`
+src\cognitive\pattern_detector.rs:504:13: warning: unneeded late initialization
+src\cognitive\tuned_parameters.rs:394:9: warning: clamp-like pattern without using clamp function: help: replace with clamp: `calibrated.clamp(0.0, 1.0)`
+src\cognitive\working_memory.rs:176:5: warning: you should consider adding a `Default` implementation for `MemoryBuffers`
+src\cognitive\working_memory.rs:235:5: warning: you should consider adding a `Default` implementation for `CentralExecutive`
+src\cognitive\working_memory.rs:438:13: warning: you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+src\cognitive\working_memory.rs:490:9: warning: the variable `removed_count` is used as a loop counter: help: consider using: `for (removed_count, (index, _, _item)) in forgetting_candidates.into_iter().enumerate()`
+src\cognitive\attention_manager.rs:157:5: warning: you should consider adding a `Default` implementation for `AttentionState`
+src\cognitive\attention_manager.rs:208:9: warning: this `map_or` can be simplified
+src\cognitive\attention_manager.rs:500:33: warning: variables can be used directly in the `format!` string
+src\cognitive\inhibitory\types.rs:18:5: warning: you should consider adding a `Default` implementation for `InhibitionMatrix`
+src\cognitive\inhibitory\competition.rs:190:18: warning: the loop variable `j` is only used to index `pre_competition`
+src\cognitive\inhibitory\hierarchical.rs:79:34: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\inhibitory\exceptions.rs:52:18: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [InhibitionException]`
+src\cognitive\inhibitory\exceptions.rs:75:18: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [InhibitionException]`
+src\cognitive\inhibitory\integration.rs:263:16: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [EntityKey]`
+src\cognitive\inhibitory\integration.rs:274:16: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [EntityKey]`
+src\cognitive\inhibitory\integration.rs:284:16: warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do: help: change this to: `&mut [EntityKey]`
+src\cognitive\inhibitory\integration.rs:301:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\cognitive\inhibitory\integration.rs:319:32: warning: variables can be used directly in the `format!` string
+src\cognitive\inhibitory\dynamics.rs:52:9: warning: returning the result of a `let` binding from a block
+src\cognitive\inhibitory\mod.rs:209:32: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\hierarchy.rs:173:13: warning: this `if` statement can be collapsed
+src\cognitive\memory_integration\retrieval.rs:42:85: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\retrieval.rs:264:26: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\retrieval.rs:295:49: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\retrieval.rs:323:42: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\consolidation.rs:50:88: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\system.rs:297:54: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\system.rs:350:53: warning: variables can be used directly in the `format!` string
+src\cognitive\memory_integration\system.rs:389:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `status.push('\n')`
+src\cognitive\memory_integration\system.rs:399:9: warning: match expression looks like `matches!` macro: help: try: `matches!((self, other), (BottleneckType::SlowRetrieval, BottleneckType::SlowRetrieval) | (BottleneckType::LowSuccessRate, BottleneckType::LowSuccessRate) | (BottleneckType::HighMemoryUsage, BottleneckType::HighMemoryUsage) | (BottleneckType::FrequentConflicts, BottleneckType::FrequentConflicts))`
+src\learning\hebbian.rs:93:13: warning: this `MutexGuard` is held across an await point
+src\learning\hebbian.rs:100:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\learning\hebbian.rs:206:13: warning: this `MutexGuard` is held across an await point
+src\learning\hebbian.rs:220:44: warning: using `clone` on type `f32` which implements the `Copy` trait
+src\learning\hebbian.rs:435:74: warning: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `weight_updates`
+src\learning\homeostasis.rs:459:13: warning: this `MutexGuard` is held across an await point
+src\learning\homeostasis.rs:597:5: warning: you should consider adding a `Default` implementation for `ActivityTracker`
+src\learning\homeostasis.rs:608:5: warning: method `default` can be confused for the standard trait method `std::default::Default::default`
+src\learning\adaptive_learning\types.rs:402:1: warning: this `impl` can be derived
+src\learning\adaptive_learning\types.rs:414:1: warning: this `impl` can be derived
+src\learning\adaptive_learning\monitoring.rs:145:27: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\monitoring.rs:202:34: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\monitoring.rs:361:30: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\monitoring.rs:366:30: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\monitoring.rs:381:30: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\scheduler.rs:293:17: warning: manual implementation of an assign operation: help: replace it with: `task.scheduled_time += std::time::Duration::from_secs(300)`
+src\learning\adaptive_learning\scheduler.rs:368:30: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\system.rs:123:30: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\system.rs:135:34: warning: variables can be used directly in the `format!` string
+src\learning\adaptive_learning\system.rs:419:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `report.push('\n')`
+src\learning\adaptive_learning\system.rs:423:9: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `report.push('\n')`
+src\learning\types.rs:125:5: warning: you should consider adding a `Default` implementation for `LearningStatistics`
+src\learning\types.rs:151:5: warning: you should consider adding a `Default` implementation for `CoactivationTracker`
+src\learning\parameter_tuning.rs:384:39: warning: using `clone` on type `f32` which implements the `Copy` trait: help: try dereferencing it: `*optimization_result.parameter_changes.get("learning_rate").unwrap_or(&0.0)`
+src\learning\parameter_tuning.rs:385:40: warning: using `clone` on type `f32` which implements the `Copy` trait: help: try dereferencing it: `*optimization_result.parameter_changes.get("decay_constant").unwrap_or(&0.0)`
+src\learning\parameter_tuning.rs:408:40: warning: using `clone` on type `f32` which implements the `Copy` trait: help: try dereferencing it: `*optimization_result.parameter_changes.get("focus_strength").unwrap_or(&0.0)`
+src\learning\parameter_tuning.rs:409:34: warning: using `clone` on type `f32` which implements the `Copy` trait: help: try dereferencing it: `*optimization_result.parameter_changes.get("attention_capacity").unwrap_or(&0.0)`
+src\graph\mod.rs:67:67: warning: variables can be used directly in the `format!` string
+src\graph\mod.rs:72:67: warning: variables can be used directly in the `format!` string
+src\api\server.rs:77:17: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:48:5: warning: method `default` can be confused for the standard trait method `std::default::Default::default`
+src\models\loader.rs:95:55: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:101:51: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:109:51: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:112:51: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:115:51: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:131:49: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:155:26: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:205:55: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:214:55: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:227:68: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:229:86: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:245:51: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:246:68: warning: variables can be used directly in the `format!` string
+src\models\loader.rs:247:71: warning: variables can be used directly in the `format!` string
+src\models\registry.rs:198:38: warning: using `clone` on type `ModelSize` which implements the `Copy` trait: help: try removing the `clone` call: `metadata.size_category`
+src\models\utils.rs:264:40: warning: called `iter().cloned().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\models\mod.rs:96:12: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\model_management\resource_manager.rs:247:55: warning: deref which would be done by auto-deref: help: try: `&registry`
+src\enhanced_knowledge_storage\model_management\resource_manager.rs:292:40: warning: deref which would be done by auto-deref: help: try: `&registry`
+src\enhanced_knowledge_storage\model_management\model_loader.rs:124:21: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\model_management\model_loader.rs:239:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\model_management\model_loader.rs:264:5: warning: you should consider adding a `Default` implementation for `MockModelBackend`
+src\enhanced_knowledge_storage\model_management\model_loader.rs:300:21: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\model_management\model_loader.rs:307:19: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\model_management\model_loader.rs:322:29: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\intelligent_processor.rs:690:9: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\intelligent_processor.rs:872:38: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\intelligent_processor.rs:882:38: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\entity_extractor.rs:95:9: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\entity_extractor.rs:141:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\entity_extractor.rs:198:13: warning: manual implementation of `Option::map`
+src\enhanced_knowledge_storage\knowledge_processing\relationship_mapper.rs:110:9: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\relationship_mapper.rs:169:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\relationship_mapper.rs:313:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\semantic_chunker.rs:88:22: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\semantic_chunker.rs:136:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\semantic_chunker.rs:281:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\semantic_chunker.rs:364:21: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\context_analyzer.rs:96:22: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\knowledge_processing\context_analyzer.rs:138:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\context_analyzer.rs:360:22: warning: redundant closure: help: replace the closure with the function itself: `KnowledgeProcessingError::JsonError`
+src\enhanced_knowledge_storage\knowledge_processing\types.rs:52:5: warning: implementation of inherent method `to_string(&self) -> String` for type `enhanced_knowledge_storage::knowledge_processing::types::EntityType`
+src\enhanced_knowledge_storage\knowledge_processing\types.rs:152:5: warning: implementation of inherent method `to_string(&self) -> String` for type `enhanced_knowledge_storage::knowledge_processing::types::RelationshipType`
+src\enhanced_knowledge_storage\hierarchical_storage\knowledge_layers.rs:102:35: warning: using `clone` on type `ComplexityLevel` which implements the `Copy` trait: help: try removing the `clone` call: `processing_result.document_structure.complexity_level`
+src\enhanced_knowledge_storage\hierarchical_storage\knowledge_layers.rs:472:31: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\knowledge_layers.rs:569:29: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\knowledge_layers.rs:573:14: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\semantic_links.rs:91:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\semantic_links.rs:147:38: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\semantic_links.rs:408:33: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\hierarchical_index.rs:210:72: warning: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `token`
+src\enhanced_knowledge_storage\hierarchical_storage\hierarchical_index.rs:252:29: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\hierarchical_index.rs:523:18: warning: the loop variable `i` is only used to index `layers`
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:327:29: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:357:13: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:392:36: warning: you seem to want to iterate on a map's values
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:540:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:557:27: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:658:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:711:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:747:30: warning: you seem to want to iterate on a map's keys
+src\enhanced_knowledge_storage\hierarchical_storage\storage_engine.rs:791:9: warning: clamp-like pattern without using clamp function: help: replace with clamp: `hit_ratio.clamp(0.0, 1.0)`
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:289:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:291:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:293:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:295:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:297:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:299:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:301:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:303:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\hierarchical_storage\types.rs:343:9: warning: match expression looks like `matches!` macro: help: try: `matches!((self, child_type), (LayerType::Document, LayerType::Section) | (LayerType::Section, LayerType::Paragraph) | (LayerType::Paragraph, LayerType::Sentence) | (LayerType::Sentence, LayerType::Entity) | (LayerType::Sentence, LayerType::Relationship) | (LayerType::Section, LayerType::Concept) | (LayerType::Paragraph, LayerType::Concept))`
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:145:17: warning: accessing first element with `initial_hypotheses.get(0)`: help: try: `initial_hypotheses.first()`
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:364:57: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:429:9: warning: unneeded late initialization
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:490:25: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:509:22: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\multi_hop_reasoner.rs:757:5: warning: you should consider adding a `Default` implementation for `GraphContext`
+src\enhanced_knowledge_storage\retrieval_system\query_processor.rs:77:22: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\query_processor.rs:122:63: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\query_processor.rs:229:63: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\query_processor.rs:345:22: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\context_aggregator.rs:258:27: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:360:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:362:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:364:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:366:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:368:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:370:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:372:17: warning: variables can be used directly in the `format!` string
+src\enhanced_knowledge_storage\retrieval_system\types.rs:374:17: warning: variables can be used directly in the `format!` string
+src\production\error_recovery.rs:170:5: warning: you should consider adding a `Default` implementation for `ErrorRecoveryManager`
+src\production\error_recovery.rs:205:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\production\error_recovery.rs:214:31: warning: variables can be used directly in the `format!` string
+src\production\error_recovery.rs:392:17: warning: variables can be used directly in the `format!` string
+src\production\monitoring.rs:286:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\production\rate_limiting.rs:370:31: warning: variables can be used directly in the `format!` string
+src\production\rate_limiting.rs:379:52: warning: variables can be used directly in the `format!` string
+src\production\rate_limiting.rs:381:35: warning: variables can be used directly in the `format!` string
+src\production\rate_limiting.rs:573:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\production\rate_limiting.rs:582:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\production\health_checks.rs:653:31: warning: variables can be used directly in the `format!` string
+src\production\health_checks.rs:842:18: warning: variables can be used directly in the `format!` string
+src\production\health_checks.rs:869:18: warning: variables can be used directly in the `format!` string
+src\production\graceful_shutdown.rs:184:17: warning: variables can be used directly in the `format!` string
+src\production\graceful_shutdown.rs:362:9: warning: variables can be used directly in the `format!` string
+src\production\graceful_shutdown.rs:400:9: warning: variables can be used directly in the `format!` string
+src\production\graceful_shutdown.rs:441:17: warning: variables can be used directly in the `format!` string
+src\production\graceful_shutdown.rs:461:9: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:185:14: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:202:22: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:205:49: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:212:22: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:215:49: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:302:22: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:308:21: warning: variables can be used directly in the `format!` string
+src\production\mod.rs:381:1: warning: this `impl` can be derived
+src\test_support\assertions.rs:21:9: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:30:9: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:44:13: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:188:9: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:199:9: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:278:22: warning: variables can be used directly in the `format!` string
+src\test_support\assertions.rs:282:17: warning: variables can be used directly in the `format!` string
+src\test_support\builders.rs:110:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:116:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:122:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:128:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:134:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:140:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:146:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:182:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\builders.rs:218:47: warning: redundant closure: help: replace the closure with the function itself: `super::fixtures::create_test_graph`
+src\test_support\data.rs:16:5: warning: you should consider adding a `Default` implementation for `TestQueries`
+src\test_support\data.rs:66:5: warning: you should consider adding a `Default` implementation for `PerformanceTestData`
+src\test_support\data.rs:68:66: warning: variables can be used directly in the `format!` string
+src\test_support\data.rs:69:68: warning: variables can be used directly in the `format!` string
+src\test_support\data.rs:70:68: warning: variables can be used directly in the `format!` string
+src\test_support\data.rs:71:70: warning: variables can be used directly in the `format!` string
+src\test_support\data.rs:84:5: warning: you should consider adding a `Default` implementation for `AttentionTestData`
+src\test_support\data.rs:112:5: warning: you should consider adding a `Default` implementation for `PatternTestData`
+src\test_support\data.rs:141:5: warning: you should consider adding a `Default` implementation for `EdgeCaseTestData`
+src\test_support\data.rs:168:5: warning: you should consider adding a `Default` implementation for `TemporalTestData`
+src\test_support\data.rs:203:5: warning: you should consider adding a `Default` implementation for `MemoryTestData`
+src\test_support\data.rs:243:5: warning: you should consider adding a `Default` implementation for `TestDataProvider`
+src\test_support\data.rs:259:72: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:260:69: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:261:69: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:262:69: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:263:70: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:264:68: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:265:70: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:266:76: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:267:74: warning: called `iter().copied().collect()` on a slice to create a `Vec`. Calling `to_vec()` is both faster and more readable: help: try: `.to_vec()`
+src\test_support\data.rs:275:28: warning: using `clone` on type `EntityKey` which implements the `Copy` trait: help: try dereferencing it: `*k`
+src\test_support\data.rs:300:44: warning: variables can be used directly in the `format!` string
+src\test_support\fixtures.rs:73:13: warning: variables can be used directly in the `format!` string
+src\test_support\scenarios.rs:600:40: warning: variables can be used directly in the `format!` string
+src\test_support\scenarios.rs:672:23: warning: using `clone` on type `CognitivePatternType` which implements the `Copy` trait: help: try removing the `clone` call: `scenario.expected_pattern`
+src\test_support\scenarios.rs:673:21: warning: using `clone` on type `CognitivePatternType` which implements the `Copy` trait: help: try dereferencing it: `*actual_pattern`
+src\test_support\scenarios.rs:876:24: warning: using `clone` on type `CognitivePatternType` which implements the `Copy` trait: help: try removing the `clone` call: `scenario.expected_pattern`
+src\mcp\llm_friendly_server\validation.rs:62:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\validation.rs:145:35: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:147:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:149:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:174:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:223:36: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:226:43: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:273:28: warning: manual `!RangeInclusive::contains` implementation: help: use: `!(50.0..=300.0).contains(&value)`
+src\mcp\llm_friendly_server\validation.rs:301:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:302:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:303:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:304:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:305:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:306:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\validation.rs:407:39: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:12:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:13:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:31:17: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `query.push(':')`
+src\mcp\llm_friendly_server\query_generation.rs:51:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:55:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:78:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:82:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:90:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:93:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:96:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:104:17: warning: calling `push_str()` using a single-character string literal: help: consider using `push` with a character literal: `query.push(')')`
+src\mcp\llm_friendly_server\query_generation.rs:131:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:132:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:139:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:143:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:149:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:158:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:162:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:169:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:175:37: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:178:37: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:181:37: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:184:37: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:189:53: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:190:52: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:191:53: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:192:70: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:202:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:210:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:398:5: warning: this `if` statement can be collapsed
+src\mcp\llm_friendly_server\query_generation.rs:426:5: warning: this `if` statement can be collapsed
+src\mcp\llm_friendly_server\query_generation.rs:511:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:512:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:513:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:514:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation.rs:554:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation_enhanced.rs:333:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\query_generation_enhanced.rs:337:21: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\divergent_graph_traversal.rs:253:31: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\search_fusion.rs:105:9: warning: wildcard pattern covers any other pattern as it will match anyway
+src\mcp\llm_friendly_server\utils.rs:51:5: warning: clamp-like pattern without using clamp function: help: replace with clamp: `(entity_efficiency * 0.5 + relationship_efficiency * 0.5).clamp(0.0, 1.0)`
+src\mcp\llm_friendly_server\handlers\storage.rs:52:19: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\storage.rs:85:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\storage.rs:103:19: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\storage.rs:162:19: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\storage.rs:233:30: warning: this `map_or` can be simplified
+src\mcp\llm_friendly_server\handlers\query.rs:102:23: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\query.rs:582:12: warning: this `map_or` can be simplified
+src\mcp\llm_friendly_server\handlers\query.rs:606:9: warning: this `if` statement can be collapsed
+src\mcp\llm_friendly_server\handlers\exploration.rs:44:13: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\exploration.rs:71:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\exploration.rs:92:13: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\exploration.rs:272:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:62:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:72:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:169:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:180:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:270:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:379:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:390:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:482:33: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\advanced.rs:488:35: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\advanced.rs:494:32: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\advanced.rs:610:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:615:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:626:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:640:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:653:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:692:35: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\advanced.rs:981:5: warning: unneeded late initialization: created here, initialised here
+src\mcp\llm_friendly_server\handlers\advanced.rs:982:5: warning: unneeded late initialization: created here, initialised here
+src\mcp\llm_friendly_server\handlers\advanced.rs:993:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\handlers\advanced.rs:996:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\handlers\advanced.rs:1006:27: warning: using `clone` on type `usize` which implements the `Copy` trait: help: try dereferencing it: `*connections`
+src\mcp\llm_friendly_server\handlers\advanced.rs:1104:43: warning: length comparison to zero: help: using `!is_empty` is clearer and more explicit: `!below_threshold_entities.is_empty()`
+src\mcp\llm_friendly_server\handlers\advanced.rs:1252:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\cognitive.rs:128:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\cognitive.rs:201:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\cognitive.rs:296:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\cognitive.rs:310:29: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\stats.rs:30:41: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\stats.rs:31:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\stats.rs:42:38: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\stats.rs:110:36: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\stats.rs:111:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\stats.rs:187:5: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\stats.rs:330:28: warning: casting to the same type is unnecessary (`f64` -> `f64`): help: try: `calculate_efficiency_score(memory_stats)`
+src\mcp\llm_friendly_server\handlers\enhanced_search.rs:27:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\enhanced_search.rs:181:33: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\enhanced_search.rs:187:35: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\enhanced_search.rs:193:32: warning: deref which would be done by auto-deref: help: try: `&engine`
+src\mcp\llm_friendly_server\handlers\enhanced_search.rs:299:26: warning: clamp-like pattern without using clamp function: help: replace with clamp: `(hash_functions as f64 / 16.0).clamp(5.0, 10.0)`
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:26:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:64:19: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:128:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:160:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:201:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:213:29: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:281:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:293:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:359:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:371:20: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\graph_analysis.rs:422:14: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\handlers\temporal.rs:38:26: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:56:42: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:57:42: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:71:33: warning: deref which would be done by auto-deref: help: try: `&TEMPORAL_INDEX`
+src\mcp\llm_friendly_server\handlers\temporal.rs:79:36: warning: deref which would be done by auto-deref: help: try: `&TEMPORAL_INDEX`
+src\mcp\llm_friendly_server\handlers\temporal.rs:83:32: warning: deref which would be done by auto-deref: help: try: `&TEMPORAL_INDEX`
+src\mcp\llm_friendly_server\handlers\temporal.rs:94:28: warning: deref which would be done by auto-deref: help: try: `&TEMPORAL_INDEX`
+src\mcp\llm_friendly_server\handlers\temporal.rs:96:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:174:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:186:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:227:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:234:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:288:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:295:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:361:25: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:365:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:376:22: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:428:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:430:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\handlers\temporal.rs:432:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\migration.rs:160:14: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\temporal_tracking.rs:30:23: warning: very complex type used. Consider factoring parts into `type` definitions
+src\mcp\llm_friendly_server\temporal_tracking.rs:36:5: warning: you should consider adding a `Default` implementation for `TemporalIndex`
+src\mcp\llm_friendly_server\temporal_tracking.rs:60:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:58:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:64:16: warning: this `map_or` can be simplified
+src\mcp\llm_friendly_server\temporal_tracking.rs:68:22: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:66:22: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:77:18: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:147:44: warning: iterating on a map's values
+src\mcp\llm_friendly_server\temporal_tracking.rs:243:25: warning: this `map_or` can be simplified
+src\mcp\llm_friendly_server\temporal_tracking.rs:264:22: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\temporal_tracking.rs:298:23: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\temporal_tracking.rs:317:19: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\temporal_tracking.rs:329:23: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:66:13: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:67:18: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:151:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:167:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:172:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:266:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:270:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:309:30: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\database_branching.rs:336:17: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:47:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:85:51: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\reasoning_engine.rs:94:45: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:110:34: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:123:36: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:129:38: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:159:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:209:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:223:37: warning: the borrowed expression implements the required traits: help: change this to: `premise`
+src\mcp\llm_friendly_server\reasoning_engine.rs:223:69: warning: the borrowed expression implements the required traits: help: change this to: `premise`
+src\mcp\llm_friendly_server\reasoning_engine.rs:223:100: warning: the borrowed expression implements the required traits: help: change this to: `premise`
+src\mcp\llm_friendly_server\reasoning_engine.rs:237:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:253:41: warning: use of `or_insert_with` to construct default value: help: try: `or_default()`
+src\mcp\llm_friendly_server\reasoning_engine.rs:293:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:323:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:382:9: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:412:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:421:24: warning: very complex type used. Consider factoring parts into `type` definitions
+src\mcp\llm_friendly_server\reasoning_engine.rs:432:33: warning: variables can be used directly in the `format!` string
+src\mcp\llm_friendly_server\reasoning_engine.rs:477:39: warning: variables can be used directly in the `format!` string
+warning: `llmkg` (lib) generated 792 warnings
+error: could not compile `llmkg` (lib) due to 1 previous error; 792 warnings emitted

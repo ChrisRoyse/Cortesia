@@ -153,6 +153,12 @@ impl Default for AttentionConfig {
     }
 }
 
+impl Default for AttentionState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AttentionState {
     pub fn new() -> Self {
         Self {
@@ -205,7 +211,7 @@ impl AttentionFocus {
     }
 
     pub fn is_focused_on(&self, entity: &EntityKey) -> bool {
-        self.attention_weights.get(entity).map_or(false, |&weight| weight > 0.1)
+        self.attention_weights.get(entity).is_some_and(|&weight| weight > 0.1)
     }
 
     pub fn get_attention_weight(&self, entity: &EntityKey) -> f32 {
@@ -497,7 +503,7 @@ impl AttentionManager {
             let inhibition_strength = weight * 0.5;
             inhibition_changes.insert(entity, inhibition_strength);
             
-            memory_updates.push(format!("Focused on entity {:?} with weight {:.2}", entity, weight));
+            memory_updates.push(format!("Focused on entity {entity:?} with weight {weight:.2}"));
         }
         
         Ok(ActivationModulation {
@@ -883,7 +889,7 @@ mod tests {
         for i in 0..count {
             let key = sm.insert(EntityData {
                 type_id: 1,
-                properties: format!("test_entity_{}", i),
+                properties: format!("test_entity_{i}"),
                 embedding: vec![0.0; 64],
             });
             keys.push(key);
@@ -967,14 +973,13 @@ mod tests {
         for target in &targets {
             let weight = weights.get(target).unwrap();
             assert!((weight - expected_weight_per_target).abs() < 0.01, 
-                   "Target {:?} weight {:.3} should be approximately {:.3}", 
-                   target, weight, expected_weight_per_target);
+                   "Target {target:?} weight {weight:.3} should be approximately {expected_weight_per_target:.3}");
         }
         
         // Test that the sum of weights equals the original focus strength (divided)
         let total_weight: f32 = weights.values().sum();
         assert!((total_weight - 1.0).abs() < 0.01, 
-               "Total weight {:.3} should be approximately 1.0", total_weight);
+               "Total weight {total_weight:.3} should be approximately 1.0");
         
         // Test edge case with just 1 target (should get full weight)
         let single_target = create_test_entity_keys(1);
@@ -987,7 +992,7 @@ mod tests {
         assert_eq!(single_weights.len(), 1);
         let single_weight = single_weights.get(&single_target[0]).unwrap();
         assert!((single_weight - 1.0).abs() < 0.01, 
-               "Single target should get full weight 1.0, got {:.3}", single_weight);
+               "Single target should get full weight 1.0, got {single_weight:.3}");
         
         Ok(())
     }
@@ -1011,7 +1016,7 @@ mod tests {
         
         let first_weight = weights.get(&targets[0]).unwrap();
         assert!((first_weight - 0.8).abs() < 0.01, 
-               "First target should get full focus strength 0.8, got {:.3}", first_weight);
+               "First target should get full focus strength 0.8, got {first_weight:.3}");
         
         Ok(())
     }
@@ -1036,8 +1041,7 @@ mod tests {
         for target in &targets {
             let weight = weights.get(target).unwrap();
             assert!((weight - expected_weight).abs() < 0.01, 
-                   "Target {:?} should get sustained weight {:.3}, got {:.3}", 
-                   target, expected_weight, weight);
+                   "Target {target:?} should get sustained weight {expected_weight:.3}, got {weight:.3}");
         }
         
         Ok(())
@@ -1059,7 +1063,7 @@ mod tests {
         assert_eq!(weights.len(), 3, "All targets should have weights in executive attention");
         
         // Executive attention: weight = focus_strength * (1.0 - i * 0.2), min 0.1
-        let expected_weights = vec![1.0, 0.8, 0.6]; // For indices 0, 1, 2
+        let expected_weights = [1.0, 0.8, 0.6]; // For indices 0, 1, 2
         
         for (i, target) in targets.iter().enumerate() {
             let weight = weights.get(target).unwrap();
@@ -1089,12 +1093,12 @@ mod tests {
         // First target gets full focus, others get 0.1
         let first_weight = weights.get(&targets[0]).unwrap();
         assert!((first_weight - 0.9).abs() < 0.01, 
-               "First target should get full focus 0.9, got {:.3}", first_weight);
+               "First target should get full focus 0.9, got {first_weight:.3}");
         
         for target in &targets[1..] {
             let weight = weights.get(target).unwrap();
             assert!((weight - 0.1).abs() < 0.01, 
-                   "Non-primary targets should get minimal weight 0.1, got {:.3}", weight);
+                   "Non-primary targets should get minimal weight 0.1, got {weight:.3}");
         }
         
         Ok(())
@@ -1130,13 +1134,13 @@ mod tests {
         ];
         
         let load = manager.calculate_memory_load(&test_items);
-        assert!(load > 0.0 && load <= 1.0, "Memory load should be between 0 and 1, got {:.3}", load);
+        assert!(load > 0.0 && load <= 1.0, "Memory load should be between 0 and 1, got {load:.3}");
         
         // Test that load increases with more items
         let mut many_items = test_items.clone();
         for i in 0..20 {
             many_items.push(MemoryItem {
-                content: MemoryContent::Concept(format!("test{}", i)),
+                content: MemoryContent::Concept(format!("test{i}")),
                 activation_level: 0.6,
                 timestamp: std::time::Instant::now(),
                 importance_score: 0.5,
@@ -1147,7 +1151,7 @@ mod tests {
         
         let high_load = manager.calculate_memory_load(&many_items);
         assert!(high_load > load, "More items should increase memory load");
-        assert!(high_load <= 1.0, "Memory load should be clamped to 1.0, got {:.3}", high_load);
+        assert!(high_load <= 1.0, "Memory load should be clamped to 1.0, got {high_load:.3}");
     }
 
     #[test]

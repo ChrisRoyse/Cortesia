@@ -261,7 +261,7 @@ pub struct RecommendationRequest {
 
 /// Find the best model matching requirements
 pub fn recommend_model<'a>(models: &'a [&'a ModelMetadata], requirements: &RecommendationRequest) -> Option<&'a ModelMetadata> {
-    let mut candidates: Vec<_> = models.iter().cloned().collect();
+    let mut candidates: Vec<_> = models.to_vec();
     
     // Filter by max parameters
     if let Some(max_params) = requirements.max_parameters {

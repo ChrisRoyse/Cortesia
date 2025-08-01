@@ -13,7 +13,7 @@ impl BloomFilter {
         let hash_count = Self::optimal_hash_count(expected_items, bit_count);
         
         Self {
-            bit_array: vec![0u64; (bit_count + 63) / 64],
+            bit_array: vec![0u64; bit_count.div_ceil(64)],
             bit_count,
             hash_count,
         }
@@ -287,7 +287,7 @@ mod tests {
         
         // Test with many different inputs
         for i in 0..100 {
-            let item = format!("test_item_{}", i);
+            let item = format!("test_item_{i}");
             let hashes = filter.hash(&item);
             
             for hash_value in hashes {
@@ -338,7 +338,7 @@ mod tests {
         let mut filter = BloomFilter::new(expected_items, fp_rate);
         
         // Insert exactly the expected number of items
-        let inserted_items: Vec<String> = (0..expected_items).map(|i| format!("item_{}", i)).collect();
+        let inserted_items: Vec<String> = (0..expected_items).map(|i| format!("item_{i}")).collect();
         for item in &inserted_items {
             filter.insert(item);
         }
@@ -350,7 +350,7 @@ mod tests {
         
         // Test false positive rate with non-inserted items
         let test_items: Vec<String> = (expected_items..expected_items + 1000)
-            .map(|i| format!("test_item_{}", i))
+            .map(|i| format!("test_item_{i}"))
             .collect();
         
         let false_positives = test_items.iter()
@@ -361,8 +361,7 @@ mod tests {
         
         // Allow some tolerance due to randomness, but should be reasonably close
         assert!(actual_fp_rate <= fp_rate * 3.0, 
-            "False positive rate {} should be reasonably close to expected {}", 
-            actual_fp_rate, fp_rate);
+            "False positive rate {actual_fp_rate} should be reasonably close to expected {fp_rate}");
     }
 
     #[test]
@@ -397,7 +396,7 @@ mod tests {
         let estimated = filter.estimated_items();
         assert!(estimated > 0.0);
         // Should be a reasonable estimate (within an order of magnitude)
-        assert!(estimated >= 1.0 && estimated <= 100.0);
+        assert!((1.0..=100.0).contains(&estimated));
     }
 
     #[test]
@@ -500,7 +499,7 @@ mod tests {
         
         // All items should be findable
         for i in 0..200 {
-            assert!(filter.contains(&i), "Item {} should be found", i);
+            assert!(filter.contains(&i), "Item {i} should be found");
         }
     }
 

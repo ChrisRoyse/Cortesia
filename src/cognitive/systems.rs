@@ -105,7 +105,7 @@ impl SystemsThinking {
         }
         
         // Return the first available entity as fallback
-        if let Some((key, _, _)) = all_entities.iter().next() {
+        if let Some((key, _, _)) = all_entities.first() {
             Ok(*key)
         } else {
             Err(GraphError::ProcessingError("No entities available for hierarchy analysis".to_string()))
@@ -195,7 +195,7 @@ impl SystemsThinking {
         
         for attr in &traversal.inherited_attributes {
             attribute_groups.entry(attr.name.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(attr.clone());
         }
         
@@ -223,7 +223,7 @@ impl SystemsThinking {
         // Group attributes by name to detect conflicts
         for attribute in attributes {
             attribute_map.entry(attribute.attribute_name.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(attribute);
         }
         
@@ -442,12 +442,12 @@ impl SystemsThinking {
 
     /// Format the final answer
     fn format_systems_answer(&self, query: &str, result: &SystemsResult) -> String {
-        let mut answer = format!("Systems Analysis for: {}\n\n", query);
+        let mut answer = format!("Systems Analysis for: {query}\n\n");
         
         if !result.hierarchy_path.is_empty() {
             answer.push_str(&format!("Hierarchy Path (depth {}):\n", result.hierarchy_path.len()));
             for (i, entity) in result.hierarchy_path.iter().enumerate() {
-                answer.push_str(&format!("  {}: {:?}\n", i, entity));
+                answer.push_str(&format!("  {i}: {entity:?}\n"));
             }
             answer.push('\n');
         }
@@ -555,7 +555,7 @@ impl SystemsThinking {
         for (neighbor_key, weight) in neighbors {
             if let Some((_, _neighbor_data, _)) = all_entities.iter().find(|(k, _, _)| k == &neighbor_key) {
                 attributes.push((
-                    format!("entity_{:?}", neighbor_key),
+                    format!("entity_{neighbor_key:?}"),
                     "property".to_string(),
                     weight,
                 ));
@@ -650,9 +650,9 @@ impl SystemsThinking {
             }
             
             // Add general animal attributes for any animal-like concept
-            if concept.contains("animal") || concept.contains("dog") || concept.contains("cat") || 
-               concept.contains("elephant") || concept.contains("domesticated") {
-                if !attributes.iter().any(|a| a.name == "warm_blooded") {
+            if (concept.contains("animal") || concept.contains("dog") || concept.contains("cat") || 
+               concept.contains("elephant") || concept.contains("domesticated"))
+                && !attributes.iter().any(|a| a.name == "warm_blooded") {
                     attributes.push(AttributeInfo {
                         name: "warm_blooded".to_string(),
                         value: "true".to_string(),
@@ -661,7 +661,6 @@ impl SystemsThinking {
                         confidence: 0.8,
                     });
                 }
-            }
             
             if !attributes.is_empty() {
                 return Ok(Some(attributes));
@@ -801,7 +800,7 @@ mod tests {
             depth: 1,
         };
         let complexity = systems.calculate_complexity(&minimal_traversal);
-        assert!(complexity >= 0.0 && complexity <= 1.0);
+        assert!((0.0..=1.0).contains(&complexity));
         assert!(complexity < 0.2); // Should be low complexity
         
         // Test with complex traversal
@@ -868,7 +867,7 @@ mod tests {
             system_complexity: 0.0,
         };
         let confidence = systems.calculate_confidence(&empty_result);
-        assert!(confidence >= 0.0 && confidence <= 1.0);
+        assert!((0.0..=1.0).contains(&confidence));
         assert!(confidence < 0.6); // Should be low confidence
         
         // Test with good result
@@ -1076,7 +1075,7 @@ mod tests {
         let trace = systems.create_reasoning_trace(&result);
         
         // Should create steps for hierarchy traversal, attribute inheritance, and exception handling
-        assert!(trace.len() >= 1);
+        assert!(!trace.is_empty());
         assert!(trace.iter().any(|step| step.concept_id == "hierarchy_traversal"));
         assert!(trace.iter().any(|step| step.concept_id == "attribute_inheritance"));
         assert!(trace.iter().any(|step| step.concept_id == "exception_handling"));

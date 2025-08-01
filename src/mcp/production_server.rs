@@ -150,12 +150,12 @@ impl ProductionMCPServer {
         // Add MCP-specific metrics
         let base_health = self.inner_server.get_health().await;
         if let Some(total_ops) = base_health.get("total_operations") {
-            metrics.push_str(&format!("# TYPE mcp_total_operations counter\n"));
-            metrics.push_str(&format!("mcp_total_operations {}\n", total_ops));
+            metrics.push_str("# TYPE mcp_total_operations counter\n");
+            metrics.push_str(&format!("mcp_total_operations {total_ops}\n"));
         }
         
         if let Some(avg_response) = base_health.get("avg_response_time_ms") {
-            metrics.push_str(&format!("# TYPE mcp_avg_response_time_ms gauge\n"));
+            metrics.push_str("# TYPE mcp_avg_response_time_ms gauge\n");
             metrics.push_str(&format!("mcp_avg_response_time_ms {avg_response}\n"));
         }
         

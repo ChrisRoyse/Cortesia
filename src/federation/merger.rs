@@ -11,6 +11,12 @@ pub struct ResultMerger {
     merge_strategies: HashMap<MergeStrategy, Box<dyn MergeHandler + Send + Sync>>,
 }
 
+impl Default for ResultMerger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Trait for handling different merge strategies
 #[async_trait]
 pub trait MergeHandler {
@@ -53,7 +59,7 @@ impl ResultMerger {
 
         // Get the appropriate merge handler
         let merge_handler = self.merge_strategies.get(&strategy)
-            .ok_or_else(|| GraphError::InvalidInput(format!("Unsupported merge strategy: {:?}", strategy)))?;
+            .ok_or_else(|| GraphError::InvalidInput(format!("Unsupported merge strategy: {strategy:?}")))?;
         
         // Perform the merge
         let merged_data = merge_handler.merge(successful_results.clone()).await?;
@@ -101,7 +107,7 @@ impl ResultMerger {
             .len();
 
         crate::federation::types::QueryMetadata {
-            query_plan: format!("Merged {} results using {:?} strategy", results.len(), strategy),
+            query_plan: format!("Merged {} results using {strategy:?} strategy", results.len()),
             optimization_used: vec!["parallel_execution".to_string(), "result_deduplication".to_string()],
             cache_hits: 0, // Would be tracked separately
             cache_misses: results.len(),
@@ -169,7 +175,7 @@ impl MergeHandler for ComparisonMergeHandler {
             let mut entity_groups: HashMap<String, Vec<&RawQueryResult>> = HashMap::new();
             for result in &raw_results {
                 if let Some(entity_id) = self.extract_entity_id(result) {
-                    entity_groups.entry(entity_id).or_insert_with(Vec::new).push(result);
+                    entity_groups.entry(entity_id).or_default().push(result);
                 }
             }
             
@@ -237,7 +243,7 @@ impl ComparisonMergeHandler {
         
         if database_versions.is_empty() {
             return Err(GraphError::InvalidInput(
-                format!("No valid entity data found for comparison of entity '{}'", entity_id)
+                format!("No valid entity data found for comparison of entity '{entity_id}'")
             ));
         }
         

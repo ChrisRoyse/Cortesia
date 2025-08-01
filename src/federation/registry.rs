@@ -290,6 +290,12 @@ impl DatabaseRegistry {
     }
 }
 
+impl Default for DiscoveryManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DiscoveryManager {
     pub fn new() -> Self {
         Self {

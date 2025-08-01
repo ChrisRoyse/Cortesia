@@ -63,8 +63,8 @@ impl DatabaseBranchManager {
         // Create snapshot of source database
         let _snapshot_id = self.version_manager.create_snapshot(
             source_db_id,
-            format!("Branch snapshot for {}", branch_name),
-            Some(format!("Creating branch '{}'", branch_name)),
+            format!("Branch snapshot for {branch_name}"),
+            Some(format!("Creating branch '{branch_name}'")),
         ).await?;
         
         // Create new database engine for branch
@@ -148,7 +148,7 @@ impl DatabaseBranchManager {
         let branches = self.branches.read().await;
         let branch = branches.get(branch_name)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Branch not found: {}", branch_name)
+                format!("Branch not found: {branch_name}")
             ))?;
         
         Ok(branch.database_id.clone())
@@ -164,12 +164,12 @@ impl DatabaseBranchManager {
         
         let info1 = branches.get(branch1)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Branch not found: {}", branch1)
+                format!("Branch not found: {branch1}")
             ))?;
             
         let info2 = branches.get(branch2)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Branch not found: {}", branch2)
+                format!("Branch not found: {branch2}")
             ))?;
         
         // Get databases
@@ -263,11 +263,11 @@ impl DatabaseBranchManager {
         let branches = self.branches.read().await;
         let source_info = branches.get(source_branch)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Source branch not found: {}", source_branch)
+                format!("Source branch not found: {source_branch}")
             ))?;
         let target_info = branches.get(target_branch)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Target branch not found: {}", target_branch)
+                format!("Target branch not found: {target_branch}")
             ))?;
         
         // Get differences
@@ -306,7 +306,7 @@ impl DatabaseBranchManager {
                     triples_added: added,
                     triples_removed: 0,
                     conflicts_resolved: 0,
-                    message: format!("Merged {} triples from {} to {}", added, source_branch, target_branch),
+                    message: format!("Merged {added} triples from {source_branch} to {target_branch}"),
                 })
             }
             MergeStrategy::AcceptTarget => {
@@ -333,7 +333,7 @@ impl DatabaseBranchManager {
         let mut branches = self.branches.write().await;
         let branch_info = branches.remove(branch_name)
             .ok_or_else(|| crate::error::GraphError::InvalidInput(
-                format!("Branch not found: {}", branch_name)
+                format!("Branch not found: {branch_name}")
             ))?;
         
         // Remove database

@@ -35,7 +35,7 @@ pub async fn handle_time_travel_query(
     let timestamp = params.get("timestamp")
         .and_then(|v| v.as_str())
         .map(|ts| DateTime::parse_from_rfc3339(ts)
-            .map_err(|e| format!("Invalid timestamp format: {}", e))
+            .map_err(|e| format!("Invalid timestamp format: {e}"))
             .map(|dt| dt.with_timezone(&Utc)))
         .transpose()?;
     
@@ -53,8 +53,8 @@ pub async fn handle_time_travel_query(
             
             match (start, end) {
                 (Some(Ok(s)), Some(Ok(e))) => Ok(Some((s, e))),
-                (Some(Err(e)), _) => Err(format!("Invalid start time: {}", e)),
-                (_, Some(Err(e))) => Err(format!("Invalid end time: {}", e)),
+                (Some(Err(e)), _) => Err(format!("Invalid start time: {e}")),
+                (_, Some(Err(e))) => Err(format!("Invalid end time: {e}")),
                 _ => Ok(None)
             }
         })
@@ -68,7 +68,7 @@ pub async fn handle_time_travel_query(
         "point_in_time" => {
             let entity = entity.ok_or("Entity required for point_in_time query")?;
             let timestamp = timestamp.unwrap_or_else(Utc::now);
-            query_point_in_time(&*TEMPORAL_INDEX, entity, timestamp).await
+            query_point_in_time(&TEMPORAL_INDEX, entity, timestamp).await
         }
         "evolution_tracking" => {
             let entity = entity.ok_or("Entity required for evolution_tracking query")?;
@@ -76,11 +76,11 @@ pub async fn handle_time_travel_query(
                 DateTime::from_timestamp(0, 0).unwrap(),
                 Utc::now()
             ));
-            track_entity_evolution(&*TEMPORAL_INDEX, entity, Some(start), Some(end)).await
+            track_entity_evolution(&TEMPORAL_INDEX, entity, Some(start), Some(end)).await
         }
         "temporal_comparison" => {
             if let Some((start, end)) = time_range {
-                detect_changes(&*TEMPORAL_INDEX, start, end, entity).await
+                detect_changes(&TEMPORAL_INDEX, start, end, entity).await
             } else {
                 return Err("Time range required for temporal_comparison".to_string());
             }
@@ -91,9 +91,9 @@ pub async fn handle_time_travel_query(
                 let start = end - chrono::Duration::days(7);
                 (start, end)
             });
-            detect_changes(&*TEMPORAL_INDEX, start, end, entity).await
+            detect_changes(&TEMPORAL_INDEX, start, end, entity).await
         }
-        _ => return Err(format!("Unknown query type: {}", query_type))
+        _ => return Err(format!("Unknown query type: {query_type}"))
     };
     
     let query_time = start_time.elapsed();
@@ -171,7 +171,7 @@ pub async fn handle_create_branch(
     
     // Get or initialize branch manager
     let branch_manager_arc = get_branch_manager().await
-        .map_err(|e| format!("Failed to get branch manager: {}", e))?;
+        .map_err(|e| format!("Failed to get branch manager: {e}"))?;
     
     let branch_manager_guard = branch_manager_arc.read().await;
     let branch_manager = branch_manager_guard.as_ref()
@@ -183,7 +183,7 @@ pub async fn handle_create_branch(
         branch_name.to_string(),
         description.clone(),
     ).await
-        .map_err(|e| format!("Failed to create branch: {}", e))?;
+        .map_err(|e| format!("Failed to create branch: {e}"))?;
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 100).await;
     
@@ -224,14 +224,14 @@ pub async fn handle_list_branches(
     _params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
     let branch_manager_arc = get_branch_manager().await
-        .map_err(|e| format!("Failed to get branch manager: {}", e))?;
+        .map_err(|e| format!("Failed to get branch manager: {e}"))?;
     
     let branch_manager_guard = branch_manager_arc.read().await;
     let branch_manager = branch_manager_guard.as_ref()
         .ok_or("Branch manager not initialized")?;
     
     let branches = branch_manager.list_branches().await
-        .map_err(|e| format!("Failed to list branches: {}", e))?;
+        .map_err(|e| format!("Failed to list branches: {e}"))?;
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 10).await;
     
@@ -285,14 +285,14 @@ pub async fn handle_compare_branches(
         .ok_or("Missing required field: branch2")?;
     
     let branch_manager_arc = get_branch_manager().await
-        .map_err(|e| format!("Failed to get branch manager: {}", e))?;
+        .map_err(|e| format!("Failed to get branch manager: {e}"))?;
     
     let branch_manager_guard = branch_manager_arc.read().await;
     let branch_manager = branch_manager_guard.as_ref()
         .ok_or("Branch manager not initialized")?;
     
     let comparison = branch_manager.compare_branches(branch1, branch2).await
-        .map_err(|e| format!("Failed to compare branches: {}", e))?;
+        .map_err(|e| format!("Failed to compare branches: {e}"))?;
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 50).await;
     
@@ -358,11 +358,11 @@ pub async fn handle_merge_branches(
         "accept_source" => MergeStrategy::AcceptSource,
         "accept_target" => MergeStrategy::AcceptTarget,
         "manual" => MergeStrategy::Manual,
-        _ => return Err(format!("Invalid merge strategy: {}", merge_strategy_str))
+        _ => return Err(format!("Invalid merge strategy: {merge_strategy_str}"))
     };
     
     let branch_manager_arc = get_branch_manager().await
-        .map_err(|e| format!("Failed to get branch manager: {}", e))?;
+        .map_err(|e| format!("Failed to get branch manager: {e}"))?;
     
     let branch_manager_guard = branch_manager_arc.read().await;
     let branch_manager = branch_manager_guard.as_ref()
@@ -373,7 +373,7 @@ pub async fn handle_merge_branches(
         target_branch,
         merge_strategy,
     ).await
-        .map_err(|e| format!("Failed to merge branches: {}", e))?;
+        .map_err(|e| format!("Failed to merge branches: {e}"))?;
     
     let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 100).await;
     
@@ -425,10 +425,10 @@ fn format_duration(duration: chrono::Duration) -> String {
     let minutes = duration.num_minutes() % 60;
     
     if days > 0 {
-        format!("{} days, {} hours", days, hours)
+        format!("{days} days, {hours} hours")
     } else if hours > 0 {
-        format!("{} hours, {} minutes", hours, minutes)
+        format!("{hours} hours, {minutes} minutes")
     } else {
-        format!("{} minutes", minutes)
+        format!("{minutes} minutes")
     }
 }

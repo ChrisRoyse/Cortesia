@@ -88,7 +88,7 @@ impl SemanticLinkManager {
         
         for (link_type, description, is_directional, strength_range, color) in types {
             link_types.insert(
-                format!("{:?}", link_type),
+                format!("{link_type:?}"),
                 LinkTypeInfo {
                     link_type,
                     description: description.to_string(),
@@ -144,7 +144,7 @@ impl SemanticLinkManager {
     ) -> HierarchicalStorageResult<()> {
         for layer in layers {
             if let Some(parent_id) = &layer.parent_layer_id {
-                let source_node_id = format!("node_{}", parent_id);
+                let source_node_id = format!("node_{parent_id}");
                 let target_node_id = format!("node_{}", layer.layer_id);
                 
                 if graph.nodes.contains_key(&source_node_id) && graph.nodes.contains_key(&target_node_id) {
@@ -405,7 +405,7 @@ impl SemanticLinkManager {
                     if graph.nodes.contains_key(&source_node_id) && graph.nodes.contains_key(&target_node_id) {
                         let edge = SemanticEdge {
                             edge_id: format!("{}_{}_{}_{}", 
-                                format!("{:?}", link_type).to_lowercase(),
+                                format!("{link_type:?}").to_lowercase(),
                                 layer1.layer_id, 
                                 layer2.layer_id,
                                 std::time::SystemTime::now()

@@ -191,7 +191,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Insert brain relationship with synaptic weight
     pub async fn insert_brain_relationship(&self, relationship: Relationship) -> Result<()> {
         // Insert into core graph
-        self.core_graph.insert_relationship(relationship.clone())?;
+        self.core_graph.insert_relationship(relationship)?;
         
         // Set synaptic weight
         self.set_synaptic_weight(relationship.from, relationship.to, relationship.weight).await;
@@ -432,7 +432,7 @@ impl BrainEnhancedKnowledgeGraph {
         // Incorporate input embeddings
         for input_key in inputs {
             if let Some(input_data) = self.core_graph.get_entity_data(*input_key) {
-                for (_i, (gate_val, input_val)) in embedding.iter_mut().zip(input_data.embedding.iter()).enumerate() {
+                for (gate_val, input_val) in embedding.iter_mut().zip(input_data.embedding.iter()) {
                     *gate_val = (*gate_val + input_val * 0.3).clamp(0.0, 1.0);
                 }
             }
@@ -505,7 +505,7 @@ impl BrainEnhancedKnowledgeGraph {
             
             // If we have enough similar entities, create/update concept
             if similar_entities.len() >= 3 {
-                let concept_name = format!("concept_{:?}", entity_key);
+                let concept_name = format!("concept_{entity_key:?}");
                 let mut concept_structure = ConceptStructure::new();
                 
                 // Add similar entities to concept
@@ -830,7 +830,7 @@ mod tests {
             let (retrieved_data, activation) = result.unwrap();
             assert_eq!(retrieved_data.type_id, entity_data.type_id);
             assert_eq!(retrieved_data.embedding, entity_data.embedding);
-            assert!(activation >= 0.0 && activation <= 1.0);
+            assert!((0.0..=1.0).contains(&activation));
         }
 
         #[tokio::test]
@@ -1054,7 +1054,7 @@ mod tests {
             let entity_key = graph.insert_brain_entity(42, entity_data).await.unwrap();
             
             // Get initial stats
-            let initial_stats = graph.get_learning_stats().await;
+            let _initial_stats = graph.get_learning_stats().await;
             
             // Update activation
             let result = graph.update_entity_activation(entity_key, 0.9).await;
@@ -1101,7 +1101,7 @@ mod tests {
             // Remove entity
             let result = graph.remove_brain_entity(entity_key).await;
             assert!(result.is_ok());
-            assert_eq!(result.unwrap(), true);
+            assert!(result.unwrap());
             
             // Verify entity no longer exists
             assert!(!graph.contains_entity(entity_key));
@@ -1115,7 +1115,7 @@ mod tests {
             let result = graph.remove_brain_entity(fake_key).await;
             
             assert!(result.is_ok());
-            assert_eq!(result.unwrap(), false);
+            assert!(!result.unwrap());
         }
 
         #[tokio::test]
@@ -1405,7 +1405,7 @@ mod tests {
             // 3. Retrieve entity data
             let retrieved = graph.get_entity(entity_key).await;
             assert!(retrieved.is_some());
-            let (retrieved_data, initial_activation) = retrieved.unwrap();
+            let (retrieved_data, _initial_activation) = retrieved.unwrap();
             assert_eq!(retrieved_data.type_id, entity_data.type_id);
             
             // 4. Update activation
@@ -1420,7 +1420,7 @@ mod tests {
             // 6. Remove entity
             let remove_result = graph.remove_brain_entity(entity_key).await;
             assert!(remove_result.is_ok());
-            assert_eq!(remove_result.unwrap(), true);
+            assert!(remove_result.unwrap());
             
             // 7. Verify entity no longer exists
             assert!(!graph.contains_entity(entity_key));
@@ -1465,7 +1465,7 @@ mod tests {
             for key in &keys {
                 let result = graph.remove_brain_entity(*key).await;
                 assert!(result.is_ok());
-                assert_eq!(result.unwrap(), true);
+                assert!(result.unwrap());
             }
             
             // Verify all entities removed

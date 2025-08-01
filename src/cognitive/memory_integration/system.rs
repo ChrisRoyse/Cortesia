@@ -294,7 +294,7 @@ impl UnifiedMemorySystem {
     /// Create cross-memory link
     pub async fn create_cross_memory_link(&self, link: CrossMemoryLink) -> Result<()> {
         self.memory_coordinator.create_cross_memory_link(link).await
-            .map_err(|e| GraphError::ProcessingError(format!("Failed to create cross-memory link: {}", e)))
+            .map_err(|e| GraphError::ProcessingError(format!("Failed to create cross-memory link: {e}")))
     }
 
     /// Search across all memory systems
@@ -347,7 +347,7 @@ impl UnifiedMemorySystem {
             let items = query_result.entities.into_iter().map(|entity_key| {
                 let similarity = query_result.activations.get(&entity_key).copied().unwrap_or(0.0);
                 MemoryItem {
-                    content: MemoryContent::Concept(format!("entity_{:?}", entity_key)),
+                    content: MemoryContent::Concept(format!("entity_{entity_key:?}")),
                     activation_level: similarity,
                     timestamp: Instant::now(),
                     importance_score: similarity,
@@ -386,7 +386,7 @@ impl UnifiedMemorySystem {
         status.push_str(&format!("Consolidation Events: {}\n", stats.consolidation_events));
         status.push_str(&format!("Cross-Memory Accesses: {}\n", stats.cross_memory_accesses));
         
-        status.push_str("\n");
+        status.push('\n');
         status.push_str(&coordinator_report);
         
         Ok(status)
@@ -648,7 +648,7 @@ mod tests {
         
         // Store some content to consolidate
         for i in 0..3 {
-            let content = format!("consolidation_test_{}", i);
+            let content = format!("consolidation_test_{i}");
             let _ = system.store_information(&content, 0.8, None).await;
         }
         
@@ -748,7 +748,8 @@ mod tests {
         let links = system.get_cross_memory_links("test_cross_link").await.unwrap();
         // Note: The actual link retrieval depends on the coordinator implementation
         // We're testing that the method doesn't fail
-        assert!(links.len() >= 0);
+        // Links should be reasonable
+        assert!(links.len() < 10000);
     }
 
     #[tokio::test]
@@ -757,12 +758,12 @@ mod tests {
         
         // Perform several operations and verify statistics tracking
         for i in 0..5 {
-            let content = format!("stats_test_{}", i);
+            let content = format!("stats_test_{i}");
             let _ = system.store_information(&content, 0.6, None).await;
         }
         
         for i in 0..3 {
-            let query = format!("stats_test_{}", i);
+            let query = format!("stats_test_{i}");
             let _ = system.retrieve_information(&query, None).await;
         }
         

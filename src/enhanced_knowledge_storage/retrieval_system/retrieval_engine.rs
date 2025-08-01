@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use std::time::Instant;
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug, instrument};
+use tracing::{info, error, debug, instrument};
 use crate::enhanced_knowledge_storage::{
     types::*,
     model_management::ModelResourceManager,

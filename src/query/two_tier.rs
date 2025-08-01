@@ -355,8 +355,7 @@ impl TwoTierQueryEngine {
             .join("\n\n");
         
         Ok(format!(
-            "Global context for question: '{}'\n\nRelevant communities:\n{}",
-            question, summaries_text
+            "Global context for question: '{question}'\n\nRelevant communities:\n{summaries_text}"
         ))
     }
 
@@ -403,13 +402,13 @@ impl TwoTierQueryEngine {
     fn generate_cache_key(&self, query: &GraphRAGQuery) -> String {
         match query {
             GraphRAGQuery::GlobalSearch { question, use_community_summaries, max_communities } => {
-                format!("global:{}:{}:{}", question, use_community_summaries, max_communities)
+                format!("global:{question}:{use_community_summaries}:{max_communities}")
             }
             GraphRAGQuery::LocalSearch { entity, max_hops, include_neighbors } => {
-                format!("local:{}:{}:{}", entity, max_hops, include_neighbors)
+                format!("local:{entity}:{max_hops}:{include_neighbors}")
             }
             GraphRAGQuery::HybridSearch { question, target_entities, max_global_communities, max_local_hops } => {
-                format!("hybrid:{}:{:?}:{}:{}", question, target_entities, max_global_communities, max_local_hops)
+                format!("hybrid:{question}:{target_entities:?}:{max_global_communities}:{max_local_hops}")
             }
         }
     }
@@ -485,7 +484,7 @@ impl GraphRAGResult {
         context.push_str(&format!("Confidence: {:.2}\n\n", self.confidence_score));
         
         if let Some(global_context) = &self.global_context {
-            context.push_str(&format!("Global Context:\n{}\n\n", global_context));
+            context.push_str(&format!("Global Context:\n{global_context}\n\n"));
         }
         
         context.push_str("Entities:\n");

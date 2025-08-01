@@ -93,7 +93,7 @@ impl Model {
         }
         
         // Placeholder implementation
-        Ok(format!("Generated response for: {}", prompt))
+        Ok(format!("Generated response for: {prompt}"))
     }
 
     pub fn is_loaded(&self) -> bool {

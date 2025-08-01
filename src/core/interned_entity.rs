@@ -189,12 +189,12 @@ pub struct InternedDataStats {
 
 impl std::fmt::Display for InternedDataStats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Interned Entity Data Stats:\n")?;
-        write!(f, "  Entities: {}\n", self.entity_count)?;
-        write!(f, "  Total memory: {} KB\n", self.total_memory_bytes / 1024)?;
-        write!(f, "  Properties memory: {} KB\n", self.properties_memory_bytes / 1024)?;
-        write!(f, "  Embeddings memory: {} KB\n", self.embedding_memory_bytes / 1024)?;
-        write!(f, "  Avg properties/entity: {:.1}\n", self.avg_properties_per_entity)?;
+        writeln!(f, "Interned Entity Data Stats:")?;
+        writeln!(f, "  Entities: {}", self.entity_count)?;
+        writeln!(f, "  Total memory: {} KB", self.total_memory_bytes / 1024)?;
+        writeln!(f, "  Properties memory: {} KB", self.properties_memory_bytes / 1024)?;
+        writeln!(f, "  Embeddings memory: {} KB", self.embedding_memory_bytes / 1024)?;
+        writeln!(f, "  Avg properties/entity: {:.1}", self.avg_properties_per_entity)?;
         write!(f, "  {}", self.interner_stats)
     }
 }
@@ -318,7 +318,7 @@ impl InternedEntityCollection {
         
         for (key, entity) in self.entities.iter().take(max_entities) {
             let mut sample = serde_json::Map::new();
-            sample.insert("entity_key".to_string(), serde_json::Value::String(format!("{:?}", key)));
+            sample.insert("entity_key".to_string(), serde_json::Value::String(format!("{key:?}")));
             
             let entity_json = entity.to_json(&self.interner)?;
             let entity_value: serde_json::Value = serde_json::from_str(&entity_json)?;

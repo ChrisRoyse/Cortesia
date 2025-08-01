@@ -397,7 +397,7 @@ mod tests {
     /// Helper function to create test entity data
     fn create_test_entity_data(id: u32, embedding: Vec<f32>) -> EntityData {
         let mut properties = HashMap::new();
-        properties.insert("name".to_string(), AttributeValue::String(format!("entity_{}", id)));
+        properties.insert("name".to_string(), AttributeValue::String(format!("entity_{id}")));
         properties.insert("value".to_string(), AttributeValue::Number(id as f64));
         
         EntityData {
@@ -430,7 +430,7 @@ mod tests {
         let retrieved = graph.get_entity(key);
         assert!(retrieved.is_some());
         
-        let (meta, data) = retrieved.unwrap();
+        let (_meta, data) = retrieved.unwrap();
         assert_eq!(data.type_id, entity_data.type_id);
         assert_eq!(data.properties, entity_data.properties);
         assert_eq!(data.embedding, entity_data.embedding);
@@ -483,7 +483,7 @@ mod tests {
         let graph = create_test_graph();
         let entity_data = create_test_entity_data(42, vec![1.0, 2.0, 3.0, 4.0]);
         
-        let key = graph.insert_entity(42, entity_data.clone()).unwrap();
+        let _key = graph.insert_entity(42, entity_data.clone()).unwrap();
         
         // Test get by ID
         let retrieved = graph.get_entity_by_id(42);
@@ -836,7 +836,7 @@ mod tests {
         assert_eq!(individual_keys.len(), batch_keys.len());
         
         // Verify all entities can be retrieved from both graphs
-        for (i, (id, original_data)) in entities.iter().enumerate() {
+        for (id, original_data) in entities.iter() {
             let retrieved1 = graph1.get_entity_by_id(*id);
             let retrieved2 = graph2.get_entity_by_id(*id);
             
@@ -912,7 +912,7 @@ mod tests {
                     ]);
                     
                     let result = graph_clone.insert_entity(id as u32, entity_data);
-                    assert!(result.is_ok(), "Failed to insert entity {} from thread {}", i, thread_id);
+                    assert!(result.is_ok(), "Failed to insert entity {i} from thread {thread_id}");
                 }
             });
             handles.push(handle);
@@ -931,7 +931,7 @@ mod tests {
             for i in 0..10 {
                 let id = thread_id * 10 + i;
                 let retrieved = graph.get_entity_by_id(id as u32);
-                assert!(retrieved.is_some(), "Entity {} not found", id);
+                assert!(retrieved.is_some(), "Entity {id} not found");
             }
         }
     }

@@ -3,6 +3,12 @@ use crate::error::Result;
 
 pub struct TripleExtractor;
 
+impl Default for TripleExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TripleExtractor {
     pub fn new() -> Self {
         Self

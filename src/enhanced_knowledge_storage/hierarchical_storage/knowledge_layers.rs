@@ -99,7 +99,7 @@ impl KnowledgeLayerManager {
             metadata: LayerMetadata {
                 word_count: document_content.split_whitespace().count(),
                 character_count: document_content.len(),
-                complexity_level: processing_result.document_structure.complexity_level.clone(),
+                complexity_level: processing_result.document_structure.complexity_level,
                 reading_time: processing_result.document_structure.estimated_reading_time,
                 tags: processing_result.document_structure.key_themes.clone(),
                 custom_attributes: HashMap::new(),
@@ -469,7 +469,7 @@ impl KnowledgeLayerManager {
                 raw_text: combined_content.clone(),
                 processed_text: combined_content.clone(),
                 key_phrases: vec![theme.clone()],
-                summary: Some(format!("Conceptual grouping for theme: {}", theme)),
+                summary: Some(format!("Conceptual grouping for theme: {theme}")),
                 metadata: LayerMetadata {
                     word_count: combined_content.split_whitespace().count(),
                     character_count: combined_content.len(),
@@ -566,11 +566,11 @@ impl KnowledgeLayerManager {
     ) -> Option<String> {
         for (i, section) in sections.iter().enumerate() {
             if chunk.start_pos >= section.start_pos && chunk.end_pos <= section.end_pos {
-                return Some(format!("{}_section_{}", document_id, i));
+                return Some(format!("{document_id}_section_{i}"));
             }
         }
         // Fallback to document layer
-        Some(format!("{}_document", document_id))
+        Some(format!("{document_id}_document"))
     }
     
     /// Split text into sentences

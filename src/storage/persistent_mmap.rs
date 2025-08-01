@@ -56,6 +56,7 @@ impl Default for MMapHeader {
 
 // Compact entity representation for memory-mapped storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct MMapEntity {
     pub entity_key: u64,          // EntityKey hash
     pub embedding_offset: u32,    // Offset in quantized embedding section
@@ -64,17 +65,6 @@ pub struct MMapEntity {
     pub flags: u32,               // Entity flags (type, etc.)
 }
 
-impl Default for MMapEntity {
-    fn default() -> Self {
-        Self {
-            entity_key: 0,
-            embedding_offset: 0,
-            property_size: 0,
-            relationship_count: 0,
-            flags: 0,
-        }
-    }
-}
 
 /// Persistent memory-mapped storage with Product Quantization integration
 pub struct PersistentMMapStorage {
@@ -435,7 +425,7 @@ impl PersistentMMapStorage {
             file.write_all(&self.quantized_embeddings)?;
         }
         
-        let file_size = file.seek(SeekFrom::Current(0))?;
+        let file_size = file.stream_position()?;
         file.sync_all()?;
         
         self.file = Some(file);
@@ -455,7 +445,7 @@ impl PersistentMMapStorage {
             file_size_bytes: self.file_size.load(Ordering::Relaxed),
             quantized_embedding_bytes: self.quantized_embeddings.len(),
             compression_ratio: compression_stats.compression_ratio,
-            avg_bytes_per_entity: if self.entities.len() > 0 {
+            avg_bytes_per_entity: if !self.entities.is_empty() {
                 self.memory_usage.load(Ordering::Relaxed) / self.entities.len() as u64
             } else {
                 0
@@ -521,12 +511,12 @@ pub struct StorageStats {
 
 impl std::fmt::Display for StorageStats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Storage Stats:\n")?;
-        write!(f, "  Entities: {}\n", self.entity_count)?;
-        write!(f, "  Memory: {} KB\n", self.memory_usage_bytes / 1024)?;
-        write!(f, "  File size: {} KB\n", self.file_size_bytes / 1024)?;
-        write!(f, "  Compression: {:.1}:1\n", self.compression_ratio)?;
-        write!(f, "  Avg bytes/entity: {}\n", self.avg_bytes_per_entity)?;
+        writeln!(f, "Storage Stats:")?;
+        writeln!(f, "  Entities: {}", self.entity_count)?;
+        writeln!(f, "  Memory: {} KB", self.memory_usage_bytes / 1024)?;
+        writeln!(f, "  File size: {} KB", self.file_size_bytes / 1024)?;
+        writeln!(f, "  Compression: {:.1}:1", self.compression_ratio)?;
+        writeln!(f, "  Avg bytes/entity: {}", self.avg_bytes_per_entity)?;
         write!(f, "  Operations: {} reads, {} writes", self.read_operations, self.write_operations)
     }
 }

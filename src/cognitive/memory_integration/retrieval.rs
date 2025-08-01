@@ -39,7 +39,7 @@ impl MemoryRetrieval {
         
         // Get retrieval strategy
         let strategy = if let Some(id) = strategy_id {
-            self.coordinator.get_strategy(id).ok_or_else(|| GraphError::ConfigError(format!("Strategy not found: {}", id)))?
+            self.coordinator.get_strategy(id).ok_or_else(|| GraphError::ConfigError(format!("Strategy not found: {id}")))?
         } else {
             self.coordinator.get_best_strategy(query)
         };
@@ -261,7 +261,7 @@ impl MemoryRetrieval {
         let graph_results: Vec<GraphSearchResult> = query_result.entities.into_iter().map(|entity_key| {
             let similarity = query_result.activations.get(&entity_key).copied().unwrap_or(0.0);
             GraphSearchResult {
-                content: format!("entity_{:?}", entity_key),
+                content: format!("entity_{entity_key:?}"),
                 relevance_score: similarity,
             }
         }).collect();
@@ -292,7 +292,7 @@ impl MemoryRetrieval {
         
         for context_item in context {
             items.push(MemoryItem {
-                content: MemoryContent::Concept(format!("Context: {}", context_item)),
+                content: MemoryContent::Concept(format!("Context: {context_item}")),
                 activation_level: 0.7,
                 timestamp: Instant::now(),
                 importance_score: 0.6,
@@ -320,7 +320,7 @@ impl MemoryRetrieval {
         // Add context from episodic results
         for item in episodic_results.iter().take(3) {
             if let MemoryContent::Concept(concept) = &item.content {
-                enhanced_query.push_str(&format!(" {}", concept));
+                enhanced_query.push_str(&format!(" {concept}"));
             }
         }
         

@@ -136,7 +136,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let report = model_utils::generate_model_report(model_metadata);
         // Print first few lines of the report
         for line in report.lines().take(15) {
-            println!("  {}", line);
+            println!("  {line}");
         }
         println!("  ... (truncated for brevity)");
     }

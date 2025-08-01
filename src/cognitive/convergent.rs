@@ -41,7 +41,7 @@ impl ConvergentThinking {
         
         // 1. Parse query to identify target concept (considering context)
         let target_concept = self.extract_target_concept_with_context(query, context).await?;
-        println!("DEBUG: Query '{}' -> Target concept: '{}'", query, target_concept);
+        println!("DEBUG: Query '{query}' -> Target concept: '{target_concept}'");
         
         // 2. Activate input nodes for the concept
         let activation_pattern = self.activate_concept_inputs(&target_concept).await?;
@@ -72,7 +72,7 @@ impl ConvergentThinking {
         // Enhanced concept extraction that considers context
         let mut _combined_text = query.to_string();
         if let Some(ctx) = context {
-            _combined_text = format!("{} {}", ctx, query);
+            _combined_text = format!("{ctx} {query}");
         }
         
         
@@ -184,13 +184,13 @@ impl ConvergentThinking {
     
     /// Activate input nodes for the target concept
     async fn activate_concept_inputs(&self, concept: &str) -> Result<ActivationPattern> {
-        let mut activation_pattern = ActivationPattern::new(format!("convergent_query_{}", concept));
+        let mut activation_pattern = ActivationPattern::new(format!("convergent_query_{concept}"));
         
         // Find all entities matching the concept
         let matching_entities = self.find_matching_entities(concept).await?;
         
         if matching_entities.is_empty() {
-            return Err(GraphError::ProcessingError(format!("No entities found for concept: {}", concept)));
+            return Err(GraphError::ProcessingError(format!("No entities found for concept: {concept}")));
         }
         
         // Set initial activations with focus on input entities
@@ -417,7 +417,7 @@ impl ConvergentThinking {
         
         for (key, _entity_data, _activation) in &all_entities {
             // Extract concept from properties
-            let concept_id = format!("entity_{:?}", key);
+            let concept_id = format!("entity_{key:?}");
             let relevance = self.calculate_concept_relevance(&concept_id, concept);
             if relevance > 0.1 { // Lower threshold for better matching
                 matches.push((*key, relevance));
@@ -428,7 +428,7 @@ impl ConvergentThinking {
         if matches.is_empty() {
             let query_norm = Self::normalize_concept(concept);
             for (key, _entity_data, _) in &all_entities {
-                let concept_id = format!("entity_{:?}", key);
+                let concept_id = format!("entity_{key:?}");
                 let entity_norm = Self::normalize_concept(&concept_id);
                 if entity_norm.contains(&query_norm) || query_norm.contains(&entity_norm) {
                     matches.push((*key, 0.8));
@@ -461,7 +461,7 @@ impl ConvergentThinking {
             .find(|(k, _, _)| k == &entity_key)
             .map(|(_, data, activation)| BrainInspiredEntity {
                 id: entity_key,
-                concept_id: format!("entity_{:?}", entity_key),
+                concept_id: format!("entity_{entity_key:?}"),
                 direction: EntityDirection::Input,
                 properties: AHashMap::new(),
                 embedding: data.embedding.clone(),
@@ -865,9 +865,9 @@ impl ConvergentThinking {
                     
                     if !leg_properties.is_empty() {
                         if leg_properties[0].contains("four") {
-                            return Ok(format!("{} have four legs", concept));
+                            return Ok(format!("{concept} have four legs"));
                         } else if leg_properties[0].contains("three") {
-                            return Ok(format!("{} has three legs", concept));
+                            return Ok(format!("{concept} has three legs"));
                         }
                     }
                 }
@@ -876,12 +876,12 @@ impl ConvergentThinking {
                 // Sort properties for consistent output
                 properties.sort();
                 let props_str = properties.join(", ");
-                return Ok(format!("{} has the following properties: {}", concept, props_str));
+                return Ok(format!("{concept} has the following properties: {props_str}"));
             }
         }
         
         // Fallback to generic answer
-        Ok(format!("The answer is related to: {}", concept))
+        Ok(format!("The answer is related to: {concept}"))
     }
     
     /// Find supporting facts for an answer
@@ -1049,10 +1049,10 @@ mod tests {
         assert_eq!(thinking.calculate_concept_relevance("dog", "dog"), 1.0);
         
         // Mammal should have moderate relevance to dog (hierarchical relationship)
-        assert!(mammal_dog_score > 0.5, "Mammal and dog should have decent relevance: {}", mammal_dog_score);
+        assert!(mammal_dog_score > 0.5, "Mammal and dog should have decent relevance: {mammal_dog_score}");
         
         // Golden retriever should have some relevance to dog 
-        assert!(golden_dog_score > 0.0, "Golden retriever and dog should have some relevance: {}", golden_dog_score);
+        assert!(golden_dog_score > 0.0, "Golden retriever and dog should have some relevance: {golden_dog_score}");
     }
 
     #[test]

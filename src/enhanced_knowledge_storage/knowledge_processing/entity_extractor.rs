@@ -124,8 +124,7 @@ Return results as a JSON array with this exact format:
 Text to analyze:
 {text}
 
-JSON Response:"#,
-            text = text
+JSON Response:"#
         )
     }
     
@@ -138,7 +137,7 @@ JSON Response:"#,
         
         // Parse JSON response
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let mut entities = Vec::new();
         
@@ -195,14 +194,10 @@ JSON Response:"#,
             // Try case-insensitive search
             let lower_text = text.to_lowercase();
             let lower_entity = entity_name.to_lowercase();
-            if let Some(start) = lower_text.find(&lower_entity) {
-                Some(TextSpan {
+            lower_text.find(&lower_entity).map(|start| TextSpan {
                     start,
                     end: start + entity_name.len(),
                 })
-            } else {
-                None
-            }
         }
     }
     

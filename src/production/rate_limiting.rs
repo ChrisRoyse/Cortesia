@@ -367,7 +367,7 @@ impl RateLimitingManager {
             if !op_limiter.try_consume(1)? {
                 self.record_rate_limit_denial(operation).await;
                 return Err(GraphError::ResourceExhausted {
-                    resource: format!("Rate limit exceeded for operation: {}", operation),
+                    resource: format!("Rate limit exceeded for operation: {operation}"),
                 });
             }
         }
@@ -376,9 +376,9 @@ impl RateLimitingManager {
         if let Some(user_id) = user_id {
             if let Some(user_limiter) = self.user_rate_limiters.get(user_id) {
                 if !user_limiter.try_consume(1)? {
-                    self.record_rate_limit_denial(&format!("user_{}", user_id)).await;
+                    self.record_rate_limit_denial(&format!("user_{user_id}")).await;
                     return Err(GraphError::ResourceExhausted {
-                        resource: format!("Rate limit exceeded for user: {}", user_id),
+                        resource: format!("Rate limit exceeded for user: {user_id}"),
                     });
                 }
             }
@@ -570,7 +570,7 @@ impl RateLimitingManager {
     async fn record_rate_limit_allowed(&self, identifier: &str) {
         let stats = self.rate_limit_stats
             .entry(identifier.to_string())
-            .or_insert_with(RateLimitStats::default);
+            .or_default();
         
         stats.total_requests.fetch_add(1, Ordering::Relaxed);
         stats.allowed_requests.fetch_add(1, Ordering::Relaxed);
@@ -579,7 +579,7 @@ impl RateLimitingManager {
     async fn record_rate_limit_denial(&self, identifier: &str) {
         let stats = self.rate_limit_stats
             .entry(identifier.to_string())
-            .or_insert_with(RateLimitStats::default);
+            .or_default();
         
         stats.total_requests.fetch_add(1, Ordering::Relaxed);
         stats.denied_requests.fetch_add(1, Ordering::Relaxed);

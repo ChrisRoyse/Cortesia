@@ -540,25 +540,25 @@ impl std::fmt::Display for CognitiveError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CognitiveError::PatternNotFound(pattern) => {
-                write!(f, "Cognitive pattern not found: {:?}", pattern)
+                write!(f, "Cognitive pattern not found: {pattern:?}")
             }
             CognitiveError::InvalidParameters(msg) => {
-                write!(f, "Invalid parameters: {}", msg)
+                write!(f, "Invalid parameters: {msg}")
             }
             CognitiveError::ActivationFailure(msg) => {
-                write!(f, "Activation failure: {}", msg)
+                write!(f, "Activation failure: {msg}")
             }
             CognitiveError::InsufficientData(msg) => {
-                write!(f, "Insufficient data: {}", msg)
+                write!(f, "Insufficient data: {msg}")
             }
             CognitiveError::ContradictionUnresolved(msg) => {
-                write!(f, "Contradiction unresolved: {}", msg)
+                write!(f, "Contradiction unresolved: {msg}")
             }
             CognitiveError::TimeoutError(timeout) => {
-                write!(f, "Operation timed out after {} ms", timeout)
+                write!(f, "Operation timed out after {timeout} ms")
             }
             CognitiveError::ModelLoadError(msg) => {
-                write!(f, "Model load error: {}", msg)
+                write!(f, "Model load error: {msg}")
             }
         }
     }
@@ -628,6 +628,12 @@ pub struct ExplorationEdge {
     pub weight: f32,
 }
 
+impl Default for ExplorationMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ExplorationMap {
     pub fn new() -> Self {
         Self {
@@ -672,8 +678,8 @@ impl ExplorationMap {
         });
         
         // Update neighbors cache
-        self.neighbors_cache.entry(from).or_insert_with(Vec::new).push(to);
-        self.neighbors_cache.entry(to).or_insert_with(Vec::new).push(from);
+        self.neighbors_cache.entry(from).or_default().push(to);
+        self.neighbors_cache.entry(to).or_default().push(from);
     }
     
     pub fn get_nodes_at_depth(&self, depth: usize) -> Vec<EntityKey> {
@@ -747,6 +753,12 @@ pub struct HierarchyCache {
     pub cached_hierarchies: HashMap<EntityKey, Vec<EntityKey>>,
     pub cache_hits: usize,
     pub cache_misses: usize,
+}
+
+impl Default for HierarchyCache {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HierarchyCache {

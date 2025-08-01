@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for i in 0..20 {
             let entity_data = EntityData {
                 type_id: 1,
-                properties: format!(r#"{{"name": "Entity {}", "type": "test"}}"#, i),
+                properties: format!(r#"{{"name": "Entity {i}", "type": "test"}}"#),
                 embedding: vec![0.05 * i as f32; 384],
             };
             
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Set activation levels
                 let activation = (i as f32 / 20.0) * 0.8 + 0.1;
                 graph.set_entity_activation(key, activation).await;
-                println!("   Added entity {} with activation {:.2}", i, activation);
+                println!("   Added entity {i} with activation {activation:.2}");
             }
         }
         
@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 
                 if graph.core_graph.add_relationship(source, target, weight).is_ok() {
                     graph.set_synaptic_weight(source, target, weight).await;
-                    println!("   Added relationship {} -> {} (weight: {:.2})", source_idx, target_idx, weight);
+                    println!("   Added relationship {source_idx} -> {target_idx} (weight: {weight:.2})");
                 }
             }
         }
@@ -85,11 +85,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     for metric in &brain_metrics {
         let value_str = match &metric.value {
-            llmkg::monitoring::metrics::MetricValue::Counter(v) => format!("{}", v),
-            llmkg::monitoring::metrics::MetricValue::Gauge(v) => format!("{:.3}", v),
+            llmkg::monitoring::metrics::MetricValue::Counter(v) => format!("{v}"),
+            llmkg::monitoring::metrics::MetricValue::Gauge(v) => format!("{v:.3}"),
             llmkg::monitoring::metrics::MetricValue::Timer { count, sum_duration_ms, .. } => format!("count: {}, avg: {:.3}ms", count, sum_duration_ms / (*count as f64).max(1.0)),
-            llmkg::monitoring::metrics::MetricValue::Histogram { count, sum, .. } => format!("count: {}, sum: {:.3}", count, sum),
-            llmkg::monitoring::metrics::MetricValue::Summary { count, sum, .. } => format!("count: {}, sum: {:.3}", count, sum),
+            llmkg::monitoring::metrics::MetricValue::Histogram { count, sum, .. } => format!("count: {count}, sum: {sum:.3}"),
+            llmkg::monitoring::metrics::MetricValue::Summary { count, sum, .. } => format!("count: {count}, sum: {sum:.3}"),
         };
         
         println!("   {:<35} = {}", metric.name, value_str);
@@ -115,7 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (i, key) in keys.iter().take(5).enumerate() {
             let new_activation = 0.9 - (i as f32 * 0.1);
             graph.set_entity_activation(*key, new_activation).await;
-            println!("   Updated entity activation to {:.2}", new_activation);
+            println!("   Updated entity activation to {new_activation:.2}");
         }
     }
     
@@ -129,7 +129,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for sample in new_samples {
         if sample.name == "brain_avg_activation" || sample.name == "brain_max_activation" {
             let value_str = match &sample.value {
-                llmkg::monitoring::metrics::MetricValue::Gauge(v) => format!("{:.3}", v),
+                llmkg::monitoring::metrics::MetricValue::Gauge(v) => format!("{v:.3}"),
                 _ => "N/A".to_string(),
             };
             println!("   {:<35} = {}", sample.name, value_str);

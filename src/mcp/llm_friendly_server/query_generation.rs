@@ -9,8 +9,8 @@ pub fn generate_cypher_query(natural_query: &str, include_explanation: bool) -> 
     let (query, explanation) = match extract_query_intent(natural_query) {
         QueryIntent::FindEntity(entity) => {
             (
-                format!("MATCH (n:Entity {{name: '{}'}}) RETURN n", entity),
-                Some(format!("This finds the entity named '{}'", entity))
+                format!("MATCH (n:Entity {{name: '{entity}'}}) RETURN n"),
+                Some(format!("This finds the entity named '{entity}'"))
             )
         }
         QueryIntent::FindRelationship(subj, pred, obj) => {
@@ -28,7 +28,7 @@ pub fn generate_cypher_query(natural_query: &str, include_explanation: bool) -> 
             
             query.push_str("-[r");
             if let Some(p) = pred {
-                query.push_str(":");
+                query.push(':');
                 query.push_str(&p.to_uppercase());
             }
             query.push_str("]->");
@@ -49,10 +49,9 @@ pub fn generate_cypher_query(natural_query: &str, include_explanation: bool) -> 
         QueryIntent::FindPath(start, end) => {
             (
                 format!(
-                    "MATCH path = shortestPath((s:Entity {{name: '{}'}})-[*]-(e:Entity {{name: '{}'}})) RETURN path",
-                    start, end
+                    "MATCH path = shortestPath((s:Entity {{name: '{start}'}})-[*]-(e:Entity {{name: '{end}'}})) RETURN path"
                 ),
-                Some(format!("This finds the shortest path between '{}' and '{}'", start, end))
+                Some(format!("This finds the shortest path between '{start}' and '{end}'"))
             )
         }
         _ => {
@@ -76,10 +75,9 @@ pub fn generate_sparql_query(natural_query: &str, include_explanation: bool) -> 
         QueryIntent::FindEntity(entity) => {
             (
                 format!(
-                    "SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER(STR(?s) = '{}') }}",
-                    entity
+                    "SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER(STR(?s) = '{entity}') }}"
                 ),
-                Some(format!("This finds all triples where '{}' is the subject", entity))
+                Some(format!("This finds all triples where '{entity}' is the subject"))
             )
         }
         QueryIntent::FindRelationship(subj, pred, obj) => {
@@ -87,13 +85,13 @@ pub fn generate_sparql_query(natural_query: &str, include_explanation: bool) -> 
             let mut filters = Vec::new();
             
             if let Some(s) = subj {
-                filters.push(format!("STR(?s) = '{}'", s));
+                filters.push(format!("STR(?s) = '{s}'"));
             }
             if let Some(p) = pred {
-                filters.push(format!("STR(?p) = '{}'", p));
+                filters.push(format!("STR(?p) = '{p}'"));
             }
             if let Some(o) = obj {
-                filters.push(format!("STR(?o) = '{}'", o));
+                filters.push(format!("STR(?o) = '{o}'"));
             }
             
             query.push_str("?s ?p ?o . ");
@@ -101,7 +99,7 @@ pub fn generate_sparql_query(natural_query: &str, include_explanation: bool) -> 
             if !filters.is_empty() {
                 query.push_str("FILTER(");
                 query.push_str(&filters.join(" && "));
-                query.push_str(")");
+                query.push(')');
             }
             
             query.push_str(" }");
@@ -128,25 +126,25 @@ pub fn generate_gremlin_query(natural_query: &str, include_explanation: bool) ->
     let (query, explanation) = match extract_query_intent(natural_query) {
         QueryIntent::FindEntity(entity) => {
             (
-                format!("g.V().has('name', '{}')", entity),
-                Some(format!("This finds vertices with name '{}'", entity))
+                format!("g.V().has('name', '{entity}')"),
+                Some(format!("This finds vertices with name '{entity}'"))
             )
         }
         QueryIntent::FindRelationship(subj, pred, obj) => {
             let mut query = "g.V()".to_string();
             
             if let Some(s) = subj {
-                query.push_str(&format!(".has('name', '{}')", s));
+                query.push_str(&format!(".has('name', '{s}')"));
             }
             
             if let Some(p) = pred {
-                query.push_str(&format!(".out('{}')", p));
+                query.push_str(&format!(".out('{p}')"));
             } else {
                 query.push_str(".out()");
             }
             
             if let Some(o) = obj {
-                query.push_str(&format!(".has('name', '{}')", o));
+                query.push_str(&format!(".has('name', '{o}')"));
             }
             
             query.push_str(".path()");
@@ -156,40 +154,39 @@ pub fn generate_gremlin_query(natural_query: &str, include_explanation: bool) ->
         QueryIntent::FindPath(start, end) => {
             (
                 format!(
-                    "g.V().has('name', '{}').repeat(out().simplePath()).until(has('name', '{}')).limit(1).path()",
-                    start, end
+                    "g.V().has('name', '{start}').repeat(out().simplePath()).until(has('name', '{end}')).limit(1).path()"
                 ),
-                Some(format!("This finds a path from '{}' to '{}'", start, end))
+                Some(format!("This finds a path from '{start}' to '{end}'"))
             )
         }
         QueryIntent::TemporalQuery { entity, predicate: _, temporal_constraint } => {
             let mut query = "g.V()".to_string();
             
             if let Some(ent) = entity {
-                query.push_str(&format!(".has('name', '{}')", ent));
+                query.push_str(&format!(".has('name', '{ent}')"));
             }
             
             // Add temporal constraint
             match temporal_constraint {
                 TemporalConstraint::Before(year) => {
-                    query.push_str(&format!(".has('year', lt({}))", year));
+                    query.push_str(&format!(".has('year', lt({year}))"));
                 }
                 TemporalConstraint::After(year) => {
-                    query.push_str(&format!(".has('year', gt({}))", year));
+                    query.push_str(&format!(".has('year', gt({year}))"));
                 }
                 TemporalConstraint::During(year) => {
-                    query.push_str(&format!(".has('year', {})", year));
+                    query.push_str(&format!(".has('year', {year})"));
                 }
                 TemporalConstraint::Between(start_year, end_year) => {
-                    query.push_str(&format!(".has('year', between({}, {}))", start_year, end_year));
+                    query.push_str(&format!(".has('year', between({start_year}, {end_year}))"));
                 }
             }
             
             let explanation = match temporal_constraint {
-                TemporalConstraint::Before(year) => format!("Finds vertices before {}", year),
-                TemporalConstraint::After(year) => format!("Finds vertices after {}", year),
-                TemporalConstraint::During(year) => format!("Finds vertices during {}", year),
-                TemporalConstraint::Between(start_year, end_year) => format!("Finds vertices between {} and {}", start_year, end_year),
+                TemporalConstraint::Before(year) => format!("Finds vertices before {year}"),
+                TemporalConstraint::After(year) => format!("Finds vertices after {year}"),
+                TemporalConstraint::During(year) => format!("Finds vertices during {year}"),
+                TemporalConstraint::Between(start_year, end_year) => format!("Finds vertices between {start_year} and {end_year}"),
             };
             
             (query, Some(explanation))
@@ -199,7 +196,7 @@ pub fn generate_gremlin_query(natural_query: &str, include_explanation: bool) ->
             
             // Create a union query for multiple entities
             let entity_conditions: Vec<String> = entities.iter()
-                .map(|e| format!("has('name', '{}')", e))
+                .map(|e| format!("has('name', '{e}')"))
                 .collect();
             
             if !entity_conditions.is_empty() {
@@ -207,7 +204,7 @@ pub fn generate_gremlin_query(natural_query: &str, include_explanation: bool) ->
             }
             
             if let Some(ref rel_type) = relationship_type {
-                query.push_str(&format!(".out('{}')", rel_type));
+                query.push_str(&format!(".out('{rel_type}')"));
             } else {
                 query.push_str(".out()");
             }
@@ -397,11 +394,10 @@ fn extract_query_intent(query: &str) -> QueryIntent {
     // Path queries with enhanced patterns
     if (lower.contains("path") || lower.contains("connection") || lower.contains("route") ||
         lower.contains("how are") && lower.contains("connected")) &&
-       (lower.contains("between") || lower.contains("from") && lower.contains("to")) {
-        if entities.len() >= 2 {
+       (lower.contains("between") || lower.contains("from") && lower.contains("to"))
+        && entities.len() >= 2 {
             return QueryIntent::FindPath(entities[0].clone(), entities[1].clone());
         }
-    }
     
     // Enhanced relationship queries with better patterns
     if lower.contains("relationship") || lower.contains("related") || 
@@ -423,12 +419,11 @@ fn extract_query_intent(query: &str) -> QueryIntent {
     }
     
     // Enhanced entity queries with case preservation
-    if lower.contains("find") || lower.contains("show") || lower.contains("get") ||
-       lower.contains("tell me about") || lower.contains("information about") {
-        if !entities.is_empty() {
+    if (lower.contains("find") || lower.contains("show") || lower.contains("get") ||
+       lower.contains("tell me about") || lower.contains("information about"))
+        && !entities.is_empty() {
             return QueryIntent::FindEntity(entities[0].clone());
         }
-    }
     
     // Aggregate queries
     if lower.contains("count") || lower.contains("average") || 
@@ -508,10 +503,10 @@ pub fn suggest_related_queries(entities: &[String]) -> Vec<String> {
     let mut suggestions = Vec::new();
     
     for entity in entities {
-        suggestions.push(format!("What did {} discover?", entity));
-        suggestions.push(format!("Who influenced {}?", entity));
-        suggestions.push(format!("What is {} known for?", entity));
-        suggestions.push(format!("When did {} live?", entity));
+        suggestions.push(format!("What did {entity} discover?"));
+        suggestions.push(format!("Who influenced {entity}?"));
+        suggestions.push(format!("What is {entity} known for?"));
+        suggestions.push(format!("When did {entity} live?"));
     }
     
     // Cross-entity suggestions
@@ -551,7 +546,7 @@ pub fn validate_and_improve_query(query: &str) -> Result<String> {
     for (abbrev, full) in abbreviations {
         if improved_query.contains(abbrev) && !improved_query.contains(full) {
             // Only suggest, don't auto-replace
-            improved_query = format!("{} (Note: {} could mean {})", improved_query, abbrev, full);
+            improved_query = format!("{improved_query} (Note: {abbrev} could mean {full})");
         }
     }
     

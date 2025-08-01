@@ -36,7 +36,7 @@ mod test_runner {
     /// Test that mock framework initializes correctly
     #[test]
     fn test_mock_framework_initialization() {
-        let mock_backend = enhanced_knowledge_storage::mocks::create_mock_model_backend_with_standard_models();
+        let _mock_backend = enhanced_knowledge_storage::mocks::create_mock_model_backend_with_standard_models();
         // If this compiles and runs, our mock framework is working
         assert!(true, "Mock framework initialized successfully");
     }

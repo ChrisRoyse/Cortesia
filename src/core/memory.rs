@@ -12,6 +12,12 @@ pub struct GraphArena {
     generation_counter: AtomicU32,
 }
 
+impl Default for GraphArena {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GraphArena {
     pub fn new() -> Self {
         Self {
@@ -196,7 +202,7 @@ mod tests {
     fn create_test_entity_data(id: u16) -> EntityData {
         EntityData {
             type_id: id,
-            properties: format!("test_entity_{}", id),
+            properties: format!("test_entity_{id}"),
             embedding: vec![0.1 * id as f32; 128],
         }
     }
@@ -207,7 +213,7 @@ mod tests {
         
         // Test initial state
         assert_eq!(arena.entity_count(), 0);
-        assert!(arena.capacity() >= 0);
+        assert!(arena.capacity() < 1000000); // Reasonable capacity limit
         
         // Test entity allocation
         let entity1 = create_test_entity_data(1);
@@ -265,7 +271,7 @@ mod tests {
         for (i, &key) in keys.iter().enumerate() {
             let entity = arena.get_entity(key).unwrap();
             assert_eq!(entity.type_id, i as u16);
-            assert_eq!(entity.properties, format!("test_entity_{}", i));
+            assert_eq!(entity.properties, format!("test_entity_{i}"));
         }
         
         // Remove half the entities
@@ -292,7 +298,7 @@ mod tests {
         
         // Test initial memory usage
         let initial_memory = arena.memory_usage();
-        assert!(initial_memory >= 0);
+        assert!(initial_memory < 1000000); // Reasonable memory usage
         
         // Add entities and check memory growth
         let mut keys = Vec::new();
@@ -697,7 +703,7 @@ mod tests {
         
         // Most retired objects should be cleaned up
         let final_retired_count = manager.retired_objects.read().len();
-        assert!(final_retired_count < 100, "Too many objects remain: {}", final_retired_count);
+        assert!(final_retired_count < 100, "Too many objects remain: {final_retired_count}");
     }
 
     #[test]

@@ -12,6 +12,12 @@ pub struct FeedbackProcessor {
     learning_metrics: Arc<RwLock<LearningMetrics>>,
 }
 
+impl Default for FeedbackProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeedbackProcessor {
     pub fn new() -> Self {
         Self {
@@ -101,6 +107,12 @@ pub struct ActiveLearningEngine {
     learning_models: Arc<RwLock<HashMap<String, LearningModel>>>,
     uncertainty_samples: Arc<RwLock<Vec<UncertaintySample>>>,
     learning_stats: Arc<RwLock<LearningStats>>,
+}
+
+impl Default for ActiveLearningEngine {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ActiveLearningEngine {

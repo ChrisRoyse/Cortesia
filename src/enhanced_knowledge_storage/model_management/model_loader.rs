@@ -121,7 +121,7 @@ impl ModelLoader {
             let loading = self.loading_models.lock().await;
             if loading.contains(model_id) {
                 return Err(EnhancedStorageError::ModelLoadingFailed(
-                    format!("Model {} is already being loaded", model_id)
+                    format!("Model {model_id} is already being loaded")
                 ));
             }
         }
@@ -236,7 +236,7 @@ impl ModelLoader {
         let registry = self.registry.read().await;
         if !registry.has_model(model_id) {
             return Err(EnhancedStorageError::ModelNotFound(
-                format!("Model {} not found in registry", model_id)
+                format!("Model {model_id} not found in registry")
             ));
         }
         drop(registry);
@@ -258,6 +258,12 @@ impl ModelLoader {
 pub struct MockModelBackend {
     load_delay: Duration,
     fail_probability: f32,
+}
+
+impl Default for MockModelBackend {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockModelBackend {
@@ -297,14 +303,14 @@ impl ModelBackend for MockModelBackend {
             
             if random < self.fail_probability {
                 return Err(EnhancedStorageError::ModelLoadingFailed(
-                    format!("Simulated failure loading model {}", model_id)
+                    format!("Simulated failure loading model {model_id}")
                 ));
             }
         }
         
         // Create mock metadata
         let metadata = ModelMetadata {
-            name: format!("Mock {}", model_id),
+            name: format!("Mock {model_id}"),
             parameters: match model_id {
                 id if id.contains("135m") => 135_000_000,
                 id if id.contains("360m") => 360_000_000,
@@ -319,7 +325,7 @@ impl ModelBackend for MockModelBackend {
             },
             complexity_level: ComplexityLevel::Medium,
             model_type: "Mock Model".to_string(),
-            huggingface_id: format!("mock/{}", model_id),
+            huggingface_id: format!("mock/{model_id}"),
             supported_tasks: vec!["text_generation".to_string()],
         };
         

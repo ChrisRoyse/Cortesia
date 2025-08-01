@@ -47,7 +47,7 @@ impl MemoryConsolidation {
 
         // Get active consolidation policies
         let policies = if let Some(id) = policy_id {
-            vec![self.coordinator.get_policy(id).ok_or_else(|| GraphError::ConfigError(format!("Policy not found: {}", id)))?]
+            vec![self.coordinator.get_policy(id).ok_or_else(|| GraphError::ConfigError(format!("Policy not found: {id}")))?]
         } else {
             self.coordinator.get_active_policies()
         };

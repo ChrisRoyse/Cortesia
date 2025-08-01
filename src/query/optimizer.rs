@@ -35,6 +35,12 @@ impl Default for OptimizationSettings {
     }
 }
 
+impl Default for QueryOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl QueryOptimizer {
     pub fn new() -> Self {
         Self {

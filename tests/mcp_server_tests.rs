@@ -4,7 +4,7 @@
 
 use llmkg::core::knowledge_engine::KnowledgeEngine;
 use llmkg::mcp::llm_friendly_server::LLMFriendlyMCPServer;
-use llmkg::mcp::shared_types::{LLMMCPTool, LLMMCPRequest, LLMMCPResponse, MCPContent};
+use llmkg::mcp::shared_types::LLMMCPRequest;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -151,7 +151,7 @@ async fn test_mcp_server_error_handling() {
         params: serde_json::json!({}),
     };
     
-    let response = server.handle_request(invalid_request).await.unwrap();
+    let _response = server.handle_request(invalid_request).await.unwrap();
     
     // Should return error response or handle gracefully
     // We don't enforce specific error handling, just that it doesn't panic
@@ -173,7 +173,7 @@ async fn test_mcp_server_malformed_requests() {
         params: serde_json::json!({}), // Missing required fields
     };
     
-    let response = server.handle_request(incomplete_request).await.unwrap();
+    let _response = server.handle_request(incomplete_request).await.unwrap();
     
     // Should handle gracefully (may succeed with defaults or fail gracefully)
     assert!(true); // Successfully handled the request

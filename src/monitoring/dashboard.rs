@@ -392,12 +392,12 @@ impl PerformanceDashboard {
                                                     match msg_type {
                                                         "subscribe" => {
                                                             if let Some(execution_id) = test_msg.get("executionId").and_then(|v| v.as_str()) {
-                                                                println!("📡 WebSocket: Subscribing to test execution: {}", execution_id);
+                                                                println!("📡 WebSocket: Subscribing to test execution: {execution_id}");
                                                             }
                                                         }
                                                         "start_test" => {
                                                             if let Some(suite_id) = test_msg.get("suiteId").and_then(|v| v.as_str()) {
-                                                                println!("🚀 WebSocket: Starting test suite: {}", suite_id);
+                                                                println!("🚀 WebSocket: Starting test suite: {suite_id}");
                                                                 // Here we would trigger test execution
                                                             }
                                                         }
@@ -1951,6 +1951,12 @@ impl DashboardServer {
 
 pub struct WebSocketHandler;
 
+impl Default for WebSocketHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WebSocketHandler {
     pub fn new() -> Self {
         Self
@@ -2053,7 +2059,7 @@ async fn get_test_status(execution_id: String) -> Result<impl warp::Reply, warp:
 }
 
 async fn run_cargo_tests(execution_id: String, suite_name: String, request: TestSuiteRequest) {
-    println!("🚀 Starting test execution: {} for suite: {}", execution_id, suite_name);
+    println!("🚀 Starting test execution: {execution_id} for suite: {suite_name}");
     
     // Send test started message via WebSocket
     broadcast_test_message(DashboardMessage::TestStarted {
@@ -2068,7 +2074,7 @@ async fn run_cargo_tests(execution_id: String, suite_name: String, request: Test
     
     // Add suite filter if provided
     if !suite_name.is_empty() && suite_name != "all" {
-        cmd.arg(&suite_name.replace("::", "_"));
+        cmd.arg(suite_name.replace("::", "_"));
     }
     
     // Add additional filter if provided
@@ -2105,7 +2111,7 @@ async fn run_cargo_tests(execution_id: String, suite_name: String, request: Test
                 let mut lines = reader.lines();
                 
                 while let Ok(Some(line)) = lines.next_line().await {
-                    println!("📝 Test output: {}", line);
+                    println!("📝 Test output: {line}");
                     
                     // Parse test output and send progress updates
                     if line.contains("running") && line.contains("test") {
@@ -2150,7 +2156,7 @@ async fn run_cargo_tests(execution_id: String, suite_name: String, request: Test
                     let duration_ms = start_time.elapsed().as_millis() as u64;
                     
                     if status.success() {
-                        println!("✅ Test execution completed successfully: {}", execution_id);
+                        println!("✅ Test execution completed successfully: {execution_id}");
                         broadcast_test_message(DashboardMessage::TestCompleted {
                             execution_id: execution_id.clone(),
                             passed: passed_count,
@@ -2159,7 +2165,7 @@ async fn run_cargo_tests(execution_id: String, suite_name: String, request: Test
                             duration_ms,
                         }).await;
                     } else {
-                        println!("❌ Test execution failed: {}", execution_id);
+                        println!("❌ Test execution failed: {execution_id}");
                         broadcast_test_message(DashboardMessage::TestFailed {
                             execution_id: execution_id.clone(),
                             error: "Test execution failed".to_string(),
@@ -2167,19 +2173,19 @@ async fn run_cargo_tests(execution_id: String, suite_name: String, request: Test
                     }
                 }
                 Err(e) => {
-                    println!("❌ Error waiting for test completion: {}", e);
+                    println!("❌ Error waiting for test completion: {e}");
                     broadcast_test_message(DashboardMessage::TestFailed {
                         execution_id: execution_id.clone(),
-                        error: format!("Error waiting for test completion: {}", e),
+                        error: format!("Error waiting for test completion: {e}"),
                     }).await;
                 }
             }
         }
         Err(e) => {
-            println!("❌ Failed to start test execution: {}", e);
+            println!("❌ Failed to start test execution: {e}");
             broadcast_test_message(DashboardMessage::TestFailed {
                 execution_id: execution_id.clone(),
-                error: format!("Failed to start test execution: {}", e),
+                error: format!("Failed to start test execution: {e}"),
             }).await;
         }
     }

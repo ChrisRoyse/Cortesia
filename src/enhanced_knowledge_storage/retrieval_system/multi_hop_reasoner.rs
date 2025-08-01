@@ -142,7 +142,7 @@ impl MultiHopReasoner {
                     break;
                 }
                 
-                initial_hypotheses.get(0).unwrap() // Fallback
+                initial_hypotheses.first().unwrap() // Fallback
             };
             
             debug!(
@@ -361,7 +361,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: Vec<String> = serde_json::from_str(json_str)
-            .map_err(|e| RetrievalError::ReasoningError(format!("JSON parse error: {}", e)))?;
+            .map_err(|e| RetrievalError::ReasoningError(format!("JSON parse error: {e}")))?;
         
         Ok(parsed)
     }
@@ -487,7 +487,7 @@ Response:"#,
         if !new_evidence.is_empty() {
             inference = self.generate_inference(hypothesis, &new_evidence).await?;
         } else {
-            inference = format!("No direct evidence found for: {}", hypothesis);
+            inference = format!("No direct evidence found for: {hypothesis}");
         }
         
         Ok((new_evidence, inference))
@@ -516,9 +516,7 @@ Evidence found:
 
 What can we infer from this evidence regarding the hypothesis?
 
-Inference:"#,
-            hypothesis = hypothesis,
-            evidence_summary = evidence_summary
+Inference:"#
         );
         
         let task = ProcessingTask::new(ComplexityLevel::Medium, &prompt);
@@ -750,6 +748,12 @@ Response:"#,
 pub struct GraphContext {
     layers: HashMap<String, LayerInfo>,
     connections: HashMap<String, Vec<(String, Vec<SemanticLinkType>)>>,
+}
+
+impl Default for GraphContext {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GraphContext {

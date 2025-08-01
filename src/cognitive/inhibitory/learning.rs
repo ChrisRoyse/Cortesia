@@ -404,7 +404,7 @@ mod tests {
         let mut entity_keys = Vec::new();
         
         for (i, strength) in strengths.into_iter().enumerate() {
-            let entity = EntityKey::from_hash(&format!("entity_{}", i));
+            let entity = EntityKey::from_hash(&format!("entity_{i}"));
             activations.insert(entity, strength);
             entity_keys.push(entity);
         }

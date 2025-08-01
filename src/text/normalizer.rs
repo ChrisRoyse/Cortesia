@@ -200,6 +200,6 @@ mod tests {
         
         // Should process 1000 normalizations in under 100ms
         assert!(elapsed.as_millis() < 100);
-        println!("1000 normalizations took: {:?}", elapsed);
+        println!("1000 normalizations took: {elapsed:?}");
     }
 }

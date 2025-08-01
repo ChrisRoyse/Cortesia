@@ -125,7 +125,7 @@ pub async fn handle_time_travel_query(
         "change_detection" => {
             execute_change_detection_query(entity, time_range).await
         },
-        _ => return Err(format!("Unknown query_type: {}", query_type))
+        _ => return Err(format!("Unknown query_type: {query_type}"))
     };
     
     let data = json!({
@@ -198,7 +198,7 @@ pub async fn handle_simd_ultra_fast_search(
         vector
     } else if let Some(text) = query_text {
         generate_embedding_vector(text).await
-            .map_err(|e| format!("Failed to generate embedding: {}", e))?
+            .map_err(|e| format!("Failed to generate embedding: {e}"))?
     } else {
         return Err("Must provide either 'query_vector' or 'query_text'".to_string());
     };
@@ -293,7 +293,7 @@ pub async fn handle_analyze_graph_centrality(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: false,
-    }).map_err(|e| format!("Failed to get graph data: {}", e))?;
+    }).map_err(|e| format!("Failed to get graph data: {e}"))?;
     drop(engine);
     
     // Calculate centrality measures
@@ -307,7 +307,7 @@ pub async fn handle_analyze_graph_centrality(
             "closeness" => calculate_closeness_centrality(&all_triples, top_n, entity_filter).await,
             "eigenvector" => calculate_eigenvector_centrality(&all_triples, top_n, entity_filter).await,
             "degree" => calculate_degree_centrality(&all_triples, top_n, entity_filter).await,
-            _ => return Err(format!("Unknown centrality type: {}", centrality_type))
+            _ => return Err(format!("Unknown centrality type: {centrality_type}"))
         };
         let calc_time = start_time.elapsed();
         

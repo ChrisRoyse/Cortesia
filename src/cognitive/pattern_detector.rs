@@ -134,8 +134,8 @@ impl PatternDetector {
                 if current_burst.len() >= 3 {
                     burst_count += 1;
                     patterns.push(DetectedPattern {
-                        pattern_id: format!("temporal_burst_{}", burst_count),
-                        id: format!("temporal_burst_{}", burst_count),
+                        pattern_id: format!("temporal_burst_{burst_count}"),
+                        id: format!("temporal_burst_{burst_count}"),
                         pattern_type: PatternType::Temporal,
                         confidence: 0.7 + (current_burst.len() as f32 * 0.05).min(0.2),
                         entities_involved: current_burst.clone(),
@@ -154,8 +154,8 @@ impl PatternDetector {
         if current_burst.len() >= 3 {
             burst_count += 1;
             patterns.push(DetectedPattern {
-                pattern_id: format!("temporal_burst_{}", burst_count),
-                id: format!("temporal_burst_{}", burst_count),
+                pattern_id: format!("temporal_burst_{burst_count}"),
+                id: format!("temporal_burst_{burst_count}"),
                 pattern_type: PatternType::Temporal,
                 confidence: 0.7 + (current_burst.len() as f32 * 0.05).min(0.2),
                 entities_involved: current_burst.clone(),
@@ -194,13 +194,13 @@ impl PatternDetector {
         for (category, group_entities) in semantic_groups {
             if group_entities.len() >= 3 {
                 patterns.push(DetectedPattern {
-                    pattern_id: format!("semantic_cluster_{}", category),
-                    id: format!("semantic_cluster_{}", category),
+                    pattern_id: format!("semantic_cluster_{category}"),
+                    id: format!("semantic_cluster_{category}"),
                     pattern_type: PatternType::Semantic,
                     confidence: 0.6 + (group_entities.len() as f32 * 0.05),
                     entities_involved: group_entities.clone(),
                     affected_entities: group_entities,
-                    description: format!("Semantic cluster of {} concepts", category),
+                    description: format!("Semantic cluster of {category} concepts"),
                     frequency: 0.5,
                 });
             }
@@ -396,8 +396,8 @@ impl PatternDetector {
         for (i, cluster) in clusters.into_iter().enumerate() {
             if cluster.len() >= 3 {
                 patterns.push(DetectedPattern {
-                    pattern_id: format!("cluster_{}", i),
-                    id: format!("cluster_{}", i),
+                    pattern_id: format!("cluster_{i}"),
+                    id: format!("cluster_{i}"),
                     pattern_type: PatternType::Structural,
                     confidence: 0.6,
                     entities_involved: cluster.clone(),
@@ -425,8 +425,8 @@ impl PatternDetector {
         for (i, hierarchy) in hierarchies.into_iter().enumerate() {
             if hierarchy.len() >= 3 {
                 patterns.push(DetectedPattern {
-                    pattern_id: format!("is_a_hierarchy_{}", i),
-                    id: format!("is_a_hierarchy_{}", i),
+                    pattern_id: format!("is_a_hierarchy_{i}"),
+                    id: format!("is_a_hierarchy_{i}"),
                     pattern_type: PatternType::Structural,
                     confidence: 0.8,
                     entities_involved: hierarchy.clone(),

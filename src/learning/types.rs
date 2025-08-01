@@ -121,6 +121,12 @@ pub struct ConvergenceMetrics {
     pub convergence_confidence: f32,
 }
 
+impl Default for LearningStatistics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LearningStatistics {
     pub fn new() -> Self {
         Self {
@@ -145,6 +151,12 @@ pub struct CoactivationTracker {
     pub correlation_matrix: HashMap<(EntityKey, EntityKey), f32>,
     pub temporal_window: Duration,
     pub correlation_threshold: f32,
+}
+
+impl Default for CoactivationTracker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CoactivationTracker {

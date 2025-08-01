@@ -16,6 +16,12 @@ pub struct DistributedMathEngine {
     load_balancer: LoadBalancer,
 }
 
+impl Default for DistributedMathEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DistributedMathEngine {
     pub fn new() -> Self {
         Self {
@@ -313,11 +319,11 @@ impl DistributedMathEngine {
         _similarity_method: SimilarityMethod,
     ) -> Result<SimilarityBatchResult> {
         // This requires actual database connections to implement
-        return Err(GraphError::NotImplemented(
+        Err(GraphError::NotImplemented(
             "Distributed similarity computation requires database connections. \
              This would need to: 1) Connect to actual databases, \
              2) Execute similarity queries, 3) Aggregate results.".into()
-        ));
+        ))
     }
 
     async fn perform_graph_analysis(
@@ -517,6 +523,12 @@ pub struct LoadBalancer {
     database_loads: HashMap<DatabaseId, f32>,
 }
 
+impl Default for LoadBalancer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LoadBalancer {
     pub fn new() -> Self {
         Self {
@@ -708,6 +720,12 @@ pub struct ComputationStats {
     pub cache_hits: usize,
     pub network_calls: usize,
     pub total_computation_time_ms: u64,
+}
+
+impl Default for ComputationStats {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ComputationStats {

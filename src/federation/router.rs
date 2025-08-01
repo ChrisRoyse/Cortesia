@@ -191,7 +191,7 @@ impl QueryRouter {
             QueryType::CrossDatabaseSimilarity { query_vector, similarity_threshold, max_results, .. } => {
                 for (i, database_id) in databases.iter().enumerate() {
                     steps.push(ExecutionStep {
-                        step_id: format!("similarity_search_{}", i),
+                        step_id: format!("similarity_search_{i}"),
                         database_id: database_id.clone(),
                         operation: DatabaseOperation::SimilaritySearch {
                             query_vector: query_vector.clone(),
@@ -208,7 +208,7 @@ impl QueryRouter {
                 let query_vector = vec![0.0; 384]; // Placeholder embedding
                 for (i, database_id) in databases.iter().enumerate() {
                     steps.push(ExecutionStep {
-                        step_id: format!("similarity_search_{}", i),
+                        step_id: format!("similarity_search_{i}"),
                         database_id: database_id.clone(),
                         operation: DatabaseOperation::SimilaritySearch {
                             query_vector: query_vector.clone(),
@@ -223,7 +223,7 @@ impl QueryRouter {
             QueryType::EntityComparison { entity_id, .. } => {
                 for (i, database_id) in databases.iter().enumerate() {
                     steps.push(ExecutionStep {
-                        step_id: format!("entity_lookup_{}", i),
+                        step_id: format!("entity_lookup_{i}"),
                         database_id: database_id.clone(),
                         operation: DatabaseOperation::EntityLookup {
                             entity_id: entity_id.clone(),
@@ -347,6 +347,12 @@ impl QueryRouter {
 /// Query optimizer for improving execution plans
 pub struct QueryOptimizer {
     optimization_rules: Vec<OptimizationRule>,
+}
+
+impl Default for QueryOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl QueryOptimizer {

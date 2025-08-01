@@ -8,9 +8,16 @@ use std::sync::{Arc, Mutex};
 
 /// Mock text processor implementation
 pub struct MockTextProcessor {
+    #[allow(dead_code)]
     processing_results: Arc<Mutex<HashMap<String, ProcessingResult>>>,
     call_log: Arc<Mutex<Vec<String>>>,
     processing_delay_ms: u64,
+}
+
+impl Default for MockTextProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockTextProcessor {
@@ -66,8 +73,15 @@ impl MockTextProcessor {
 
 /// Mock entity extractor implementation
 pub struct MockEntityExtractor {
+    #[allow(dead_code)]
     extracted_entities: HashMap<String, Vec<Entity>>,
     call_log: Arc<Mutex<Vec<String>>>,
+}
+
+impl Default for MockEntityExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockEntityExtractor {
@@ -106,6 +120,12 @@ impl MockEntityExtractor {
 /// Mock relationship detector implementation
 pub struct MockRelationshipDetector {
     call_log: Arc<Mutex<Vec<String>>>,
+}
+
+impl Default for MockRelationshipDetector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockRelationshipDetector {

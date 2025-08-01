@@ -2,7 +2,6 @@ use llmkg::monitoring::dashboard::{DashboardConfig, DashboardServer};
 use llmkg::monitoring::metrics::MetricRegistry;
 use llmkg::monitoring::collectors::{SystemMetricsCollector, ApplicationMetricsCollector, SystemMetricsConfig, ApplicationMetricsConfig};
 use std::sync::Arc;
-use tokio;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

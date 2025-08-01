@@ -14,6 +14,12 @@ pub struct InhibitionMatrix {
     pub temporal_inhibition: HashMap<(EntityKey, EntityKey), f32>,
 }
 
+impl Default for InhibitionMatrix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InhibitionMatrix {
     pub fn new() -> Self {
         Self {

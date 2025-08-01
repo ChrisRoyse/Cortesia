@@ -67,6 +67,12 @@ pub struct BiTemporalIndex {
     version_chains: AHashMap<EntityKey, Vec<u64>>,
 }
 
+impl Default for BiTemporalIndex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BiTemporalIndex {
     pub fn new() -> Self {
         Self {
@@ -80,19 +86,19 @@ impl BiTemporalIndex {
         // Index by valid time start
         self.valid_time_index
             .entry(temporal_entity.valid_time.start)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(entity_key);
 
         // Index by transaction time start
         self.transaction_time_index
             .entry(temporal_entity.transaction_time.start)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(entity_key);
 
         // Track version chain
         self.version_chains
             .entry(entity_key)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(temporal_entity.version_id);
     }
 
@@ -115,6 +121,12 @@ pub struct TemporalStore {
     next_version_id: u64,
 }
 
+impl Default for TemporalStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TemporalStore {
     pub fn new() -> Self {
         Self {
@@ -127,7 +139,7 @@ impl TemporalStore {
     pub fn store_entity_version(&mut self, key: EntityKey, temporal_entity: TemporalEntity) {
         self.entities
             .entry(key)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(temporal_entity);
     }
 
@@ -139,7 +151,7 @@ impl TemporalStore {
     ) {
         self.relationships
             .entry((source, target))
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(temporal_rel);
     }
 
@@ -202,7 +214,7 @@ impl TemporalKnowledgeGraph {
             existing_versions.iter()
                 .filter(|v| v.valid_time.end.is_none())
                 .map(|v| v.entity.id)
-                .last()
+                .next_back()
         } else {
             None
         };
@@ -286,9 +298,8 @@ impl TemporalKnowledgeGraph {
     ) -> Result<Vec<TemporalEntity>> {
         let store = self.temporal_store.read().await;
         
-        store.entities.get(&entity_key)
-            .map(|versions| versions.clone())
-            .ok_or_else(|| GraphError::InvalidInput(format!("Entity {:?} not found", entity_key)))
+        store.entities.get(&entity_key).cloned()
+            .ok_or_else(|| GraphError::InvalidInput(format!("Entity {entity_key:?} not found")))
     }
 
     /// Insert a temporal relationship
@@ -309,7 +320,7 @@ impl TemporalKnowledgeGraph {
                 versions.iter()
                     .filter(|v| v.valid_time.end.is_none())
                     .map(|v| (v.relationship.source, v.relationship.target))
-                    .last()
+                    .next_back()
             });
 
         let temporal_rel = TemporalRelationship {
@@ -363,7 +374,7 @@ impl TemporalKnowledgeGraph {
                 temporal_results.push((current_time, matching_entities));
             }
             
-            current_time = current_time + interval;
+            current_time += interval;
         }
         
         Ok(temporal_results)

@@ -35,7 +35,7 @@ impl EntityExtractor for &str {
         
         // Extract simple patterns like proper nouns (capitalized words)
         for word in text.split_whitespace() {
-            if word.chars().next().map_or(false, |c| c.is_uppercase()) && word.len() > 2 {
+            if word.chars().next().is_some_and(|c| c.is_uppercase()) && word.len() > 2 {
                 entities.push(Entity {
                     id: format!("entity_{}", entities.len()),
                     text: word.to_string(),

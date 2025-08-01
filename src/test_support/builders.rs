@@ -107,43 +107,43 @@ impl CognitivePatternBuilder {
     
     pub fn build_convergent(self) -> crate::cognitive::convergent::ConvergentThinking {
         use crate::cognitive::convergent::ConvergentThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         ConvergentThinking::new(graph)
     }
     
     pub fn build_divergent(self) -> crate::cognitive::divergent::DivergentThinking {
         use crate::cognitive::divergent::DivergentThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         DivergentThinking::new(graph)
     }
     
     pub fn build_lateral(self) -> crate::cognitive::lateral::LateralThinking {
         use crate::cognitive::lateral::LateralThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         LateralThinking::new(graph)
     }
     
     pub fn build_systems(self) -> crate::cognitive::systems::SystemsThinking {
         use crate::cognitive::systems::SystemsThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         SystemsThinking::new(graph)
     }
     
     pub fn build_critical(self) -> crate::cognitive::critical::CriticalThinking {
         use crate::cognitive::critical::CriticalThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         CriticalThinking::new(graph)
     }
     
     pub fn build_abstract(self) -> crate::cognitive::abstract_pattern::AbstractThinking {
         use crate::cognitive::abstract_pattern::AbstractThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         AbstractThinking::new(graph)
     }
     
     pub fn build_adaptive(self) -> crate::cognitive::adaptive::AdaptiveThinking {
         use crate::cognitive::adaptive::AdaptiveThinking;
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         AdaptiveThinking::new(graph)
     }
 }
@@ -179,7 +179,7 @@ impl CognitiveOrchestratorBuilder {
     }
     
     pub async fn build(self) -> Result<CognitiveOrchestrator> {
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         CognitiveOrchestrator::new(graph, self.config).await
     }
 }
@@ -215,7 +215,7 @@ impl WorkingMemoryBuilder {
     }
     
     pub async fn build(self) -> Result<WorkingMemorySystem> {
-        let graph = self.graph.unwrap_or_else(|| super::fixtures::create_test_graph());
+        let graph = self.graph.unwrap_or_else(super::fixtures::create_test_graph);
         let activation_engine = self.activation_engine.unwrap_or_else(|| {
             Arc::new(ActivationPropagationEngine::new(ActivationConfig::default()))
         });

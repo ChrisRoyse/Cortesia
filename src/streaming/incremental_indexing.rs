@@ -276,7 +276,7 @@ impl BloomFilterUpdater {
         let mut filter = self.bloom_filter.write().await;
         
         // Add relation signature
-        let relation_key = format!("{}:{}:{}", from, relation_type, to);
+        let relation_key = format!("{from}:{relation_type}:{to}");
         filter.insert(&relation_key);
         
         Ok(())

@@ -208,6 +208,12 @@ pub struct ApiEndpointMonitor {
     http_client: reqwest::Client,
 }
 
+impl Default for ApiEndpointMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ApiEndpointMonitor {
     pub fn new() -> Self {
         let (event_sender, _) = broadcast::channel(1000);
@@ -246,7 +252,7 @@ impl ApiEndpointMonitor {
         let mut metrics = self.metrics.write().unwrap();
         let method_val = endpoint.method as u8;
         let path = endpoint.path.clone();
-        let key = format!("{} {}", method_val, path);
+        let key = format!("{method_val} {path}");
         metrics.endpoints.insert(key.clone(), endpoint);
         
         // Initialize stats for the endpoint
@@ -540,7 +546,7 @@ impl ApiEndpointMonitor {
                 let success = if let Some(expected) = test_request.expected_status {
                     status_code == expected
                 } else {
-                    status_code >= 200 && status_code < 400
+                    (200..400).contains(&status_code)
                 };
 
                 let validation_results = self.validate_response(&test_request, &api_response);
@@ -880,8 +886,8 @@ mod tests {
                 let api_response = ApiResponse {
                     status_code,
                     headers: HashMap::new(),
-                    body: Some(format!("Response for request {}", i)),
-                    size_bytes: 50 + i as u64 * 10,
+                    body: Some(format!("Response for request {i}")),
+                    size_bytes: 50 + i * 10,
                 };
                 
                 let error = if status_code == 404 { Some("Not found".to_string()) } else { None };
@@ -896,7 +902,7 @@ mod tests {
         // Check that each endpoint has stats
         for (path, method) in &endpoints {
             let method_val = *method as u8;
-            let endpoint_key = format!("{} {}", method_val, path);
+            let endpoint_key = format!("{method_val} {path}");
             
             if let Some(stats) = metrics.endpoint_stats.get(&endpoint_key) {
                 assert_eq!(stats.total_requests, 5);

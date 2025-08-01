@@ -97,7 +97,7 @@ impl HebbianLearningEngine {
         for event in activation_events {
             tracker.activation_history
                 .entry(event.entity_key)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(event.clone());
         }
         
@@ -217,10 +217,9 @@ impl HebbianLearningEngine {
                     (event_b.entity_key, event_a.entity_key)
                 };
                 
-                let correlation_strength = tracker.correlation_matrix
+                let correlation_strength = *tracker.correlation_matrix
                     .get(&correlation_key)
-                    .unwrap_or(&0.0)
-                    .clone();
+                    .unwrap_or(&0.0);
                 
                 // Check if this creates competition
                 let creates_competition = self.would_create_competition(
@@ -432,7 +431,7 @@ impl HebbianLearningEngine {
             stats.average_learning_rate = 0.9 * stats.average_learning_rate + 0.1 * average_change;
             
             // Update stability metrics
-            stats.learning_stability = self.calculate_learning_stability(&weight_updates);
+            stats.learning_stability = self.calculate_learning_stability(weight_updates);
         }
         
         Ok(())
@@ -997,7 +996,7 @@ mod tests {
         
         let efficiency = engine.calculate_learning_efficiency(&weight_updates);
         
-        assert!(efficiency >= 0.0 && efficiency <= 1.0, 
+        assert!((0.0..=1.0).contains(&efficiency), 
                "Learning efficiency should be normalized");
         
         // With equal strengthening and weakening, plus new connections, 
@@ -1100,7 +1099,8 @@ mod tests {
         
         // Decay should occur but might not prune connections immediately in a new system
         // This is biologically realistic - synapses don't disappear instantly
-        assert!(decay_result.len() >= 0, "Temporal decay should return pruning information");
+        // Decay result should be reasonable
+        assert!(decay_result.len() < 10000, "Temporal decay should return pruning information");
     }
 
     #[tokio::test]
@@ -1166,8 +1166,8 @@ mod tests {
             .expect("Failed to create Hebbian engine");
         
         // Test that learning parameters can adapt
-        let initial_learning_rate = engine.learning_rate;
-        let initial_decay_constant = engine.decay_constant;
+        let _initial_learning_rate = engine.learning_rate;
+        let _initial_decay_constant = engine.decay_constant;
         
         // Apply learning multiple times
         for _ in 0..5 {

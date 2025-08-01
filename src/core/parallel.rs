@@ -226,7 +226,7 @@ mod tests {
         EntityData {
             type_id: 1,
             embedding: create_test_embedding(dim, seed),
-            properties: format!("test_entity_{}", seed),
+            properties: format!("test_entity_{seed}"),
         }
     }
 
@@ -249,8 +249,8 @@ mod tests {
         
         // Verify all distances are valid (non-negative and finite)
         for (_, distance) in &results {
-            assert!(distance.is_finite(), "Distance is not finite: {}", distance);
-            assert!(*distance >= 0.0, "Distance is negative: {}", distance);
+            assert!(distance.is_finite(), "Distance is not finite: {distance}");
+            assert!(*distance >= 0.0, "Distance is negative: {distance}");
         }
     }
 
@@ -415,7 +415,7 @@ mod tests {
             .map(|i| create_test_embedding(32, i as f32))
             .collect();
         
-        let quantizer = MockQuantizer;
+        let _quantizer = MockQuantizer;
         
         // Mock the parallel encoding by testing the logic
         let should_be_parallel = embeddings.len() >= 50;
@@ -443,7 +443,7 @@ mod tests {
         let entity_ids: Vec<u32> = (0..50).collect();
         let mut property_map = HashMap::new();
         for i in 0..30 {
-            property_map.insert(i, format!("property_{}", i));
+            property_map.insert(i, format!("property_{i}"));
         }
 
         let results = ParallelProcessor::parallel_extract_properties(&entity_ids, &property_map);
@@ -453,10 +453,10 @@ mod tests {
         // Check that existing properties are found
         for (id, prop) in &results {
             if *id < 30 {
-                assert!(prop.is_some(), "Property should exist for id {}", id);
-                assert_eq!(prop.as_ref().unwrap(), &format!("property_{}", id));
+                assert!(prop.is_some(), "Property should exist for id {id}");
+                assert_eq!(prop.as_ref().unwrap(), &format!("property_{id}"));
             } else {
-                assert!(prop.is_none(), "Property should not exist for id {}", id);
+                assert!(prop.is_none(), "Property should not exist for id {id}");
             }
         }
     }
@@ -466,7 +466,7 @@ mod tests {
         let entity_ids: Vec<u32> = (0..5).collect();
         let mut property_map = HashMap::new();
         for i in 0..3 {
-            property_map.insert(i, format!("property_{}", i));
+            property_map.insert(i, format!("property_{i}"));
         }
 
         let results = ParallelProcessor::parallel_extract_properties(&entity_ids, &property_map);
@@ -512,7 +512,7 @@ mod tests {
         assert_eq!(results.len(), 20);
         
         for i in 0..20 {
-            assert!(results.contains_key(&i), "Should have neighbors for entity {}", i);
+            assert!(results.contains_key(&i), "Should have neighbors for entity {i}");
             let neighbors = results.get(&i).unwrap();
             assert_eq!(neighbors.len(), 3);
             assert_eq!(neighbors[0], i * 2);

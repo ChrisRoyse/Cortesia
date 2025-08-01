@@ -276,7 +276,7 @@ impl QuantizedIndex {
     pub fn reconstruct_embedding(&self, entity_id: u32) -> Result<Vec<f32>> {
         let entity_id_map = self.entity_id_map.read();
         let entity_index = entity_id_map.get(&entity_id)
-            .ok_or_else(|| GraphError::InvalidEmbeddingDimension { expected: 1, actual: 0 })?;
+            .ok_or(GraphError::InvalidEmbeddingDimension { expected: 1, actual: 0 })?;
 
         let entities = self.entities.read();
         let entity = &entities[*entity_index];

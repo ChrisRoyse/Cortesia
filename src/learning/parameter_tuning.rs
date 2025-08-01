@@ -381,8 +381,8 @@ impl ParameterTuningSystem {
         ).await?;
         
         Ok(HebbianParameterUpdate {
-            learning_rate_adjustment: optimization_result.parameter_changes.get("learning_rate").unwrap_or(&0.0).clone(),
-            decay_constant_adjustment: optimization_result.parameter_changes.get("decay_constant").unwrap_or(&0.0).clone(),
+            learning_rate_adjustment: *optimization_result.parameter_changes.get("learning_rate").unwrap_or(&0.0),
+            decay_constant_adjustment: *optimization_result.parameter_changes.get("decay_constant").unwrap_or(&0.0),
             strengthening_threshold_adjustment: 0.0, // Would be optimized if included
             optimization_confidence: optimization_result.confidence,
             expected_performance_gain: optimization_result.expected_improvement,
@@ -405,8 +405,8 @@ impl ParameterTuningSystem {
         ).await?;
         
         Ok(AttentionParameterUpdate {
-            focus_strength_adjustment: optimization_result.parameter_changes.get("focus_strength").unwrap_or(&0.0).clone(),
-            capacity_adjustment: optimization_result.parameter_changes.get("attention_capacity").unwrap_or(&0.0).clone(),
+            focus_strength_adjustment: *optimization_result.parameter_changes.get("focus_strength").unwrap_or(&0.0),
+            capacity_adjustment: *optimization_result.parameter_changes.get("attention_capacity").unwrap_or(&0.0),
             shift_speed_adjustment: 0.0, // Would be included if in parameter space
             optimization_confidence: optimization_result.confidence,
             expected_performance_gain: optimization_result.expected_improvement,
@@ -922,19 +922,19 @@ mod tests {
         for (space_name, space) in &spaces {
             for (param_name, param_def) in &space.parameters {
                 assert!(!param_def.name.is_empty(), 
-                       "Parameter {} in space {} should have name", param_name, space_name);
+                       "Parameter {param_name} in space {space_name} should have name");
                 assert!(param_def.valid_range.0 <= param_def.valid_range.1,
-                       "Parameter {} should have valid range", param_name);
+                       "Parameter {param_name} should have valid range");
                 assert!(param_def.current_value >= param_def.valid_range.0 && 
                        param_def.current_value <= param_def.valid_range.1,
-                       "Current value should be within valid range for {}", param_name);
+                       "Current value should be within valid range for {param_name}");
                 assert!(param_def.default_value >= param_def.valid_range.0 && 
                        param_def.default_value <= param_def.valid_range.1,
-                       "Default value should be within valid range for {}", param_name);
+                       "Default value should be within valid range for {param_name}");
                 assert!(param_def.granularity > 0.0,
-                       "Granularity should be positive for {}", param_name);
+                       "Granularity should be positive for {param_name}");
                 assert!(param_def.importance_weight >= 0.0 && param_def.importance_weight <= 1.0,
-                       "Importance weight should be normalized for {}", param_name);
+                       "Importance weight should be normalized for {param_name}");
             }
         }
     }

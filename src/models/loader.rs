@@ -92,13 +92,13 @@ impl ModelLoader {
         // Create cache directory if it doesn't exist
         if !self.cache_dir.exists() {
             std::fs::create_dir_all(&self.cache_dir)
-                .map_err(|e| GraphError::StorageError(format!("Failed to create cache directory: {}", e)))?;
+                .map_err(|e| GraphError::StorageError(format!("Failed to create cache directory: {e}")))?;
         }
 
         // Simulate download process (in a real implementation, this would use huggingface-hub crate)
         let model_cache_path = self.get_model_cache_path(model_id);
         std::fs::create_dir_all(&model_cache_path)
-            .map_err(|e| GraphError::StorageError(format!("Failed to create model cache directory: {}", e)))?;
+            .map_err(|e| GraphError::StorageError(format!("Failed to create model cache directory: {e}")))?;
 
         // Create placeholder files to simulate download
         let config_path = model_cache_path.join("config.json");
@@ -106,13 +106,13 @@ impl ModelLoader {
         let tokenizer_path = model_cache_path.join("tokenizer.json");
 
         std::fs::write(&config_path, r#"{"model_type": "transformer"}"#)
-            .map_err(|e| GraphError::StorageError(format!("Failed to write config: {}", e)))?;
+            .map_err(|e| GraphError::StorageError(format!("Failed to write config: {e}")))?;
         
         std::fs::write(&model_path, b"placeholder model data")
-            .map_err(|e| GraphError::StorageError(format!("Failed to write model: {}", e)))?;
+            .map_err(|e| GraphError::StorageError(format!("Failed to write model: {e}")))?;
         
         std::fs::write(&tokenizer_path, r#"{"tokenizer": "placeholder"}"#)
-            .map_err(|e| GraphError::StorageError(format!("Failed to write tokenizer: {}", e)))?;
+            .map_err(|e| GraphError::StorageError(format!("Failed to write tokenizer: {e}")))?;
 
         // Update progress
         for i in 1..=10 {
@@ -128,7 +128,7 @@ impl ModelLoader {
         let model_cache_path = self.get_model_cache_path(model_id);
         
         if !model_cache_path.exists() {
-            return Err(GraphError::StorageError(format!("Model {} not found in cache", model_id)));
+            return Err(GraphError::StorageError(format!("Model {model_id} not found in cache")));
         }
 
         // Create a placeholder model (in a real implementation, this would load the actual model)
@@ -152,7 +152,7 @@ impl ModelLoader {
             training_tokens: None,
             release_date: "Unknown".to_string(),
             license: "Unknown".to_string(),
-            description: format!("Loaded model: {}", model_id),
+            description: format!("Loaded model: {model_id}"),
         };
 
         let mut model = Model::new(metadata, config);
@@ -202,7 +202,7 @@ impl ModelLoader {
         let model_cache_path = self.get_model_cache_path(model_id);
         if model_cache_path.exists() {
             std::fs::remove_dir_all(&model_cache_path)
-                .map_err(|e| GraphError::StorageError(format!("Failed to clear cache: {}", e)))?;
+                .map_err(|e| GraphError::StorageError(format!("Failed to clear cache: {e}")))?;
         }
         Ok(())
     }
@@ -211,7 +211,7 @@ impl ModelLoader {
     pub fn clear_all_cache(&self) -> Result<()> {
         if self.cache_dir.exists() {
             std::fs::remove_dir_all(&self.cache_dir)
-                .map_err(|e| GraphError::StorageError(format!("Failed to clear all cache: {}", e)))?;
+                .map_err(|e| GraphError::StorageError(format!("Failed to clear all cache: {e}")))?;
         }
         Ok(())
     }
@@ -224,9 +224,9 @@ impl ModelLoader {
 
         let mut total_size = 0u64;
         for entry in walkdir::WalkDir::new(&self.cache_dir) {
-            let entry = entry.map_err(|e| GraphError::StorageError(format!("Failed to read cache directory: {}", e)))?;
+            let entry = entry.map_err(|e| GraphError::StorageError(format!("Failed to read cache directory: {e}")))?;
             if entry.file_type().is_file() {
-                let metadata = entry.metadata().map_err(|e| GraphError::StorageError(format!("Failed to read file metadata: {}", e)))?;
+                let metadata = entry.metadata().map_err(|e| GraphError::StorageError(format!("Failed to read file metadata: {e}")))?;
                 total_size += metadata.len();
             }
         }
@@ -242,9 +242,9 @@ impl ModelLoader {
 
         let mut cached_models = Vec::new();
         for entry in std::fs::read_dir(&self.cache_dir)
-            .map_err(|e| GraphError::StorageError(format!("Failed to read cache directory: {}", e)))? {
-            let entry = entry.map_err(|e| GraphError::StorageError(format!("Failed to read directory entry: {}", e)))?;
-            if entry.file_type().map_err(|e| GraphError::StorageError(format!("Failed to read file type: {}", e)))?.is_dir() {
+            .map_err(|e| GraphError::StorageError(format!("Failed to read cache directory: {e}")))? {
+            let entry = entry.map_err(|e| GraphError::StorageError(format!("Failed to read directory entry: {e}")))?;
+            if entry.file_type().map_err(|e| GraphError::StorageError(format!("Failed to read file type: {e}")))?.is_dir() {
                 let model_id = entry.file_name().to_string_lossy().replace("--", "/");
                 cached_models.push(model_id);
             }

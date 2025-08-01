@@ -324,7 +324,7 @@ impl HierarchicalStorageEngine {
             
             Ok(document.clone())
         } else {
-            let error_msg = format!("Document not found: {}", document_id);
+            let error_msg = format!("Document not found: {document_id}");
             error!(
                 document_id = %document_id,
                 retrieval_time_ms = start_time.elapsed().as_millis(),
@@ -354,7 +354,7 @@ impl HierarchicalStorageEngine {
         }
         
         Err(HierarchicalStorageError::LayerNotFound(
-            format!("Layer not found: {}", layer_id)
+            format!("Layer not found: {layer_id}")
         ))
     }
     
@@ -389,7 +389,7 @@ impl HierarchicalStorageEngine {
         let mut documents_searched = 0;
         
         // Search each document's index
-        for (_doc_id, document) in &storage.documents {
+        for document in storage.documents.values() {
             let doc_search_start = Instant::now();
             let results = self.index_manager.search_index(&document.retrieval_index, &query);
             let doc_results_count = results.len();
@@ -537,7 +537,7 @@ impl HierarchicalStorageEngine {
         let document = storage.documents.values()
             .find(|doc| doc.knowledge_layers.iter().any(|l| l.layer_id == layer_id))
             .ok_or_else(|| HierarchicalStorageError::LayerNotFound(
-                format!("Layer not found: {}", layer_id)
+                format!("Layer not found: {layer_id}")
             ))?;
         
         // Perform breadth-first search through semantic links
@@ -554,7 +554,7 @@ impl HierarchicalStorageEngine {
             visited.insert(current_id.clone(), path.clone());
             
             // Find connected nodes
-            let node_id = format!("node_{}", current_id);
+            let node_id = format!("node_{current_id}");
             for edge in &document.semantic_links.edges {
                 let (connected_id, _is_source) = if edge.source_node_id == node_id {
                     (edge.target_node_id.clone(), true)
@@ -655,7 +655,7 @@ impl HierarchicalStorageEngine {
         
         let document = storage.documents.get_mut(document_id)
             .ok_or_else(|| HierarchicalStorageError::LayerNotFound(
-                format!("Document not found: {}", document_id)
+                format!("Document not found: {document_id}")
             ))?;
         
         // Add new layers
@@ -708,7 +708,7 @@ impl HierarchicalStorageEngine {
         // Remove from documents
         let document = storage.documents.remove(document_id)
             .ok_or_else(|| HierarchicalStorageError::LayerNotFound(
-                format!("Document not found: {}", document_id)
+                format!("Document not found: {document_id}")
             ))?;
         
         // Remove layers from cache
@@ -744,7 +744,7 @@ impl HierarchicalStorageEngine {
         // Collect cache entries with access times
         let mut cache_entries: Vec<(String, u64)> = Vec::new();
         
-        for (layer_id, _) in &storage.layer_cache {
+        for layer_id in storage.layer_cache.keys() {
             // Find access time from any document's index
             let mut last_accessed = 0;
             for document in storage.documents.values() {

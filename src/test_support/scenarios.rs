@@ -597,7 +597,7 @@ pub fn get_attention_scenarios() -> Vec<AttentionScenario> {
 /// Helper to create entities for test scenarios
 pub fn create_scenario_entities(count: usize, prefix: &str) -> Vec<EntityKey> {
     (0..count)
-        .map(|i| EntityKey::from_hash(&format!("{}_{}", prefix, i)))
+        .map(|i| EntityKey::from_hash(&format!("{prefix}_{i}")))
         .collect()
 }
 
@@ -669,8 +669,8 @@ pub fn validate_scenario_result(
     // Validate cognitive pattern
     if actual_pattern != &scenario.expected_pattern {
         errors.push(ValidationError::PatternMismatch {
-            expected: scenario.expected_pattern.clone(),
-            actual: actual_pattern.clone(),
+            expected: scenario.expected_pattern,
+            actual: *actual_pattern,
         });
     }
 
@@ -873,7 +873,7 @@ pub async fn execute_scenario_with_validation(
 
     // TODO: Execute the actual cognitive query when the API is available
     // For now, return mock results
-    let mock_pattern = scenario.expected_pattern.clone();
+    let mock_pattern = scenario.expected_pattern;
     let mock_intent = scenario.expected_intent.clone();
     let mock_confidence = (scenario.expected_confidence_min + scenario.expected_confidence_max) / 2.0;
 

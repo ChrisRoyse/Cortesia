@@ -14,6 +14,12 @@ pub struct VersionMerger {
     merge_stats: MergeOperationStats,
 }
 
+impl Default for VersionMerger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VersionMerger {
     pub fn new() -> Self {
         let mut strategy_weights = HashMap::new();
@@ -399,7 +405,7 @@ impl VersionMerger {
             for (field_name, value) in state {
                 field_values
                     .entry(field_name.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push((db_id.clone(), value.clone()));
             }
         }

@@ -10,6 +10,12 @@ pub struct SimilarityEngine {
     config: SimilarityConfig,
 }
 
+impl Default for SimilarityEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimilarityEngine {
     pub fn new() -> Self {
         Self {
@@ -527,7 +533,7 @@ mod tests {
         assert!((sim1 - sim2).abs() < 1e-6);
         
         // Range: -1 <= sim(x, y) <= 1
-        assert!(sim1 >= -1.0 && sim1 <= 1.0);
+        assert!((-1.0..=1.0).contains(&sim1));
     }
 
     #[test]
@@ -658,7 +664,7 @@ mod tests {
         
         // Different strings
         let sim3 = engine.textual_similarity("completely", "different");
-        assert!(sim3 >= 0.0 && sim3 < 1.0);
+        assert!((0.0..1.0).contains(&sim3));
     }
 
     #[test]
@@ -704,8 +710,8 @@ mod tests {
         
         // First case should have higher length similarity component
         // Note: This is a rough test since semantic_similarity combines multiple factors
-        assert!(sim1 >= 0.0 && sim1 <= 1.0);
-        assert!(sim2 >= 0.0 && sim2 <= 1.0);
+        assert!((0.0..=1.0).contains(&sim1));
+        assert!((0.0..=1.0).contains(&sim2));
     }
 
     #[test]
@@ -717,13 +723,13 @@ mod tests {
         
         // Without weights
         let sim = engine.structural_similarity(&neighbors1, &neighbors2, None, None);
-        assert!(sim >= 0.0 && sim <= 1.0);
+        assert!((0.0..=1.0).contains(&sim));
         
         // With weights
         let weights1 = vec![1.0, 2.0, 3.0, 4.0];
         let weights2 = vec![3.0, 4.0, 5.0, 6.0];
         let sim_weighted = engine.structural_similarity(&neighbors1, &neighbors2, Some(&weights1), Some(&weights2));
-        assert!(sim_weighted >= 0.0 && sim_weighted <= 1.0);
+        assert!((0.0..=1.0).contains(&sim_weighted));
     }
 
     #[test]
@@ -758,7 +764,7 @@ mod tests {
         graph.insert(4, vec![2, 3]);
         
         let sim = engine.graph_similarity(1, 2, &graph, 2);
-        assert!(sim >= 0.0 && sim <= 1.0);
+        assert!((0.0..=1.0).contains(&sim));
         
         // Same entity should have similarity 1.0
         let sim_same = engine.graph_similarity(1, 1, &graph, 2);
@@ -794,7 +800,7 @@ mod tests {
         let paths2 = vec![vec![1, 2, 3], vec![1, 6, 7]];
         
         let sim = engine.path_similarity(&paths1, &paths2);
-        assert!(sim >= 0.0 && sim <= 1.0);
+        assert!((0.0..=1.0).contains(&sim));
         
         // Empty path sets
         let empty_paths: Vec<Vec<u32>> = vec![];
@@ -813,7 +819,7 @@ mod tests {
         let embedding2 = vec![0.0, 1.0, 0.0];
         
         let sim = engine.semantic_similarity(&embedding1, &embedding2, "hello", "world").unwrap();
-        assert!(sim >= 0.0 && sim <= 1.0);
+        assert!((0.0..=1.0).contains(&sim));
         
         // Test with different dimension vectors - should fail
         let embedding3 = vec![1.0, 0.0];

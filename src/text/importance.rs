@@ -187,7 +187,7 @@ impl HeuristicImportanceScorer {
             }
         }
         
-        if text_words.len() > 0 {
+        if !text_words.is_empty() {
             (overlap_count as f32 / text_words.len() as f32) * 0.2 // 20% max bonus
         } else {
             0.0
@@ -367,6 +367,6 @@ mod tests {
         
         // Should process 1000 calculations in under 100ms
         assert!(elapsed.as_millis() < 100);
-        println!("1000 importance calculations took: {:?}", elapsed);
+        println!("1000 importance calculations took: {elapsed:?}");
     }
 }

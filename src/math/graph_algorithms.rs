@@ -8,6 +8,12 @@ pub struct GraphAlgorithms {
     algorithm_cache: HashMap<String, AlgorithmResult>,
 }
 
+impl Default for GraphAlgorithms {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GraphAlgorithms {
     pub fn new() -> Self {
         Self {
@@ -170,7 +176,7 @@ impl GraphAlgorithms {
     fn reconstruct_all_paths(&self, start: u32, parents: &HashMap<u32, Option<u32>>) -> HashMap<u32, Vec<u32>> {
         let mut paths = HashMap::new();
         
-        for (&target, _) in parents {
+        for &target in parents.keys() {
             if target != start {
                 let path = self.reconstruct_path(start, target, parents);
                 paths.insert(target, path);

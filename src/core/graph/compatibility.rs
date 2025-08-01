@@ -724,7 +724,7 @@ mod tests {
         
         // Insert multiple entities
         for i in 1..=5 {
-            let _key = graph.insert_entity_with_text(i, &format!("entity {}", i), properties.clone()).unwrap();
+            let _key = graph.insert_entity_with_text(i, &format!("entity {i}"), properties.clone()).unwrap();
         }
         
         // Test ID to key conversion for each entity
@@ -877,7 +877,7 @@ mod tests {
         // Remove non-existent entity
         let remove_result = graph.remove_entity_by_id(999);
         assert!(remove_result.is_ok()); // Should return Ok(false)
-        assert_eq!(remove_result.unwrap(), false);
+        assert!(!remove_result.unwrap());
     }
 
     #[test]
@@ -901,8 +901,8 @@ mod tests {
         
         // Results should contain entity IDs and similarity scores
         for (id, similarity) in search_results {
-            assert!(id >= 1 && id <= 3);
-            assert!(similarity >= 0.0 && similarity <= 1.0);
+            assert!((1..=3).contains(&id));
+            assert!((0.0..=1.0).contains(&similarity));
         }
     }
 

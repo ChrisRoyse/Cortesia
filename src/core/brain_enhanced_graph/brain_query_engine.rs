@@ -61,7 +61,7 @@ impl BrainEnhancedKnowledgeGraph {
             
             Ok(result)
         } else {
-            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept_name)))
+            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {concept_name}")))
         }
     }
 
@@ -85,7 +85,7 @@ impl BrainEnhancedKnowledgeGraph {
             
             Ok(boosted_entities)
         } else {
-            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept_name)))
+            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {concept_name}")))
         }
     }
 
@@ -344,7 +344,7 @@ mod tests {
         let brain_result = result.unwrap();
         assert!(brain_result.entities.len() <= 2);
         assert!(brain_result.total_activation >= 0.0);
-        assert!(brain_result.query_time.as_millis() >= 0);
+        assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
     }
 
     #[tokio::test]
@@ -463,7 +463,7 @@ mod tests {
         // 0.2 * 0.8 * 0.95 = 0.152 (should be included as above threshold 0.1)
         assert!(!result.is_empty());
         
-        for (_, &activation) in &result {
+        for &activation in result.values() {
             assert!(activation <= 0.8); // Should be dampened
         }
     }
@@ -591,7 +591,7 @@ mod tests {
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
-        assert!(brain_result.query_time.as_millis() >= 0);
+        assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
         // Result might be empty if no entities match, which is fine for this test
     }
 
@@ -626,7 +626,7 @@ mod tests {
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
-        assert!(brain_result.query_time.as_millis() >= 0);
+        assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
     }
 
     #[tokio::test]
@@ -639,7 +639,7 @@ mod tests {
         
         // Should work but concept boost won't apply
         let brain_result = result.unwrap();
-        assert!(brain_result.query_time.as_millis() >= 0);
+        assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
     }
 
     #[tokio::test]
@@ -672,25 +672,25 @@ mod tests {
     #[tokio::test]
     async fn test_hybrid_query_basic() {
         let graph = create_test_brain_graph().await;
-        let query_embedding = vec![0.5; 96];
+        let _query_embedding = vec![0.5; 96];
         
         let result = graph.sdr_query("test query", 5).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
-        assert!(brain_result.query_time.as_millis() >= 0);
+        assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
     }
 
     #[tokio::test]
     async fn test_hybrid_query_empty_inputs() {
         let graph = create_test_brain_graph().await;
-        let empty_embedding: Vec<f32> = vec![];
+        let _empty_embedding: Vec<f32> = vec![];
         
         let result = graph.sdr_query("", 5).await;
         // Should handle gracefully - similarity_search might fail but SDR should work
         if result.is_ok() {
             let brain_result = result.unwrap();
-            assert!(brain_result.query_time.as_millis() >= 0);
+            assert!(brain_result.query_time.as_millis() < 10000); // Query should complete in reasonable time
         }
     }
 

@@ -114,9 +114,7 @@ Title: {title}
 Document:
 {content}
 
-JSON Response:"#,
-            title = title,
-            content = content
+JSON Response:"#
         );
         
         let task = ProcessingTask::new(ComplexityLevel::High, &prompt);
@@ -135,7 +133,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let document_theme = parsed["document_theme"].as_str().unwrap_or("").to_string();
         
@@ -357,7 +355,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let has_connection = parsed["has_connection"].as_bool().unwrap_or(false);
         

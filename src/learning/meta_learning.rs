@@ -1014,8 +1014,8 @@ mod tests {
         assert!(meta_parameters.contains_key("adaptation_aggressiveness"), "Should include adaptation aggressiveness");
         
         // Check parameter values are reasonable
-        for (_, &value) in &meta_parameters {
-            assert!(value >= 0.0 && value <= 1.0, "Meta parameters should be normalized");
+        for &value in meta_parameters.values() {
+            assert!((0.0..=1.0).contains(&value), "Meta parameters should be normalized");
         }
     }
 
@@ -1094,8 +1094,8 @@ mod tests {
         
         // Check that all features are normalized
         for &feature in &features {
-            assert!(feature >= 0.0 && feature <= 1.0, 
-                   "Context features should be normalized: got {}", feature);
+            assert!((0.0..=1.0).contains(&feature), 
+                   "Context features should be normalized: got {feature}");
         }
     }
 
@@ -1179,7 +1179,7 @@ mod tests {
         let similarity = system.calculate_domain_similarity(&source_domain, &target_domain).await
             .expect("Failed to calculate domain similarity");
         
-        assert!(similarity >= 0.0 && similarity <= 1.0, 
+        assert!((0.0..=1.0).contains(&similarity), 
                "Domain similarity should be normalized");
     }
 
@@ -1198,7 +1198,7 @@ mod tests {
         // Union size is 4: "word", "text", "language", "sentence"
         // Overlap = 2/4 = 0.5
         assert!((overlap - 0.5).abs() < 0.001, 
-               "Should calculate correct vocabulary overlap: expected 0.5, got {}", overlap);
+               "Should calculate correct vocabulary overlap: expected 0.5, got {overlap}");
         
         // Test no overlap
         let vocab_a = vec!["a".to_string(), "b".to_string()];
@@ -1233,7 +1233,7 @@ mod tests {
         
         let similarity = system.calculate_structure_similarity(&struct_a, &struct_b);
         
-        assert!(similarity >= 0.0 && similarity <= 1.0, 
+        assert!((0.0..=1.0).contains(&similarity), 
                "Structure similarity should be normalized");
         
         // Test identical structures
@@ -1249,10 +1249,10 @@ mod tests {
         // Test algorithm selection based on task type
         for algorithm in &system.learning_algorithms {
             let effectiveness = algorithm.get_effectiveness();
-            assert!(effectiveness >= 0.0 && effectiveness <= 1.0,
+            assert!((0.0..=1.0).contains(&effectiveness),
                    "Algorithm effectiveness should be normalized");
             
-            let algorithm_type = algorithm.get_algorithm_type();
+            let _algorithm_type = algorithm.get_algorithm_type();
             assert!(!algorithm.get_algorithm_id().is_empty(),
                    "Algorithm should have an ID");
         }

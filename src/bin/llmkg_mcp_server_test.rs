@@ -65,23 +65,23 @@ async fn main() -> Result<()> {
                     continue;
                 }
                 
-                log::debug!("Received: {}", line);
+                log::debug!("Received: {line}");
                 
                 // Parse JSON-RPC request
                 match serde_json::from_str::<Value>(line) {
                     Ok(request) => {
                         let response = handle_mcp_request(&mcp_server, request).await;
                         let response_str = serde_json::to_string(&response)
-                            .map_err(|e| GraphError::SerializationError(format!("JSON serialization failed: {}", e)))?;
+                            .map_err(|e| GraphError::SerializationError(format!("JSON serialization failed: {e}")))?;
                         
-                        log::debug!("Sending: {}", response_str);
+                        log::debug!("Sending: {response_str}");
                         
                         stdout.write_all(response_str.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
                     }
                     Err(e) => {
-                        log::error!("Failed to parse request: {}", e);
+                        log::error!("Failed to parse request: {e}");
                         let error_response = json!({
                             "jsonrpc": "2.0",
                             "error": {
@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
                         });
                         
                         let error_str = serde_json::to_string(&error_response)
-                            .map_err(|e| GraphError::SerializationError(format!("JSON serialization failed: {}", e)))?;
+                            .map_err(|e| GraphError::SerializationError(format!("JSON serialization failed: {e}")))?;
                         stdout.write_all(error_str.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
                 }
             }
             Err(e) => {
-                log::error!("Error reading stdin: {}", e);
+                log::error!("Error reading stdin: {e}");
                 break;
             }
         }

@@ -99,7 +99,7 @@ impl LshIndex {
             
             hash_tables
                 .entry(hash_signature)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(entity);
         }
         
@@ -445,7 +445,7 @@ mod tests {
         
         index.insert(1, key, embedding).unwrap();
         assert!(!index.is_empty());
-        assert!(index.len() > 0);
+        assert!(!index.is_empty());
     }
 
     #[test]

@@ -127,8 +127,7 @@ mod quality_assessment {
         
         let quality_percentage = (score as f32 / max_score as f32) * 100.0;
         
-        println!("Test Infrastructure Quality Score: {}/{} ({}%)", 
-                score, max_score, quality_percentage);
+        println!("Test Infrastructure Quality Score: {score}/{max_score} ({quality_percentage}%)");
         
         assert_eq!(score, max_score, "Test infrastructure should achieve 100% quality");
         assert_eq!(quality_percentage, 100.0, "Quality should be 100%");

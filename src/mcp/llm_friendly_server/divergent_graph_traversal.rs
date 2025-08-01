@@ -250,7 +250,7 @@ async fn find_cross_domain_connections(
     
     for entity in entities {
         let domain = classify_entity_domain(entity);
-        domains.entry(domain).or_insert_with(Vec::new).push(entity.clone());
+        domains.entry(domain).or_default().push(entity.clone());
     }
     
     // Find connections between different domains

@@ -84,6 +84,12 @@ pub struct MockSimilarityCalculator {
     call_log: Arc<Mutex<Vec<String>>>,
 }
 
+impl Default for MockSimilarityCalculator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockSimilarityCalculator {
     pub fn new() -> Self {
         Self {
@@ -149,13 +155,13 @@ impl MockEmbeddingIndex {
             return Err(format!("Expected dimension {}, got {}", self.dimension, embedding.len()));
         }
         
-        self.call_log.lock().unwrap().push(format!("add_embedding: {}", id));
+        self.call_log.lock().unwrap().push(format!("add_embedding: {id}"));
         self.embeddings.lock().unwrap().insert(id, embedding);
         Ok(())
     }
     
     pub fn search_similar(&self, query_embedding: &[f32], k: usize) -> Vec<SimilarityMatch> {
-        self.call_log.lock().unwrap().push(format!("search_similar: k={}", k));
+        self.call_log.lock().unwrap().push(format!("search_similar: k={k}"));
         
         let embeddings = self.embeddings.lock().unwrap();
         let mut results = Vec::new();
@@ -226,16 +232,14 @@ pub fn setup_embedding_mocks_with_sample_data() -> (MockEmbeddingGenerator, Mock
     let index = create_mock_embedding_index(384);
     
     // Add some sample embeddings
-    let sample_texts = vec![
-        "artificial intelligence",
+    let sample_texts = ["artificial intelligence",
         "machine learning",
         "neural networks",
-        "deep learning",
-    ];
+        "deep learning"];
     
     for (i, text) in sample_texts.iter().enumerate() {
         let embedding = generator.generate_embedding(text);
-        let _ = index.add_embedding(format!("sample_{}", i), embedding);
+        let _ = index.add_embedding(format!("sample_{i}"), embedding);
     }
     
     (generator, index)

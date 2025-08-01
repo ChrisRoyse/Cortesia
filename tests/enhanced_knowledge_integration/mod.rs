@@ -5,6 +5,9 @@
 
 pub mod basic_functionality_tests;
 pub mod system_integration_tests;
+pub mod end_to_end_document_processing;
+pub mod multi_hop_reasoning_integration;
+pub mod performance_load_tests;
 
 /// Create test content for integration testing
 pub fn create_test_knowledge_content() -> &'static str {

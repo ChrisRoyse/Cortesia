@@ -283,7 +283,7 @@ impl ProductionMonitor {
 
         // Store in metrics collection
         self.metrics.entry(name.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(point);
 
         // Update specific metric types
@@ -718,7 +718,7 @@ mod tests {
         // Wait for alert checker to run
         sleep(Duration::from_secs(1)).await;
         
-        let alerts = monitor.get_active_alerts().await;
+        let _alerts = monitor.get_active_alerts().await;
         // Note: In a real test, we'd need to wait for the background task to process
         // For now, just verify the alert rule was added
         assert!(monitor.alert_rules.contains_key("test_alert"));

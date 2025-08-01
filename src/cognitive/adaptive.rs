@@ -130,12 +130,11 @@ impl AdaptiveThinking {
         
         // Check for divergent queries (asking for multiple examples/types)
         let query_lower = query.to_lowercase();
-        if query_lower.contains("types") || query_lower.contains("examples") ||
-           query_lower.contains("kinds") || query_lower.contains("varieties") {
-            if !selected_patterns.contains(&CognitivePatternType::Divergent) {
+        if (query_lower.contains("types") || query_lower.contains("examples") ||
+           query_lower.contains("kinds") || query_lower.contains("varieties"))
+            && !selected_patterns.contains(&CognitivePatternType::Divergent) {
                 selected_patterns.push(CognitivePatternType::Divergent);
             }
-        }
         
         if selected_patterns.is_empty() {
             selected_patterns.push(CognitivePatternType::Convergent);
@@ -251,7 +250,7 @@ impl AdaptiveThinking {
     ) -> Result<Vec<PatternContribution>> {
         let mut contributions = Vec::new();
         
-        for (_i, pattern_type) in strategy.selected_patterns.iter().enumerate() {
+        for pattern_type in strategy.selected_patterns.iter() {
             let weight = 1.0 / strategy.selected_patterns.len() as f32;
             
             // For now, simulate pattern execution
@@ -463,7 +462,7 @@ impl AdaptiveThinking {
     ) -> Vec<usize> {
         let mut indexed_patterns: Vec<(usize, CognitivePatternType, f32)> = patterns.iter()
             .enumerate()
-            .map(|(i, p)| (i, p.clone(), self.calculate_pattern_score(p, analysis)))
+            .map(|(i, p)| (i, *p, self.calculate_pattern_score(p, analysis)))
             .collect();
         
         // Sort by score (highest first)
@@ -494,7 +493,7 @@ impl AdaptiveThinking {
         
         Ok(PatternResult {
             pattern_type: *pattern_type,
-            answer: format!("{:?} analysis: {}", pattern_type, query),
+            answer: format!("{pattern_type:?} analysis: {query}"),
             confidence,
             reasoning_trace: Vec::new(),
             metadata: ResultMetadata {

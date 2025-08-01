@@ -16,7 +16,7 @@ async fn test_system_initialization() {
     assert!(initialization_time < Duration::from_secs(1), 
            "System initialization should be fast");
     
-    println!("✓ System initialization works: {:?}", initialization_time);
+    println!("✓ System initialization works: {initialization_time:?}");
 }
 
 #[tokio::test]
@@ -34,7 +34,7 @@ async fn test_end_to_end_text_processing() {
         .collect();
     
     // Validate processing results
-    assert!(processed_lines.len() > 0, "Should process lines");
+    assert!(!processed_lines.is_empty(), "Should process lines");
     
     // Check for key content
     let combined = processed_lines.join(" ");
@@ -137,9 +137,9 @@ async fn test_performance_under_load() {
     // Should handle load efficiently
     let operations_per_second = iterations as f64 / duration.as_secs_f64();
     assert!(operations_per_second > 50.0, 
-           "Should handle load efficiently: {:.0} ops/sec", operations_per_second);
+           "Should handle load efficiently: {operations_per_second:.0} ops/sec");
     
-    println!("✓ Performance under load: {:.0} operations/second", operations_per_second);
+    println!("✓ Performance under load: {operations_per_second:.0} operations/second");
 }
 
 #[tokio::test]
@@ -174,17 +174,17 @@ async fn test_concurrent_processing() {
     
     for result in results {
         let (task_id, word_count, has_key_content) = result
-            .expect(&format!("Task should complete successfully"));
+            .expect("Task should complete successfully");
         
-        assert!(word_count > 0, "Task {} should count words", task_id);
-        assert!(has_key_content, "Task {} should find key content", task_id);
+        assert!(word_count > 0, "Task {task_id} should count words");
+        assert!(has_key_content, "Task {task_id} should find key content");
         successful_tasks += 1;
     }
     
     assert_eq!(successful_tasks, task_count, "All tasks should succeed");
     
     let tasks_per_second = task_count as f64 / duration.as_secs_f64();
-    println!("✓ Concurrent processing: {:.0} tasks/second", tasks_per_second);
+    println!("✓ Concurrent processing: {tasks_per_second:.0} tasks/second");
 }
 
 #[tokio::test]
@@ -218,13 +218,13 @@ async fn test_error_recovery() {
             Ok("processed_successfully")
         };
         
-        assert!(result.is_ok(), "Process {} should recover from errors", i);
+        assert!(result.is_ok(), "Process {i} should recover from errors");
     }
     
     assert!(successful_processes > 0, "Should have some successful processes");
     assert!(recovered_errors > 0, "Should demonstrate error recovery");
     
-    println!("✓ Error recovery: {} successful, {} recovered", successful_processes, recovered_errors);
+    println!("✓ Error recovery: {successful_processes} successful, {recovered_errors} recovered");
 }
 
 #[tokio::test]
@@ -251,7 +251,7 @@ async fn test_memory_management() {
         }
     }
     
-    println!("✓ Memory management: {} iterations completed successfully", large_iteration_count);
+    println!("✓ Memory management: {large_iteration_count} iterations completed successfully");
 }
 
 #[tokio::test]

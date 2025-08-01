@@ -23,7 +23,7 @@ pub async fn handle_analyze_graph(
     
     // Validate analysis type
     if !["connections", "centrality", "clustering", "prediction"].contains(&analysis_type) {
-        return Err(format!("Invalid analysis_type: {}. Must be one of: connections, centrality, clustering, prediction", analysis_type));
+        return Err(format!("Invalid analysis_type: {analysis_type}. Must be one of: connections, centrality, clustering, prediction"));
     }
     
     // Extract config
@@ -62,9 +62,7 @@ pub async fn handle_analyze_graph(
     });
     
     let message = format!(
-        "Graph Analysis Complete ({}): {}",
-        analysis_type,
-        specific_message
+        "Graph Analysis Complete ({analysis_type}): {specific_message}"
     );
     
     let suggestions = match analysis_type {
@@ -125,7 +123,7 @@ async fn analyze_connections(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: false,
-    }).map_err(|e| format!("Failed to query graph: {}", e))?;
+    }).map_err(|e| format!("Failed to query graph: {e}"))?;
     drop(engine);
     
     // Build adjacency list
@@ -157,7 +155,7 @@ async fn analyze_connections(
     } else if end_entity.is_some() {
         format!("Found {} paths from {} to {}", total_paths, start_entity, end_entity.unwrap())
     } else {
-        format!("Found {} connections from {}", total_paths, start_entity)
+        format!("Found {total_paths} connections from {start_entity}")
     };
     
     Ok((results, message))
@@ -198,7 +196,7 @@ async fn analyze_centrality(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: false,
-    }).map_err(|e| format!("Failed to query graph: {}", e))?;
+    }).map_err(|e| format!("Failed to query graph: {e}"))?;
     drop(engine);
     
     let mut centrality_measures = HashMap::new();
@@ -210,7 +208,7 @@ async fn analyze_centrality(
             "closeness" => calculate_closeness_centrality(&graph_data.triples, entity_filter),
             "eigenvector" => calculate_eigenvector_centrality(&graph_data.triples, entity_filter),
             "degree" => calculate_degree_centrality(&graph_data.triples, entity_filter),
-            _ => return Err(format!("Unknown centrality type: {}", centrality_type))
+            _ => return Err(format!("Unknown centrality type: {centrality_type}"))
         };
         
         // Get top N
@@ -278,7 +276,7 @@ async fn analyze_clustering(
     
     // Validate algorithm
     if !["leiden", "louvain", "hierarchical"].contains(&algorithm) {
-        return Err(format!("Unknown clustering algorithm: {}", algorithm));
+        return Err(format!("Unknown clustering algorithm: {algorithm}"));
     }
     
     // Get graph data
@@ -290,7 +288,7 @@ async fn analyze_clustering(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: false,
-    }).map_err(|e| format!("Failed to query graph: {}", e))?;
+    }).map_err(|e| format!("Failed to query graph: {e}"))?;
     drop(engine);
     
     // Execute clustering (simplified implementation)
@@ -356,7 +354,7 @@ async fn analyze_predictions(
     
     // Validate prediction type
     if !["missing_links", "future_connections", "community_evolution", "knowledge_gaps"].contains(&prediction_type) {
-        return Err(format!("Unknown prediction type: {}", prediction_type));
+        return Err(format!("Unknown prediction type: {prediction_type}"));
     }
     
     // Get graph data
@@ -368,7 +366,7 @@ async fn analyze_predictions(
         limit: 10000,
         min_confidence: 0.0,
         include_chunks: true,
-    }).map_err(|e| format!("Failed to query graph: {}", e))?;
+    }).map_err(|e| format!("Failed to query graph: {e}"))?;
     drop(engine);
     
     // Generate predictions (simplified implementation)
@@ -419,7 +417,7 @@ fn build_adjacency_list(triples: &[Triple], relationship_filter: &Option<HashSet
         }
         
         adjacency.entry(triple.subject.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push((triple.predicate.clone(), triple.object.clone()));
     }
     

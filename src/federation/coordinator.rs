@@ -20,13 +20,19 @@ pub struct FederationCoordinator {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TransactionId(pub String);
 
+impl Default for TransactionId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TransactionId {
     pub fn new() -> Self {
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_millis();
-        Self(format!("txn_{}", timestamp))
+        Self(format!("txn_{timestamp}"))
     }
     
     pub fn as_str(&self) -> &str {
@@ -641,7 +647,7 @@ mod tests {
         
         let result = coordinator.send_abort_request(&db_id, &transaction_id).await;
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), true);
+        assert!(result.unwrap());
     }
 
     #[tokio::test]

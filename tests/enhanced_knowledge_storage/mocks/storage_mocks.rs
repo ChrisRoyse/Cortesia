@@ -13,6 +13,12 @@ pub struct MockHierarchicalStorage {
     call_log: Arc<Mutex<Vec<String>>>,
 }
 
+impl Default for MockHierarchicalStorage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockHierarchicalStorage {
     pub fn new() -> Self {
         Self {
@@ -23,13 +29,13 @@ impl MockHierarchicalStorage {
     }
     
     pub fn store_entry(&self, key: String, entry: MockStorageEntry, tier: StorageTier) {
-        self.call_log.lock().unwrap().push(format!("store_entry: {} to {:?}", key, tier));
+        self.call_log.lock().unwrap().push(format!("store_entry: {key} to {tier:?}"));
         self.data.lock().unwrap().insert(key.clone(), entry);
         self.tier_assignments.lock().unwrap().insert(key, tier);
     }
     
     pub fn retrieve_entry(&self, key: &str) -> Option<MockStorageEntry> {
-        self.call_log.lock().unwrap().push(format!("retrieve_entry: {}", key));
+        self.call_log.lock().unwrap().push(format!("retrieve_entry: {key}"));
         self.data.lock().unwrap().get(key).cloned()
     }
     
@@ -66,6 +72,12 @@ pub struct MockIndex {
     call_log: Arc<Mutex<Vec<String>>>,
 }
 
+impl Default for MockIndex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockIndex {
     pub fn new() -> Self {
         Self {
@@ -75,12 +87,12 @@ impl MockIndex {
     }
     
     pub fn add_entry(&self, key: String, values: Vec<String>) {
-        self.call_log.lock().unwrap().push(format!("add_entry: {}", key));
+        self.call_log.lock().unwrap().push(format!("add_entry: {key}"));
         self.entries.lock().unwrap().insert(key, values);
     }
     
     pub fn search(&self, query: &str) -> Vec<String> {
-        self.call_log.lock().unwrap().push(format!("search: {}", query));
+        self.call_log.lock().unwrap().push(format!("search: {query}"));
         // Mock search implementation
         vec!["mock_result_1".to_string(), "mock_result_2".to_string()]
     }
@@ -93,8 +105,15 @@ impl MockIndex {
 /// Mock semantic store implementation
 pub struct MockSemanticStore {
     embeddings: Arc<Mutex<HashMap<String, Vec<f32>>>>,
+    #[allow(dead_code)]
     similarity_threshold: f32,
     call_log: Arc<Mutex<Vec<String>>>,
+}
+
+impl Default for MockSemanticStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockSemanticStore {
@@ -107,12 +126,12 @@ impl MockSemanticStore {
     }
     
     pub fn store_embedding(&self, id: String, embedding: Vec<f32>) {
-        self.call_log.lock().unwrap().push(format!("store_embedding: {}", id));
+        self.call_log.lock().unwrap().push(format!("store_embedding: {id}"));
         self.embeddings.lock().unwrap().insert(id, embedding);
     }
     
-    pub fn find_similar(&self, query_embedding: &[f32], limit: usize) -> Vec<SimilarityResult> {
-        self.call_log.lock().unwrap().push(format!("find_similar: limit {}", limit));
+    pub fn find_similar(&self, _query_embedding: &[f32], limit: usize) -> Vec<SimilarityResult> {
+        self.call_log.lock().unwrap().push(format!("find_similar: limit {limit}"));
         // Mock similarity search
         vec![
             SimilarityResult { id: "result_1".to_string(), score: 0.95 },

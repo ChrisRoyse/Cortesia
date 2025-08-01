@@ -3,7 +3,7 @@
 //! Tests for ModelRegistry component following London School TDD methodology.
 //! These tests will initially fail (RED phase) until implementation is complete.
 
-use crate::enhanced_knowledge_storage::mocks::*;
+// use crate::enhanced_knowledge_storage::mocks::*; // Unused import
 
 // Target structures - these will fail initially as part of TDD red phase
 #[derive(Debug, Clone)]
@@ -27,6 +27,12 @@ pub struct ModelRegistry {
     models: std::collections::HashMap<String, ModelMetadata>,
 }
 
+impl Default for ModelRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModelRegistry {
     pub fn new() -> Self {
         Self {
@@ -35,33 +41,89 @@ impl ModelRegistry {
     }
     
     pub fn with_default_models() -> Self {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::with_default_models not yet implemented")
+        let mut registry = Self::new();
+        
+        // Register default models for testing
+        registry.register_model("smol_125m", ModelMetadata {
+            name: "SmolLM2-125M".to_string(),
+            parameters: 125_000_000,
+            memory_footprint: 250_000_000,
+            complexity_level: "Low".to_string(),
+            model_type: "Language Model".to_string(),
+        });
+        
+        registry.register_model("smol_360m", ModelMetadata {
+            name: "SmolLM2-360M".to_string(),
+            parameters: 360_000_000,
+            memory_footprint: 720_000_000,
+            complexity_level: "Medium".to_string(),
+            model_type: "Language Model".to_string(),
+        });
+        
+        registry.register_model("smol_1b", ModelMetadata {
+            name: "SmolLM2-1B".to_string(),
+            parameters: 1_000_000_000,
+            memory_footprint: 2_500_000_000,
+            complexity_level: "High".to_string(),
+            model_type: "Language Model".to_string(),
+        });
+        
+        registry.register_model("small_bert", ModelMetadata {
+            name: "BERT-Small".to_string(),
+            parameters: 110_000_000,
+            memory_footprint: 220_000_000,
+            complexity_level: "Low".to_string(),
+            model_type: "Encoder Model".to_string(),
+        });
+        
+        registry
     }
     
-    pub fn register_model(&mut self, _model_id: &str, _metadata: ModelMetadata) {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::register_model not yet implemented")
+    pub fn register_model(&mut self, model_id: &str, metadata: ModelMetadata) {
+        self.models.insert(model_id.to_string(), metadata);
     }
     
-    pub fn get_model_metadata(&self, _model_id: &str) -> Option<&ModelMetadata> {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::get_model_metadata not yet implemented")
+    pub fn get_model_metadata(&self, model_id: &str) -> Option<&ModelMetadata> {
+        self.models.get(model_id)
     }
     
-    pub fn suggest_optimal_model(&self, _complexity: TaskComplexity) -> Option<&ModelMetadata> {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::suggest_optimal_model not yet implemented")
+    pub fn suggest_optimal_model(&self, complexity: TaskComplexity) -> Option<&ModelMetadata> {
+        let target_complexity = match complexity {
+            TaskComplexity::Low => "Low",
+            TaskComplexity::Medium => "Medium",
+            TaskComplexity::High => "High",
+        };
+        
+        // Find models matching the complexity level and pick the one with optimal parameters
+        let mut matching_models: Vec<_> = self.models.values()
+            .filter(|model| model.complexity_level == target_complexity)
+            .collect();
+            
+        if matching_models.is_empty() {
+            return None;
+        }
+        
+        // Sort by parameters and pick the middle one (or first if only one)
+        matching_models.sort_by_key(|model| model.parameters);
+        Some(matching_models[matching_models.len() / 2])
     }
     
-    pub fn list_models_by_complexity(&self, _complexity: TaskComplexity) -> Vec<&ModelMetadata> {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::list_models_by_complexity not yet implemented")
+    pub fn list_models_by_complexity(&self, complexity: TaskComplexity) -> Vec<&ModelMetadata> {
+        let target_complexity = match complexity {
+            TaskComplexity::Low => "Low",
+            TaskComplexity::Medium => "Medium", 
+            TaskComplexity::High => "High",
+        };
+        
+        self.models.values()
+            .filter(|model| model.complexity_level == target_complexity)
+            .collect()
     }
     
-    pub fn get_models_within_memory_limit(&self, _max_memory: u64) -> Vec<&ModelMetadata> {
-        // This will fail initially - part of TDD red phase
-        todo!("ModelRegistry::get_models_within_memory_limit not yet implemented")
+    pub fn get_models_within_memory_limit(&self, max_memory: u64) -> Vec<&ModelMetadata> {
+        self.models.values()
+            .filter(|model| model.memory_footprint <= max_memory)
+            .collect()
     }
 }
 
@@ -269,7 +331,7 @@ mod model_registry_tests {
             
             // Memory footprint should be reasonable relative to parameters
             let memory_per_param = model.memory_footprint as f64 / model.parameters as f64;
-            assert!(memory_per_param >= 1.0 && memory_per_param <= 10.0,
+            assert!((1.0..=10.0).contains(&memory_per_param),
                 "Memory per parameter should be reasonable (1-10 bytes per param)");
         }
     }

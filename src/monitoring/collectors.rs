@@ -426,7 +426,7 @@ impl SystemMetricsCollector {
                 total: 8 * 1024 * 1024 * 1024, // 8GB fallback
                 available: 4 * 1024 * 1024 * 1024, // 4GB fallback
                 swap_total: 2 * 1024 * 1024 * 1024, // 2GB fallback
-                swap_free: 1 * 1024 * 1024 * 1024, // 1GB fallback
+                swap_free: 1024 * 1024 * 1024, // 1GB fallback
             })
         }
     }

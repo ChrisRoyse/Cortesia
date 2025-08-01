@@ -82,13 +82,13 @@ impl DivergentThinking {
     
     /// Activate the seed concept as starting point
     async fn activate_seed_concept(&self, concept: &str) -> Result<ActivationPattern> {
-        let mut activation_pattern = ActivationPattern::new(format!("divergent_exploration_{}", concept));
+        let mut activation_pattern = ActivationPattern::new(format!("divergent_exploration_{concept}"));
         
         // Find entities matching the seed concept
         let matching_entities = self.find_concept_entities(concept).await?;
         
         if matching_entities.is_empty() {
-            return Err(GraphError::ProcessingError(format!("No entities found for seed concept: {}", concept)));
+            return Err(GraphError::ProcessingError(format!("No entities found for seed concept: {concept}")));
         }
         
         // Set initial high activation for seed entities
@@ -129,8 +129,8 @@ impl DivergentThinking {
                         let propagated_activation = activation * connection_weight * 0.8_f32.powi(depth as i32);
                         
                         if propagated_activation >= self.creativity_threshold {
-                            let current_activation = next_wave.get(&connected_key).unwrap_or(&0.0);
-                            next_wave.insert(connected_key, ((*current_activation) as f32).max(propagated_activation));
+                            let current_activation = next_wave.get(&connected_key).unwrap_or(&0.0f32);
+                            next_wave.insert(connected_key, current_activation.max(propagated_activation));
                             
                             exploration_map.add_edge(*entity_key, connected_key, relation_type, connection_weight);
                         }
@@ -449,7 +449,7 @@ impl DivergentThinking {
         
         // First pass: exact and substring matches
         for (key, _entity_data, _) in &all_entities {
-            let entity_concept = format!("entity_{:?}", key);
+            let entity_concept = format!("entity_{key:?}");
             let entity_norm = Self::normalize_concept(&entity_concept);
             
             if entity_norm == query_norm {
@@ -470,7 +470,7 @@ impl DivergentThinking {
             for (key, _entity_data, _) in &all_entities {
                 // Check if either query or entity concept contains the other as a word
                 let query_words: Vec<&str> = query_norm.split_whitespace().collect();
-                let entity_concept_lower = format!("entity_{:?}", key).to_lowercase();
+                let entity_concept_lower = format!("entity_{key:?}").to_lowercase();
                 let entity_words: Vec<&str> = entity_concept_lower.split_whitespace().collect();
                 
                 for query_word in &query_words {
@@ -497,7 +497,7 @@ impl DivergentThinking {
             .find(|(k, _, _)| k == &entity_key)
             .map(|(_, data, activation)| BrainInspiredEntity {
                 id: entity_key,
-                concept_id: format!("entity_{:?}", entity_key),
+                concept_id: format!("entity_{entity_key:?}"),
                 direction: EntityDirection::Input,
                 properties: HashMap::new(),
                 embedding: data.embedding.clone(),
@@ -662,7 +662,7 @@ impl DivergentThinking {
                 } else {
                     // Check for word-level matches
                     let entity_words: Vec<&str> = entity.split_whitespace().collect();
-                    if entity_words.iter().any(|&word| word == term) {
+                    if entity_words.contains(&term) {
                         0.9
                     } else {
                         0.0
@@ -678,7 +678,7 @@ impl DivergentThinking {
                 } else {
                     // Check for word-level matches
                     let query_words: Vec<&str> = query.split_whitespace().collect();
-                    if query_words.iter().any(|&word| word == term) {
+                    if query_words.contains(&term) {
                         0.9
                     } else {
                         0.0
@@ -900,7 +900,7 @@ impl CognitivePattern for DivergentThinking {
                     let mut info = HashMap::new();
                     info.insert("query".to_string(), query.to_string());
                     info.insert("pattern".to_string(), "divergent".to_string());
-                    info.insert("exploration_type".to_string(), format!("{:?}", exploration_type));
+                    info.insert("exploration_type".to_string(), format!("{exploration_type:?}"));
                     info.insert("paths_found".to_string(), result.total_paths_explored.to_string());
                     info
                 },
@@ -1288,7 +1288,7 @@ mod tests {
         let exploration_map = thinking.spread_activation(activation_pattern, ExplorationType::Instances).await;
         assert!(exploration_map.is_ok());
         
-        let map = exploration_map.unwrap();
+        let _map = exploration_map.unwrap();
         // The actual test logic depends on the implementation details
         // For now, we just verify the method can be called
     }
@@ -1313,7 +1313,7 @@ mod tests {
         let paths = thinking.graph_path_exploration(exploration_map).await;
         assert!(paths.is_ok());
         
-        let found_paths = paths.unwrap();
+        let _found_paths = paths.unwrap();
         // The actual test logic depends on the implementation details
         // For now, we just verify the method can be called
     }

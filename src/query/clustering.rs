@@ -223,8 +223,8 @@ impl LeidenClustering {
         let total_edges = adjacency.total_edges();
         
         // Modularity gain calculation
-        let gain = (edges_to_to - edges_to_from) as f64 / total_edges as f64
-            - resolution * node_degree as f64 * (to_comm.total_degree - from_comm.total_degree) as f64 / (2.0 * total_edges as f64).powi(2);
+        let gain = ((edges_to_to - edges_to_from)) / total_edges
+            - resolution * node_degree * ((to_comm.total_degree - from_comm.total_degree)) / (2.0 * total_edges).powi(2);
         
         Ok(gain)
     }
@@ -340,7 +340,7 @@ impl ClusterHierarchy {
     fn add_parent_child_relationship(&mut self, parent: u32, child: u32) {
         self.parent_child_relationships
             .entry(parent)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(child);
     }
 

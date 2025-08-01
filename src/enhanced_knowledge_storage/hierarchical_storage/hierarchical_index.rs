@@ -207,7 +207,7 @@ impl HierarchicalIndexManager {
                     matches.push(IndexMatch {
                         layer_id: layer.layer_id.clone(),
                         positions: vec![position],
-                        relevance_score: self.calculate_term_relevance(&token, layer),
+                        relevance_score: self.calculate_term_relevance(token, layer),
                         context_snippet,
                     });
                 }
@@ -249,7 +249,7 @@ impl HierarchicalIndexManager {
             let coherence_score = self.calculate_cluster_coherence(cluster_layers);
             
             let semantic_cluster = SemanticCluster {
-                cluster_id: format!("cluster_{}", cluster_id),
+                cluster_id: format!("cluster_{cluster_id}"),
                 center_embedding,
                 member_layer_ids: cluster_layers.iter().map(|l| l.layer_id.clone()).collect(),
                 cluster_label,

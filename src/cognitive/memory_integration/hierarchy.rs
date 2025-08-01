@@ -170,11 +170,10 @@ impl MemoryHierarchy {
     /// Check if consolidation should occur
     pub fn should_consolidate(&self, source_memory: &MemoryType, item_stats: &ItemStats) -> Option<ConsolidationRule> {
         for rule in &self.consolidation_rules {
-            if rule.source_memory == *source_memory {
-                if self.evaluate_consolidation_conditions(&rule.conditions, item_stats) {
+            if rule.source_memory == *source_memory
+                && self.evaluate_consolidation_conditions(&rule.conditions, item_stats) {
                     return Some(rule.clone());
                 }
-            }
         }
         None
     }

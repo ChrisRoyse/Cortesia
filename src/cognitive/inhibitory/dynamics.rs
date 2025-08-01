@@ -48,8 +48,8 @@ pub fn calculate_temporal_factor(dynamics: &TemporalDynamics, elapsed: Duration)
         0.0
     } else if elapsed_ms < peak_ms {
         // Rising phase
-        let progress = (elapsed_ms - onset_ms) / (peak_ms - onset_ms);
-        progress
+        
+        (elapsed_ms - onset_ms) / (peak_ms - onset_ms)
     } else if elapsed_ms < decay_ms {
         // Decay phase
         let progress = (elapsed_ms - peak_ms) / (decay_ms - peak_ms);

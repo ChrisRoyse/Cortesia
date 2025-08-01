@@ -298,7 +298,7 @@ fn detect_cross_pattern_conflicts(
     for inhibition in inhibitions {
         for entity in &inhibition.entities_affected {
             entity_patterns.entry(*entity)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(inhibition.pattern_type);
         }
     }
@@ -317,8 +317,7 @@ fn detect_cross_pattern_conflicts(
             
             if max_convergent - min_convergent > 0.5 {
                 conflicts.push(format!(
-                    "Conflicting inhibition for entity {:?} between patterns {:?}",
-                    entity, patterns
+                    "Conflicting inhibition for entity {entity:?} between patterns {patterns:?}"
                 ));
             }
         }

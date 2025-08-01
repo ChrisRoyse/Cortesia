@@ -127,7 +127,7 @@ impl BrainEnhancedKnowledgeGraph {
             let entity_data = crate::core::types::EntityData {
                 type_id: 1,
                 embedding: vec![0.5; self.embedding_dimension()],
-                properties: format!("{{\"id\": {}}}", source_id),
+                properties: format!("{{\"id\": {source_id}}}"),
             };
             self.insert_brain_entity(source_id, entity_data).await?
         };
@@ -139,7 +139,7 @@ impl BrainEnhancedKnowledgeGraph {
             let entity_data = crate::core::types::EntityData {
                 type_id: 1,
                 embedding: vec![0.5; self.embedding_dimension()],
-                properties: format!("{{\"id\": {}}}", target_id),
+                properties: format!("{{\"id\": {target_id}}}"),
             };
             self.insert_brain_entity(target_id, entity_data).await?
         };
@@ -635,7 +635,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Batch insert relationships
     pub async fn batch_insert_relationships(&self, relationships: &[crate::core::types::Relationship]) -> Result<()> {
         for relationship in relationships {
-            self.insert_brain_relationship(relationship.clone()).await?;
+            self.insert_brain_relationship(*relationship).await?;
         }
         Ok(())
     }
@@ -788,7 +788,7 @@ mod tests {
             let entity_data = EntityData {
                 type_id: 1,
                 embedding: vec![0.1 * (i as f32 + 1.0); 96],
-                properties: format!("{{\"name\": \"test_entity_{}\"}}", i),
+                properties: format!("{{\"name\": \"test_entity_{i}\"}}"),
             };
             
             let entity_key = graph.insert_brain_entity(i as u32, entity_data).await?;
@@ -1300,7 +1300,7 @@ mod tests {
         // Wait for all operations to complete
         for handle in handles {
             let result = handle.await.unwrap();
-            assert!(result >= 0.1 && result <= 0.6); // Should be within expected range
+            assert!((0.1..=0.6).contains(&result)); // Should be within expected range
         }
     }
 

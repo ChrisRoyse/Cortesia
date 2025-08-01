@@ -50,6 +50,7 @@ pub struct SystemMetrics {
 
 /// User interaction metrics
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct UserInteractionMetrics {
     pub session_durations: Vec<Duration>,
     pub user_satisfaction_scores: Vec<f32>,
@@ -278,6 +279,7 @@ pub struct EmergencyContext {
 
 /// Collected metrics structure
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct MetricsCollector {
     pub query_metrics: QueryMetrics,
     pub cognitive_metrics: CognitiveMetrics,
@@ -399,25 +401,4 @@ impl Default for SystemMetrics {
     }
 }
 
-impl Default for UserInteractionMetrics {
-    fn default() -> Self {
-        Self {
-            session_durations: Vec::new(),
-            user_satisfaction_scores: Vec::new(),
-            task_completion_rates: Vec::new(),
-            feedback_sentiment: Vec::new(),
-            repeat_usage_patterns: HashMap::new(),
-        }
-    }
-}
 
-impl Default for MetricsCollector {
-    fn default() -> Self {
-        Self {
-            query_metrics: QueryMetrics::default(),
-            cognitive_metrics: CognitiveMetrics::default(),
-            system_metrics: SystemMetrics::default(),
-            user_interaction_metrics: UserInteractionMetrics::default(),
-        }
-    }
-}

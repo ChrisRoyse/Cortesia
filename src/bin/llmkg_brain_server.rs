@@ -8,7 +8,6 @@ use llmkg::monitoring::BrainMetricsCollector;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tokio;
 use rand::Rng;
 use rand::prelude::SliceRandom;
 use rand::SeedableRng;
@@ -32,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for i in 0..20 {
             let entity_data = llmkg::core::types::EntityData {
                 type_id: 1,
-                properties: format!("{{\"name\": \"Entity {}\", \"index\": {}}}", i, i),
+                properties: format!("{{\"name\": \"Entity {i}\", \"index\": {i}}}"),
                 embedding: vec![rng.gen::<f32>(); 384],
             };
             
@@ -42,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // Set random activation levels
                     graph.set_entity_activation(entity_key, rng.gen::<f32>()).await;
                 },
-                Err(e) => eprintln!("Warning: Failed to add entity {}: {}", i, e),
+                Err(e) => eprintln!("Warning: Failed to add entity {i}: {e}"),
             }
         }
         
@@ -55,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let target = keys[target_idx];
                 
                 if let Err(e) = graph.core_graph.add_relationship(source, target, rng.gen::<f32>()) {
-                    eprintln!("Warning: Failed to add relationship: {}", e);
+                    eprintln!("Warning: Failed to add relationship: {e}");
                 }
                 
                 // Set synaptic weights
@@ -95,17 +94,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Analyze codebase and discover endpoints
     println!("Analyzing codebase...");
     if let Err(e) = codebase_analyzer.analyze_codebase().await {
-        eprintln!("Warning: Failed to analyze codebase: {}", e);
+        eprintln!("Warning: Failed to analyze codebase: {e}");
     }
     
     println!("Discovering API endpoints...");
     if let Err(e) = api_monitor.discover_endpoints() {
-        eprintln!("Warning: Failed to discover API endpoints: {}", e);
+        eprintln!("Warning: Failed to discover API endpoints: {e}");
     }
     
     println!("Discovering test suites...");
     if let Err(e) = test_tracker.discover_test_suites().await {
-        eprintln!("Warning: Failed to discover test suites: {}", e);
+        eprintln!("Warning: Failed to discover test suites: {e}");
     }
 
     // Create collectors including brain metrics and enhanced collectors
@@ -165,7 +164,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Ok(entity_key) = graph.core_graph.add_entity(entity_data) {
                         // Set initial activation
                         graph.set_entity_activation(entity_key, rng.gen::<f32>()).await;
-                        println!("🧠 Added new entity: {:?}", entity_key);
+                        println!("🧠 Added new entity: {entity_key:?}");
                     }
                 }
                 
@@ -193,7 +192,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let weight = rng.gen::<f32>();
                         let _ = graph.core_graph.add_relationship(*source, *target, weight);
                         graph.set_synaptic_weight(*source, *target, weight).await;
-                        println!("🔗 Added relationship: {:?} -> {:?} (weight: {:.3})", source, target, weight);
+                        println!("🔗 Added relationship: {source:?} -> {target:?} (weight: {weight:.3})");
                     }
                 }
             }

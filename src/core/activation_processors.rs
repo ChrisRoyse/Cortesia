@@ -66,7 +66,7 @@ impl ActivationProcessors {
                 trace.push(ActivationStep {
                     step_id: trace.len(),
                     entity_key: *entity_key,
-                    concept_id: format!("entity_{:?}", entity_key),
+                    concept_id: format!("entity_{entity_key:?}"),
                     activation_level: new_activation,
                     operation_type: ActivationOperation::Propagate,
                     timestamp: std::time::SystemTime::now(),
@@ -110,7 +110,7 @@ impl ActivationProcessors {
             trace.push(ActivationStep {
                 step_id: trace.len(),
                 entity_key: *gate_key,
-                concept_id: format!("gate_{:?}", gate_key),
+                concept_id: format!("gate_{gate_key:?}"),
                 activation_level: gate_output,
                 operation_type: ActivationOperation::Propagate,
                 timestamp: std::time::SystemTime::now(),
@@ -128,7 +128,7 @@ impl ActivationProcessors {
                         trace.push(ActivationStep {
                             step_id: trace.len(),
                             entity_key: *output_node,
-                            concept_id: format!("output_{:?}", output_node),
+                            concept_id: format!("output_{output_node:?}"),
                             activation_level: new_activation,
                             operation_type: ActivationOperation::Propagate,
                             timestamp: std::time::SystemTime::now(),
@@ -188,7 +188,7 @@ impl ActivationProcessors {
                             trace.push(ActivationStep {
                                 step_id: trace.len(),
                                 entity_key: *target,
-                                concept_id: format!("inhibited_{:?}", target),
+                                concept_id: format!("inhibited_{target:?}"),
                                 activation_level: new_target_activation,
                                 operation_type: ActivationOperation::Inhibit,
                                 timestamp: std::time::SystemTime::now(),

@@ -180,7 +180,7 @@ impl IncrementalTemporalProcessor {
             match Self::process_single_update(update, graph).await {
                 Ok(_) => successful += 1,
                 Err(e) => {
-                    eprintln!("Failed to process update: {:?}", e);
+                    eprintln!("Failed to process update: {e:?}");
                     failed += 1;
                 }
             }

@@ -302,7 +302,7 @@ impl TemporalQueryEngine {
 
     fn generate_cache_key(&self, query: &TemporalQuery) -> String {
         // Generate a unique key for the query
-        format!("{:?}", query) // Simplified
+        format!("{query:?}") // Simplified
     }
 
     async fn get_from_cache(&self, cache_key: &str) -> Option<TemporalResult> {

@@ -12,6 +12,12 @@ pub struct AdvancedEntityExtractor {
     relation_extractor: RelationExtractor,
 }
 
+impl Default for AdvancedEntityExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AdvancedEntityExtractor {
     pub fn new() -> Self {
         let mut ner_models = HashMap::new();
@@ -422,6 +428,12 @@ pub struct CoreferenceResolver {
     pronoun_patterns: Vec<Regex>,
 }
 
+impl Default for CoreferenceResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CoreferenceResolver {
     pub fn new() -> Self {
         let pronoun_patterns = vec![
@@ -439,7 +451,7 @@ impl CoreferenceResolver {
     pub async fn resolve(&self, text: &str) -> Result<String> {
         // Simple coreference resolution using basic rules
         let mut resolved = text.to_string();
-        let sentences: Vec<&str> = text.split(|c| c == '.' || c == '!' || c == '?').collect();
+        let sentences: Vec<&str> = text.split(['.', '!', '?']).collect();
         
         // Track entities mentioned in previous sentences
         let mut recent_entities: Vec<(String, String)> = Vec::new(); // (entity, gender/type)
@@ -453,7 +465,7 @@ impl CoreferenceResolver {
             // Extract potential entity mentions (simple heuristic: capitalized words)
             let words: Vec<&str> = sentence.split_whitespace().collect();
             for word in &words {
-                if word.chars().next().map_or(false, |c| c.is_uppercase()) && word.len() > 2 {
+                if word.chars().next().is_some_and(|c| c.is_uppercase()) && word.len() > 2 {
                     // Simple gender/type detection
                     let entity_type = if sentence.contains("she") || sentence.contains("her") {
                         "female"
@@ -483,24 +495,24 @@ impl CoreferenceResolver {
                     match entity_type.as_str() {
                         "male" => {
                             sentence_resolved = sentence_resolved
-                                .replace(" he ", &format!(" {} ", entity))
-                                .replace(" He ", &format!(" {} ", entity))
-                                .replace(" his ", &format!(" {}'s ", entity))
-                                .replace(" His ", &format!(" {}'s ", entity));
+                                .replace(" he ", &format!(" {entity} "))
+                                .replace(" He ", &format!(" {entity} "))
+                                .replace(" his ", &format!(" {entity}'s "))
+                                .replace(" His ", &format!(" {entity}'s "));
                         }
                         "female" => {
                             sentence_resolved = sentence_resolved
-                                .replace(" she ", &format!(" {} ", entity))
-                                .replace(" She ", &format!(" {} ", entity))
-                                .replace(" her ", &format!(" {}'s ", entity))
-                                .replace(" Her ", &format!(" {}'s ", entity));
+                                .replace(" she ", &format!(" {entity} "))
+                                .replace(" She ", &format!(" {entity} "))
+                                .replace(" her ", &format!(" {entity}'s "))
+                                .replace(" Her ", &format!(" {entity}'s "));
                         }
                         "thing" => {
                             sentence_resolved = sentence_resolved
-                                .replace(" it ", &format!(" {} ", entity))
-                                .replace(" It ", &format!(" {} ", entity))
-                                .replace(" its ", &format!(" {}'s ", entity))
-                                .replace(" Its ", &format!(" {}'s ", entity));
+                                .replace(" it ", &format!(" {entity} "))
+                                .replace(" It ", &format!(" {entity} "))
+                                .replace(" its ", &format!(" {entity}'s "))
+                                .replace(" Its ", &format!(" {entity}'s "));
                         }
                         _ => {}
                     }

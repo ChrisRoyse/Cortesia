@@ -70,7 +70,7 @@ pub fn create_test_entity_keys(count: usize) -> Vec<EntityKey> {
     for i in 0..count {
         let key = sm.insert(EntityData::new(
             i as u16 + 1,
-            format!("test_entity_{}", i),
+            format!("test_entity_{i}"),
             vec![i as f32 / 100.0; 4],
         ));
         keys.push(key);

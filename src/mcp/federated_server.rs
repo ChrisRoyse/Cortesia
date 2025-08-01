@@ -540,7 +540,7 @@ impl FederatedMCPServer {
             &query,
             threshold,
             max_results,
-        ).await.map_err(|e| format!("Similarity search failed: {}", e))?;
+        ).await.map_err(|e| format!("Similarity search failed: {e}"))?;
         
         // Format results
         let results_count = results.len();
@@ -560,7 +560,7 @@ impl FederatedMCPServer {
         
         Ok((
             response,
-            format!("Found {} similar entities across databases", results_count),
+            format!("Found {results_count} similar entities across databases"),
             vec![
                 "Results are ranked by similarity score".to_string(),
                 "Use threshold to filter results".to_string(),

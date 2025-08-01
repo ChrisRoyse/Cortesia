@@ -687,7 +687,7 @@ impl IntelligentKnowledgeProcessor {
             hasher.finish()
         };
         
-        format!("doc_{}_{:x}", timestamp, title_hash)
+        format!("doc_{timestamp}_{title_hash:x}")
     }
     
     /// Deduplicate entities by name and type
@@ -869,7 +869,7 @@ impl IntelligentKnowledgeProcessor {
             .count();
         
         if low_confidence_entities > 0 {
-            validation_warnings.push(format!("{} entities below confidence threshold", low_confidence_entities));
+            validation_warnings.push(format!("{low_confidence_entities} entities below confidence threshold"));
         }
         
         // Check relationship quality
@@ -879,7 +879,7 @@ impl IntelligentKnowledgeProcessor {
             .count();
         
         if low_confidence_relationships > 0 {
-            validation_warnings.push(format!("{} relationships below confidence threshold", low_confidence_relationships));
+            validation_warnings.push(format!("{low_confidence_relationships} relationships below confidence threshold"));
         }
         
         // Check overall quality

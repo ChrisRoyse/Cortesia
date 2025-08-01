@@ -85,60 +85,55 @@ impl PrometheusExporter {
             match sample.value {
                 MetricValue::Counter(value) => {
                     output.push_str(&format!(
-                        "# TYPE {} counter\n{}{} {}\n",
-                        metric_name, metric_name, labels, value
+                        "# TYPE {metric_name} counter\n{metric_name}{labels} {value}\n"
                     ));
                 }
                 MetricValue::Gauge(value) => {
                     output.push_str(&format!(
-                        "# TYPE {} gauge\n{}{} {}\n",
-                        metric_name, metric_name, labels, value
+                        "# TYPE {metric_name} gauge\n{metric_name}{labels} {value}\n"
                     ));
                 }
                 MetricValue::Histogram { count, sum, buckets } => {
-                    output.push_str(&format!("# TYPE {} histogram\n", metric_name));
+                    output.push_str(&format!("# TYPE {metric_name} histogram\n"));
                     
                     // Histogram buckets
                     for (upper_bound, bucket_count) in buckets {
                         let bucket_labels = self.format_histogram_bucket_labels(&sample.labels, upper_bound);
                         output.push_str(&format!(
-                            "{}_bucket{} {}\n",
-                            metric_name, bucket_labels, bucket_count
+                            "{metric_name}_bucket{bucket_labels} {bucket_count}\n"
                         ));
                     }
                     
                     // Histogram count and sum
-                    output.push_str(&format!("{}_count{} {}\n", metric_name, labels, count));
-                    output.push_str(&format!("{}_sum{} {}\n", metric_name, labels, sum));
+                    output.push_str(&format!("{metric_name}_count{labels} {count}\n"));
+                    output.push_str(&format!("{metric_name}_sum{labels} {sum}\n"));
                 }
                 MetricValue::Timer { count, sum_duration_ms, percentiles, .. } => {
-                    output.push_str(&format!("# TYPE {} histogram\n", metric_name));
+                    output.push_str(&format!("# TYPE {metric_name} histogram\n"));
                     
                     // Timer percentiles as gauges
                     for (percentile_name, value) in percentiles {
                         let percentile_labels = self.format_percentile_labels(&sample.labels, &percentile_name);
                         output.push_str(&format!(
-                            "{}_percentile{} {}\n",
-                            metric_name, percentile_labels, value
+                            "{metric_name}_percentile{percentile_labels} {value}\n"
                         ));
                     }
                     
-                    output.push_str(&format!("{}_count{} {}\n", metric_name, labels, count));
-                    output.push_str(&format!("{}_sum{} {}\n", metric_name, labels, sum_duration_ms));
+                    output.push_str(&format!("{metric_name}_count{labels} {count}\n"));
+                    output.push_str(&format!("{metric_name}_sum{labels} {sum_duration_ms}\n"));
                 }
                 MetricValue::Summary { count, sum, quantiles } => {
-                    output.push_str(&format!("# TYPE {} summary\n", metric_name));
+                    output.push_str(&format!("# TYPE {metric_name} summary\n"));
                     
                     for (quantile_name, value) in quantiles {
                         let quantile_labels = self.format_quantile_labels(&sample.labels, &quantile_name);
                         output.push_str(&format!(
-                            "{}{} {}\n",
-                            metric_name, quantile_labels, value
+                            "{metric_name}{quantile_labels} {value}\n"
                         ));
                     }
                     
-                    output.push_str(&format!("{}_count{} {}\n", metric_name, labels, count));
-                    output.push_str(&format!("{}_sum{} {}\n", metric_name, labels, sum));
+                    output.push_str(&format!("{metric_name}_count{labels} {count}\n"));
+                    output.push_str(&format!("{metric_name}_sum{labels} {sum}\n"));
                 }
             }
         }
@@ -165,11 +160,11 @@ impl PrometheusExporter {
         
         let label_string = label_pairs
             .iter()
-            .map(|(k, v)| format!("{}=\"{}\"", k, v))
+            .map(|(k, v)| format!("{k}=\"{v}\""))
             .collect::<Vec<_>>()
             .join(",");
         
-        format!("{{{}}}", label_string)
+        format!("{{{label_string}}}")
     }
     
     fn format_histogram_bucket_labels(&self, labels: &HashMap<String, String>, upper_bound: f64) -> String {
@@ -290,9 +285,9 @@ impl InfluxDBExporter {
             
             if !fields.is_empty() {
                 let line = if tags.is_empty() {
-                    format!("{} {} {}", measurement, fields, timestamp)
+                    format!("{measurement} {fields} {timestamp}")
                 } else {
-                    format!("{},{} {} {}", measurement, tags, fields, timestamp)
+                    format!("{measurement},{tags} {fields} {timestamp}")
                 };
                 lines.push(line);
             }
@@ -322,10 +317,10 @@ impl InfluxDBExporter {
     
     fn format_fields(&self, value: &MetricValue) -> String {
         match value {
-            MetricValue::Counter(val) => format!("value={}i", val),
-            MetricValue::Gauge(val) => format!("value={}", val),
+            MetricValue::Counter(val) => format!("value={val}i"),
+            MetricValue::Gauge(val) => format!("value={val}"),
             MetricValue::Histogram { count, sum, .. } => {
-                format!("count={}i,sum={}", count, sum)
+                format!("count={count}i,sum={sum}")
             }
             MetricValue::Timer { count, sum_duration_ms, min_ms, max_ms, percentiles } => {
                 let mut fields = vec![
@@ -336,7 +331,7 @@ impl InfluxDBExporter {
                 ];
                 
                 for (percentile, value) in percentiles {
-                    fields.push(format!("{}={}", percentile, value));
+                    fields.push(format!("{percentile}={value}"));
                 }
                 
                 fields.join(",")
@@ -348,7 +343,7 @@ impl InfluxDBExporter {
                 ];
                 
                 for (quantile, value) in quantiles {
-                    fields.push(format!("{}={}", quantile, value));
+                    fields.push(format!("{quantile}={value}"));
                 }
                 
                 fields.join(",")
@@ -377,7 +372,7 @@ impl MetricsExporter for InfluxDBExporter {
         );
         
         if let Some(ref rp) = self.config.retention_policy {
-            url.push_str(&format!("&rp={}", rp));
+            url.push_str(&format!("&rp={rp}"));
         }
         
         let mut request = self.client.post(&url)
@@ -501,9 +496,9 @@ impl MetricsExporter for JsonExporter {
         };
         
         if self.config.append_mode {
-            writeln!(file, "{}", json_str)?;
+            writeln!(file, "{json_str}")?;
         } else {
-            write!(file, "{}", json_str)?;
+            write!(file, "{json_str}")?;
         }
         
         file.flush()?;
@@ -521,7 +516,7 @@ impl MetricsExporter for JsonExporter {
         // Test if we can write to the output file
         OpenOptions::new()
             .create(true)
-            .write(true)
+            
             .append(true)
             .open(&self.config.output_file)
             .is_ok()
@@ -547,7 +542,7 @@ impl MultiExporter {
     
     pub async fn start_background_export(&self, registry: Arc<MetricRegistry>) {
         let exporters: Vec<_> = self.exporters.iter().map(|e| e.name().to_string()).collect();
-        println!("Starting background metrics export with exporters: {:?}", exporters);
+        println!("Starting background metrics export with exporters: {exporters:?}");
         
         let mut interval = interval(self.export_config.export_interval);
         let batch_size = self.export_config.batch_size;
@@ -568,10 +563,10 @@ impl MultiExporter {
                         let exporter_name = exporter.name();
                         match exporter.export(samples_clone).await {
                             Ok(_) => {
-                                println!("Successfully exported metrics to {}", exporter_name);
+                                println!("Successfully exported metrics to {exporter_name}");
                             }
                             Err(e) => {
-                                eprintln!("Failed to export metrics to {}: {}", exporter_name, e);
+                                eprintln!("Failed to export metrics to {exporter_name}: {e}");
                             }
                         }
                     }

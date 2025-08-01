@@ -197,12 +197,12 @@ impl SemanticSummarizer {
         text.push_str("Key Features:\n");
         for feature in &summary.key_features {
             let value_desc = match &feature.value {
-                FeatureValue::Category(cat) => format!("Category {}", cat),
+                FeatureValue::Category(cat) => format!("Category {cat}"),
                 FeatureValue::Numeric { value, range_hint } => {
                     if let Some((min, max)) = range_hint {
-                        format!("Numeric: {:.3} (range: {:.2}-{:.2})", value, min, max)
+                        format!("Numeric: {value:.3} (range: {min:.2}-{max:.2})")
                     } else {
-                        format!("Numeric: {:.3}", value)
+                        format!("Numeric: {value:.3}")
                     }
                 },
                 FeatureValue::TextSummary { key_terms, sentiment, length_category } => {
@@ -210,7 +210,7 @@ impl SemanticSummarizer {
                            key_terms.len(), sentiment, length_category)
                 },
                 FeatureValue::Temporal { timestamp, duration_hint } => {
-                    format!("Time: {}, duration: {:?}", timestamp, duration_hint)
+                    format!("Time: {timestamp}, duration: {duration_hint:?}")
                 },
             };
             text.push_str(&format!("  - Feature {}: {} (importance: {:.2})\n", 
@@ -1109,7 +1109,7 @@ mod tests {
         
         // Verify they can be debug formatted (used in to_llm_text)
         for context_type in types {
-            let debug_str = format!("{:?}", context_type);
+            let debug_str = format!("{context_type:?}");
             assert!(!debug_str.is_empty());
         }
     }

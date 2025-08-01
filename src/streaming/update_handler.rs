@@ -175,7 +175,7 @@ impl StreamingUpdateHandler {
         let success = result.is_ok();
         
         if let Err(e) = result {
-            eprintln!("ERROR: Failed to insert triple: {}", e);
+            eprintln!("ERROR: Failed to insert triple: {e}");
         }
         
         Ok(UpdateResult {
@@ -222,7 +222,7 @@ impl StreamingUpdateHandler {
         let success = result.is_ok();
         
         if let Err(e) = result {
-            eprintln!("ERROR: Failed to update triple: {}", e);
+            eprintln!("ERROR: Failed to update triple: {e}");
         }
         
         Ok(UpdateResult {

@@ -24,7 +24,7 @@ impl PerformanceMode {
             "standard" => Ok(PerformanceMode::Standard),
             "simd" => Ok(PerformanceMode::Simd),
             "lsh" => Ok(PerformanceMode::Lsh),
-            _ => Err(format!("Invalid performance_mode: {}. Must be one of: standard, simd, lsh", s))
+            _ => Err(format!("Invalid performance_mode: {s}. Must be one of: standard, simd, lsh"))
         }
     }
 }
@@ -178,19 +178,19 @@ async fn execute_standard_search(
     
     // Perform different types of searches
     let semantic_results = if ["semantic", "hybrid"].contains(&search_type) {
-        perform_semantic_search(&*engine, query, limit).await?
+        perform_semantic_search(&engine, query, limit).await?
     } else {
         vec![]
     };
     
     let structural_results = if ["structural", "hybrid"].contains(&search_type) {
-        perform_structural_search(&*engine, query, limit).await?
+        perform_structural_search(&engine, query, limit).await?
     } else {
         vec![]
     };
     
     let keyword_results = if ["keyword", "hybrid"].contains(&search_type) {
-        perform_keyword_search(&*engine, query, limit).await?
+        perform_keyword_search(&engine, query, limit).await?
     } else {
         vec![]
     };

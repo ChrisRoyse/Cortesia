@@ -273,6 +273,12 @@ pub struct ZeroCopySerializer {
     variable_data_buffer: Vec<u8>,
 }
 
+impl Default for ZeroCopySerializer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ZeroCopySerializer {
     pub fn new() -> Self {
         Self {
@@ -459,7 +465,7 @@ impl ZeroCopyGraphStorage {
     }
 
     /// Fast entity iteration with zero allocation
-    pub fn iter_entities(&self) -> impl Iterator<Item = &ZeroCopyEntity> + ExactSizeIterator {
+    pub fn iter_entities(&self) -> impl ExactSizeIterator<Item = &ZeroCopyEntity> {
         self.deserializer.as_ref().unwrap().iter_entities()
     }
 
@@ -483,6 +489,12 @@ pub struct ZeroCopyMetrics {
     pub entities_processed: u32,
     pub relationships_processed: u32,
     pub compression_ratio: f32,
+}
+
+impl Default for ZeroCopyMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ZeroCopyMetrics {
@@ -565,7 +577,7 @@ mod tests {
         for i in 0..1000 {
             let entity = EntityData {
                 type_id: i as u16,
-                properties: format!("entity_{}", i),
+                properties: format!("entity_{i}"),
                 embedding: vec![i as f32; 96],
             };
             serializer.add_entity(&entity, 96).unwrap();

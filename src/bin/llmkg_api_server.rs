@@ -6,7 +6,7 @@ use tracing::{info, error};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging
     if let Err(e) = logging::init_logging() {
-        eprintln!("Failed to initialize logging: {}", e);
+        eprintln!("Failed to initialize logging: {e}");
         std::process::exit(1);
     }
     

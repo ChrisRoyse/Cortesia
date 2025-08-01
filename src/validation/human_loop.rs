@@ -255,7 +255,7 @@ impl HumanValidationInterface {
     }
 
     fn generate_task_id(&self) -> String {
-        format!("val_{}", uuid::Uuid::new_v4().to_string())
+        format!("val_{}", uuid::Uuid::new_v4())
     }
 }
 
@@ -265,6 +265,12 @@ pub struct ValidationQueue {
     max_size: usize,
     pub total_processed: u64,
     pub avg_processing_time: f64,
+}
+
+impl Default for ValidationQueue {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ValidationQueue {

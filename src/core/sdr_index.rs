@@ -28,7 +28,7 @@ impl SimilarityIndex {
         for bit in active_bits {
             self.bit_to_patterns
                 .entry(bit)
-                .or_insert_with(HashSet::new)
+                .or_default()
                 .insert(pattern_id.clone());
         }
 

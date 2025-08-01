@@ -24,7 +24,7 @@ impl EnhancedConvergentThinking {
         let start_time = Instant::now();
         
         // Basic graph-only query processing
-        let answer = format!("Graph result for: {}", query);
+        let answer = format!("Graph result for: {query}");
         
         Ok(ConvergentResult {
             answer,

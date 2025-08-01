@@ -206,7 +206,7 @@ impl CompetitiveInhibitionSystem {
         }
         
         Ok(InhibitionChange {
-            competition_group: format!("entities_{:?}_{:?}", entity_a, entity_b),
+            competition_group: format!("entities_{entity_a:?}_{entity_b:?}"),
             entities_affected: vec![entity_a, entity_b],
             strength_change,
             change_reason: InhibitionChangeReason::LearningAdjustment,

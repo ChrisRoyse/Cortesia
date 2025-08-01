@@ -18,7 +18,7 @@ pub struct Entity {
 impl Entity {
     pub fn new(key: EntityKey, name: String) -> Self {
         Self {
-            id: format!("entity_{:?}", key),
+            id: format!("entity_{key:?}"),
             name,
             entity_type: String::new(),
             attributes: HashMap::new(),
@@ -179,7 +179,7 @@ impl EntityKey {
     
     
     pub fn id(&self) -> String {
-        format!("{:?}", self)
+        format!("{self:?}")
     }
     
     pub fn from_id(id: String) -> Self {
@@ -189,7 +189,7 @@ impl EntityKey {
     pub fn get_original_id(&self) -> Option<String> {
         // For tests, we'll try to extract meaningful parts from the debug representation
         // This is a best-effort approach for test compatibility
-        let debug_str = format!("{:?}", self);
+        let debug_str = format!("{self:?}");
         
         // Try to match against known test patterns
         if debug_str.contains("visual_pattern") {
@@ -243,7 +243,7 @@ mod tests {
         assert_eq!(entity.key(), key);
         assert_eq!(entity.entity_type(), "");
         assert!(entity.attributes().is_empty());
-        assert_eq!(entity.id(), &format!("entity_{:?}", key));
+        assert_eq!(entity.id(), &format!("entity_{key:?}"));
     }
 
     #[test]
@@ -326,7 +326,7 @@ mod tests {
         
         // Create a large attribute map
         for i in 0..1000 {
-            attributes.insert(format!("key{}", i), format!("value{}", i));
+            attributes.insert(format!("key{i}"), format!("value{i}"));
         }
         
         let entity = Entity::with_attributes(id.clone(), entity_type.clone(), attributes.clone());
@@ -462,7 +462,7 @@ mod tests {
         let mut attributes = HashMap::new();
         
         for i in 0..1000 {
-            attributes.insert(format!("attr{}", i), format!("value{}", i));
+            attributes.insert(format!("attr{i}"), format!("value{i}"));
         }
         
         let relationship = Relationship::new(rel_type.clone(), attributes.clone());
@@ -628,7 +628,7 @@ mod tests {
         
         for pattern in patterns {
             let key = EntityKey::from_hash(pattern);
-            let original = key.get_original_id();
+            let _original = key.get_original_id();
             // For known patterns, should return something
             // Note: This test might fail due to hash collisions, but it's worth testing
         }

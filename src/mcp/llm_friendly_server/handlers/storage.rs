@@ -49,7 +49,7 @@ pub async fn handle_store_fact(
         object.to_string(),
         confidence,
         Some("user_input".to_string()),
-    ).map_err(|e| format!("Failed to create triple: {}", e))?;
+    ).map_err(|e| format!("Failed to create triple: {e}"))?;
     
     // Check if this triple already exists (for update vs create detection)
     let existing_query = TripleQuery {
@@ -82,7 +82,7 @@ pub async fn handle_store_fact(
     // Store the triple
     let engine = knowledge_engine.write().await;
     let node_id = engine.store_triple(triple.clone(), None)
-        .map_err(|e| format!("Failed to store triple: {}", e))?;
+        .map_err(|e| format!("Failed to store triple: {e}"))?;
     drop(engine);
     
     // Record in temporal index
@@ -100,7 +100,7 @@ pub async fn handle_store_fact(
         "confidence": confidence
     });
     
-    let message = format!("Stored fact: {} {} {}", subject, predicate, object);
+    let message = format!("Stored fact: {subject} {predicate} {object}");
     let suggestions = vec![
         format!("Explore connections with: explore_connections(start_entity=\"{}\")", subject),
         format!("Find related facts with: find_facts(subject=\"{}\")", subject),
@@ -159,7 +159,7 @@ async fn handle_store_knowledge_fallback(
         chunk_id.clone(),
         "is".to_string(),
         "knowledge_chunk".to_string(),
-    ).map_err(|e| format!("Failed to create chunk triple: {}", e))?;
+    ).map_err(|e| format!("Failed to create chunk triple: {e}"))?;
     
     let mut stored_count = 0;
     
@@ -230,7 +230,7 @@ fn extract_entities_from_text(text: &str) -> Vec<String> {
     
     // Simple extraction: capitalized words likely to be entities
     for word in text.split_whitespace() {
-        if word.len() > 2 && word.chars().next().map_or(false, |c| c.is_uppercase()) {
+        if word.len() > 2 && word.chars().next().is_some_and(|c| c.is_uppercase()) {
             let clean_word = word.trim_matches(|c: char| !c.is_alphanumeric());
             if !clean_word.is_empty() && !is_common_word(clean_word) {
                 entities.push(clean_word.to_string());

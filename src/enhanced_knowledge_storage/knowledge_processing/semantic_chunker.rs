@@ -113,8 +113,7 @@ Return as JSON with this format:
 Document to analyze:
 {text}
 
-JSON Response:"#,
-            text = text
+JSON Response:"#
         );
         
         let task = ProcessingTask::new(ComplexityLevel::Medium, &prompt);
@@ -133,7 +132,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let overall_topic = parsed["overall_topic"].as_str().map(|s| s.to_string());
         
@@ -278,7 +277,7 @@ JSON Response:"#,
         let json_str = &response[json_start..json_end];
         
         let parsed: serde_json::Value = serde_json::from_str(json_str)
-            .map_err(|e| KnowledgeProcessingError::JsonError(e))?;
+            .map_err(KnowledgeProcessingError::JsonError)?;
         
         let mut boundaries = Vec::new();
         
@@ -361,7 +360,7 @@ JSON Response:"#,
             
             // Create semantic chunk
             let chunk = SemanticChunk {
-                id: format!("chunk_{}", i),
+                id: format!("chunk_{i}"),
                 content,
                 start_pos,
                 end_pos: actual_end_pos,
@@ -593,13 +592,11 @@ mod tests {
     
     #[test]
     fn test_boundary_type_parsing() {
-        assert_eq!(
-            matches!(BoundaryType::TopicShift, BoundaryType::TopicShift),
-            true
+        assert!(
+            matches!(BoundaryType::TopicShift, BoundaryType::TopicShift)
         );
-        assert_eq!(
-            matches!(BoundaryType::SentenceEnd, BoundaryType::SentenceEnd),
-            true
+        assert!(
+            matches!(BoundaryType::SentenceEnd, BoundaryType::SentenceEnd)
         );
     }
 }

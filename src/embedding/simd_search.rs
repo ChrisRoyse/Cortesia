@@ -74,7 +74,7 @@ impl SIMDSimilaritySearch {
             
             // Accumulate distances for each subvector
             for m in 0..self.subvector_count {
-                let subvec_distances;
+                
                 
                 // Load 8 codes for this subvector
                 let codes: [u8; 8] = [
@@ -101,7 +101,7 @@ impl SIMDSimilaritySearch {
                     self.distance_table[table_base + codes[7] as usize],
                 ];
                 
-                subvec_distances = _mm256_loadu_ps(gathered_distances.as_ptr());
+                let subvec_distances = _mm256_loadu_ps(gathered_distances.as_ptr());
                 distances = _mm256_add_ps(distances, subvec_distances);
             }
             

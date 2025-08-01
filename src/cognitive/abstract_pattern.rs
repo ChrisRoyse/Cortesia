@@ -228,7 +228,7 @@ impl AbstractThinking {
         let stats = self.graph.get_brain_statistics().await?;
         
         // Get relationship counts by type
-        let most_common_types;
+        
         
         // Count relationships by analyzing all entity connections
         let mut type_counts = std::collections::HashMap::new();
@@ -248,12 +248,12 @@ impl AbstractThinking {
         sorted_types.sort_by(|a, b| b.1.cmp(&a.1));
         
         // Debug output
-        println!("DEBUG: Analyzed {} entity neighbors", type_count_len);
+        println!("DEBUG: Analyzed {type_count_len} entity neighbors");
         for (rel_type, count) in &sorted_types {
-            println!("  {}: {}", rel_type, count);
+            println!("  {rel_type}: {count}");
         }
         
-        most_common_types = sorted_types.into_iter().map(|(t, _)| t).collect();
+        let most_common_types = sorted_types.into_iter().map(|(t, _)| t).collect();
         
         // Calculate average connections per entity
         let avg_connections = if stats.entity_count > 0 {
@@ -316,8 +316,8 @@ impl AbstractThinking {
         for relationship_type in &data.relationship_frequency.most_common_types {
             if relationship_type == "is_a" {
                 patterns.push(DetectedPattern {
-                    pattern_id: format!("is_a_hierarchy_pattern"),
-                    id: format!("is_a_hierarchy_pattern"),
+                    pattern_id: "is_a_hierarchy_pattern".to_string(),
+                    id: "is_a_hierarchy_pattern".to_string(),
                     pattern_type: PatternType::Structural,
                     description: "Hierarchical is_a relationship pattern detected".to_string(),
                     confidence: 0.9,
@@ -329,8 +329,8 @@ impl AbstractThinking {
             
             if relationship_type == "has_property" {
                 patterns.push(DetectedPattern {
-                    pattern_id: format!("has_property_pattern"),
-                    id: format!("has_property_pattern"),
+                    pattern_id: "has_property_pattern".to_string(),
+                    id: "has_property_pattern".to_string(),
                     pattern_type: PatternType::Structural,
                     description: "Property assignment pattern detected".to_string(),
                     confidence: 0.85,
@@ -648,7 +648,7 @@ impl AbstractThinking {
     
     /// Format the abstract analysis answer
     fn format_abstract_answer(&self, query: &str, result: &AbstractResult) -> String {
-        let mut answer = format!("Abstract Pattern Analysis for: {}\n\n", query);
+        let mut answer = format!("Abstract Pattern Analysis for: {query}\n\n");
         
         // Report patterns found
         if !result.patterns_found.is_empty() {
@@ -851,9 +851,12 @@ mod tests {
         let result = result.unwrap();
         
         // Verify result structure
-        assert!(result.patterns_found.len() >= 0, "Should have detected patterns (or none if empty graph)");
-        assert!(result.abstractions.len() >= 0, "Should have abstraction candidates");
-        assert!(result.refactoring_opportunities.len() >= 0, "Should have refactoring opportunities");
+        // Pattern count should be reasonable
+        assert!(result.patterns_found.len() < 1000, "Should have reasonable number of patterns");
+        // Abstraction count should be reasonable
+        assert!(result.abstractions.len() < 1000, "Should have reasonable number of abstractions");
+        // Refactoring opportunities should be reasonable
+        assert!(result.refactoring_opportunities.len() < 1000, "Should have reasonable number of opportunities");
         
         // Verify efficiency gains structure
         assert!(result.efficiency_gains.query_time_improvement >= 0.0);
@@ -897,7 +900,7 @@ mod tests {
         let abstractions = result.unwrap();
         
         // Should only identify abstractions for high-frequency, high-confidence patterns
-        let high_quality_abstractions: Vec<_> = abstractions.iter()
+        let _high_quality_abstractions: Vec<_> = abstractions.iter()
             .filter(|a| a.complexity_reduction > 0.0)
             .collect();
         
@@ -932,7 +935,7 @@ mod tests {
         assert!(result.is_ok(), "Refactoring suggestion should succeed");
         
         let opportunities = result.unwrap();
-        assert!(opportunities.len() > 0, "Should have refactoring opportunities");
+        assert!(!opportunities.is_empty(), "Should have refactoring opportunities");
         
         // Verify refactoring opportunity structure
         for opportunity in &opportunities {
@@ -990,7 +993,7 @@ mod tests {
         
         for pattern_type in [PatternType::Structural, PatternType::Temporal, PatternType::Semantic, PatternType::Usage] {
             let result = abstract_thinking.graph_pattern_detection(structural_data.clone(), pattern_type).await;
-            assert!(result.is_ok(), "Pattern detection should succeed for {:?}", pattern_type);
+            assert!(result.is_ok(), "Pattern detection should succeed for {pattern_type:?}");
             
             let patterns = result.unwrap();
             // Patterns may be empty for some types (temporal, semantic, usage), but should not error
@@ -1045,9 +1048,9 @@ mod tests {
             .filter(|p| p.pattern_id.contains("hub"))
             .collect();
         
-        assert!(is_a_patterns.len() > 0, "Should detect is_a patterns");
-        assert!(property_patterns.len() > 0, "Should detect property patterns");
-        assert!(hub_patterns.len() > 0, "Should detect hub patterns due to high connectivity");
+        assert!(!is_a_patterns.is_empty(), "Should detect is_a patterns");
+        assert!(!property_patterns.is_empty(), "Should detect property patterns");
+        assert!(!hub_patterns.is_empty(), "Should detect hub patterns due to high connectivity");
     }
 
     #[tokio::test]
@@ -1099,7 +1102,7 @@ mod tests {
         // Should be (frequency - 1) * 0.1 * confidence = (5-1) * 0.1 * 0.8 = 0.32
         let expected = (5.0 - 1.0) * 0.1 * 0.8;
         assert!((reduction - expected).abs() < 0.001, 
-               "Complexity reduction calculation should be accurate: expected {}, got {}", expected, reduction);
+               "Complexity reduction calculation should be accurate: expected {expected}, got {reduction}");
     }
 
     #[tokio::test]
@@ -1206,7 +1209,7 @@ mod tests {
         assert!(result.is_ok(), "Performance optimization identification should succeed");
         
         let optimizations = result.unwrap();
-        assert!(optimizations.len() > 0, "Should identify at least one optimization");
+        assert!(!optimizations.is_empty(), "Should identify at least one optimization");
         
         // Verify optimization structure
         for optimization in &optimizations {
@@ -1325,9 +1328,12 @@ mod tests {
         let patterns = result.unwrap();
         
         // For now, these are empty but should not error
-        assert!(patterns.hotspot_entities.len() >= 0, "Hotspot entities should be a valid list");
-        assert!(patterns.activation_frequency.len() >= 0, "Activation frequency should be a valid map");
-        assert!(patterns.temporal_patterns.len() >= 0, "Temporal patterns should be a valid list");
+        // Hotspot entities should be reasonable
+        assert!(patterns.hotspot_entities.len() < 10000, "Hotspot entities should be a valid list");
+        // Activation frequency should be reasonable
+        assert!(patterns.activation_frequency.len() < 10000, "Activation frequency should be a valid map");
+        // Temporal patterns should be reasonable
+        assert!(patterns.temporal_patterns.len() < 10000, "Temporal patterns should be a valid list");
     }
 }
 
