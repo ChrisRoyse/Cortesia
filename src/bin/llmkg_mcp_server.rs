@@ -18,16 +18,21 @@ use clap::Parser;
 async fn main() -> Result<()> {
     let args = Args::parse();
     
-    // Initialize logging
-    env_logger::Builder::from_default_env()
-        .filter_level(if args.verbose { 
-            log::LevelFilter::Debug 
-        } else { 
-            log::LevelFilter::Info 
-        })
-        .init();
+    // Initialize structured logging (tracing) for enhanced knowledge storage
+    // and fallback to env_logger for other components
+    if let Err(e) = llmkg::enhanced_knowledge_storage::logging::init_logging() {
+        eprintln!("Failed to initialize structured logging: {}", e);
+        // Fallback to env_logger
+        env_logger::Builder::from_default_env()
+            .filter_level(if args.verbose { 
+                log::LevelFilter::Debug 
+            } else { 
+                log::LevelFilter::Info 
+            })
+            .init();
+    }
     
-    log::info!("Starting LLMKG MCP Server");
+    tracing::info!("Starting LLMKG MCP Server with enhanced logging");
     log::info!("Data directory: {}", args.data_dir);
     log::info!("Embedding dimension: {}", args.embedding_dim);
     

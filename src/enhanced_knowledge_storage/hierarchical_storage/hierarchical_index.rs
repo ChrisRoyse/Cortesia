@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::enhanced_knowledge_storage::{
-    types::{Result, ProcessingTask, ComplexityLevel, ModelResourceConfig},
     model_management::ModelResourceManager,
     hierarchical_storage::types::{KnowledgeLayer, HierarchicalIndex, LayerIndexEntry, HierarchicalStorageConfig, HierarchicalStorageResult, LayerType, IndexMatch, SemanticCluster},
 };
@@ -752,6 +751,7 @@ pub struct SearchResult {
 mod tests {
     use super::*;
     use crate::enhanced_knowledge_storage::model_management::ModelResourceManager;
+    use crate::enhanced_knowledge_storage::types::ModelResourceConfig;
     
     #[tokio::test]
     async fn test_index_manager_creation() {

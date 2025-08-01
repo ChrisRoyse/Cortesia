@@ -61,13 +61,10 @@ impl QueryProcessor {
             query_embedding,
             temporal_context,
             processing_metadata: ProcessingMetadata {
-                processing_time: std::time::Duration::from_millis(50), // Placeholder
-                models_used: vec![self.config.reasoning_model_id.clone()],
-                total_tokens_processed: query.natural_language_query.len() / 4,
-                chunks_created: 0,
-                entities_extracted: 0,
-                relationships_extracted: 0,
-                memory_usage_peak: 1000,
+                memory_used: 1000,
+                cache_hit: false,
+                model_load_time: None,
+                inference_time: std::time::Duration::from_millis(50),
             },
         })
     }
@@ -323,6 +320,11 @@ JSON Response:"#,
         
         // Generate boolean queries
         let boolean_queries = self.generate_boolean_queries(&keywords, &entities, &concepts);
+        let fuzzy_terms = if self.config.enable_fuzzy_matching {
+            self.identify_fuzzy_terms(&keywords)
+        } else {
+            Vec::new()
+        };
         
         Ok(SearchComponents {
             keywords,
@@ -333,11 +335,7 @@ JSON Response:"#,
                 .map(|c| c.required_relationships.clone())
                 .unwrap_or_default(),
             boolean_queries,
-            fuzzy_terms: if self.config.enable_fuzzy_matching {
-                self.identify_fuzzy_terms(&keywords)
-            } else {
-                Vec::new()
-            },
+            fuzzy_terms,
         })
     }
     

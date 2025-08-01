@@ -89,6 +89,18 @@ pub struct SemanticLinkGraph {
     pub link_types: HashMap<String, LinkTypeInfo>,
 }
 
+impl SemanticLinkGraph {
+    /// Get the total number of semantic links (edges) in the graph
+    pub fn len(&self) -> usize {
+        self.edges.len()
+    }
+    
+    /// Check if the semantic link graph is empty
+    pub fn is_empty(&self) -> bool {
+        self.edges.is_empty() && self.nodes.is_empty()
+    }
+}
+
 /// A node in the semantic link graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticNode {

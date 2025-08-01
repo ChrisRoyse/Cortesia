@@ -278,7 +278,7 @@ impl Default for ModelCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::enhanced_knowledge_storage::types::*;
+    use crate::enhanced_knowledge_storage::types::ComplexityLevel;
     
     fn create_test_model(id: &str, memory: u64) -> CachedModel {
         let metadata = ModelMetadata {

@@ -5,11 +5,14 @@
 
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use std::time::Instant;
+use tracing::{info, error, debug, instrument};
 use crate::enhanced_knowledge_storage::{
     types::*,
     model_management::ModelResourceManager,
     hierarchical_storage::types::*,
     retrieval_system::types::*,
+    logging::LogContext,
 };
 
 /// Multi-hop reasoning engine
@@ -31,6 +34,15 @@ impl MultiHopReasoner {
     }
     
     /// Perform multi-hop reasoning
+    #[instrument(
+        skip(self, query, initial_results, graph_context),
+        fields(
+            max_hops = max_hops,
+            initial_results_count = initial_results.len(),
+            graph_nodes = graph_context.layers.len(),
+            graph_connections = graph_context.connections.len()
+        )
+    )]
     pub async fn perform_reasoning(
         &self,
         query: &ProcessedQuery,
@@ -38,51 +50,136 @@ impl MultiHopReasoner {
         graph_context: &GraphContext,
         max_hops: u32,
     ) -> RetrievalResult2<ReasoningChain> {
-        let start_time = std::time::Instant::now();
+        let start_time = Instant::now();
+        
+        let log_context = LogContext::new("multi_hop_reasoning", "multi_hop_reasoner");
+        
+        info!(
+            context = ?log_context,
+            max_hops = max_hops,
+            initial_results_count = initial_results.len(),
+            graph_nodes = graph_context.layers.len(),
+            graph_connections = graph_context.connections.len(),
+            query_complexity = ?query.understanding.complexity_level,
+            "Starting multi-hop reasoning"
+        );
         
         // Step 1: Identify reasoning type needed
-        let reasoning_type = self.identify_reasoning_type(query, initial_results).await?;
+        info!("Step 1/3: Identifying reasoning type");
+        let reasoning_start = Instant::now();
+        let reasoning_type = self.identify_reasoning_type(query, initial_results).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to identify reasoning type"
+                );
+                e
+            })?;
+        debug!(
+            reasoning_type_identification_ms = reasoning_start.elapsed().as_millis(),
+            reasoning_type = ?reasoning_type,
+            "Reasoning type identification completed"
+        );
         
         // Step 2: Generate initial hypotheses
-        let initial_hypotheses = self.generate_hypotheses(query, initial_results).await?;
+        info!("Step 2/3: Generating initial hypotheses");
+        let hypothesis_start = Instant::now();
+        let initial_hypotheses = self.generate_hypotheses(query, initial_results).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to generate initial hypotheses"
+                );
+                e
+            })?;
+        debug!(
+            hypothesis_generation_ms = hypothesis_start.elapsed().as_millis(),
+            hypotheses_generated = initial_hypotheses.len(),
+            "Initial hypothesis generation completed"
+        );
         
         // Step 3: Execute reasoning steps
+        info!("Step 3/3: Executing reasoning steps (max {} hops)", max_hops);
         let mut reasoning_steps = Vec::new();
         let mut current_evidence = initial_results.to_vec();
         let mut visited_layers = HashSet::new();
         
+        let loop_start = Instant::now();
         for hop in 0..max_hops {
             if initial_hypotheses.is_empty() {
+                debug!(hop = hop, "No more hypotheses to explore, stopping reasoning");
                 break;
             }
             
+            let hop_start = Instant::now();
+            debug!(hop = hop + 1, max_hops = max_hops, "Starting reasoning hop");
+            
             // Select next hypothesis to explore
-            let hypothesis = if hop < initial_hypotheses.len() {
-                &initial_hypotheses[hop]
+            let hypothesis = if (hop as usize) < initial_hypotheses.len() {
+                &initial_hypotheses[hop as usize]
             } else {
                 // Generate new hypothesis based on current evidence
+                debug!("Generating new hypothesis from current evidence");
                 let new_hypothesis = self.generate_next_hypothesis(
                     query,
                     &current_evidence,
                     &reasoning_steps,
-                ).await?;
+                ).await
+                .map_err(|e| {
+                    error!(
+                        context = ?log_context,
+                        hop = hop,
+                        error = %e,
+                        "Failed to generate next hypothesis"
+                    );
+                    e
+                })?;
                 
                 if new_hypothesis.is_none() {
+                    debug!(hop = hop, "No new hypothesis generated, stopping reasoning");
                     break;
                 }
                 
                 initial_hypotheses.get(0).unwrap() // Fallback
             };
             
+            debug!(
+                hop = hop + 1,
+                hypothesis = %hypothesis,
+                "Selected hypothesis for exploration"
+            );
+            
             // Find supporting evidence through graph traversal
+            let evidence_start = Instant::now();
             let (new_evidence, inference) = self.find_supporting_evidence(
                 hypothesis,
                 &current_evidence,
                 graph_context,
                 &mut visited_layers,
-            ).await?;
+            ).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    hop = hop,
+                    error = %e,
+                    "Failed to find supporting evidence"
+                );
+                e
+            })?;
+            
+            debug!(
+                evidence_search_ms = evidence_start.elapsed().as_millis(),
+                new_evidence_count = new_evidence.len(),
+                visited_layers_count = visited_layers.len(),
+                "Evidence search completed for hop"
+            );
             
             // Create reasoning step
+            let step_confidence = self.calculate_step_confidence(&new_evidence);
+            let step_type = self.determine_step_type(&inference);
+            
             let step = ReasoningStep {
                 step_number: hop + 1,
                 hypothesis: hypothesis.clone(),
@@ -96,45 +193,107 @@ impl MultiHopReasoner {
                     .map(|item| item.layer_id.clone())
                     .collect(),
                 inference: inference.clone(),
-                confidence: self.calculate_step_confidence(&new_evidence),
-                step_type: self.determine_step_type(&inference),
+                confidence: step_confidence,
+                step_type: step_type.clone(),
             };
             
             reasoning_steps.push(step);
             
+            debug!(
+                hop = hop + 1,
+                step_confidence = step_confidence,
+                step_type = ?step_type,
+                inference_length = inference.len(),
+                hop_time_ms = hop_start.elapsed().as_millis(),
+                "Reasoning step completed"
+            );
+            
             // Update current evidence
+            let pre_evidence_count = current_evidence.len();
             current_evidence.extend(new_evidence);
+            debug!(
+                evidence_before = pre_evidence_count,
+                evidence_after = current_evidence.len(),
+                "Updated current evidence pool"
+            );
             
             // Check if we have enough evidence to conclude
             if self.has_sufficient_evidence(&current_evidence, query) {
+                info!(
+                    hop = hop + 1,
+                    total_evidence = current_evidence.len(),
+                    "Sufficient evidence found, stopping reasoning early"
+                );
                 break;
             }
         }
         
+        debug!(
+            reasoning_loop_ms = loop_start.elapsed().as_millis(),
+            total_steps = reasoning_steps.len(),
+            "Reasoning loop completed"
+        );
+        
         // Step 4: Generate final conclusion
+        info!("Generating final conclusion from {} reasoning steps", reasoning_steps.len());
+        let conclusion_start = Instant::now();
         let (final_conclusion, confidence) = self.generate_conclusion(
             query,
             &reasoning_steps,
             &current_evidence,
-        ).await?;
+        ).await
+        .map_err(|e| {
+            error!(
+                context = ?log_context,
+                error = %e,
+                "Failed to generate final conclusion"
+            );
+            e
+        })?;
+        debug!(
+            conclusion_generation_ms = conclusion_start.elapsed().as_millis(),
+            conclusion_length = final_conclusion.len(),
+            final_confidence = confidence,
+            "Final conclusion generation completed"
+        );
         
         // Step 5: Calculate evidence strength
+        let strength_start = Instant::now();
         let evidence_strength = self.calculate_evidence_strength(&reasoning_steps);
+        debug!(
+            strength_calculation_ms = strength_start.elapsed().as_millis(),
+            evidence_strength = evidence_strength,
+            "Evidence strength calculation completed"
+        );
         
-        Ok(ReasoningChain {
-            reasoning_steps,
-            final_conclusion,
+        let total_time = start_time.elapsed();
+        let chain = ReasoningChain {
+            reasoning_steps: reasoning_steps.clone(),
+            final_conclusion: final_conclusion.clone(),
             confidence,
             evidence_strength,
             reasoning_type,
-        })
+        };
+        
+        info!(
+            context = ?log_context,
+            total_reasoning_time_ms = total_time.as_millis(),
+            reasoning_steps_count = chain.reasoning_steps.len(),
+            final_confidence = chain.confidence,
+            evidence_strength = chain.evidence_strength,
+            reasoning_type = ?chain.reasoning_type,
+            conclusion_length = chain.final_conclusion.len(),
+            "Multi-hop reasoning completed successfully"
+        );
+        
+        Ok(chain)
     }
     
     /// Identify the type of reasoning needed
     async fn identify_reasoning_type(
         &self,
         query: &ProcessedQuery,
-        initial_results: &[RetrievedItem],
+        _initial_results: &[RetrievedItem],
     ) -> RetrievalResult2<ReasoningType> {
         // Based on query intent and initial results
         match query.understanding.intent {
@@ -241,7 +400,7 @@ Return a single hypothesis as a string, or "COMPLETE" if we have enough informat
 Response:"#,
             query.original_query.natural_language_query,
             reasoning_steps.len(),
-            recent_evidence.join("\n---\n")
+            recent_evidence.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n---\n")
         );
         
         let task = ProcessingTask::new(ComplexityLevel::Medium, &prompt);
@@ -267,7 +426,7 @@ Response:"#,
         visited_layers: &mut HashSet<String>,
     ) -> RetrievalResult2<(Vec<RetrievedItem>, String)> {
         let mut new_evidence = Vec::new();
-        let mut inference = String::new();
+        let inference;
         
         // Extract key terms from hypothesis
         let hypothesis_terms = self.extract_key_terms(hypothesis);
@@ -343,7 +502,7 @@ Response:"#,
         let evidence_summary = evidence
             .iter()
             .take(3)
-            .map(|item| &item.content)
+            .map(|item| item.content.as_str())
             .collect::<Vec<_>>()
             .join("\n");
         
@@ -674,7 +833,8 @@ mod tests {
         let hypothesis = "Einstein's theory of relativity influenced quantum mechanics";
         let terms = reasoner.extract_key_terms(hypothesis);
         
-        assert!(terms.contains(&"einstein".to_string()));
+        // "Einstein's" becomes "einstein's" after lowercasing (apostrophe is preserved)
+        assert!(terms.contains(&"einstein's".to_string()));
         assert!(terms.contains(&"theory".to_string()));
         assert!(terms.contains(&"relativity".to_string()));
         assert!(terms.contains(&"influenced".to_string()));

@@ -2,9 +2,15 @@ use crate::query::rag::GraphRAGEngine;
 use crate::error::Result;
 use crate::embedding::simd_search::BatchProcessor;
 use crate::storage::mmap_storage::MMapStorage;
+use crate::enhanced_knowledge_storage::{
+    model_management::ModelResourceManager,
+    types::ModelResourceConfig,
+    knowledge_processing::types::KnowledgeProcessingConfig,
+};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use std::sync::Arc;
+use lazy_static::lazy_static;
 
 pub mod llm_friendly_server;
 pub mod federated_server;
@@ -15,6 +21,35 @@ pub mod production_server;
 pub use federated_server::FederatedMCPServer;
 pub use production_server::ProductionMCPServer;
 pub use shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent, LLMMCPTool, LLMExample, LLMMCPRequest, LLMMCPResponse, ResponseMetadata, PerformanceInfo};
+
+// Global singleton for enhanced knowledge storage components
+lazy_static! {
+    /// Global model resource manager for intelligent processing
+    pub static ref MODEL_MANAGER: Arc<ModelResourceManager> = {
+        let config = ModelResourceConfig {
+            max_concurrent_models: 3,
+            max_memory_usage: 4_000_000_000, // 4GB
+            idle_timeout: std::time::Duration::from_secs(300), // 5 minutes
+            min_memory_threshold: 100_000_000, // 100MB
+        };
+        Arc::new(ModelResourceManager::new(config))
+    };
+    
+    /// Global knowledge processing configuration
+    pub static ref PROCESSING_CONFIG: KnowledgeProcessingConfig = {
+        KnowledgeProcessingConfig {
+            entity_extraction_model: "smollm2_360m".to_string(),
+            relationship_extraction_model: "smollm2_360m".to_string(),
+            semantic_analysis_model: "smollm2_360m".to_string(),
+            max_chunk_size: 2048,
+            min_chunk_size: 256,
+            chunk_overlap_size: 128,
+            preserve_context: true,
+            min_entity_confidence: 0.7,
+            min_relationship_confidence: 0.6,
+        }
+    };
+}
 
 pub struct LLMKGMCPServer {
     rag_engine: Arc<RwLock<GraphRAGEngine>>,

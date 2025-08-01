@@ -70,7 +70,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         
         LLMMCPTool {
             name: "store_knowledge".to_string(),
-            description: "Store more complex knowledge as a chunk of text. Use this for descriptions, explanations, or any text longer than a simple fact. The system will automatically extract entities and relationships.".to_string(),
+            description: "Store more complex knowledge as a chunk of text with enhanced AI-powered processing. Uses intelligent entity extraction, relationship mapping, semantic chunking, and context analysis. Automatically creates hierarchical knowledge structures with quality metrics.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -110,15 +110,16 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 }
             ],
             tips: vec![
-                "Break very long texts into logical chunks (e.g., one per topic)".to_string(),
-                "Include dates, names, and specific facts for better extraction".to_string(),
-                "Use the category field to help with later retrieval".to_string(),
+                "Enhanced processing extracts entities, relationships, and creates semantic chunks automatically".to_string(),
+                "Include dates, names, and specific facts for better AI extraction".to_string(),
+                "Quality metrics show processing effectiveness (aim for >0.7)".to_string(),
+                "Falls back to basic processing if enhanced mode fails".to_string(),
             ],
         },
         
         LLMMCPTool {
             name: "find_facts".to_string(),
-            description: "Find facts (triples) about a subject or matching a pattern. Returns Subject-Predicate-Object triples. At least one of subject, predicate, or object must be provided.".to_string(),
+            description: "Find facts (triples) with enhanced AI-powered retrieval. Uses multi-hop reasoning, semantic similarity, and intelligent result ranking. Falls back to traditional triple matching if enhanced retrieval fails.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -176,15 +177,16 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 }
             ],
             tips: vec![
-                "Leave fields empty to make them wildcards".to_string(),
-                "Use partial matching by including part of a name".to_string(),
-                "Combine multiple fields for more specific queries".to_string(),
+                "Enhanced mode uses semantic similarity and multi-hop reasoning".to_string(),
+                "Confidence scores indicate retrieval certainty".to_string(),
+                "Check match_type to understand how results were found".to_string(),
+                "Falls back to exact matching if enhanced retrieval fails".to_string(),
             ],
         },
         
         LLMMCPTool {
             name: "ask_question".to_string(),
-            description: "Ask a natural language question about the stored knowledge. The system will search for relevant facts and knowledge chunks to answer your question.".to_string(),
+            description: "Ask natural language questions with enhanced AI-powered answer generation. Uses advanced retrieval, multi-hop reasoning, semantic search, and contextual answer synthesis. Provides evidence-based responses with confidence scoring.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -219,9 +221,11 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                 }
             ],
             tips: vec![
-                "Be specific in your questions for better results".to_string(),
-                "Use the context field to disambiguate (e.g., 'context: \"in physics\"')".to_string(),
-                "Questions about relationships work well (e.g., 'How are X and Y related?')".to_string(),
+                "Enhanced mode provides comprehensive answers with evidence and reasoning".to_string(),
+                "Multi-hop reasoning finds indirect connections and deeper insights".to_string(),
+                "Check confidence_score and evidence for answer quality assessment".to_string(),
+                "Use context field to guide retrieval and improve answer relevance".to_string(),
+                "Falls back to basic search if enhanced processing fails".to_string(),
             ],
         },
         

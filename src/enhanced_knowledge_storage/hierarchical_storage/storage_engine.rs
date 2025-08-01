@@ -5,11 +5,12 @@
 
 use std::sync::Arc;
 use std::collections::HashMap;
+use std::time::Instant;
 use tokio::sync::RwLock;
+use tracing::{info, error, debug, instrument};
 use crate::enhanced_knowledge_storage::{
-    types::{ModelResourceConfig},
     model_management::ModelResourceManager,
-    knowledge_processing::types::{KnowledgeProcessingResult, DocumentStructure, ComplexityLevel, DocumentSection, SectionType, ProcessingMetadata, QualityMetrics, ComplexityIndicators},
+    knowledge_processing::types::KnowledgeProcessingResult,
     hierarchical_storage::{
         types::{HierarchicalStorageConfig, HierarchicalKnowledge, KnowledgeLayer, GlobalContext, HierarchicalStorageResult, HierarchicalStorageError, HierarchicalStorageStats, SemanticLinkType},
         KnowledgeLayerManager,
@@ -18,6 +19,7 @@ use crate::enhanced_knowledge_storage::{
         IndexQuery,
         SearchResult,
     },
+    logging::LogContext,
 };
 
 /// Main hierarchical storage engine
@@ -89,47 +91,130 @@ impl HierarchicalStorageEngine {
     }
     
     /// Store processed knowledge in hierarchical structure
+    #[instrument(
+        skip(self, processing_result, global_context),
+        fields(
+            document_id = %processing_result.document_id,
+            chunks_count = processing_result.chunks.len(),
+            entities_count = processing_result.global_entities.len(),
+            relationships_count = processing_result.global_relationships.len()
+        )
+    )]
     pub async fn store_knowledge(
         &self,
         processing_result: KnowledgeProcessingResult,
         global_context: GlobalContext,
     ) -> HierarchicalStorageResult<String> {
+        let start_time = Instant::now();
         let document_id = processing_result.document_id.clone();
         
+        let log_context = LogContext::new("store_knowledge", "hierarchical_storage_engine")
+            .with_request_id(document_id.clone());
+        
+        info!(
+            context = ?log_context,
+            document_id = %document_id,
+            chunks_count = processing_result.chunks.len(),
+            entities_count = processing_result.global_entities.len(),
+            relationships_count = processing_result.global_relationships.len(),
+            "Starting hierarchical knowledge storage"
+        );
+        
         // Step 1: Create hierarchical layers
+        info!("Step 1/5: Creating hierarchical layers");
+        let layer_start = Instant::now();
         let layers = self.layer_manager
             .create_hierarchical_layers(&processing_result)
-            .await?;
+            .await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to create hierarchical layers"
+                );
+                e
+            })?;
+        debug!(
+            layer_creation_time_ms = layer_start.elapsed().as_millis(),
+            layers_created = layers.len(),
+            "Hierarchical layer creation completed"
+        );
         
         // Validate layer count
         if layers.len() > self.config.max_layers_per_document {
-            return Err(HierarchicalStorageError::InvalidLayerStructure(
-                format!("Too many layers: {} > {}", layers.len(), self.config.max_layers_per_document)
-            ));
+            let error_msg = format!("Too many layers: {} > {}", layers.len(), self.config.max_layers_per_document);
+            error!(
+                context = ?log_context,
+                layers_created = layers.len(),
+                max_allowed = self.config.max_layers_per_document,
+                "Layer count exceeds maximum allowed"
+            );
+            return Err(HierarchicalStorageError::InvalidLayerStructure(error_msg));
         }
         
         // Step 2: Build semantic link graph
+        info!("Step 2/5: Building semantic link graph");
+        let link_start = Instant::now();
         let semantic_links = self.link_manager
             .build_semantic_link_graph(&layers)
-            .await?;
+            .await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to build semantic link graph"
+                );
+                e
+            })?;
+        debug!(
+            link_building_time_ms = link_start.elapsed().as_millis(),
+            semantic_links_created = semantic_links.len(),
+            "Semantic link graph building completed"
+        );
         
         // Step 3: Build hierarchical index
+        info!("Step 3/5: Building hierarchical index");
+        let index_start = Instant::now();
         let retrieval_index = self.index_manager
             .build_hierarchical_index(&layers)
-            .await?;
+            .await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to build hierarchical index"
+                );
+                e
+            })?;
+        debug!(
+            index_building_time_ms = index_start.elapsed().as_millis(),
+            index_entries = retrieval_index.layer_index.len(),
+            "Hierarchical index building completed"
+        );
         
         // Step 4: Create hierarchical knowledge structure
+        info!("Step 4/5: Creating hierarchical knowledge structure");
+        let struct_start = Instant::now();
         let mut hierarchical_knowledge = HierarchicalKnowledge::new(
             document_id.clone(),
             global_context,
         );
         
         hierarchical_knowledge.knowledge_layers = layers.clone();
-        hierarchical_knowledge.semantic_links = semantic_links;
+        hierarchical_knowledge.semantic_links = semantic_links.clone();
         hierarchical_knowledge.retrieval_index = retrieval_index;
+        debug!(
+            structure_creation_time_ms = struct_start.elapsed().as_millis(),
+            "Hierarchical knowledge structure creation completed"
+        );
         
         // Step 5: Store in memory
+        info!("Step 5/5: Storing in memory and updating cache");
+        let storage_start = Instant::now();
         let mut storage = self.storage.write().await;
+        
+        let initial_layer_cache_size = storage.layer_cache.len();
+        let initial_document_count = storage.documents.len();
         
         // Cache individual layers
         for layer in &layers {
@@ -150,17 +235,56 @@ impl HierarchicalStorageEngine {
             operation: StorageOperation::Store,
         });
         
+        debug!(
+            storage_time_ms = storage_start.elapsed().as_millis(),
+            layer_cache_before = initial_layer_cache_size,
+            layer_cache_after = storage.layer_cache.len(),
+            document_count_before = initial_document_count,
+            document_count_after = storage.documents.len(),
+            "In-memory storage completed"
+        );
+        
         // Manage cache size
-        self.manage_cache_size(&mut storage).await?;
+        let cache_mgmt_start = Instant::now();
+        self.manage_cache_size(&mut storage).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to manage cache size"
+                );
+                e
+            })?;
+        debug!(
+            cache_management_time_ms = cache_mgmt_start.elapsed().as_millis(),
+            final_cache_size = storage.layer_cache.len(),
+            "Cache management completed"
+        );
+        
+        let total_time = start_time.elapsed();
+        info!(
+            context = ?log_context,
+            document_id = %document_id,
+            total_storage_time_ms = total_time.as_millis(),
+            layers_stored = layers.len(),
+            semantic_links_stored = semantic_links.len(),
+            final_document_count = storage.documents.len(),
+            final_cache_size = storage.layer_cache.len(),
+            "Hierarchical knowledge storage completed successfully"
+        );
         
         Ok(document_id)
     }
     
     /// Retrieve complete hierarchical knowledge for a document
+    #[instrument(skip(self), fields(document_id = %document_id))]
     pub async fn retrieve_document(
         &self,
         document_id: &str,
     ) -> HierarchicalStorageResult<HierarchicalKnowledge> {
+        let start_time = Instant::now();
+        
+        debug!(document_id = %document_id, "Retrieving hierarchical document");
         let mut storage = self.storage.write().await;
         
         // Log access
@@ -181,16 +305,32 @@ impl HierarchicalStorageEngine {
                 .unwrap()
                 .as_secs();
             
+            let mut updated_entries = 0;
             for entry in document.retrieval_index.layer_index.values_mut() {
                 entry.last_accessed = timestamp;
                 entry.access_count += 1;
+                updated_entries += 1;
             }
+            
+            let retrieval_time = start_time.elapsed();
+            info!(
+                document_id = %document_id,
+                retrieval_time_ms = retrieval_time.as_millis(),
+                layers_count = document.knowledge_layers.len(),
+                semantic_links_count = document.semantic_links.len(),
+                index_entries_updated = updated_entries,
+                "Document retrieved successfully"
+            );
             
             Ok(document.clone())
         } else {
-            Err(HierarchicalStorageError::LayerNotFound(
-                format!("Document not found: {}", document_id)
-            ))
+            let error_msg = format!("Document not found: {}", document_id);
+            error!(
+                document_id = %document_id,
+                retrieval_time_ms = start_time.elapsed().as_millis(),
+                "Document not found in storage"
+            );
+            Err(HierarchicalStorageError::LayerNotFound(error_msg))
         }
     }
     
@@ -219,52 +359,167 @@ impl HierarchicalStorageEngine {
     }
     
     /// Search across all documents with query
+    #[instrument(
+        skip(self, query),
+        fields(
+            max_results = query.max_results,
+            has_keywords = query.keywords.as_ref().map(|k| !k.is_empty()).unwrap_or(false),
+            has_entities = query.entities.as_ref().map(|e| !e.is_empty()).unwrap_or(false),
+            has_concepts = query.concepts.as_ref().map(|c| !c.is_empty()).unwrap_or(false)
+        )
+    )]
     pub async fn search(
         &self,
         query: IndexQuery,
     ) -> HierarchicalStorageResult<Vec<SearchResult>> {
+        let start_time = Instant::now();
+        
+        debug!(
+            max_results = query.max_results,
+            min_score = query.min_score,
+            keywords_count = query.keywords.as_ref().map(|k| k.len()).unwrap_or(0),
+            entities_count = query.entities.as_ref().map(|e| e.len()).unwrap_or(0),
+            concepts_count = query.concepts.as_ref().map(|c| c.len()).unwrap_or(0),
+            "Starting hierarchical search"
+        );
+        
         let storage = self.storage.read().await;
+        let document_count = storage.documents.len();
         let mut all_results = Vec::new();
+        let mut documents_searched = 0;
         
         // Search each document's index
         for (_doc_id, document) in &storage.documents {
+            let doc_search_start = Instant::now();
             let results = self.index_manager.search_index(&document.retrieval_index, &query);
+            let doc_results_count = results.len();
             all_results.extend(results);
+            documents_searched += 1;
+            
+            debug!(
+                document_search_time_ms = doc_search_start.elapsed().as_millis(),
+                results_from_document = doc_results_count,
+                total_results_so_far = all_results.len(),
+                "Document search completed"
+            );
         }
         
+        let search_time = start_time.elapsed();
+        let pre_sort_count = all_results.len();
+        
         // Sort by score globally
+        let sort_start = Instant::now();
         all_results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        let sort_time = sort_start.elapsed();
         
         // Limit to requested number
+        let pre_limit_count = all_results.len();
         all_results.truncate(query.max_results);
+        let final_count = all_results.len();
+        
+        let total_time = start_time.elapsed();
+        
+        // Calculate average relevance score
+        let avg_score = if all_results.is_empty() { 0.0 } else {
+            all_results.iter().map(|r| r.score).sum::<f32>() / all_results.len() as f32
+        };
+        
+        info!(
+            total_search_time_ms = total_time.as_millis(),
+            documents_searched = documents_searched,
+            total_document_count = document_count,
+            search_phase_time_ms = search_time.as_millis(),
+            sort_time_ms = sort_time.as_millis(),
+            results_before_sort = pre_sort_count,
+            results_before_limit = pre_limit_count,
+            final_results_count = final_count,
+            requested_max = query.max_results,
+            average_relevance_score = avg_score,
+            "Hierarchical search completed"
+        );
         
         Ok(all_results)
     }
     
     /// Find semantically similar content
+    #[instrument(
+        skip(self, target_embedding),
+        fields(
+            embedding_dim = target_embedding.len(),
+            max_results = max_results
+        )
+    )]
     pub async fn find_similar(
         &self,
         target_embedding: &[f32],
         max_results: usize,
     ) -> HierarchicalStorageResult<Vec<(String, f32)>> {
+        let start_time = Instant::now();
+        
+        debug!(
+            embedding_dimension = target_embedding.len(),
+            max_results = max_results,
+            "Starting semantic similarity search"
+        );
+        
         let storage = self.storage.read().await;
+        let document_count = storage.documents.len();
         let mut all_similarities = Vec::new();
+        let mut documents_searched = 0;
         
         // Search across all documents
         for document in storage.documents.values() {
+            let doc_search_start = Instant::now();
             let similarities = self.index_manager.find_similar_layers(
                 &document.retrieval_index,
                 target_embedding,
                 max_results,
             );
+            let doc_results_count = similarities.len();
             all_similarities.extend(similarities);
+            documents_searched += 1;
+            
+            debug!(
+                document_search_time_ms = doc_search_start.elapsed().as_millis(),
+                similarities_found = doc_results_count,
+                total_similarities_so_far = all_similarities.len(),
+                "Document similarity search completed"
+            );
         }
         
+        let search_time = start_time.elapsed();
+        let pre_sort_count = all_similarities.len();
+        
         // Sort by similarity globally
+        let sort_start = Instant::now();
         all_similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        let sort_time = sort_start.elapsed();
         
         // Limit results
+        let pre_limit_count = all_similarities.len();
         all_similarities.truncate(max_results);
+        let final_count = all_similarities.len();
+        
+        let total_time = start_time.elapsed();
+        
+        // Calculate average similarity score
+        let avg_similarity = if all_similarities.is_empty() { 0.0 } else {
+            all_similarities.iter().map(|(_, sim)| sim).sum::<f32>() / all_similarities.len() as f32
+        };
+        
+        info!(
+            total_similarity_search_time_ms = total_time.as_millis(),
+            documents_searched = documents_searched,
+            total_document_count = document_count,
+            search_phase_time_ms = search_time.as_millis(),
+            sort_time_ms = sort_time.as_millis(),
+            results_before_sort = pre_sort_count,
+            results_before_limit = pre_limit_count,
+            final_results_count = final_count,
+            requested_max = max_results,
+            average_similarity_score = avg_similarity,
+            "Semantic similarity search completed"
+        );
         
         Ok(all_similarities)
     }
@@ -586,6 +841,9 @@ impl HierarchicalStorageEngine {
 mod tests {
     use super::*;
     use crate::enhanced_knowledge_storage::model_management::ModelResourceManager;
+    use crate::enhanced_knowledge_storage::types::{ModelResourceConfig, ComplexityLevel};
+    use crate::enhanced_knowledge_storage::knowledge_processing::types::{DocumentStructure, QualityMetrics};
+    use crate::enhanced_knowledge_storage::hierarchical_storage::types::ComplexityIndicators;
     
     #[tokio::test]
     async fn test_storage_engine_creation() {

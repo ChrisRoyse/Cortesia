@@ -21,6 +21,12 @@ pub mod reasoning_engine;
 
 use crate::core::knowledge_engine::KnowledgeEngine;
 use crate::mcp::shared_types::{LLMMCPRequest, LLMMCPResponse, LLMMCPTool, PerformanceInfo};
+use crate::mcp::MODEL_MANAGER;
+// TODO: Temporarily disabled enhanced storage imports
+// use crate::enhanced_knowledge_storage::{
+//     hierarchical_storage::{HierarchicalStorageEngine, HierarchicalStorageConfig},
+//     retrieval_system::{RetrievalEngine, RetrievalConfig},
+// };
 use crate::error::Result;
 use crate::versioning::MultiDatabaseVersionManager;
 use types::UsageStats;
@@ -30,19 +36,56 @@ use tokio::sync::RwLock;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-/// LLM-Friendly MCP Server
+/// Enhanced storage configuration for LLM-friendly MCP server
+#[derive(Debug, Clone)]
+pub struct EnhancedStorageConfig {
+    pub enable_intelligent_processing: bool,
+    pub enable_multi_hop_reasoning: bool,
+    pub model_memory_limit: u64,
+    pub max_processing_time_seconds: u64,
+    pub fallback_on_failure: bool,
+    pub cache_enhanced_results: bool,
+}
+
+impl Default for EnhancedStorageConfig {
+    fn default() -> Self {
+        Self {
+            enable_intelligent_processing: true,
+            enable_multi_hop_reasoning: true,
+            model_memory_limit: 2_000_000_000, // 2GB
+            max_processing_time_seconds: 30,
+            fallback_on_failure: true,
+            cache_enhanced_results: true,
+        }
+    }
+}
+
+/// LLM-Friendly MCP Server with Enhanced Storage Capabilities
 /// 
 /// Provides high-level, intuitive operations for knowledge graph interaction
 /// that are specifically designed for LLM consumption and generation.
+/// Now includes advanced AI-powered processing and retrieval capabilities.
 pub struct LLMFriendlyMCPServer {
     knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
     usage_stats: Arc<RwLock<UsageStats>>,
     version_manager: Arc<MultiDatabaseVersionManager>,
+    enhanced_config: EnhancedStorageConfig,
+    // TODO: Temporarily disabled enhanced storage fields
+    // hierarchical_storage: Option<Arc<HierarchicalStorageEngine>>,
+    // retrieval_engine: Option<Arc<RetrievalEngine>>,
 }
 
 impl LLMFriendlyMCPServer {
-    /// Create a new LLM-friendly MCP server
+    /// Create a new LLM-friendly MCP server with default enhanced storage
     pub fn new(knowledge_engine: Arc<RwLock<KnowledgeEngine>>) -> Result<Self> {
+        Self::new_with_enhanced_config(knowledge_engine, EnhancedStorageConfig::default())
+    }
+    
+    /// Create a new LLM-friendly MCP server with custom enhanced storage configuration
+    pub fn new_with_enhanced_config(
+        knowledge_engine: Arc<RwLock<KnowledgeEngine>>,
+        enhanced_config: EnhancedStorageConfig,
+    ) -> Result<Self> {
         let version_manager = Arc::new(MultiDatabaseVersionManager::new()?);
         
         // Initialize the branch manager
@@ -51,11 +94,30 @@ impl LLMFriendlyMCPServer {
             database_branching::initialize_branch_manager(branch_manager_clone).await;
         });
         
+        // TODO: Temporarily disabled enhanced storage initialization
+        
         Ok(Self {
             knowledge_engine,
             usage_stats: Arc::new(RwLock::new(UsageStats::default())),
             version_manager,
+            enhanced_config,
+            // TODO: Temporarily disabled enhanced storage fields
+            // hierarchical_storage,
+            // retrieval_engine,
         })
+    }
+    
+    // TODO: Enhanced storage initialization function temporarily removed
+    
+    /// Check if enhanced storage is available
+    pub fn has_enhanced_storage(&self) -> bool {
+        // TODO: Temporarily disabled
+        false
+    }
+    
+    /// Get enhanced storage configuration
+    pub fn get_enhanced_config(&self) -> &EnhancedStorageConfig {
+        &self.enhanced_config
     }
 
     /// Get all available tools
@@ -277,16 +339,43 @@ impl LLMFriendlyMCPServer {
         *stats = UsageStats::default();
     }
 
-    /// Get server health information
+    /// Get server health information including enhanced storage status
     pub async fn get_health(&self) -> HashMap<String, Value> {
         let stats = self.usage_stats.read().await;
         let engine_available = self.knowledge_engine.try_read().is_ok();
+        let enhanced_available = self.has_enhanced_storage();
+        
+        let status = if engine_available && (!self.enhanced_config.enable_intelligent_processing || enhanced_available) {
+            "healthy"
+        } else {
+            "degraded"
+        };
         
         let mut health = HashMap::new();
-        health.insert("status".to_string(), json!(if engine_available { "healthy" } else { "degraded" }));
+        health.insert("status".to_string(), json!(status));
         health.insert("total_operations".to_string(), json!(stats.total_operations));
         health.insert("avg_response_time_ms".to_string(), json!(stats.avg_response_time_ms));
         health.insert("uptime_seconds".to_string(), json!(stats.uptime.elapsed().as_secs()));
+        
+        // Enhanced storage status
+        health.insert("enhanced_storage".to_string(), json!({
+            "enabled": self.enhanced_config.enable_intelligent_processing,
+            "available": enhanced_available,
+            "multi_hop_reasoning": self.enhanced_config.enable_multi_hop_reasoning,
+            "memory_limit_gb": self.enhanced_config.model_memory_limit / 1_000_000_000,
+            "fallback_on_failure": self.enhanced_config.fallback_on_failure
+        }));
+        
+        // Model manager statistics
+        let model_stats = MODEL_MANAGER.get_stats().await;
+        health.insert("model_manager".to_string(), json!({
+            "active_models": model_stats.active_models,
+            "memory_usage_mb": model_stats.total_memory_usage / 1_000_000,
+            "available_memory_mb": model_stats.available_memory / 1_000_000,
+            "cache_utilization": model_stats.cache_utilization,
+            "success_rate": model_stats.loader_success_rate,
+            "tasks_processed": model_stats.total_tasks_processed
+        }));
         
         health
     }

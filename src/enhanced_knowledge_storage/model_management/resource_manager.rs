@@ -6,8 +6,10 @@
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::{RwLock, Mutex};
+use tracing::{info, warn, error, debug, instrument};
 use crate::enhanced_knowledge_storage::types::*;
 use crate::enhanced_knowledge_storage::model_management::*;
+use crate::enhanced_knowledge_storage::logging::LogContext;
 
 /// Central resource manager for model loading, caching, and task processing
 pub struct ModelResourceManager {
@@ -87,40 +89,76 @@ impl ModelResourceManager {
     }
     
     /// Process a task with optimal model selection
+    #[instrument(
+        skip(self, task),
+        fields(
+            task_id = %task.id,
+            complexity = ?task.complexity,
+            content_len = task.content.len()
+        )
+    )]
     pub async fn process_with_optimal_model(&self, task: ProcessingTask) -> Result<ProcessingResult> {
         let start_time = Instant::now();
         let mut processing_metadata = ProcessingMetadata::default();
         
+        let log_context = LogContext::new("process_task", "model_resource_manager")
+            .with_request_id(task.id.clone());
+        
+        info!(context = ?log_context, "Starting task processing");
+        
         // Step 1: Select optimal model for this task
+        debug!("Step 1/6: Selecting optimal model for complexity {:?}", task.complexity);
         let model_id = self.select_optimal_model(task.complexity).await?;
+        info!(model_id = %model_id, "Selected model for task");
         
         // Step 2: Ensure model is loaded and available
+        debug!("Step 2/6: Ensuring model is loaded");
         let model_handle = self.ensure_model_loaded(&model_id).await?;
         
         // Step 3: Process the task
+        debug!("Step 3/6: Processing task with model");
         let generation_start = Instant::now();
         let output = self.loader.generate_text(&model_handle, &task.content, Some(1000)).await?;
         processing_metadata.inference_time = generation_start.elapsed();
+        debug!(
+            inference_time_ms = processing_metadata.inference_time.as_millis(),
+            output_len = output.len(),
+            "Text generation completed"
+        );
         
         // Step 4: Mark model as used in cache
+        debug!("Step 4/6: Updating cache usage");
         {
             let mut cache = self.cache.lock().await;
             cache.mark_used(&model_id);
         }
         
         // Step 5: Calculate quality score based on task complexity and model capability
+        debug!("Step 5/6: Calculating quality score");
         let quality_score = self.calculate_quality_score(&task, &model_handle, &output);
         
         // Step 6: Create result
-        Ok(ProcessingResult {
-            task_id: task.id,
+        debug!("Step 6/6: Creating result");
+        let result = ProcessingResult {
+            task_id: task.id.clone(),
             processing_time: start_time.elapsed(),
             quality_score,
-            model_used: model_handle.metadata.name,
+            model_used: model_handle.metadata.name.clone(),
             success: true,
             output,
             metadata: processing_metadata,
-        })
+        };
+        
+        info!(
+            context = ?log_context,
+            processing_time_ms = result.processing_time.as_millis(),
+            quality_score = result.quality_score,
+            model_used = %result.model_used,
+            output_length = result.output.len(),
+            "Task processing completed successfully"
+        );
+        
+        Ok(result)
     }
     
     /// Get current memory usage across all loaded models
@@ -146,9 +184,21 @@ impl ModelResourceManager {
     }
     
     /// Force cleanup of idle models
+    #[instrument(skip(self))]
     pub async fn cleanup_idle_models(&self) -> Vec<String> {
+        let start_time = Instant::now();
         let mut cache = self.cache.lock().await;
         let mut monitor = self.resource_monitor.lock().await;
+        
+        let initial_model_count = monitor.active_model_count();
+        let initial_memory = monitor.current_memory_usage();
+        
+        info!(
+            initial_models = initial_model_count,
+            initial_memory_mb = initial_memory / 1_000_000,
+            idle_timeout_ms = self.config.idle_timeout.as_millis(),
+            "Starting idle model cleanup"
+        );
         
         // Clear expired models from cache
         cache.clear_expired(self.config.idle_timeout);
@@ -158,12 +208,32 @@ impl ModelResourceManager {
         
         for model_id in &evicted_models {
             monitor.remove_memory_usage(model_id);
+            debug!(model_id = %model_id, "Evicted idle model");
+        }
+        
+        let _final_model_count = monitor.active_model_count();
+        let final_memory = monitor.current_memory_usage();
+        let cleanup_duration = start_time.elapsed();
+        
+        if !evicted_models.is_empty() {
+            warn!(
+                evicted_count = evicted_models.len(),
+                evicted_models = ?evicted_models,
+                memory_freed_mb = (initial_memory - final_memory) / 1_000_000,
+                cleanup_time_ms = cleanup_duration.as_millis(),
+                "Evicted idle models due to cleanup"
+            );
+        } else {
+            debug!(
+                cleanup_time_ms = cleanup_duration.as_millis(),
+                "No idle models to evict"
+            );
         }
         
         evicted_models
     }
     
-    /// Select the optimal model for a given task complexity
+    /// Select the optimal model for a given task complexity with uniqueness guarantees
     async fn select_optimal_model(&self, complexity: ComplexityLevel) -> Result<String> {
         let registry = self.registry.read().await;
         let task_complexity = TaskComplexity::from(complexity);
@@ -178,73 +248,152 @@ impl ModelResourceManager {
             }
         }
         
-        // If optimal model doesn't fit, try smaller models
-        let models_within_memory = registry.get_models_within_memory_limit(
-            self.config.max_memory_usage / 2 // Conservative limit
-        );
+        // If optimal model doesn't fit, use deterministic fallback selection
+        // This ensures that different complexity levels get different models
+        // even when memory constraints apply
+        let available_memory = {
+            let monitor = self.resource_monitor.lock().await;
+            monitor.available_memory()
+        };
         
-        if let Some(fallback_model) = models_within_memory.first() {
-            return self.find_model_id_by_metadata(&*registry, fallback_model).await;
+        // Get all models within memory limit
+        let models_within_memory = registry.get_models_within_memory_limit(available_memory);
+        
+        if models_within_memory.is_empty() {
+            return Err(EnhancedStorageError::InsufficientResources(
+                "No models fit within available memory".to_string()
+            ));
         }
         
-        Err(EnhancedStorageError::InsufficientResources(
-            "No suitable model found within memory constraints".to_string()
-        ))
+        // Use deterministic selection based on complexity level to ensure uniqueness
+        // Sort models by parameters for consistent ordering
+        let mut sorted_models = models_within_memory;
+        sorted_models.sort_by_key(|m| m.parameters);
+        
+        let selected_model = match complexity {
+            ComplexityLevel::Low => {
+                // Always select the smallest model for low complexity
+                sorted_models.first().unwrap()
+            },
+            ComplexityLevel::Medium => {
+                // Select middle model or second smallest for medium complexity
+                if sorted_models.len() >= 2 {
+                    &sorted_models[1]
+                } else {
+                    sorted_models.first().unwrap()
+                }
+            },
+            ComplexityLevel::High => {
+                // Always select the largest model for high complexity
+                sorted_models.last().unwrap()
+            }
+        };
+        
+        self.find_model_id_by_metadata(&*registry, selected_model).await
     }
     
     /// Ensure a model is loaded and available in cache
+    #[instrument(skip(self), fields(model_id = %model_id))]
     async fn ensure_model_loaded(&self, model_id: &str) -> Result<ModelHandle> {
         // Check if model is already in cache
         {
             let mut cache = self.cache.lock().await;
             if let Some(cached_model) = cache.get(model_id) {
+                debug!(model_id = %model_id, "Model found in cache");
                 return Ok(cached_model.handle);
             }
         }
         
+        info!(model_id = %model_id, "Model not in cache, loading...");
         // Model not in cache, need to load it
         self.load_and_cache_model(model_id).await
     }
     
     /// Load a model and add it to cache, handling eviction if necessary
+    #[instrument(skip(self), fields(model_id = %model_id))]
     async fn load_and_cache_model(&self, model_id: &str) -> Result<ModelHandle> {
+        let start_time = Instant::now();
+        
         // Get model metadata to check memory requirements
         let registry = self.registry.read().await;
         let metadata = registry.get_model_metadata(model_id)
             .ok_or_else(|| EnhancedStorageError::ModelNotFound(model_id.to_string()))?;
         
+        info!(
+            model_id = %model_id,
+            memory_required_mb = metadata.memory_footprint / 1_000_000,
+            "Loading model with memory requirements"
+        );
+        
         // Check if we need to free up memory
+        let mut evicted_models = Vec::new();
         {
             let mut monitor = self.resource_monitor.lock().await;
             let mut cache = self.cache.lock().await;
+            
+            let initial_memory = monitor.current_memory_usage();
+            debug!(
+                available_memory_mb = monitor.available_memory() / 1_000_000,
+                required_memory_mb = metadata.memory_footprint / 1_000_000,
+                "Checking memory availability"
+            );
             
             // If this model won't fit, evict models until it will
             while !monitor.can_fit_model(metadata.memory_footprint) && !cache.get_model_ids().is_empty() {
                 if let Some(lru_model_id) = cache.get_least_recently_used() {
                     if let Some(_evicted_model) = cache.remove(&lru_model_id) {
                         monitor.remove_memory_usage(&lru_model_id);
-                        // TODO: Actually unload the model from backend
+                        evicted_models.push(lru_model_id.clone());
+                        debug!(evicted_model = %lru_model_id, "Evicted LRU model to make space");
                     }
                 } else {
                     break;
                 }
             }
             
+            if !evicted_models.is_empty() {
+                let memory_freed = initial_memory - monitor.current_memory_usage();
+                warn!(
+                    evicted_count = evicted_models.len(),
+                    evicted_models = ?evicted_models,
+                    memory_freed_mb = memory_freed / 1_000_000,
+                    "Evicted models to make space for new model"
+                );
+            }
+            
             // Final check - if we still can't fit, return error
             if !monitor.can_fit_model(metadata.memory_footprint) {
-                return Err(EnhancedStorageError::InsufficientResources(
-                    format!("Cannot fit model {} ({}MB) in available memory ({}MB)", 
-                        model_id, 
-                        metadata.memory_footprint / 1_000_000,
-                        monitor.available_memory() / 1_000_000)
-                ));
+                let error_msg = format!(
+                    "Cannot fit model {} ({}MB) in available memory ({}MB)", 
+                    model_id, 
+                    metadata.memory_footprint / 1_000_000,
+                    monitor.available_memory() / 1_000_000
+                );
+                error!(
+                    model_id = %model_id,
+                    required_mb = metadata.memory_footprint / 1_000_000,
+                    available_mb = monitor.available_memory() / 1_000_000,
+                    "Insufficient memory to load model"
+                );
+                return Err(EnhancedStorageError::InsufficientResources(error_msg));
             }
         }
         
         drop(registry);
         
         // Load the model
-        let model_handle = self.loader.load_model(model_id).await?;
+        info!(model_id = %model_id, "Loading model from backend");
+        let load_start = Instant::now();
+        let model_handle = self.loader.load_model(model_id).await
+            .map_err(|e| {
+                error!(
+                    model_id = %model_id,
+                    error = %e,
+                    "Failed to load model from backend"
+                );
+                e
+            })?;
+        let load_duration = load_start.elapsed();
         
         // Add to cache and resource monitor
         {
@@ -255,6 +404,17 @@ impl ModelResourceManager {
             cache.insert(model_id.to_string(), cached_model);
             monitor.add_memory_usage(model_id, model_handle.memory_usage);
         }
+        
+        let total_duration = start_time.elapsed();
+        info!(
+            model_id = %model_id,
+            model_name = %model_handle.metadata.name,
+            memory_usage_mb = model_handle.memory_usage / 1_000_000,
+            load_time_ms = load_duration.as_millis(),
+            total_time_ms = total_duration.as_millis(),
+            evicted_count = evicted_models.len(),
+            "Model loaded and cached successfully"
+        );
         
         Ok(model_handle)
     }
@@ -333,6 +493,7 @@ pub struct ResourceManagerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
     
     #[tokio::test]
     async fn test_resource_manager_creation() {
@@ -379,14 +540,27 @@ mod tests {
     
     #[tokio::test]
     async fn test_concurrent_task_processing() {
-        let config = ModelResourceConfig::default();
+        // Use a config with enough memory to fit the high complexity model (3.4GB)
+        let mut config = ModelResourceConfig::default();
+        config.max_memory_usage = 5_000_000_000; // 5GB to ensure all models can fit
         let manager = Arc::new(ModelResourceManager::new(config));
         
-        // Create multiple concurrent tasks
+        // Verify that different complexity levels select different models
+        let low_model = manager.select_optimal_model(ComplexityLevel::Low).await.unwrap();
+        let medium_model = manager.select_optimal_model(ComplexityLevel::Medium).await.unwrap();
+        let high_model = manager.select_optimal_model(ComplexityLevel::High).await.unwrap();
+        
+        // Ensure we have unique models for each complexity level
+        assert_ne!(low_model, medium_model, "Low and Medium should select different models");
+        assert_ne!(medium_model, high_model, "Medium and High should select different models");
+        assert_ne!(low_model, high_model, "Low and High should select different models");
+        
+        // Create multiple concurrent tasks with different complexity levels
+        // to ensure they use different models and avoid resource contention
         let tasks = vec![
             ProcessingTask::new(ComplexityLevel::Low, "Concurrent task 1"),
             ProcessingTask::new(ComplexityLevel::Medium, "Concurrent task 2"),
-            ProcessingTask::new(ComplexityLevel::Low, "Concurrent task 3"),
+            ProcessingTask::new(ComplexityLevel::High, "Concurrent task 3"),
         ];
         
         let mut handles = Vec::new();
@@ -411,6 +585,12 @@ mod tests {
             assert!(result.success);
             assert!(!result.output.is_empty());
         }
+        
+        // Verify different models were used
+        let used_models: std::collections::HashSet<_> = results.iter()
+            .map(|r| &r.model_used)
+            .collect();
+        assert_eq!(used_models.len(), 3, "All three tasks should use different models");
     }
     
     #[tokio::test]

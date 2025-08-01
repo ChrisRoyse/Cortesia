@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use std::time::Instant;
 use tokio::sync::RwLock;
+use tracing::{info, warn, error, debug, instrument};
 use crate::enhanced_knowledge_storage::{
     types::*,
     model_management::ModelResourceManager,
@@ -23,6 +24,7 @@ use crate::enhanced_knowledge_storage::{
         ContextAggregator,
         multi_hop_reasoner::GraphContext,
     },
+    logging::LogContext,
 };
 
 /// Main retrieval engine
@@ -70,6 +72,15 @@ impl RetrievalEngine {
     }
     
     /// Execute a retrieval query
+    #[instrument(
+        skip(self, query),
+        fields(
+            query = %query.natural_language_query,
+            max_results = query.max_results,
+            retrieval_mode = ?query.retrieval_mode,
+            multi_hop = query.enable_multi_hop
+        )
+    )]
     pub async fn retrieve(
         &self,
         query: RetrievalQuery,
@@ -77,78 +88,266 @@ impl RetrievalEngine {
         let start_time = Instant::now();
         let query_id = self.generate_query_id(&query);
         
+        let log_context = LogContext::new("retrieve", "retrieval_engine")
+            .with_request_id(query_id.clone());
+        
+        info!(
+            context = ?log_context,
+            query_id = %query_id,
+            query = %query.natural_language_query,
+            max_results = query.max_results,
+            retrieval_mode = ?query.retrieval_mode,
+            enable_multi_hop = query.enable_multi_hop,
+            context_window_size = query.context_window_size,
+            "Starting retrieval query processing"
+        );
+        
         // Check cache if enabled
         if self.config.cache_search_results {
+            debug!("Checking cache for results");
             if let Some(cached) = self.check_cache(&query).await {
+                info!(
+                    context = ?log_context,
+                    cached_results_count = cached.len(),
+                    "Returning cached results"
+                );
                 return Ok(self.create_cached_result(query_id, cached, start_time));
             }
+            debug!("No cached results found");
         }
         
         // Step 1: Process and understand query
-        let processed_query = self.query_processor.process_query(&query).await?;
+        info!("Step 1/8: Processing and understanding query");
+        let query_start = Instant::now();
+        let processed_query = self.query_processor.process_query(&query).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to process query"
+                );
+                e
+            })?;
+        debug!(
+            query_processing_time_ms = query_start.elapsed().as_millis(),
+            intent = ?processed_query.understanding.intent,
+            entities_extracted = processed_query.understanding.extracted_entities.len(),
+            concepts_extracted = processed_query.understanding.extracted_concepts.len(),
+            complexity = ?processed_query.understanding.complexity_level,
+            "Query processing completed"
+        );
         
         // Step 2: Execute initial search
-        let initial_results = self.execute_search(&processed_query).await?;
+        info!("Step 2/8: Executing initial search");
+        let search_start = Instant::now();
+        let initial_results = self.execute_search(&processed_query).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to execute search"
+                );
+                e
+            })?;
+        debug!(
+            initial_search_time_ms = search_start.elapsed().as_millis(),
+            initial_results_count = initial_results.len(),
+            avg_relevance_score = if initial_results.is_empty() { 0.0 } else { 
+                initial_results.iter().map(|r| r.relevance_score).sum::<f32>() / initial_results.len() as f32
+            },
+            "Initial search completed"
+        );
         
         // Step 3: Perform multi-hop reasoning if enabled
         let reasoning_chain = if query.enable_multi_hop && initial_results.len() < query.max_results {
-            let graph_context = self.build_graph_context(&initial_results).await?;
+            info!("Step 3/8: Performing multi-hop reasoning");
+            let reasoning_start = Instant::now();
             
-            Some(self.multi_hop_reasoner.perform_reasoning(
+            let graph_context = self.build_graph_context(&initial_results).await
+                .map_err(|e| {
+                    error!(
+                        context = ?log_context,
+                        error = %e,
+                        "Failed to build graph context for multi-hop reasoning"
+                    );
+                    e
+                })?;
+            
+            let chain = self.multi_hop_reasoner.perform_reasoning(
                 &processed_query,
                 &initial_results,
                 &graph_context,
                 query.max_reasoning_hops,
-            ).await?)
+            ).await
+            .map_err(|e| {
+                error!(
+                    context = ?log_context,
+                    error = %e,
+                    "Failed to perform multi-hop reasoning"
+                );
+                e
+            })?;
+            
+            debug!(
+                reasoning_time_ms = reasoning_start.elapsed().as_millis(),
+                reasoning_steps = chain.reasoning_steps.len(),
+                reasoning_confidence = chain.confidence,
+                max_hops = query.max_reasoning_hops,
+                "Multi-hop reasoning completed"
+            );
+            
+            Some(chain)
         } else {
+            if !query.enable_multi_hop {
+                debug!("Multi-hop reasoning disabled");
+            } else {
+                debug!(
+                    initial_results = initial_results.len(),
+                    max_results = query.max_results,
+                    "Skipping multi-hop reasoning - sufficient initial results"
+                );
+            }
             None
         };
         
         // Step 4: Collect all results including multi-hop discoveries
+        info!("Step 4/8: Collecting and merging results");
+        let merge_start = Instant::now();
         let mut all_results = initial_results.clone();
+        let mut multi_hop_results = 0;
+        
         if let Some(ref chain) = reasoning_chain {
-            all_results.extend(self.extract_results_from_reasoning(chain).await?);
+            let additional_results = self.extract_results_from_reasoning(chain).await
+                .map_err(|e| {
+                    error!(
+                        context = ?log_context,
+                        error = %e,
+                        "Failed to extract results from reasoning chain"
+                    );
+                    e
+                })?;
+            multi_hop_results = additional_results.len();
+            all_results.extend(additional_results);
         }
+        debug!(
+            merge_time_ms = merge_start.elapsed().as_millis(),
+            initial_results = initial_results.len(),
+            multi_hop_results = multi_hop_results,
+            total_results = all_results.len(),
+            "Result merging completed"
+        );
         
         // Step 5: Re-rank results if enabled
         if self.config.enable_result_reranking {
-            all_results = self.rerank_results(all_results, &processed_query).await?;
+            info!("Step 5/8: Re-ranking results");
+            let rerank_start = Instant::now();
+            let pre_rerank_count = all_results.len();
+            
+            all_results = self.rerank_results(all_results, &processed_query).await
+                .map_err(|e| {
+                    error!(
+                        context = ?log_context,
+                        error = %e,
+                        "Failed to re-rank results"
+                    );
+                    e
+                })?;
+            
+            debug!(
+                rerank_time_ms = rerank_start.elapsed().as_millis(),
+                results_before = pre_rerank_count,
+                results_after = all_results.len(),
+                "Result re-ranking completed"
+            );
+        } else {
+            debug!("Result re-ranking disabled");
         }
         
         // Step 6: Apply context window and limit results
+        info!("Step 6/8: Applying context window and result limits");
+        let limit_start = Instant::now();
+        let pre_limit_count = all_results.len();
+        
         all_results = self.apply_context_window(all_results, query.context_window_size);
         all_results.truncate(query.max_results);
         
+        debug!(
+            limit_time_ms = limit_start.elapsed().as_millis(),
+            results_before_limit = pre_limit_count,
+            results_after_limit = all_results.len(),
+            context_window_size = query.context_window_size,
+            max_results = query.max_results,
+            "Context window and result limiting completed"
+        );
+        
         // Step 7: Aggregate context
+        info!("Step 7/8: Aggregating context");
+        let context_start = Instant::now();
         let aggregated_context = self.context_aggregator.aggregate_context(
             &all_results,
             &processed_query,
             reasoning_chain.as_ref(),
-        ).await?;
+        ).await
+        .map_err(|e| {
+            error!(
+                context = ?log_context,
+                error = %e,
+                "Failed to aggregate context"
+            );
+            e
+        })?;
+        debug!(
+            context_aggregation_time_ms = context_start.elapsed().as_millis(),
+            coherence_score = aggregated_context.coherence_score,
+            context_snippets = aggregated_context.supporting_contexts.len(),
+            "Context aggregation completed"
+        );
         
         // Step 8: Calculate confidence score
+        info!("Step 8/8: Calculating confidence score");
+        let confidence_start = Instant::now();
         let confidence_score = self.calculate_overall_confidence(
             &all_results,
             &reasoning_chain,
             &aggregated_context,
         );
+        debug!(
+            confidence_calculation_time_ms = confidence_start.elapsed().as_millis(),
+            confidence_score = confidence_score,
+            "Confidence calculation completed"
+        );
         
         // Cache results if enabled
         if self.config.cache_search_results {
+            debug!("Caching results for future queries");
             self.cache_results(&query, &all_results).await;
         }
         
         let retrieval_time_ms = start_time.elapsed().as_millis() as u64;
+        let total_matches = all_results.len();
         
-        Ok(RetrievalResult {
-            query_id,
+        let result = RetrievalResult {
+            query_id: query_id.clone(),
             retrieved_items: all_results,
             reasoning_chain,
             query_understanding: processed_query.understanding,
-            total_matches: all_results.len(),
+            total_matches,
             retrieval_time_ms,
             confidence_score,
-        })
+        };
+        
+        info!(
+            context = ?log_context,
+            query_id = %query_id,
+            total_retrieval_time_ms = retrieval_time_ms,
+            total_matches = total_matches,
+            confidence_score = confidence_score,
+            used_multi_hop = result.reasoning_chain.is_some(),
+            reasoning_steps = result.reasoning_chain.as_ref().map(|c| c.reasoning_steps.len()).unwrap_or(0),
+            "Retrieval query completed successfully"
+        );
+        
+        Ok(result)
     }
     
     /// Execute search using processed query
@@ -382,13 +581,10 @@ impl RetrievalEngine {
                             query_embedding: Vec::new(),
                             temporal_context: None,
                             processing_metadata: ProcessingMetadata {
-                                processing_time: std::time::Duration::from_millis(0),
-                                models_used: Vec::new(),
-                                total_tokens_processed: 0,
-                                chunks_created: 0,
-                                entities_extracted: 0,
-                                relationships_extracted: 0,
-                                memory_usage_peak: 0,
+                                memory_used: 0,
+                                cache_hit: false,
+                                model_load_time: None,
+                                inference_time: std::time::Duration::from_millis(0),
                             },
                         },
                     ).await?;
@@ -398,7 +594,7 @@ impl RetrievalEngine {
             }
         }
         
-        results
+        Ok(results)
     }
     
     /// Re-rank results using advanced model
@@ -412,7 +608,7 @@ impl RetrievalEngine {
         }
         
         // Use reranking model if configured
-        if let Some(reranking_model) = &self.config.reranking_model_id {
+        if let Some(_reranking_model) = &self.config.reranking_model_id {
             // Create reranking prompt
             let prompt = format!(
                 r#"Rerank these search results for the query:
@@ -439,10 +635,7 @@ Ranking:"#,
                     .join("\n")
             );
             
-            let task = ProcessingTask {
-                complexity: ComplexityLevel::Medium,
-                content: prompt,
-            };
+            let task = ProcessingTask::new(ComplexityLevel::Medium, &prompt);
             
             if let Ok(result) = self.model_manager.process_with_optimal_model(task).await {
                 // Parse ranking and reorder
@@ -529,7 +722,7 @@ Ranking:"#,
         format!("query_{:x}_{}", hash, std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
-            .as_millis())
+            .as_nanos())
     }
     
     /// Check cache for results
@@ -619,15 +812,15 @@ Ranking:"#,
     /// Get layer context
     async fn get_layer_context(
         &self,
-        parent_id: &str,
-        layer_id: &str,
+        _parent_id: &str,
+        _layer_id: &str,
     ) -> (Option<String>, Option<String>) {
         // Simplified - would get actual sibling layers
         (None, None)
     }
     
     /// Get semantic links for layer
-    async fn get_semantic_links_for_layer(&self, layer_id: &str) -> Vec<LinkedLayer> {
+    async fn get_semantic_links_for_layer(&self, _layer_id: &str) -> Vec<LinkedLayer> {
         // Simplified - would query actual semantic links
         Vec::new()
     }
@@ -760,6 +953,6 @@ mod tests {
         assert_eq!(engine.parse_ranking("[0, 2, 1]", 3).unwrap(), vec![0, 2, 1]);
         assert_eq!(engine.parse_ranking("2, 0, 1", 3).unwrap(), vec![2, 0, 1]);
         assert!(engine.parse_ranking("[0, 3, 1]", 3).is_err()); // Index out of bounds
-        assert!(engine.parse_ranking("invalid", 3).is_err());
+        assert!(engine.parse_ranking("999999999999999999999", 3).is_err()); // Number too large to parse
     }
 }

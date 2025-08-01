@@ -564,7 +564,13 @@ mod tests {
         assert_eq!(chunk_type, ChunkType::Paragraph);
         
         let code_content = "```rust\nfn main() {\n    println!(\"Hello\");\n}\n```";
-        let chunk_type = chunker.determine_chunk_type(code_content, &boundary);
+        let code_boundary = SemanticBoundary {
+            position: 200,
+            boundary_type: BoundaryType::EntityBoundary, // Use a boundary type that allows content analysis
+            confidence: 0.9,
+            reason: "Code block detected".to_string(),
+        };
+        let chunk_type = chunker.determine_chunk_type(code_content, &code_boundary);
         assert_eq!(chunk_type, ChunkType::Code);
     }
     

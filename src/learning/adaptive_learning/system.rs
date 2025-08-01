@@ -548,6 +548,7 @@ mod tests {
             max_iterations: 100,
             convergence_threshold: 0.01,
             decay_rate: 0.1,
+            decay_factor: 0.95,
             inhibition_strength: 0.3,
             default_threshold: 0.5,
         };

@@ -68,6 +68,8 @@ lazy_static = "1.4"
 # Logging
 log = "0.4"
 env_logger = "0.11"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Command line parsing
 clap = { version = "4.5", features = ["derive"] }
@@ -133,6 +135,7 @@ dotenv = "0.15"
 mockall = "0.12"
 test-case = "3.3"
 uuid = { version = "1.10", features = ["v4"] }
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
 
 [profile.release]
 lto = true
@@ -149,6 +152,10 @@ native = ["nalgebra"]
 simd = []
 cuda = []
 mcp = []
+
+[[bench]]
+name = "enhanced_storage_benchmarks"
+harness = false
 
 # Other disabled test targets
 

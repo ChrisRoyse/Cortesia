@@ -6,7 +6,6 @@
 use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
 use crate::enhanced_knowledge_storage::{
-    types::{Result, ProcessingTask, ComplexityLevel},
     model_management::ModelResourceManager,
     hierarchical_storage::types::{KnowledgeLayer, SemanticLinkGraph, SemanticLinkType, SemanticNode, SemanticEdge, HierarchicalStorageConfig, HierarchicalStorageResult, HierarchicalStorageError, LayerType, LinkTypeInfo, SemanticNodeType, CentralityScores},
 };
@@ -801,6 +800,9 @@ impl SemanticLinkManager {
 mod tests {
     use super::*;
     use crate::enhanced_knowledge_storage::model_management::ModelResourceManager;
+    use crate::enhanced_knowledge_storage::types::{ModelResourceConfig, ComplexityLevel};
+    use crate::enhanced_knowledge_storage::hierarchical_storage::types::{LayerContent, LayerMetadata, LayerPosition};
+    use std::time::Duration;
     
     #[tokio::test]
     async fn test_semantic_link_manager_creation() {

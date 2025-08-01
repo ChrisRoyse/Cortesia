@@ -4,9 +4,11 @@
 //! This file serves as the entry point for running the comprehensive test suite.
 
 mod enhanced_knowledge_storage;
+mod enhanced_knowledge_integration;
 
 // Re-export test modules for easy access
 pub use enhanced_knowledge_storage::*;
+pub use enhanced_knowledge_integration::*;
 
 // Integration with main test runner
 #[cfg(test)]

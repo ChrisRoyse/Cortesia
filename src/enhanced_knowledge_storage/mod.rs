@@ -9,6 +9,7 @@ pub mod knowledge_processing;
 pub mod hierarchical_storage;
 pub mod retrieval_system;
 pub mod types;
+pub mod logging;
 
 // Re-export commonly used types and traits
 pub use types::*;

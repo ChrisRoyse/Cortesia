@@ -1,5 +1,6 @@
 #![cfg_attr(target_arch = "wasm32", no_std)]
 #![allow(dead_code)]
+#![doc = include_str!("../docs/enhanced_knowledge_storage/README.md")]
 
 #[cfg(target_arch = "wasm32")]
 extern crate alloc;

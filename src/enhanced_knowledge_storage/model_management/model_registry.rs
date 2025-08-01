@@ -262,10 +262,18 @@ mod tests {
         let registry = ModelRegistry::with_default_models();
         
         let low_model = registry.suggest_optimal_model(TaskComplexity::Low).unwrap();
+        let medium_model = registry.suggest_optimal_model(TaskComplexity::Medium).unwrap();
         let high_model = registry.suggest_optimal_model(TaskComplexity::High).unwrap();
         
         assert!(low_model.parameters < high_model.parameters);
         assert_eq!(low_model.complexity_level, ComplexityLevel::Low);
+        assert_eq!(medium_model.complexity_level, ComplexityLevel::Medium);
+        assert_eq!(high_model.complexity_level, ComplexityLevel::High);
+        
+        // Verify each complexity level selects a different model
+        assert_ne!(low_model.name, medium_model.name);
+        assert_ne!(medium_model.name, high_model.name);
+        assert_ne!(low_model.name, high_model.name);
     }
     
     #[test]

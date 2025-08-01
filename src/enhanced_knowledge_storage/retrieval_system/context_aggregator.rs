@@ -109,7 +109,7 @@ impl ContextAggregator {
     ) -> RetrievalResult2<String> {
         let contents = items
             .iter()
-            .map(|item| &item.content)
+            .map(|item| item.content.as_str())
             .collect::<Vec<_>>();
         
         let prompt = format!(
@@ -174,7 +174,7 @@ Synthesized answer:"#,
             }
         }
         
-        supporting
+        Ok(supporting)
     }
     
     /// Calculate relevance to primary content
@@ -277,7 +277,7 @@ Synthesized answer:"#,
     async fn analyze_temporal_flow(
         &self,
         items: &[RetrievedItem],
-        query: &ProcessedQuery,
+        _query: &ProcessedQuery,
     ) -> RetrievalResult2<TemporalFlow> {
         let mut events = Vec::new();
         
@@ -516,7 +516,7 @@ mod tests {
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);
         
-        let content = "This is the beginning. The important keyword appears here. And this is the end.";
+        let content = "This is a very long content that contains many words before the important keyword appears here, and it continues with much more text after the keyword to ensure truncation happens. This should definitely be long enough to trigger the ellipsis functionality.";
         let key_terms = vec!["keyword".to_string()];
         
         let snippet = aggregator.extract_relevant_snippet(content, &key_terms, 50);
