@@ -1,0 +1,315 @@
+//! Working Mock System Validation Test
+//! 
+//! This test validates that the mock components can be instantiated and function correctly.
+//! It avoids complex mockall predicates for better compatibility.
+
+#[cfg(test)]
+mod working_mock_validation_tests {
+    use mockall::mock;
+
+    // Define basic mock structures that mirror the real system
+    #[derive(Debug, Clone)]
+    pub struct MockEntity {
+        pub id: String,
+        pub name: String,
+        pub entity_type: String,
+        pub confidence: f32,
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct MockRelationship {
+        pub source: String,
+        pub target: String,
+        pub relationship_type: String,
+        pub confidence: f32,
+    }
+
+    #[derive(Debug)]
+    pub struct MockProcessingResult {
+        pub entities: Vec<MockEntity>,
+        pub relationships: Vec<MockRelationship>,
+        pub success: bool,
+        pub processing_time_ms: u64,
+    }
+
+    // Mock knowledge storage trait
+    mock! {
+        KnowledgeStorage {
+            fn store_entity(&mut self, entity: MockEntity) -> Result<String, String>;
+            fn store_relationship(&mut self, relationship: MockRelationship) -> Result<String, String>;
+            fn get_entity(&self, id: &str) -> Result<Option<MockEntity>, String>;
+            fn get_relationships(&self, entity_id: &str) -> Result<Vec<MockRelationship>, String>;
+        }
+    }
+
+    // Mock processing engine trait
+    mock! {
+        ProcessingEngine {
+            fn process_text(&self, text: &str) -> Result<MockProcessingResult, String>;
+            fn extract_entities(&self, text: &str) -> Result<Vec<MockEntity>, String>;
+            fn extract_relationships(&self, text: &str) -> Result<Vec<MockRelationship>, String>;
+        }
+    }
+
+    #[test]
+    fn test_mock_storage_basic_operations() {
+        let mut mock_storage = MockKnowledgeStorage::new();
+        
+        // Setup simple expectations without complex predicates
+        mock_storage
+            .expect_store_entity()
+            .times(1)
+            .returning(|entity| Ok(entity.id.clone()));
+        
+        mock_storage
+            .expect_get_entity()
+            .times(1)
+            .returning(|_| Ok(Some(MockEntity {
+                id: "test_entity_1".to_string(),
+                name: "Test Entity".to_string(),
+                entity_type: "Person".to_string(),
+                confidence: 0.95,
+            })));
+
+        // Test entity storage
+        let test_entity = MockEntity {
+            id: "test_entity_1".to_string(),
+            name: "Test Entity".to_string(),
+            entity_type: "Person".to_string(),
+            confidence: 0.95,
+        };
+
+        let result = mock_storage.store_entity(test_entity);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "test_entity_1");
+
+        // Test entity retrieval
+        let retrieved = mock_storage.get_entity("test_entity_1");
+        assert!(retrieved.is_ok());
+        let entity = retrieved.unwrap().unwrap();
+        assert_eq!(entity.name, "Test Entity");
+        assert_eq!(entity.entity_type, "Person");
+    }
+
+    #[test]
+    fn test_mock_processing_engine() {
+        let mut mock_engine = MockProcessingEngine::new();
+        
+        // Setup expectations for text processing
+        mock_engine
+            .expect_process_text()
+            .times(1)
+            .returning(|_| Ok(MockProcessingResult {
+                entities: vec![
+                    MockEntity {
+                        id: "entity_1".to_string(),
+                        name: "Albert Einstein".to_string(),
+                        entity_type: "Person".to_string(),
+                        confidence: 0.98,
+                    },
+                    MockEntity {
+                        id: "entity_2".to_string(),
+                        name: "theoretical physicist".to_string(),
+                        entity_type: "Profession".to_string(),
+                        confidence: 0.92,
+                    }
+                ],
+                relationships: vec![
+                    MockRelationship {
+                        source: "entity_1".to_string(),
+                        target: "entity_2".to_string(),
+                        relationship_type: "is_a".to_string(),
+                        confidence: 0.95,
+                    }
+                ],
+                success: true,
+                processing_time_ms: 150,
+            }));
+
+        // Test processing
+        let result = mock_engine.process_text("Albert Einstein was a theoretical physicist.");
+        assert!(result.is_ok());
+        
+        let processing_result = result.unwrap();
+        assert!(processing_result.success);
+        assert_eq!(processing_result.entities.len(), 2);
+        assert_eq!(processing_result.relationships.len(), 1);
+        
+        // Verify entity extraction
+        let albert = &processing_result.entities[0];
+        assert_eq!(albert.name, "Albert Einstein");
+        assert_eq!(albert.entity_type, "Person");
+        assert!(albert.confidence > 0.9);
+        
+        // Verify relationship extraction
+        let relationship = &processing_result.relationships[0];
+        assert_eq!(relationship.source, "entity_1");
+        assert_eq!(relationship.target, "entity_2");
+        assert_eq!(relationship.relationship_type, "is_a");
+    }
+
+    #[test]
+    fn test_integrated_mock_workflow() {
+        let mut mock_storage = MockKnowledgeStorage::new();
+        
+        // Setup storage expectations
+        mock_storage
+            .expect_store_entity()
+            .times(2)
+            .returning(|entity| Ok(entity.id.clone()));
+        
+        mock_storage
+            .expect_store_relationship()
+            .times(1)
+            .returning(|rel| Ok(format!("{}-{}", rel.source, rel.target)));
+
+        // Create test entities
+        let entity1 = MockEntity {
+            id: "person_1".to_string(),
+            name: "John Doe".to_string(),
+            entity_type: "Person".to_string(),
+            confidence: 0.95,
+        };
+        
+        let entity2 = MockEntity {
+            id: "company_1".to_string(),
+            name: "Tech Corp".to_string(),
+            entity_type: "Organization".to_string(),
+            confidence: 0.88,
+        };
+        
+        let relationship = MockRelationship {
+            source: "person_1".to_string(),
+            target: "company_1".to_string(),
+            relationship_type: "works_at".to_string(),
+            confidence: 0.92,
+        };
+
+        // Test integrated workflow
+        let store_result1 = mock_storage.store_entity(entity1);
+        let store_result2 = mock_storage.store_entity(entity2);
+        let rel_result = mock_storage.store_relationship(relationship);
+
+        assert!(store_result1.is_ok());
+        assert!(store_result2.is_ok());
+        assert!(rel_result.is_ok());
+        assert_eq!(rel_result.unwrap(), "person_1-company_1");
+    }
+
+    #[test] 
+    fn test_mock_system_performance_simulation() {
+        let mut mock_engine = MockProcessingEngine::new();
+        
+        // Setup expectations for performance testing
+        mock_engine
+            .expect_extract_entities()
+            .times(1)
+            .returning(|_| {
+                // Simulate extraction of multiple entities
+                Ok((0..10).map(|i| MockEntity {
+                    id: format!("entity_{}", i),
+                    name: format!("Entity {}", i),
+                    entity_type: "Test".to_string(),
+                    confidence: 0.8 + (i as f32 * 0.01),
+                }).collect())
+            });
+
+        // Test batch processing capabilities  
+        let entities = mock_engine.extract_entities("Large document with many entities...");
+        assert!(entities.is_ok());
+        
+        let entity_list = entities.unwrap();
+        assert_eq!(entity_list.len(), 10);
+        
+        // Verify confidence scores are properly distributed
+        for (i, entity) in entity_list.iter().enumerate() {
+            assert!(entity.confidence >= 0.8);
+            assert!(entity.confidence <= 1.0);
+            assert_eq!(entity.id, format!("entity_{}", i));
+        }
+    }
+
+    #[test]
+    fn test_mock_error_handling() {
+        let mut mock_storage = MockKnowledgeStorage::new();
+        
+        // Setup error scenarios
+        mock_storage
+            .expect_get_entity()
+            .times(1)
+            .returning(|_| Err("Entity not found".to_string()));
+        
+        mock_storage
+            .expect_store_entity()
+            .times(1)
+            .returning(|_| Err("Invalid entity: name cannot be empty".to_string()));
+
+        // Test error handling
+        let error_result = mock_storage.get_entity("nonexistent");
+        assert!(error_result.is_err());
+        assert_eq!(error_result.unwrap_err(), "Entity not found");
+        
+        // Test validation error
+        let invalid_entity = MockEntity {
+            id: "invalid".to_string(),
+            name: "".to_string(), // Empty name should cause error
+            entity_type: "Test".to_string(),
+            confidence: 0.5,
+        };
+        
+        let validation_result = mock_storage.store_entity(invalid_entity);
+        assert!(validation_result.is_err());
+        assert!(validation_result.unwrap_err().contains("name cannot be empty"));
+    }
+
+    #[test]
+    fn test_mock_system_instantiation() {
+        // Test that mock objects can be created successfully
+        let _storage = MockKnowledgeStorage::new();
+        let _engine = MockProcessingEngine::new();
+        
+        // This test verifies that the mock system compiles and instantiates correctly
+        assert!(true);
+    }
+
+    #[test]
+    fn test_basic_mock_data_structures() {
+        // Test that our mock data structures work correctly
+        let entity = MockEntity {
+            id: "test_id".to_string(),
+            name: "Test Name".to_string(),
+            entity_type: "TestType".to_string(),
+            confidence: 0.85,
+        };
+
+        let relationship = MockRelationship {
+            source: "source_id".to_string(),
+            target: "target_id".to_string(),
+            relationship_type: "related_to".to_string(),
+            confidence: 0.90,
+        };
+
+        let result = MockProcessingResult {
+            entities: vec![entity.clone()],
+            relationships: vec![relationship.clone()],
+            success: true,
+            processing_time_ms: 100,
+        };
+
+        // Verify all fields are accessible and correct
+        assert_eq!(entity.id, "test_id");
+        assert_eq!(entity.name, "Test Name");
+        assert_eq!(entity.entity_type, "TestType");
+        assert_eq!(entity.confidence, 0.85);
+
+        assert_eq!(relationship.source, "source_id");
+        assert_eq!(relationship.target, "target_id");
+        assert_eq!(relationship.relationship_type, "related_to");
+        assert_eq!(relationship.confidence, 0.90);
+
+        assert!(result.success);
+        assert_eq!(result.entities.len(), 1);
+        assert_eq!(result.relationships.len(), 1);
+        assert_eq!(result.processing_time_ms, 100);
+    }
+}

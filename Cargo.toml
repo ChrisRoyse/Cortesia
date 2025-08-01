@@ -93,6 +93,30 @@ reqwest = { version = "0.11", features = ["json"] }
 num-traits = "0.2"
 nalgebra = { version = "0.33", optional = true }
 
+# AI/ML Dependencies for Real Components
+candle-core = "0.6"
+candle-nn = "0.6" 
+candle-transformers = "0.6"
+tokenizers = "0.19"
+hf-hub = "0.3"
+ort = { version = "2.0", optional = true }  # ONNX Runtime
+ndarray = "0.15"
+linfa = { version = "0.7", optional = true }
+smartcore = { version = "0.3", optional = true }
+
+# Embedding and similarity computation
+faiss = { version = "0.12", optional = true }
+hnswlib = { version = "0.1", optional = true }
+
+# Text processing and NLP
+unicode-segmentation = "1.10"
+whatlang = "0.16"
+lingua = { version = "1.6", optional = true }
+
+# LRU Cache for intelligent caching
+lru = "0.12"
+redis = { version = "0.24", optional = true }
+
 web-sys = { version = "0.3", features = ["console", "Performance", "WorkerGlobalScope"], optional = true }
 
 # WASM-specific dependencies
@@ -152,6 +176,8 @@ native = ["nalgebra"]
 simd = []
 cuda = []
 mcp = []
+ai-full = ["ort", "linfa", "smartcore", "faiss", "hnswlib", "lingua", "redis"]
+ai-minimal = ["redis"]
 
 [[bench]]
 name = "enhanced_storage_benchmarks"

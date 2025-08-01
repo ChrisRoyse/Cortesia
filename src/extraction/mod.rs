@@ -4,6 +4,7 @@ pub use advanced_nlp::{
     AdvancedEntityExtractor, 
     Entity, 
     Relation, 
+    ExtractionResult,
     NERModel,
     RelationModel,
     EntityLinker,
@@ -38,6 +39,7 @@ impl EntityExtractor for &str {
             if word.chars().next().is_some_and(|c| c.is_uppercase()) && word.len() > 2 {
                 entities.push(Entity {
                     id: format!("entity_{}", entities.len()),
+                    name: word.to_string(),
                     text: word.to_string(),
                     canonical_name: word.to_string(),
                     entity_type: "UNKNOWN".to_string(),

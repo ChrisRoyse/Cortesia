@@ -1,4 +1,4 @@
-# CogniWeave: The Revolutionary Brain-Inspired Distributed Knowledge Intelligence System
+# Cortesia: The Revolutionary Brain-Inspired Distributed Knowledge Intelligence System
 
 <div align="center">
 
@@ -7,7 +7,7 @@
 [![Architecture](https://img.shields.io/badge/architecture-brain--inspired-purple.svg)](#architecture)
 [![Status](https://img.shields.io/badge/status-revolutionary-brightgreen.svg)](#status)
 
-**CogniWeave** is a groundbreaking cognitive computing platform that fundamentally reimagines how artificial intelligence systems store, process, and reason with knowledge. By combining brain-inspired architectures with distributed computing paradigms, CogniWeave creates a living, breathing knowledge ecosystem that learns, adapts, and evolves like biological neural networks.
+**Cortesia** is a groundbreaking cognitive computing platform that fundamentally reimagines how artificial intelligence systems store, process, and reason with knowledge. By combining brain-inspired architectures with distributed computing paradigms, Cortesia creates a living, breathing knowledge ecosystem that learns, adapts, and evolves like biological neural networks.
 
 [Overview](#overview) • [Architecture](#architecture) • [Features](#features) • [Installation](#installation) • [Usage](#usage) • [Documentation](#documentation) • [Contributing](#contributing)
 
@@ -41,9 +41,9 @@
 
 ## Overview
 
-### What is CogniWeave?
+### What is Cortesia?
 
-CogniWeave represents a paradigm shift in knowledge management and artificial intelligence. Unlike traditional knowledge graphs that store static relationships, CogniWeave creates a dynamic, self-organizing neural substrate where:
+Cortesia represents a paradigm shift in knowledge management and artificial intelligence. Unlike traditional knowledge graphs that store static relationships, Cortesia creates a dynamic, self-organizing neural substrate where:
 
 - **Knowledge lives and breathes** through activation patterns, just like memories in the human brain
 - **Concepts compete and cooperate** through inhibitory and excitatory connections
@@ -51,7 +51,7 @@ CogniWeave represents a paradigm shift in knowledge management and artificial in
 - **Learning happens continuously** through Hebbian plasticity and adaptive mechanisms
 - **Intelligence scales** through federated, Byzantine-fault-tolerant consensus protocols
 
-### Why CogniWeave Changes Everything
+### Why Cortesia Changes Everything
 
 Traditional AI systems suffer from fundamental limitations:
 
@@ -61,7 +61,7 @@ Traditional AI systems suffer from fundamental limitations:
 4. **Centralized Bottlenecks**: Single points of failure limit scalability
 5. **Rigid Reasoning**: Fixed inference patterns can't adapt to new domains
 
-CogniWeave solves all of these problems through revolutionary approaches inspired by neuroscience, distributed systems theory, and emergent intelligence.
+Cortesia solves all of these problems through revolutionary approaches inspired by neuroscience, distributed systems theory, and emergent intelligence.
 
 ---
 
@@ -69,7 +69,7 @@ CogniWeave solves all of these problems through revolutionary approaches inspire
 
 ### 1. Living Knowledge Graphs
 
-Traditional knowledge graphs are like libraries - static repositories of facts. CogniWeave knowledge graphs are like brains - dynamic networks where:
+Traditional knowledge graphs are like libraries - static repositories of facts. Cortesia knowledge graphs are like brains - dynamic networks where:
 
 ```rust
 // Traditional approach - static storage
@@ -79,7 +79,7 @@ let fact = Triple {
     object: "relativity"
 };
 
-// CogniWeave approach - living knowledge
+// Cortesia approach - living knowledge
 let neural_pattern = BrainInspiredEntity {
     concept_id: "Einstein",
     activation_state: 0.95,  // Currently highly activated
@@ -89,7 +89,7 @@ let neural_pattern = BrainInspiredEntity {
 };
 ```
 
-Knowledge in CogniWeave:
+Knowledge in Cortesia:
 - **Activates** when relevant, spreading through connected concepts
 - **Strengthens** with use through Hebbian learning
 - **Competes** for attention through lateral inhibition
@@ -97,7 +97,7 @@ Knowledge in CogniWeave:
 
 ### 2. Cognitive Architecture
 
-CogniWeave implements a complete cognitive architecture with specialized subsystems that mirror human cognition:
+Cortesia implements a complete cognitive architecture with specialized subsystems that mirror human cognition:
 
 #### Working Memory System
 ```rust
@@ -123,7 +123,7 @@ pub struct WorkingMemorySystem {
 
 ### 3. Distributed Consensus Intelligence
 
-CogniWeave pioneers the use of distributed consensus protocols for collaborative AI:
+Cortesia pioneers the use of distributed consensus protocols for collaborative AI:
 
 ```rust
 pub enum ConsensusStrategy {
@@ -142,7 +142,7 @@ This enables:
 
 ### 4. Temporal Knowledge Dynamics
 
-Time is a first-class citizen in CogniWeave:
+Time is a first-class citizen in Cortesia:
 
 ```rust
 pub struct TemporalKnowledge {
@@ -165,7 +165,7 @@ This enables:
 
 ### System Layers
 
-CogniWeave is architected as a series of increasingly sophisticated layers:
+Cortesia is architected as a series of increasingly sophisticated layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -220,7 +220,7 @@ graph TB
 
 ### 1. Brain-Enhanced Knowledge Graph
 
-The foundation of CogniWeave is a revolutionary graph structure that mimics neural networks:
+The foundation of Cortesia is a revolutionary graph structure that mimics neural networks:
 
 ```rust
 pub struct BrainEnhancedKnowledgeGraph {
@@ -249,7 +249,7 @@ Key innovations:
 
 ### 2. Sparse Distributed Representations (SDRs)
 
-CogniWeave uses SDRs for robust, brain-like knowledge encoding:
+Cortesia uses SDRs for robust, brain-like knowledge encoding:
 
 ```rust
 pub struct SDR {
@@ -330,7 +330,7 @@ Features:
 
 ### Neural Activation Dynamics
 
-CogniWeave implements sophisticated activation propagation:
+Cortesia implements sophisticated activation propagation:
 
 ```rust
 pub async fn propagate_activation(&self, source: EntityKey, initial_activation: f32) {
@@ -461,7 +461,7 @@ impl CompetitiveInhibitionSystem {
 
 ### Federated Learning Architecture
 
-CogniWeave enables secure multi-party learning:
+Cortesia enables secure multi-party learning:
 
 ```rust
 pub struct FederatedLearningCoordinator {
@@ -1059,7 +1059,7 @@ impl MultiModalEmbeddingEngine {
 
 ### Claude-Optimized Tools
 
-CogniWeave provides powerful tools for Claude through MCP:
+Cortesia provides powerful tools for Claude through MCP:
 
 ```rust
 pub struct MCPToolRegistry {
@@ -1164,11 +1164,11 @@ impl MCPToolRegistry {
 
 ### Benchmark Results
 
-CogniWeave achieves breakthrough performance:
+Cortesia achieves breakthrough performance:
 
 #### Knowledge Operations
 ```
-Operation                   | Traditional KG | CogniWeave  | Improvement
+Operation                   | Traditional KG | Cortesia  | Improvement
 ---------------------------|----------------|-------------|-------------
 Single fact insertion      | 2.5ms          | 0.8ms       | 3.1x faster
 Bulk knowledge ingestion   | 450 docs/sec   | 2,100 docs/sec | 4.7x faster
@@ -1220,7 +1220,7 @@ pub struct MemoryOptimizer {
 
 Memory usage comparison:
 - Traditional knowledge graph: 100GB for 10M entities
-- CogniWeave with optimization: 12GB for 10M entities (8.3x reduction)
+- Cortesia with optimization: 12GB for 10M entities (8.3x reduction)
 
 ### Parallel Processing
 
@@ -1387,7 +1387,7 @@ impl AccessControlSystem {
 
 ### 1. Advanced Research Assistant
 
-CogniWeave revolutionizes research:
+Cortesia revolutionizes research:
 
 ```rust
 pub struct ResearchAssistant {
@@ -1544,8 +1544,8 @@ impl KnowledgeEvolutionTracker {
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/cogniweave.git
-cd cogniweave
+git clone https://github.com/your-org/cortesia.git
+cd cortesia
 
 # Build with optimizations
 cargo build --release
@@ -1562,13 +1562,13 @@ cargo run --bin mcp-server
 #### Creating a Knowledge Base
 
 ```rust
-use cogniweave::prelude::*;
+use cortesia::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize CogniWeave
-    let config = CogniWeaveConfig::default();
-    let neural_mesh = CogniWeave::new(config).await?;
+    // Initialize Cortesia
+    let config = CortesiaConfig::default();
+    let neural_mesh = Cortesia::new(config).await?;
     
     // Create a brain-enhanced knowledge graph
     let graph = neural_mesh.create_graph("my_knowledge").await?;
@@ -1599,7 +1599,7 @@ async fn main() -> Result<()> {
 
 ```python
 # In Claude with MCP
-async def research_with_cogniweave(topic):
+async def research_with_cortesia(topic):
     # Store initial knowledge
     await mcp.store_knowledge({
         "content": f"Research topic: {topic}",
@@ -1638,7 +1638,7 @@ async def research_with_cogniweave(topic):
 #### System Configuration
 
 ```toml
-# cogniweave.toml
+# cortesia.toml
 [neural]
 embedding_dimensions = 768
 activation_threshold = 0.3
@@ -1712,7 +1712,7 @@ pub async fn sync_with_peers(&self) -> Result<SyncResult>
 
 ### REST API
 
-CogniWeave exposes a comprehensive REST API:
+Cortesia exposes a comprehensive REST API:
 
 ```
 POST   /api/knowledge              Store new knowledge
@@ -1763,7 +1763,7 @@ type Subscription {
 ```
 Benchmark: 10M entities, 50M relationships
 
-Operation          | Neo4j    | ArangoDB | CogniWeave | Improvement
+Operation          | Neo4j    | ArangoDB | Cortesia | Improvement
 -------------------|----------|----------|------------|-------------
 Initial Load       | 45 min   | 38 min   | 8 min      | 5.6x
 Semantic Search    | 450ms    | 380ms    | 45ms       | 10x
@@ -1777,7 +1777,7 @@ Memory Usage       | 125GB    | 98GB     | 15GB       | 8.3x
 ```
 Benchmark: 1M documents, 768-dim embeddings
 
-Operation          | Pinecone | Weaviate | CogniWeave | Improvement
+Operation          | Pinecone | Weaviate | Cortesia | Improvement
 -------------------|----------|----------|------------|-------------
 Index Creation     | 12 min   | 15 min   | 3 min      | 4x
 Semantic Search    | 25ms     | 30ms     | 8ms        | 3.1x
@@ -1790,7 +1790,7 @@ Memory per Doc     | 3.2KB    | 3.8KB    | 0.6KB      | 5.3x
 ```
 Benchmark: Complex reasoning tasks
 
-Task                    | GPT-4 API | Local LLM | CogniWeave | Improvement
+Task                    | GPT-4 API | Local LLM | Cortesia | Improvement
 ------------------------|-----------|-----------|------------|-------------
 5-step reasoning chain  | 2.5s      | 8s        | 95ms       | 26x
 Creative exploration    | 3.2s      | 12s       | 180ms      | 17x
@@ -1867,7 +1867,7 @@ We welcome contributions to push the boundaries of cognitive computing!
 
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/your-org/cogniweave.git
+git clone --recursive https://github.com/your-org/cortesia.git
 
 # Install development dependencies
 cargo install cargo-watch cargo-tarpaulin cargo-criterion
@@ -1902,27 +1902,27 @@ cargo criterion
 
 ## License
 
-CogniWeave is open source under the MIT License. See [LICENSE](LICENSE) for details.
+Cortesia is open source under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## Acknowledgments
 
-CogniWeave stands on the shoulders of giants:
+Cortesia stands on the shoulders of giants:
 
 - **Neuroscience Research**: Inspired by discoveries in cognitive neuroscience
 - **Distributed Systems**: Building on decades of distributed computing research
 - **AI/ML Community**: Leveraging breakthroughs in deep learning and reasoning
 - **Open Source**: Grateful for the Rust ecosystem and dependencies
 
-Special thanks to all contributors who have helped make CogniWeave a reality.
+Special thanks to all contributors who have helped make Cortesia a reality.
 
 ---
 
 <div align="center">
 
-**CogniWeave** - Where Knowledge Comes Alive
+**Cortesia** - Where Knowledge Comes Alive
 
-[Website](https://cogniweave.ai) • [Documentation](https://docs.cogniweave.ai) • [Community](https://discord.gg/cogniweave) • [Twitter](https://twitter.com/cogniweave)
+[Website](https://cortesia.ai) • [Documentation](https://docs.cortesia.ai) • [Community](https://discord.gg/cortesia) • [Twitter](https://twitter.com/cortesia)
 
 </div>

@@ -4,6 +4,13 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use regex::Regex;
 
+/// Result of entity and relation extraction
+#[derive(Debug, Clone)]
+pub struct ExtractionResult {
+    pub entities: Vec<Entity>,
+    pub relations: Vec<Relation>,
+}
+
 /// Advanced NLP-based entity and relation extraction
 pub struct AdvancedEntityExtractor {
     ner_models: HashMap<String, Arc<dyn NERModel>>,
@@ -88,6 +95,17 @@ impl AdvancedEntityExtractor {
         }
         
         Ok(triples)
+    }
+
+    /// Extract both entities and relations in a single call
+    pub async fn extract_entities_and_relations(&self, text: &str) -> Result<ExtractionResult> {
+        let entities = self.extract_entities(text).await?;
+        let relations = self.extract_relations(text, &entities).await?;
+        
+        Ok(ExtractionResult {
+            entities,
+            relations,
+        })
     }
 
     fn merge_entities(&self, entities: Vec<Entity>) -> Result<Vec<Entity>> {
@@ -176,6 +194,7 @@ impl NERModel for PersonNERModel {
             for mat in pattern.find_iter(text) {
                 entities.push(Entity {
                     id: format!("person_{}", entities.len()),
+                    name: mat.as_str().to_string(),
                     text: mat.as_str().to_string(),
                     canonical_name: mat.as_str().to_string(),
                     entity_type: "PERSON".to_string(),
@@ -227,6 +246,7 @@ impl NERModel for LocationNERModel {
             for mat in pattern.find_iter(text) {
                 entities.push(Entity {
                     id: format!("location_{}", entities.len()),
+                    name: mat.as_str().to_string(),
                     text: mat.as_str().to_string(),
                     canonical_name: mat.as_str().to_string(),
                     entity_type: "LOCATION".to_string(),
@@ -278,6 +298,7 @@ impl NERModel for OrganizationNERModel {
             for mat in pattern.find_iter(text) {
                 entities.push(Entity {
                     id: format!("org_{}", entities.len()),
+                    name: mat.as_str().to_string(),
                     text: mat.as_str().to_string(),
                     canonical_name: mat.as_str().to_string(),
                     entity_type: "ORGANIZATION".to_string(),
@@ -337,6 +358,7 @@ impl NERModel for MiscNERModel {
                 
                 entities.push(Entity {
                     id: format!("misc_{}", entities.len()),
+                    name: mat.as_str().to_string(),
                     text: mat.as_str().to_string(),
                     canonical_name: mat.as_str().to_string(),
                     entity_type: entity_type.to_string(),
@@ -761,6 +783,7 @@ impl ConfidenceScorer {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Entity {
     pub id: String,
+    pub name: String,  // Added for test compatibility
     pub text: String,
     pub canonical_name: String,
     pub entity_type: String,
