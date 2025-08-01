@@ -261,7 +261,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_hierarchical_layers() {
-        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3, 0.8]);
+        let (pattern, _entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3, 0.8]);
         
         let abstraction_levels = assign_abstraction_levels(&pattern.activations);
         let layers = create_hierarchical_layers(&abstraction_levels, &pattern);
@@ -295,7 +295,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_apply_top_down_inhibition() {
-        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3]);
+        let (pattern, _entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3]);
         let abstraction_levels = assign_abstraction_levels(&pattern.activations);
         let mut layers = create_hierarchical_layers(&abstraction_levels, &pattern);
         
@@ -311,7 +311,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_apply_within_layer_inhibition() {
-        let (pattern, entities) = create_test_pattern_with_strengths(vec![0.9, 0.8, 0.7]);
+        let (pattern, _entities) = create_test_pattern_with_strengths(vec![0.9, 0.8, 0.7]);
         let abstraction_levels = assign_abstraction_levels(&pattern.activations);
         let mut layers = create_hierarchical_layers(&abstraction_levels, &pattern);
         
@@ -330,7 +330,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_pattern_from_layers() {
-        let (mut pattern, entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3]);
+        let (mut pattern, _entities) = create_test_pattern_with_strengths(vec![0.9, 0.6, 0.3]);
         let abstraction_levels = assign_abstraction_levels(&pattern.activations);
         let layers = create_hierarchical_layers(&abstraction_levels, &pattern);
         

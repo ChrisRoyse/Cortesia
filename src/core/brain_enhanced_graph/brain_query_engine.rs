@@ -3,7 +3,7 @@
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
 use crate::core::types::EntityKey;
-use crate::core::sdr_types::{SDRQuery, SDR};
+use crate::core::sdr_types::SDR;
 use crate::error::Result;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
@@ -182,7 +182,7 @@ impl BrainEnhancedKnowledgeGraph {
     }
 
     /// SDR-based query
-    pub async fn sdr_query(&self, _query: &str, k: usize) -> Result<BrainQueryResult> {
+    pub async fn sdr_query(&self, _query: &str, _k: usize) -> Result<BrainQueryResult> {
         let start_time = Instant::now();
         
         // Generate query embedding
@@ -191,18 +191,10 @@ impl BrainEnhancedKnowledgeGraph {
         
         // Create SDR from query embedding
         // Use default SDR config since field is private
-        let sdr_config = crate::core::sdr_types::SDRConfig::default();
-        let query_sdr = SDR::from_dense_vector(&query_embedding, &sdr_config);
+        let query_sdr = SDR::from_dense_vector(&query_embedding, &crate::core::sdr_types::SDRConfig::default());
         
-        // Create SDR query
-        let sdr_query = SDRQuery {
-            query_sdr,
-            top_k: k,
-            min_overlap: 0.7,
-        };
-        
-        // Search SDR storage
-        let sdr_results = self.sdr_storage.find_similar_patterns(&sdr_query.query_sdr, 10).await?;
+        // Search SDR storage directly
+        let sdr_results = self.sdr_storage.find_similar_patterns(&query_sdr, 10).await?;
         
         // Convert to brain query result
         let mut result = BrainQueryResult::new();

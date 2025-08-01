@@ -5,6 +5,7 @@
 
 use llmkg::mcp::llm_friendly_server::LLMFriendlyMCPServer;
 use llmkg::core::knowledge_engine::KnowledgeEngine;
+use llmkg::cli::Args;
 use llmkg::error::{Result, GraphError};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -12,21 +13,6 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use serde_json::{json, Value};
 use clap::Parser;
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Path to the knowledge graph data directory
-    #[arg(short, long, default_value = "./llmkg_data")]
-    data_dir: String,
-    
-    /// Embedding dimension for the knowledge graph
-    #[arg(short, long, default_value = "96")]
-    embedding_dim: usize,
-    
-    /// Enable debug logging
-    #[arg(short = 'v', long)]
-    verbose: bool,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {

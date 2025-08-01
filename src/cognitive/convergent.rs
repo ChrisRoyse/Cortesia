@@ -851,25 +851,7 @@ impl ConvergentThinking {
                 }
                 visited_entities.insert(current_key);
                 
-                // Get direct properties of this entity
-                // TODO: Implement when brain_relationships is available
-                // for relationship in relationships {
-                //     if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::HasProperty {
-                //         if let Some(property_entity) = entities.get(relationship.target) {
-                //             if !properties.contains(&property_entity.concept_id) {
-                //                 properties.push(property_entity.concept_id.clone());
-                //             }
-                //         }
-                //     }
-                // }
                 
-                // Find parent entities through IsA relationships
-                // TODO: Implement when brain_relationships is available
-                // for relationship in relationships {
-                //     if relationship.source == current_key && relationship.relation_type == crate::core::brain_types::RelationType::IsA {
-                //         entities_to_check.push(relationship.target);
-                //     }
-                // }
             }
             
             if !properties.is_empty() {

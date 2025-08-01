@@ -10,8 +10,6 @@ pub mod enhanced_search;
 pub mod graph_analysis;
 pub mod temporal;
 
-// #[cfg(test)]
-// pub mod tests;
 
 pub use storage::*;
 pub use query::*;

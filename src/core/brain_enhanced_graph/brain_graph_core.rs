@@ -112,7 +112,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Create new brain-enhanced graph with custom configuration
     pub fn new_with_config(embedding_dim: usize, config: BrainEnhancedConfig) -> Result<Self> {
         // Validate configuration
-        config.validate().map_err(|e| crate::error::GraphError::InvalidConfiguration(e))?;
+        config.validate().map_err(crate::error::GraphError::InvalidConfiguration)?;
         
         let core_graph = Arc::new(KnowledgeGraph::new(embedding_dim)?);
         let sdr_config = SDRConfig {
@@ -157,7 +157,7 @@ impl BrainEnhancedKnowledgeGraph {
 
     /// Update configuration
     pub fn update_config(&mut self, config: BrainEnhancedConfig) -> Result<()> {
-        config.validate().map_err(|e| crate::error::GraphError::InvalidConfiguration(e))?;
+        config.validate().map_err(crate::error::GraphError::InvalidConfiguration)?;
         self.config = config;
         Ok(())
     }
@@ -297,11 +297,11 @@ impl BrainEnhancedKnowledgeGraph {
         let activations = self.entity_activations.read().await;
         for (entity, activation) in activations.iter() {
             if !self.contains_entity(*entity) {
-                issues.push(format!("Activation found for non-existent entity: {:?}", entity));
+                issues.push(format!("Activation found for non-existent entity: {entity:?}"));
             }
             
             if *activation < 0.0 || *activation > 1.0 {
-                issues.push(format!("Invalid activation value {} for entity {:?}", activation, entity));
+                issues.push(format!("Invalid activation value {activation} for entity {entity:?}"));
             }
         }
         
@@ -595,10 +595,12 @@ mod tests {
         let result = BrainEnhancedKnowledgeGraph::new(0);
         // Assuming the underlying KnowledgeGraph::new would fail with 0 dimension
         // The exact behavior depends on the KnowledgeGraph implementation
+        assert!(result.is_err(), "Expected error for zero embedding dimension");
         
         // Test with very large dimension to check memory limits
         let result_large = BrainEnhancedKnowledgeGraph::new(usize::MAX);
         // This should likely fail due to memory allocation issues
+        assert!(result_large.is_err(), "Expected error for excessively large embedding dimension");
     }
 
     #[tokio::test]
@@ -624,9 +626,6 @@ mod tests {
         let brain_graph = result.unwrap();
         assert_eq!(brain_graph.embedding_dimension(), 256);
         
-        // Verify SDR configuration
-        let expected_total_bits = 256 * 4;
-        let expected_active_bits = expected_total_bits / 50;
         // Note: We can't directly access SDR config without public methods
         // This test validates the creation process
     }
@@ -675,9 +674,9 @@ mod tests {
         let result = BrainEnhancedKnowledgeGraph::new_with_config(128, invalid_config);
         assert!(result.is_err());
         
-        if let Err(e) = result {
+        if let Err(_e) = result {
             // Verify it's a configuration error
-            match e {
+            match _e {
                 crate::error::GraphError::InvalidConfiguration(_) => {
                     // Expected error type
                 }

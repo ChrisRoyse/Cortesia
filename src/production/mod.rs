@@ -409,7 +409,7 @@ pub fn create_production_system_with_config(
 mod tests {
     use super::*;
     use crate::core::knowledge_engine::KnowledgeEngine;
-    use tokio::time::{sleep, Duration};
+    use tokio::time::Duration;
 
     #[tokio::test]
     async fn test_production_system_creation() {
@@ -500,58 +500,6 @@ mod tests {
         assert!(status.contains_key("performance"));
     }
 
-    // FIXME: Commented out due to DashMap lifetime issues with ShutdownHandler trait
-    // #[tokio::test]
-    // async fn test_graceful_shutdown() {
-    //     let engine = Arc::new(RwLock::new(KnowledgeEngine::new(768, 1_000_000).unwrap()));
-    //     let config = ProductionConfig {
-    //         shutdown: ShutdownConfig {
-    //             graceful_timeout_seconds: 1,
-    //             save_state_timeout_seconds: 1,
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     };
-    //     let system = create_production_system_with_config(engine, config);
-    //     
-    //     // System should not be shutting down initially
-    //     assert!(!system.shutdown_manager.is_shutting_down());
-    //     
-    //     // Start an operation
-    //     let operation_task = {
-    //         let system = system.clone();
-    //         tokio::spawn(async move {
-    //             system.execute_protected_operation(
-    //                 "long_operation",
-    //                 None,
-    //                 || async {
-    //                     sleep(Duration::from_millis(500)).await;
-    //                     Ok("completed")
-    //                 }
-    //             ).await
-    //         })
-    //     };
-    //     
-    //     // Wait a bit for operation to start
-    //     sleep(Duration::from_millis(100)).await;
-    //     
-    //     // Initiate shutdown
-    //     let system_clone = system.clone();
-    //     let shutdown_task = tokio::spawn(async move {
-    //         system_clone.shutdown().await
-    //     });
-    //     
-    //     // Operation should complete
-    //     let op_result = operation_task.await.unwrap();
-    //     assert!(op_result.is_ok());
-    //     
-    //     // Shutdown should complete
-    //     let shutdown_result = shutdown_task.await.unwrap();
-    //     assert!(shutdown_result.is_ok());
-    //     
-    //     // System should be in shutdown state
-    //     assert!(system.shutdown_manager.is_shutting_down());
-    // }
 
     #[tokio::test]
     async fn test_operation_configuration() {

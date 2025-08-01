@@ -147,6 +147,7 @@ impl KnowledgeGraph {
     }
 
     /// Recursive helper for finding best path
+    #[allow(clippy::too_many_arguments)]
     fn find_best_path_recursive(
         &self,
         current: EntityKey,
@@ -221,6 +222,7 @@ impl KnowledgeGraph {
     }
 
     /// Recursive helper for finding weakest path
+    #[allow(clippy::too_many_arguments)]
     fn find_weakest_path_recursive(
         &self,
         current: EntityKey,
@@ -430,7 +432,7 @@ impl PathStats {
     
     /// Check if entities are closely connected (distance <= 2)
     pub fn is_close_connection(&self) -> bool {
-        self.shortest_distance.map_or(false, |d| d <= 2)
+        self.shortest_distance.is_some_and(|d| d <= 2)
     }
     
     /// Check if there are multiple paths

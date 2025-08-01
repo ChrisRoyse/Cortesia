@@ -6,6 +6,7 @@ pub mod metrics;
 pub mod collectors;
 pub mod exporters;
 pub mod brain_metrics_collector;
+pub mod memory_info;
 
 pub use performance::{
     PerformanceMonitor,
@@ -60,6 +61,8 @@ pub use collectors::{
 };
 
 pub use brain_metrics_collector::BrainMetricsCollector;
+
+pub use memory_info::MemoryInfo;
 
 pub use exporters::{
     PrometheusExporter,

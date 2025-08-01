@@ -156,7 +156,7 @@ impl ProductionMCPServer {
         
         if let Some(avg_response) = base_health.get("avg_response_time_ms") {
             metrics.push_str(&format!("# TYPE mcp_avg_response_time_ms gauge\n"));
-            metrics.push_str(&format!("mcp_avg_response_time_ms {}\n", avg_response));
+            metrics.push_str(&format!("mcp_avg_response_time_ms {avg_response}\n"));
         }
         
         metrics

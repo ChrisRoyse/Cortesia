@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 // Using pure graph operations for adaptive pattern selection
-// use crate::monitoring::performance::PerformanceMonitor;
 use crate::error::Result;
 
 /// Ensemble result from merging multiple patterns

@@ -10,11 +10,7 @@ use std::time::Instant;
 impl KnowledgeGraph {
     /// Perform similarity search with intelligent index selection
     pub fn similarity_search(&self, query_embedding: &[f32], k: usize) -> Result<Vec<(EntityKey, f32)>> {
-        let _trace = if let Some(profiler) = &self.runtime_profiler {
-            Some(trace_function!(profiler, "similarity_search", query_embedding.len(), k))
-        } else {
-            None
-        };
+        let _trace = self.runtime_profiler.as_ref().map(|profiler| trace_function!(profiler, "similarity_search", query_embedding.len(), k));
         
         let start_time = Instant::now();
         

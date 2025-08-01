@@ -214,7 +214,7 @@ impl LLMKGMCPServer {
             Err(e) => return MCPResponse {
                 content: vec![MCPContent {
                     type_: "text".to_string(),
-                    text: format!("Failed to create embedding: {}", e),
+                    text: format!("Failed to create embedding: {e}"),
                 }],
                 is_error: true,
             }
@@ -247,7 +247,7 @@ impl LLMKGMCPServer {
             Err(e) => MCPResponse {
                 content: vec![MCPContent {
                     type_: "text".to_string(),
-                    text: format!("Knowledge search failed: {}", e),
+                    text: format!("Knowledge search failed: {e}"),
                 }],
                 is_error: true,
             }
@@ -273,7 +273,7 @@ impl LLMKGMCPServer {
             MCPResponse {
                 content: vec![MCPContent {
                     type_: "text".to_string(),
-                    text: format!("Entity lookup by ID {} not yet implemented", entity_id),
+                    text: format!("Entity lookup by ID {entity_id} not yet implemented"),
                 }],
                 is_error: false,
             }
@@ -300,7 +300,7 @@ impl LLMKGMCPServer {
                         Err(e) => MCPResponse {
                             content: vec![MCPContent {
                                 type_: "text".to_string(),
-                                text: format!("Entity lookup failed: {}", e),
+                                text: format!("Entity lookup failed: {e}"),
                             }],
                             is_error: true,
                         }
@@ -309,7 +309,7 @@ impl LLMKGMCPServer {
                 Err(e) => MCPResponse {
                     content: vec![MCPContent {
                         type_: "text".to_string(),
-                        text: format!("Failed to create embedding: {}", e),
+                        text: format!("Failed to create embedding: {e}"),
                     }],
                     is_error: true,
                 }
@@ -345,8 +345,7 @@ impl LLMKGMCPServer {
             content: vec![MCPContent {
                 type_: "text".to_string(),
                 text: format!(
-                    "# Connection Analysis\n\nSearching for connections between '{}' and '{}' with maximum path length {}.\n\n*Connection analysis not yet fully implemented*",
-                    entity_a, entity_b, max_path_length
+                    "# Connection Analysis\n\nSearching for connections between '{entity_a}' and '{entity_b}' with maximum path length {max_path_length}.\n\n*Connection analysis not yet fully implemented*"
                 ),
             }],
             is_error: false,
@@ -388,7 +387,7 @@ impl LLMKGMCPServer {
                     Err(e) => MCPResponse {
                         content: vec![MCPContent {
                             type_: "text".to_string(),
-                            text: format!("Concept expansion failed: {}", e),
+                            text: format!("Concept expansion failed: {e}"),
                         }],
                         is_error: true,
                     }
@@ -397,7 +396,7 @@ impl LLMKGMCPServer {
             Err(e) => MCPResponse {
                 content: vec![MCPContent {
                     type_: "text".to_string(),
-                    text: format!("Failed to create embedding: {}", e),
+                    text: format!("Failed to create embedding: {e}"),
                 }],
                 is_error: true,
             }

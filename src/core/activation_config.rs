@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use crate::core::types::EntityKey;
+use serde::{Serialize, Deserialize};
 
 /// Configuration for activation propagation
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActivationConfig {
     pub max_iterations: usize,
     pub convergence_threshold: f32,
     pub decay_rate: f32,
+    pub decay_factor: f32,
     pub inhibition_strength: f32,
     pub default_threshold: f32,
 }
@@ -17,6 +19,7 @@ impl Default for ActivationConfig {
             max_iterations: 100,
             convergence_threshold: 0.001,
             decay_rate: 0.1,
+            decay_factor: 0.95,
             inhibition_strength: 2.0,
             default_threshold: 0.5,
         }

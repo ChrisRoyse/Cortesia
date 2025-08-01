@@ -11,11 +11,7 @@ use std::collections::HashMap;
 impl KnowledgeGraph {
     /// Perform complex query with context entities and relationships
     pub fn query(&self, query_embedding: &[f32], context_entities: &[ContextEntity], k: usize) -> Result<QueryResult> {
-        let _trace = if let Some(profiler) = &self.runtime_profiler {
-            Some(trace_function!(profiler, "query", query_embedding.len(), context_entities.len(), k))
-        } else {
-            None
-        };
+        let _trace = self.runtime_profiler.as_ref().map(|profiler| trace_function!(profiler, "query", query_embedding.len(), context_entities.len(), k));
         
         let start_time = Instant::now();
         
@@ -201,13 +197,13 @@ impl KnowledgeGraph {
                 let neighbors = self.get_neighbors(entity_key);
                 
                 for neighbor in neighbors {
-                    if !all_entities.contains_key(&neighbor) {
+                    if let std::collections::hash_map::Entry::Vacant(e) = all_entities.entry(neighbor) {
                         if let Some((_, data)) = self.get_entity(neighbor) {
                             // Score neighbor based on similarity to query
                             if let Some(neighbor_embedding) = self.get_entity_embedding(neighbor) {
                                 let similarity = cosine_similarity(query_embedding, &neighbor_embedding);
                                 if similarity > 0.5 { // Threshold for relevance
-                                    all_entities.insert(neighbor, data);
+                                    e.insert(data);
                                     next_entities.push(neighbor);
                                 }
                             }

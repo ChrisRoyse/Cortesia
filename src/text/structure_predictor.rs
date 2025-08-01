@@ -395,7 +395,6 @@ mod tests {
         
         // Should contain both node and edge operations
         let has_nodes = operations.iter().any(|op| matches!(op, GraphOperation::CreateNode { .. }));
-        let has_edges = operations.iter().any(|op| matches!(op, GraphOperation::CreateEdge { .. }));
         
         assert!(has_nodes);
         // Edges might not always be found depending on heuristics

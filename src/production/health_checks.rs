@@ -11,7 +11,6 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 use dashmap::DashMap;
-// use crate::error::{GraphError, Result};
 use crate::core::knowledge_engine::KnowledgeEngine;
 
 /// Health check status levels

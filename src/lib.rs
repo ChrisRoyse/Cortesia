@@ -25,6 +25,7 @@ pub mod learning;
 pub mod graph;
 pub mod api;
 pub mod models;
+pub mod cli;
 
 #[cfg(feature = "native")]
 pub mod production;
@@ -83,8 +84,6 @@ pub use crate::core::brain_types::{
 pub use crate::versioning::temporal_graph::{TemporalKnowledgeGraph, TimeRange, TemporalEntity, TemporalRelationship};
 pub use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, TemporalUpdate, UpdateOperation, UpdateSource, UpdateStatistics, TemporalUpdateBuilder};
 
-// #[cfg(feature = "native")]
-// pub use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
 #[cfg(feature = "native")]
 pub use crate::mcp::production_server::ProductionMCPServer;
 #[cfg(feature = "native")]
@@ -105,7 +104,7 @@ pub use crate::core::brain_enhanced_graph::{
     EntityRole, SplitCriteria, OptimizationResult, ConceptUsageStats, GraphPatternAnalysis
 };
 
-// Phase 2 Cognitive Pattern Engine Exports
+// Cognitive Pattern Engine Exports
 pub use crate::cognitive::{
     CognitiveOrchestrator, CognitiveOrchestratorConfig, OrchestratorStatistics,
     CognitivePattern, CognitivePatternType, PatternParameters, PatternResult, 
@@ -119,7 +118,7 @@ pub use crate::cognitive::{
     AdaptiveThinking, AdaptiveResult, QueryCharacteristics, StrategySelection
 };
 
-// Phase 3 Advanced Reasoning System Exports  
+// Advanced Reasoning System Exports  
 pub use crate::cognitive::{
     WorkingMemorySystem, MemoryQuery, MemoryRetrievalResult, MemoryContent, BufferType,
     AttentionManager, AttentionState, AttentionFocus, AttentionType, AttentionTarget, AttentionTargetType, ExecutiveCommand,

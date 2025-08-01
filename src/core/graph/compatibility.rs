@@ -58,7 +58,7 @@ impl KnowledgeGraph {
             let embedding_len = embedding.len();
             for (j, val) in embedding.iter_mut().enumerate() {
                 if (i * 16 + j) < embedding_len {
-                    *val = ((hash as u64).wrapping_mul(j as u64 + 1) % 1000) as f32 / 1000.0;
+                    *val = (hash.wrapping_mul(j as u64 + 1) % 1000) as f32 / 1000.0;
                 }
             }
         }
@@ -80,9 +80,9 @@ impl KnowledgeGraph {
     /// Legacy relationship insertion with string IDs
     pub fn insert_relationship_by_id(&self, source_id: u32, target_id: u32, weight: f32) -> Result<()> {
         let source_key = self.get_entity_key(source_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
+            .ok_or(crate::error::GraphError::EntityNotFound { id: source_id })?;
         let target_key = self.get_entity_key(target_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
+            .ok_or(crate::error::GraphError::EntityNotFound { id: target_id })?;
         
         let relationship = crate::core::types::Relationship {
             from: source_key,
@@ -276,9 +276,9 @@ impl KnowledgeGraph {
     /// Legacy relationship removal by ID
     pub fn remove_relationship_by_id(&self, source_id: u32, target_id: u32) -> Result<bool> {
         let source_key = self.get_entity_key(source_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: source_id })?;
+            .ok_or(crate::error::GraphError::EntityNotFound { id: source_id })?;
         let target_key = self.get_entity_key(target_id)
-            .ok_or_else(|| crate::error::GraphError::EntityNotFound { id: target_id })?;
+            .ok_or(crate::error::GraphError::EntityNotFound { id: target_id })?;
         
         self.remove_relationship(source_key, target_key)
     }
@@ -442,7 +442,7 @@ impl KnowledgeGraph {
         let buffer_size = self.edge_buffer_size();
         
         if buffer_size > 1000 {
-            issues.push(format!("Edge buffer is very large: {} entries", buffer_size));
+            issues.push(format!("Edge buffer is very large: {buffer_size} entries"));
         }
         
         // Check embedding dimension consistency

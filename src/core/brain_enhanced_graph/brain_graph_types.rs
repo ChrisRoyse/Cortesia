@@ -1,6 +1,7 @@
 //! Type definitions for brain-enhanced knowledge graph
 
 use crate::core::types::EntityKey;
+use crate::core::activation_config::ActivationConfig;
 use std::collections::HashMap;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
@@ -436,23 +437,6 @@ pub struct ConnectivityStats {
     pub average_path_length: f32,
 }
 
-/// Activation configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ActivationConfig {
-    pub default_threshold: f32,
-    pub max_iterations: usize,
-    pub decay_factor: f32,
-}
-
-impl Default for ActivationConfig {
-    fn default() -> Self {
-        Self {
-            default_threshold: 0.5,
-            max_iterations: 100,
-            decay_factor: 0.95,
-        }
-    }
-}
 
 /// Brain graph configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
