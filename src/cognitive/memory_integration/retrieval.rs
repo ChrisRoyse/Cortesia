@@ -257,11 +257,12 @@ impl MemoryRetrieval {
         let query_hash = query.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
         let query_embedding = vec![query_hash as f32 / u32::MAX as f32; 96]; // Assuming 96 dim embeddings
         
-        let query_result = self.long_term_graph.query(&query_embedding, &[], 10).await?;
-        let graph_results: Vec<GraphSearchResult> = query_result.entities.into_iter().map(|entity| {
+        let query_result = self.long_term_graph.similarity_search(&query_embedding, 10).await?;
+        let graph_results: Vec<GraphSearchResult> = query_result.entities.into_iter().map(|entity_key| {
+            let similarity = query_result.activations.get(&entity_key).copied().unwrap_or(0.0);
             GraphSearchResult {
-                content: format!("entity_{:?}", entity.id),
-                relevance_score: entity.similarity,
+                content: format!("entity_{:?}", entity_key),
+                relevance_score: similarity,
             }
         }).collect();
         

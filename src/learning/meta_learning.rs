@@ -1,7 +1,4 @@
 use crate::learning::types::*;
-use crate::learning::adaptive_learning::ResourceRequirement;
-use crate::learning::phase4_integration::LearningStrategy;
-use crate::cognitive::phase4_integration::LearningAlgorithmType;
 use crate::error::Result;
 
 use std::collections::HashMap;
@@ -497,10 +494,10 @@ impl MetaLearningSystem {
     fn recommend_strategy(&self, _similar_contexts: &[TaskContext]) -> Result<LearningStrategy> {
         // Recommend strategy based on successful strategies in similar contexts
         Ok(LearningStrategy {
-            strategy_type: crate::learning::phase4_integration::StrategyType::Balanced,
+            strategy_type: StrategyType::Balanced,
             priority_areas: vec!["Pattern Recognition".to_string(), "Transfer Learning".to_string()],
-            resource_allocation: ResourceRequirement::default(),
-            coordination_approach: crate::learning::phase4_integration::CoordinationApproach::Synchronized,
+            resource_allocation: crate::learning::adaptive_learning::ResourceRequirement::default(),
+            coordination_approach: CoordinationApproach::Synchronized,
             safety_level: 0.8,
             expected_duration: Duration::from_secs(1800),
         })

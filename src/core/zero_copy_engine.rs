@@ -1,4 +1,3 @@
-// Phase 4.4: Zero-Copy Knowledge Engine Integration
 // Enhanced knowledge engine that leverages zero-copy serialization for maximum performance
 
 use crate::core::types::{EntityData, Relationship};

@@ -1398,7 +1398,7 @@ impl PerformanceDashboard {
                 if (name.includes('claude') || name.includes('ai') || name.includes('assistant')) return 'AI';
                 if (name.includes('anthropic') || name.includes('google') || name.includes('company')) return 'Company';
                 if (name.includes('san francisco') || name.includes('california') || name.includes('location')) return 'Location';
-                if (name.includes('transformer') || name.includes('neural') || name.includes('architecture')) return 'Technology';
+                if (name.includes('transformer') || name.includes('pattern') || name.includes('architecture')) return 'Technology';
                 if (name.includes('protocol') || name.includes('mcp') || name.includes('system')) return 'System';
                 return 'Concept';
             }}
@@ -1975,7 +1975,7 @@ async fn discover_tests() -> Result<impl warp::Reply, warp::Rejection> {
             "path": "src/core/brain_enhanced_graph",
             "test_type": "Unit",
             "test_count": 12,
-            "tags": ["core", "brain", "neural"],
+            "tags": ["core", "brain", "enhanced"],
             "description": "Brain-enhanced graph tests"
         }),
         serde_json::json!({

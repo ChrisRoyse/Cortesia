@@ -7,7 +7,7 @@ use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, ActivationStep, ActivationOperation, RelationType};
 use crate::core::types::EntityKey;
-// Neural server dependency removed - using pure graph operations
+// Using pure graph operations for divergent thinking
 use crate::error::{Result, GraphError};
 
 /// Divergent thinking pattern - explores many possible paths, brainstorming, creative connections
@@ -65,8 +65,8 @@ impl DivergentThinking {
             exploration_type,
         ).await?;
         
-        // 3. Use neural path exploration to find creative connections
-        let path_exploration = self.neural_path_exploration(exploration_map).await?;
+        // 3. Use graph path exploration to find creative connections
+        let path_exploration = self.graph_path_exploration(exploration_map).await?;
         
         // 4. Rank results by relevance and novelty
         let ranked_results = self.rank_by_creativity(path_exploration).await?;
@@ -148,8 +148,8 @@ impl DivergentThinking {
         Ok(exploration_map)
     }
     
-    /// Use neural networks for creative path exploration
-    async fn neural_path_exploration(&self, exploration_map: ExplorationMap) -> Result<Vec<ExplorationPath>> {
+    /// Use graph-based creative path exploration
+    async fn graph_path_exploration(&self, exploration_map: ExplorationMap) -> Result<Vec<ExplorationPath>> {
         let mut paths = Vec::new();
         
         // Generate paths from seed nodes to interesting endpoints
@@ -186,10 +186,10 @@ impl DivergentThinking {
             }
         }
         
-        // Use neural network to enhance path discovery
-        let neural_paths = self.neural_enhance_paths(paths, &exploration_map).await?;
+        // Use graph-based enhancement for path discovery
+        let enhanced_paths = self.graph_enhance_paths(paths, &exploration_map).await?;
         
-        Ok(neural_paths)
+        Ok(enhanced_paths)
     }
     
     /// Find creative path between two entities
@@ -256,8 +256,8 @@ impl DivergentThinking {
         Ok(None)
     }
     
-    /// Enhance paths using neural network analysis
-    async fn neural_enhance_paths(
+    /// Enhance paths using graph-based analysis
+    async fn graph_enhance_paths(
         &self,
         paths: Vec<ExplorationPath>,
         _exploration_map: &ExplorationMap,
@@ -570,7 +570,7 @@ impl DivergentThinking {
             
             // Technology hierarchy
             vec!["machine learning", "artificial intelligence", "ai", "technology"],
-            vec!["neural network", "deep learning", "machine learning", "ai", "technology"],
+            vec!["decision tree", "supervised learning", "machine learning", "ai", "technology"],
             vec!["computer science", "technology", "science"],
             
             // Science hierarchy
@@ -642,7 +642,7 @@ impl DivergentThinking {
             
             // AI/Technology field  
             vec!["ai", "artificial", "intelligence", "machine", "computer", "algorithm", 
-                 "technology", "neural", "network", "learning", "deep"],
+                 "technology", "model", "network", "learning", "deep"],
             
             // Science field
             vec!["physics", "chemistry", "biology", "science", "theory", "experiment", 
@@ -735,8 +735,8 @@ impl DivergentThinking {
             
             // AI patterns
             (vec!["machine", "learning"], vec!["ai", "artificial"], 0.9),
-            (vec!["neural", "network"], vec!["ai", "deep"], 0.9),
-            (vec!["deep", "learning"], vec!["neural", "ai"], 0.9),
+            (vec!["decision", "tree"], vec!["ai", "algorithm"], 0.9),
+            (vec!["deep", "learning"], vec!["model", "ai"], 0.9),
             
             // Science patterns
             (vec!["quantum", "mechanics"], vec!["physics", "science"], 0.9),
@@ -1294,7 +1294,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_neural_path_exploration() {
+    async fn test_graph_path_exploration() {
         let thinking = create_test_thinking();
         
         // Create a mock exploration map
@@ -1310,7 +1310,7 @@ mod tests {
             creative_bridges_found: 1,
         };
         
-        let paths = thinking.neural_path_exploration(exploration_map).await;
+        let paths = thinking.graph_path_exploration(exploration_map).await;
         assert!(paths.is_ok());
         
         let found_paths = paths.unwrap();

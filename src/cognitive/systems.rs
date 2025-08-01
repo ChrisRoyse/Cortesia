@@ -8,7 +8,6 @@ use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
 use crate::core::types::EntityKey;
-// Neural server dependency removed - using pure graph operations
 use crate::error::{Result, GraphError};
 
 /// Systems thinking pattern - navigates hierarchies, inherits attributes, understands complex systems
@@ -43,7 +42,7 @@ impl SystemsThinking {
             reasoning_type,
         ).await?;
         
-        // 3. Apply inheritance rules using neural model
+        // 3. Apply inheritance rules
         let inherited_attributes = self.apply_inheritance_rules(
             &hierarchy_traversal_internal,
         ).await?;
@@ -184,7 +183,7 @@ impl SystemsThinking {
         })
     }
 
-    /// Apply inheritance rules using neural processing
+    /// Apply inheritance rules
     async fn apply_inheritance_rules(
         &self,
         traversal: &HierarchyTraversalInternal,
@@ -285,7 +284,7 @@ impl SystemsThinking {
         _reasoning_type: &SystemsReasoningType,
     ) -> Result<EntityKey> {
         // For now, return the first parent
-        // In a full implementation, this would use neural scoring
+        // In a full implementation, this would use advanced scoring
         parents.first().copied()
             .ok_or_else(|| GraphError::ProcessingError("No parents found".to_string()))
     }

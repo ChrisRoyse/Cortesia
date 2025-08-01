@@ -476,7 +476,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                             "hash_tables": 16
                         }
                     }),
-                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Neural_Networks -> type_of -> machine_learning".to_string(),
+                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Decision_Trees -> type_of -> machine_learning".to_string(),
                 }
             ],
             tips: vec![
@@ -531,8 +531,8 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         // ========= TIER 1 ADVANCED COGNITIVE TOOLS =========
         
         LLMMCPTool {
-            name: "neural_importance_scoring".to_string(),
-            description: "AI-powered content importance and quality assessment using neural salience models. Determines if content should be stored and provides quality metrics.".to_string(),
+            name: "importance_scoring".to_string(),
+            description: "Content importance and quality assessment using heuristic methods. Determines if content should be stored and provides quality metrics.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -556,7 +556,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "text": "Einstein's theory of general relativity revolutionized our understanding of gravity by describing it as curvature in spacetime caused by mass and energy.",
                         "context": "physics education"
                     }),
-                    expected_output: "Neural Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
+                    expected_output: "Heuristic Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
                 }
             ],
             tips: vec![
@@ -850,7 +850,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
 
         LLMMCPTool {
             name: "predict_graph_structure".to_string(),
-            description: "Neural network-powered prediction of missing links, future connections, and knowledge gaps using advanced graph neural networks.".to_string(),
+            description: "Heuristic prediction of missing links, future connections, and knowledge gaps using graph-based algorithms.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -878,11 +878,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "type": "string",
                         "description": "Focus predictions on specific entity pattern",
                         "maxLength": 100
-                    },
-                    "use_neural_features": {
-                        "type": "boolean",
-                        "description": "Enable neural feature extraction (default: true)",
-                        "default": true
                     }
                 },
                 "required": []
@@ -895,12 +890,12 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "entity_filter": "scientist",
                         "confidence_threshold": 0.8
                     }),
-                    expected_output: "Neural Structure Prediction:\n🧠 Prediction Type: missing_links\n🎯 Generated 15 predictions\n📊 Avg Confidence: 0.847\n⚡ Processing Time: 234ms\n✅ Validation Score: 0.912".to_string(),
+                    expected_output: "Heuristic Structure Prediction:\n🧠 Prediction Type: missing_links\n🎯 Generated 15 predictions\n📊 Avg Confidence: 0.847\n⚡ Processing Time: 234ms\n✅ Validation Score: 0.912".to_string(),
                 }
             ],
             tips: vec![
                 "Use 'missing_links' for discovering hidden connections".to_string(),
-                "Enable neural features for more accurate predictions".to_string(),
+                "Enable advanced features for more accurate predictions".to_string(),
                 "Validate predictions before incorporating into knowledge base".to_string(),
             ],
         },

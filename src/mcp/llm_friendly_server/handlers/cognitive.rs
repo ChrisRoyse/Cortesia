@@ -11,13 +11,13 @@ use tokio::sync::RwLock;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-/// Handle neural importance scoring request
-pub async fn handle_neural_importance_scoring(
+/// Handle importance scoring request (using heuristic methods)
+pub async fn handle_importance_scoring(
     _knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
     usage_stats: &Arc<RwLock<UsageStats>>,
     params: Value,
 ) -> std::result::Result<(Value, String, Vec<String>), String> {
-    log::debug!("handle_neural_importance_scoring: Starting");
+    log::debug!("handle_importance_scoring: Starting");
     
     let text = params.get("text")
         .and_then(|v| v.as_str())
@@ -32,8 +32,8 @@ pub async fn handle_neural_importance_scoring(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     
-    // Calculate neural importance score
-    let importance_score = calculate_neural_importance(text, context).await;
+    // Calculate importance score using heuristic methods
+    let importance_score = calculate_heuristic_importance(text, context).await;
     let quality_level = categorize_quality(importance_score);
     let should_store = importance_score > 0.5;
     
@@ -58,7 +58,7 @@ pub async fn handle_neural_importance_scoring(
     });
     
     let message = format!(
-        "Neural Importance Analysis:\n\
+        "Heuristic Importance Analysis:\n\
         📊 Importance Score: {:.2}/1.0 ({})\n\
         🧠 Quality Level: {}\n\
         💾 Storage Recommendation: {}\n\
@@ -430,9 +430,9 @@ pub async fn handle_analyze_graph_centrality(
     Ok((data, message, suggestions))
 }
 
-// Helper functions for neural importance scoring
-async fn calculate_neural_importance(text: &str, context: &str) -> f32 {
-    // Simulate neural importance calculation
+// Helper functions for heuristic importance scoring
+async fn calculate_heuristic_importance(text: &str, context: &str) -> f32 {
+    // Calculate importance using heuristic methods (text length, complexity, context)
     let base_score = (text.len() as f32 / 1000.0).min(1.0);
     let context_bonus = if !context.is_empty() { 0.1 } else { 0.0 };
     let complexity_factor = calculate_text_complexity(text) * 0.3;

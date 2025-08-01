@@ -96,7 +96,7 @@ pub fn get_domain_hierarchy() -> HashMap<String, Vec<String>> {
     hierarchy.insert("ai".to_string(), vec![
         "machine_learning".to_string(),
         "deep_learning".to_string(),
-        "neural_network".to_string(),
+        "pattern_recognition".to_string(),
         "natural_language".to_string(),
         "computer_vision".to_string(),
         "robotics".to_string(),

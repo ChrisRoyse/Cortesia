@@ -1,5 +1,4 @@
 // Enhanced entity data structures with string interning support
-// Phase 4.3: String interning integration for memory optimization
 
 use crate::core::types::EntityKey;
 use crate::storage::string_interner::{StringInterner, InternedString, InternedProperties};

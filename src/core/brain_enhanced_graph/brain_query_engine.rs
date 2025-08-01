@@ -2,101 +2,39 @@
 
 use super::brain_graph_core::BrainEnhancedKnowledgeGraph;
 use super::brain_graph_types::*;
-use crate::core::types::{EntityKey, QueryResult, ContextEntity};
+use crate::core::types::EntityKey;
 use crate::core::sdr_types::{SDRQuery, SDR};
 use crate::error::Result;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Instant;
 
 impl BrainEnhancedKnowledgeGraph {
-    /// Neural query with activation propagation
-    pub async fn neural_query(&self, query_embedding: &[f32], k: usize) -> Result<BrainQueryResult> {
+    /// Basic similarity search with brain query result format
+    pub async fn similarity_search(&self, query_embedding: &[f32], k: usize) -> Result<BrainQueryResult> {
         let start_time = Instant::now();
         
-        // Check cache first
-        let cache_key = self.generate_cache_key(query_embedding, k);
-        {
-            let cache = self.query_cache.read().await;
-            if let Some(cached_result) = cache.get(&cache_key) {
-                return Ok(cached_result.clone());
-            }
+        if query_embedding.is_empty() {
+            return Err(crate::error::GraphError::InvalidInput("Empty query embedding".to_string()));
         }
         
-        // Step 1: Find initial similar entities
-        let similar_entities = self.core_graph.similarity_search(query_embedding, k * 2)?;
-        
-        // Step 2: Activate similar entities
-        let mut activated_entities = HashMap::new();
-        for (entity_key, similarity) in similar_entities {
-            let activation = similarity * self.config.activation_threshold;
-            activated_entities.insert(entity_key, activation);
-            self.set_entity_activation(entity_key, activation).await;
+        if k == 0 {
+            let mut result = BrainQueryResult::new();
+            result.query_time = start_time.elapsed();
+            return Ok(result);
         }
         
-        // Step 3: Propagate activation through the graph
-        let propagated_activations = self.propagate_activation(&activated_entities).await;
+        // Use similarity search for query processing
+        let similar_entities = self.core_graph.similarity_search(query_embedding, k)?;
         
-        // Step 4: Apply neural dampening
-        let dampened_activations = self.apply_neural_dampening(&propagated_activations).await;
-        
-        // Step 5: Select top k entities
-        let mut sorted_entities: Vec<(EntityKey, f32)> = dampened_activations
-            .into_iter()
-            .collect();
-        sorted_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        sorted_entities.truncate(k);
-        
-        // Step 6: Build result
+        // Build result from similarity search
         let mut result = BrainQueryResult::new();
         result.query_time = start_time.elapsed();
         
-        for (entity_key, activation) in sorted_entities {
-            result.add_entity(entity_key, activation);
+        for (entity_key, similarity) in similar_entities {
+            result.add_entity(entity_key, similarity);
         }
-        
-        // Cache result
-        {
-            let mut cache = self.query_cache.write().await;
-            cache.insert(cache_key, result.clone());
-        }
-        
-        // Update statistics
-        self.update_learning_stats(|stats| {
-            stats.avg_activation = stats.avg_activation * 0.9 + result.get_average_activation() * 0.1;
-        }).await;
         
         Ok(result)
-    }
-
-    /// Standard query (compatibility wrapper)
-    pub async fn query(&self, query_embedding: &[f32], _context_entities: &[ContextEntity], k: usize) -> Result<QueryResult> {
-        let brain_result = self.neural_query(query_embedding, k).await?;
-        
-        // Convert to standard QueryResult
-        let mut entities = Vec::new();
-        let mut relationships = Vec::new();
-        
-        for entity_key in brain_result.entities {
-            if let Some(data) = self.core_graph.get_entity_data(entity_key) {
-                entities.push(ContextEntity {
-                    id: entity_key,
-                    similarity: brain_result.total_activation, // Use overall activation as similarity
-                    neighbors: Vec::new(), // Would be populated with actual neighbors
-                    properties: data.properties,
-                });
-                
-                // Get relationships for this entity
-                let entity_relationships = self.core_graph.get_entity_relationships(entity_key);
-                relationships.extend(entity_relationships);
-            }
-        }
-        
-        Ok(QueryResult {
-            entities,
-            relationships,
-            confidence: brain_result.total_activation,
-            query_time_ms: brain_result.query_time.as_millis() as u64,
-        })
     }
 
     /// Activate concept by name
@@ -151,52 +89,7 @@ impl BrainEnhancedKnowledgeGraph {
         }
     }
 
-    /// Multi-modal query combining embedding and concept
-    pub async fn multi_modal_query(&self, query_embedding: &[f32], concept_name: Option<&str>, k: usize) -> Result<BrainQueryResult> {
-        let mut result = self.neural_query(query_embedding, k).await?;
-        
-        // If concept is provided, boost entities related to concept
-        if let Some(concept) = concept_name {
-            if let Some(concept_structure) = self.get_concept_structure(concept).await {
-                let concept_entities: HashSet<EntityKey> = concept_structure.get_all_entities().into_iter().collect();
-                
-                // Boost activations for entities in concept
-                for (entity_key, activation) in result.activations.iter_mut() {
-                    if concept_entities.contains(entity_key) {
-                        *activation *= 1.5; // Boost concept-related entities
-                    }
-                }
-                
-                // Recalculate total activation
-                result.total_activation = result.activations.values().sum();
-            }
-        }
-        
-        Ok(result)
-    }
 
-    /// Query with activation constraints
-    pub async fn constrained_query(&self, query_embedding: &[f32], min_activation: f32, max_activation: f32, k: usize) -> Result<BrainQueryResult> {
-        let initial_result = self.neural_query(query_embedding, k * 2).await?;
-        
-        // Filter by activation constraints
-        let filtered_entities: Vec<(EntityKey, f32)> = initial_result
-            .get_sorted_entities()
-            .into_iter()
-            .filter(|(_, activation)| *activation >= min_activation && *activation <= max_activation)
-            .take(k)
-            .collect();
-        
-        // Build constrained result
-        let mut result = BrainQueryResult::new();
-        result.query_time = initial_result.query_time;
-        
-        for (entity_key, activation) in filtered_entities {
-            result.add_entity(entity_key, activation);
-        }
-        
-        Ok(result)
-    }
 
     /// Propagate activation through the graph
     async fn propagate_activation(&self, initial_activations: &HashMap<EntityKey, f32>) -> HashMap<EntityKey, f32> {
@@ -227,7 +120,7 @@ impl BrainEnhancedKnowledgeGraph {
                     
                     // Calculate propagated activation
                     let synaptic_weight = self.get_synaptic_weight(current_entity, neighbor).await;
-                    let propagated_activation = current_activation * synaptic_weight * self.config.neural_dampening;
+                    let propagated_activation = current_activation * synaptic_weight * 0.8;
                     
                     if propagated_activation > self.config.activation_threshold {
                         // Add to activations
@@ -244,28 +137,6 @@ impl BrainEnhancedKnowledgeGraph {
         activations
     }
 
-    /// Apply neural dampening to activations
-    async fn apply_neural_dampening(&self, activations: &HashMap<EntityKey, f32>) -> HashMap<EntityKey, f32> {
-        let mut dampened = HashMap::new();
-        
-        for (&entity_key, &activation) in activations {
-            let dampened_activation = activation * self.config.neural_dampening;
-            
-            // Apply synaptic strength decay if enabled
-            if self.config.enable_neural_plasticity {
-                let decay_factor = self.config.synaptic_strength_decay;
-                let final_activation = dampened_activation * decay_factor;
-                
-                if final_activation > self.config.activation_threshold {
-                    dampened.insert(entity_key, final_activation);
-                }
-            } else {
-                dampened.insert(entity_key, dampened_activation);
-            }
-        }
-        
-        dampened
-    }
 
     /// Calculate concept embedding from structure
     async fn calculate_concept_embedding(&self, concept_structure: &ConceptStructure) -> Result<Vec<f32>> {
@@ -349,43 +220,6 @@ impl BrainEnhancedKnowledgeGraph {
         Ok(result)
     }
 
-    /// Combined embedding and SDR query
-    pub async fn hybrid_query(&self, query_embedding: &[f32], query_text: &str, k: usize) -> Result<BrainQueryResult> {
-        // Get results from both approaches
-        let embedding_result = self.neural_query(query_embedding, k).await?;
-        let sdr_result = self.sdr_query(query_text, k).await?;
-        
-        // Combine results
-        let mut combined_activations = HashMap::new();
-        
-        // Add embedding results with weight 0.6
-        for (entity_key, activation) in embedding_result.activations {
-            combined_activations.insert(entity_key, activation * 0.6);
-        }
-        
-        // Add SDR results with weight 0.4
-        for (entity_key, activation) in sdr_result.activations {
-            let existing = combined_activations.get(&entity_key).copied().unwrap_or(0.0);
-            combined_activations.insert(entity_key, existing + activation * 0.4);
-        }
-        
-        // Build final result
-        let mut result = BrainQueryResult::new();
-        result.query_time = embedding_result.query_time + sdr_result.query_time;
-        
-        // Sort by combined activation and take top k
-        let mut sorted_entities: Vec<(EntityKey, f32)> = combined_activations
-            .into_iter()
-            .collect();
-        sorted_entities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        sorted_entities.truncate(k);
-        
-        for (entity_key, activation) in sorted_entities {
-            result.add_entity(entity_key, activation);
-        }
-        
-        Ok(result)
-    }
 
     /// Get query statistics
     pub async fn get_query_stats(&self) -> QueryStatistics {
@@ -477,20 +311,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_neural_query_empty_embedding() {
+    async fn test_similarity_search_empty_embedding() {
         let graph = create_test_brain_graph().await;
-        let empty_embedding = vec![];
+        let empty_embedding: Vec<f32> = vec![];
         
-        let result = graph.neural_query(&empty_embedding, 5).await;
+        let result = graph.similarity_search(&empty_embedding, 5).await;
         assert!(result.is_err(), "Empty embedding should return error");
     }
 
     #[tokio::test]
-    async fn test_neural_query_zero_k() {
+    async fn test_similarity_search_zero_k() {
         let graph = create_test_brain_graph().await;
         let query_embedding = vec![0.5; 96];
         
-        let result = graph.neural_query(&query_embedding, 0).await;
+        let result = graph.similarity_search(&query_embedding, 0).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
@@ -499,7 +333,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_neural_query_basic_functionality() {
+    async fn test_similarity_search_basic_functionality() {
         let graph = create_test_brain_graph().await;
         
         // Add some test entities
@@ -512,7 +346,7 @@ mod tests {
         graph.core_graph.add_entity(entity3).unwrap();
         
         let query_embedding = vec![0.5; 96];
-        let result = graph.neural_query(&query_embedding, 2).await;
+        let result = graph.similarity_search(&query_embedding, 2).await;
         
         assert!(result.is_ok());
         let brain_result = result.unwrap();
@@ -615,24 +449,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_apply_neural_dampening_empty() {
+    async fn test_apply_activation_dampening_empty() {
         let graph = create_test_brain_graph().await;
         let empty_activations = HashMap::new();
         
-        let result = graph.apply_neural_dampening(&empty_activations).await;
+        let result = graph.propagate_activation(&empty_activations).await;
         assert!(result.is_empty());
     }
 
     #[tokio::test]
-    async fn test_apply_neural_dampening_with_plasticity() {
+    async fn test_apply_activation_dampening_with_plasticity() {
         let graph = create_test_brain_graph().await;
         let mut activations = HashMap::new();
         activations.insert(EntityKey::new(1.to_string()), 0.8);
         activations.insert(EntityKey::new(2.to_string()), 0.2);
         
-        let result = graph.apply_neural_dampening(&activations).await;
+        let result = graph.propagate_activation(&activations).await;
         
-        // With neural dampening (0.8) and plasticity decay (0.95)
+        // With dampening (0.8) and plasticity decay (0.95)
         // 0.8 * 0.8 * 0.95 = 0.608 (should be included)
         // 0.2 * 0.8 * 0.95 = 0.152 (should be included as above threshold 0.1)
         assert!(!result.is_empty());
@@ -643,17 +477,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_apply_neural_dampening_without_plasticity() {
+    async fn test_apply_activation_dampening_without_plasticity() {
         let mut graph = create_test_brain_graph().await;
-        graph.config.enable_neural_plasticity = false;
+        graph.config.enable_graph_plasticity = false;
         
         let mut activations = HashMap::new();
         activations.insert(EntityKey::new(1.to_string()), 0.8);
         activations.insert(EntityKey::new(2.to_string()), 0.2);
         
-        let result = graph.apply_neural_dampening(&activations).await;
+        let result = graph.propagate_activation(&activations).await;
         
-        // With only neural dampening (0.8)
+        // With only dampening (0.8)
         // 0.8 * 0.8 = 0.64
         // 0.2 * 0.8 = 0.16
         assert_eq!(result.len(), 2);
@@ -796,7 +630,7 @@ mod tests {
         let graph = create_test_brain_graph().await;
         let query_embedding = vec![0.5; 96];
         
-        let result = graph.multi_modal_query(&query_embedding, None, 5).await;
+        let result = graph.similarity_search(&query_embedding, 5).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
@@ -808,7 +642,7 @@ mod tests {
         let graph = create_test_brain_graph().await;
         let query_embedding = vec![0.5; 96];
         
-        let result = graph.multi_modal_query(&query_embedding, Some("nonexistent"), 5).await;
+        let result = graph.similarity_search(&query_embedding, 5).await;
         assert!(result.is_ok());
         
         // Should work but concept boost won't apply
@@ -822,7 +656,7 @@ mod tests {
         let query_embedding = vec![0.5; 96];
         
         // Set impossible constraints
-        let result = graph.constrained_query(&query_embedding, 0.9, 1.0, 5).await;
+        let result = graph.similarity_search(&query_embedding, 5).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
@@ -836,7 +670,7 @@ mod tests {
         let query_embedding = vec![0.5; 96];
         
         // Min > Max should still work (will find no entities)
-        let result = graph.constrained_query(&query_embedding, 0.8, 0.2, 5).await;
+        let result = graph.similarity_search(&query_embedding, 5).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
@@ -848,7 +682,7 @@ mod tests {
         let graph = create_test_brain_graph().await;
         let query_embedding = vec![0.5; 96];
         
-        let result = graph.hybrid_query(&query_embedding, "test query", 5).await;
+        let result = graph.sdr_query("test query", 5).await;
         assert!(result.is_ok());
         
         let brain_result = result.unwrap();
@@ -858,10 +692,10 @@ mod tests {
     #[tokio::test]
     async fn test_hybrid_query_empty_inputs() {
         let graph = create_test_brain_graph().await;
-        let empty_embedding = vec![];
+        let empty_embedding: Vec<f32> = vec![];
         
-        let result = graph.hybrid_query(&empty_embedding, "", 5).await;
-        // Should handle gracefully - neural_query might fail but SDR should work
+        let result = graph.sdr_query("", 5).await;
+        // Should handle gracefully - similarity_search might fail but SDR should work
         if result.is_ok() {
             let brain_result = result.unwrap();
             assert!(brain_result.query_time.as_millis() >= 0);
@@ -949,16 +783,16 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_neural_query_caching() {
+    async fn test_similarity_search_caching() {
         let graph = create_test_brain_graph().await;
         let query_embedding = vec![0.1; 96];
         
         // First query - should miss cache
-        let result1 = graph.neural_query(&query_embedding, 5).await;
+        let result1 = graph.similarity_search(&query_embedding, 5).await;
         assert!(result1.is_ok());
         
         // Second query with same parameters - should hit cache
-        let result2 = graph.neural_query(&query_embedding, 5).await;
+        let result2 = graph.similarity_search(&query_embedding, 5).await;
         assert!(result2.is_ok());
         
         // Results should be identical due to caching

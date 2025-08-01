@@ -729,7 +729,7 @@ mod tests {
         let mut engine = create_test_hebbian_engine().await
             .expect("Failed to create Hebbian engine");
         
-        // Test Hebb's rule: "Neurons that fire together, wire together"
+        // Test Hebb's rule: "Entities that activate together, strengthen together"
         let simultaneous_activation_events = vec![
             ActivationEvent {
                 entity_key: EntityKey::default(),

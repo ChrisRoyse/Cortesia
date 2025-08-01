@@ -7,7 +7,7 @@ use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
 use crate::core::types::EntityKey;
-// Neural server dependency removed - using pure graph operations
+// Using pure graph operations for critical thinking analysis
 use crate::error::Result;
 
 /// Critical thinking pattern - handles contradictions, validates information, resolves conflicts
@@ -62,7 +62,7 @@ impl CriticalThinking {
     /// Get base query results for analysis
     async fn get_base_query_results(&self, query: &str) -> Result<QueryResults> {
         // Try to perform basic query to get initial results
-        let graph = &self.graph;
+        let _graph = &self.graph;
         let query_lower = query.to_lowercase();
         
         // If the query doesn't seem to have any queryable content, create synthetic facts
@@ -79,56 +79,11 @@ impl CriticalThinking {
             });
         }
         
-        // Generate a simple embedding from query text
-        let query_embedding = self.generate_query_embedding(query).await?;
-        let results = match graph.neural_query(&query_embedding, 10).await {
-            Ok(results) => results,
-            Err(_) => {
-                // If neural query fails, try to extract entities manually
-                return self.create_fallback_results(query).await;
-            }
-        };
-        
-        // Build fact descriptions from activated entities
-        let all_entities = graph.get_all_entities().await;
-        
-        let mut facts = Vec::new();
-        for (entity_key, activation) in results.activations.iter() {
-            if let Some((_, entity_data, _)) = all_entities.iter().find(|(k, _, _)| k == entity_key) {
-                // Create more descriptive facts based on entity type and relationships
-                let mut fact_description = format!("entity_{:?}", entity_key);
-                
-                // Look for properties in entity data
-                if !entity_data.properties.is_empty() {
-                    fact_description = format!("{} with properties: {}", fact_description, entity_data.properties);
-                }
-                
-                facts.push(FactInfo {
-                    entity_key: *entity_key,
-                    fact_description,
-                    confidence: *activation,
-                    source: "neural_query".to_string(),
-                    timestamp: SystemTime::now(),
-                });
-            }
-        }
-        
-        // Convert BrainQueryResult to PropagationResult for metadata
-        let metadata = crate::core::activation_engine::PropagationResult {
-            final_activations: results.activations.clone(),
-            iterations_completed: 1,
-            converged: true,
-            activation_trace: vec![],
-            total_energy: results.total_activation,
-        };
-        
-        Ok(QueryResults {
-            facts,
-            metadata,
-        })
+        // Extract entities manually
+        return self.create_fallback_results(query).await;
     }
     
-    /// Create fallback results when neural query fails
+    /// Create fallback results for query processing
     async fn create_fallback_results(&self, query: &str) -> Result<QueryResults> {
         let query_lower = query.to_lowercase();
         let all_entities = self.graph.get_all_entities().await;
@@ -390,7 +345,7 @@ impl CriticalThinking {
     async fn calculate_source_reliability(&self, source: &str) -> Result<f32> {
         // Simple heuristic based on source type
         match source {
-            "neural_query" => Ok(0.8),
+            "graph_query" => Ok(0.8),
             "user_input" => Ok(0.6),
             "external_api" => Ok(0.7),
             _ => Ok(0.5),
@@ -634,7 +589,6 @@ struct FactInfo {
 }
 
 /// Use global Contradiction from cognitive::types
-
 /// Inhibitory resolution result
 #[derive(Debug, Clone)]
 struct InhibitoryResolution {
@@ -817,9 +771,9 @@ mod critical_thinking_unit_tests {
         let facts = vec![
             create_test_fact_info(
                 EntityKey::from_hash("entity1"), 
-                "neural fact", 
+                "graph fact", 
                 0.8, 
-                "neural_query"
+                "graph_query"
             ),
             create_test_fact_info(
                 EntityKey::from_hash("entity2"), 
@@ -840,11 +794,11 @@ mod critical_thinking_unit_tests {
         
         assert_eq!(validation.confidence_intervals.len(), 2);
         assert_eq!(validation.validation_level, ValidationLevel::Basic);
-        assert!(validation.source_reliability.contains_key("neural_query"));
+        assert!(validation.source_reliability.contains_key("graph_query"));
         assert!(validation.source_reliability.contains_key("user_input"));
         
-        // Neural query should have higher reliability than user input
-        assert!(validation.source_reliability["neural_query"] > validation.source_reliability["user_input"]);
+        // Graph query should have higher reliability than user input
+        assert!(validation.source_reliability["graph_query"] > validation.source_reliability["user_input"]);
     }
     
     #[tokio::test]
@@ -856,7 +810,7 @@ mod critical_thinking_unit_tests {
                 EntityKey::from_hash("entity1"), 
                 "test fact", 
                 1.0, 
-                "neural_query"
+                "graph_query"
             ),
         ];
         
@@ -961,9 +915,9 @@ mod critical_thinking_unit_tests {
     async fn test_calculate_source_reliability() {
         let thinking = create_test_critical_thinking().await;
         
-        let neural_reliability = thinking.calculate_source_reliability("neural_query").await
-            .expect("Should calculate neural query reliability");
-        assert_eq!(neural_reliability, 0.8);
+        let graph_reliability = thinking.calculate_source_reliability("graph_query").await
+            .expect("Should calculate graph query reliability");
+        assert_eq!(graph_reliability, 0.8);
         
         let user_reliability = thinking.calculate_source_reliability("user_input").await
             .expect("Should calculate user input reliability");

@@ -1,15 +1,12 @@
-//! Phase 4: Self-Organization & Learning Systems
+//! Learning Systems
 //! 
 //! This module implements adaptive learning mechanisms that enhance the existing
 //! cognitive architecture with biological learning principles.
 
 pub mod hebbian;
 pub mod homeostasis;
-// pub mod optimization_agent; // Removed as requested
 pub mod adaptive_learning;
-pub mod phase4_integration;
 pub mod types;
-pub mod neural_pattern_detection;
 pub mod parameter_tuning;
 pub mod meta_learning;
 
@@ -29,10 +26,6 @@ pub use adaptive_learning::{
     ResourceRequirement
 };
 
-pub use phase4_integration::{
-    Phase4LearningSystem,
-    ComprehensiveLearningResult
-};
 
 // From types - rename conflicting types
 pub use types::{
@@ -49,12 +42,6 @@ pub use types::{
     PerformanceBottleneck as CorePerformanceBottleneck
 };
 
-// From neural_pattern_detection - rename conflicting types
-pub use neural_pattern_detection::{
-    NeuralPatternDetectionSystem,
-    PatternDetector as NeuralPatternDetector,
-    AnalysisScope as NeuralAnalysisScope
-};
 
 pub use parameter_tuning::{
     ParameterTuner

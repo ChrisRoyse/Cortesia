@@ -13,7 +13,7 @@ pub enum EntityDirection {
     Hidden,   // Hidden processing nodes
 }
 
-/// Types of logic gates for neural processing
+/// Types of logic gates for processing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LogicGateType {
     And,
@@ -75,7 +75,7 @@ pub struct BrainInspiredEntity {
     pub last_update: SystemTime,     // Last update timestamp
 }
 
-/// Graph operation for neural structure prediction
+/// Graph operation for structure prediction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GraphOperation {
     CreateNode {
@@ -103,7 +103,7 @@ pub struct TrainingExample {
     pub metadata: HashMap<String, String>,
 }
 
-/// Logic gate for neural computation
+/// Logic gate for computation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogicGate {
     pub gate_id: EntityKey,
@@ -135,7 +135,7 @@ pub struct BrainInspiredRelationship {
     pub metadata: HashMap<String, String>, // Additional metadata
 }
 
-/// Activation pattern for neural propagation
+/// Activation pattern for propagation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActivationPattern {
     pub activations: HashMap<EntityKey, f32>,

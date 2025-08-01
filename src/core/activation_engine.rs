@@ -14,7 +14,7 @@ pub use crate::core::activation_config::{ActivationConfig, PropagationResult, Ac
 use crate::core::activation_processors::ActivationProcessors;
 use crate::error::Result;
 
-/// Neural activation propagation engine
+/// Activation propagation engine
 pub struct ActivationPropagationEngine {
     entities: Arc<RwLock<AHashMap<EntityKey, BrainInspiredEntity>>>,
     logic_gates: Arc<RwLock<AHashMap<EntityKey, LogicGate>>>,

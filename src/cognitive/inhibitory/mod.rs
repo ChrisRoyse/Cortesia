@@ -1,6 +1,6 @@
 //! Competitive Inhibition System
 //! 
-//! This module implements competitive inhibition mechanisms inspired by neural processing,
+//! This module implements competitive inhibition mechanisms inspired by biological processing,
 //! including lateral inhibition, hierarchical competition, and temporal dynamics.
 
 pub mod types;

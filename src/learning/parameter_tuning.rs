@@ -7,7 +7,7 @@ use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 use anyhow::anyhow;
 
-/// Automated parameter tuning system for Phase 4 learning
+/// Automated parameter tuning system
 #[derive(Debug, Clone)]
 pub struct ParameterTuningSystem {
     pub tuning_strategies: Vec<TuningStrategy>,

@@ -16,7 +16,6 @@ pub struct QueryContext {
     pub max_depth: Option<usize>,
     pub required_evidence: Option<usize>,
     pub reasoning_trace: bool,
-    // Phase 4 extensions
     pub user_id: Option<String>,
     pub session_id: Option<String>,
     pub conversation_history: Vec<String>,
@@ -34,7 +33,6 @@ impl QueryContext {
             max_depth: Some(5),
             required_evidence: Some(1),
             reasoning_trace: false,
-            // Phase 4 extensions
             user_id: None,
             session_id: None,
             conversation_history: Vec::new(),
@@ -123,9 +121,7 @@ pub struct ResultMetadata {
 }
 
 /// Single step in activation propagation
-
 /// Types of activation operations
-
 /// Complexity estimate for query processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplexityEstimate {

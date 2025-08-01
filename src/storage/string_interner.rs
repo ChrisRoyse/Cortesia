@@ -1,4 +1,3 @@
-// Phase 4.3: String Interning for Properties
 // High-performance string interning system to reduce memory usage for duplicate strings
 
 use std::collections::HashMap;
@@ -122,7 +121,7 @@ impl StringInterner {
         strings.get(id.0 as usize).cloned()
     }
     
-    /// Get string reference by ID (zero-copy) - removed due to lifetime issues
+    // Get string reference by ID (zero-copy) - removed due to lifetime issues
     // pub fn get_ref(&self, id: InternedString) -> Option<&str> {
     //     let strings = self.strings.read();
     //     strings.get(id.0 as usize).map(|s| s.as_str())

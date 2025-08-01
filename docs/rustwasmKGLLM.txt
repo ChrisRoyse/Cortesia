@@ -2839,7 +2839,7 @@ impl FederatedKnowledgeGraphMCP {
             usage_examples: vec![
                 UsageExample {
                     scenario: "Research across multiple knowledge bases".to_string(),
-                    user_request: "Find all research papers about neural networks published after 2020, and compare their methodologies".to_string(),
+                    user_request: "Find all research papers about machine learning published after 2020, and compare their methodologies".to_string(),
                     recommended_approach: "Use cross_database_similarity with temporal filtering, then compare_across_databases for methodology analysis".to_string(),
                 },
                 UsageExample {
@@ -4414,7 +4414,7 @@ Once installed, users can immediately use the MCP server:
 # Then in Claude:
 "Create a new knowledge graph database and add some sample data about machine learning concepts"
 
-"Find similar concepts to 'neural networks' across all my databases"
+"Find similar concepts to 'machine learning' across all my databases"
 
 "Show me the relationships between 'deep learning' and 'artificial intelligence'"
 ```

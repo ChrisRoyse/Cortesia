@@ -71,7 +71,7 @@ impl BrainEnhancedKnowledgeGraph {
         }
     }
 
-    /// Insert brain entity with neural activation
+    /// Insert brain entity with activation
     pub async fn insert_brain_entity(&self, id: u32, data: EntityData) -> Result<EntityKey> {
         let _start_time = Instant::now();
         
@@ -535,7 +535,7 @@ impl BrainEnhancedKnowledgeGraph {
         let source_activation = self.get_entity_activation(source).await;
         let target_activation = self.get_entity_activation(target).await;
         
-        // Hebbian rule: neurons that fire together, wire together
+        // Hebbian rule: entities that activate together, strengthen together
         let current_weight = self.get_synaptic_weight(source, target).await;
         let learning_signal = source_activation * target_activation * self.config.learning_rate;
         let new_weight = (current_weight + learning_signal).clamp(0.0, 1.0);

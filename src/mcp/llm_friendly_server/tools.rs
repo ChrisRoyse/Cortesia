@@ -318,7 +318,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                             "hash_tables": 16
                         }
                     }),
-                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Neural_Networks -> type_of -> machine_learning".to_string(),
+                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Decision_Trees -> type_of -> machine_learning".to_string(),
                 }
             ],
             tips: vec![
@@ -524,7 +524,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         
         LLMMCPTool {
             name: "validate_knowledge".to_string(),
-            description: "Validate stored knowledge for consistency, conflicts, and quality. Supports comprehensive mode with importance scoring and neural assessment.".to_string(),
+            description: "Validate stored knowledge for consistency, conflicts, and quality. Supports comprehensive mode with importance scoring and graph-based assessment.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -568,11 +568,6 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "default": 0.6,
                         "minimum": 0.0,
                         "maximum": 1.0
-                    },
-                    "neural_features": {
-                        "type": "boolean",
-                        "description": "Enable neural assessment features (salience, coherence)",
-                        "default": true
                     }
                 },
                 "additionalProperties": false
@@ -593,7 +588,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "include_metrics": true,
                         "quality_threshold": 0.8
                     }),
-                    expected_output: "Validation Results:\n\n**Quality Metrics**:\n- Overall Quality: Excellent\n- Importance Scores: Top entities identified\n  1. Einstein (importance: 0.92, connections: 45)\n  2. Physics (importance: 0.89, connections: 38)\n- Knowledge Density: Good (avg connections: 6.3)\n- Neural Assessment:\n  - Salience: High (0.85)\n  - Coherence: Strong (0.78)\n- Entities below threshold: 3 found\n  - BadEntity (confidence: 0.3, below by: 0.5)".to_string(),
+                    expected_output: "Validation Results:\n\n**Quality Metrics**:\n- Overall Quality: Excellent\n- Importance Scores: Top entities identified\n  1. Einstein (importance: 0.92, connections: 45)\n  2. Physics (importance: 0.89, connections: 38)\n- Knowledge Density: Good (avg connections: 6.3)\n- Heuristic Assessment:\n  - Salience: High (0.85)\n  - Coherence: Strong (0.78)\n- Entities below threshold: 3 found\n  - BadEntity (confidence: 0.3, below by: 0.5)".to_string(),
                 }
             ],
             tips: vec![
@@ -608,8 +603,8 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         // ========= SPECIALIZED TOOLS =========
         
         LLMMCPTool {
-            name: "neural_importance_scoring".to_string(),
-            description: "AI-powered content importance and quality assessment using neural salience models. Determines if content should be stored and provides quality metrics.".to_string(),
+            name: "importance_scoring".to_string(),
+            description: "Content importance and quality assessment using heuristic methods. Determines if content should be stored and provides quality metrics.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -633,7 +628,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "text": "Einstein's theory of general relativity revolutionized our understanding of gravity by describing it as curvature in spacetime caused by mass and energy.",
                         "context": "physics education"
                     }),
-                    expected_output: "Neural Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
+                    expected_output: "Heuristic Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
                 }
             ],
             tips: vec![

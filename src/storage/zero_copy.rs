@@ -1,4 +1,3 @@
-// Phase 4.4: Zero-Copy Serialization
 // Ultra-efficient serialization that avoids memory allocation and copying during read operations
 // Designed for maximum performance with direct memory access patterns
 

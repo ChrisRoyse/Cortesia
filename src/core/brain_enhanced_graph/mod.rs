@@ -1,7 +1,7 @@
-//! Brain-enhanced knowledge graph with neural processing capabilities
+//! Brain-enhanced knowledge graph with processing capabilities
 //!
 //! This module provides a brain-enhanced knowledge graph that combines traditional
-//! graph storage with brain-inspired processing patterns including neural activation,
+//! graph storage with brain-inspired processing patterns including activation,
 //! concept formation, and adaptive learning.
 
 pub mod brain_graph_types;

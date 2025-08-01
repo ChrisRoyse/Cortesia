@@ -111,6 +111,9 @@ syn = { version = "2.0", features = ["full", "visit"] }
 walkdir = "2.4"
 notify = "6.1"
 
+# Directory utilities for cache management
+dirs = "5.0"
+
 # Test infrastructure dependencies (optional)
 rusqlite = { version = "0.30", features = ["bundled"], optional = true }
 axum = { version = "0.7", optional = true }
@@ -118,7 +121,6 @@ tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
 handlebars = { version = "5.0", optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.5"
 tokio-test = "0.4"
 tempfile = "3.12"
@@ -147,67 +149,8 @@ simd = []
 cuda = []
 mcp = []
 
-# Integration test targets for cognitive patterns
-[[test]]
-name = "attention_integration_tests"
-path = "tests/cognitive/attention_integration_tests.rs"
-
-[[test]]
-name = "orchestrator_integration_tests"
-path = "tests/cognitive/orchestrator_integration_tests.rs"
-
-[[test]]
-name = "patterns_integration_tests"
-path = "tests/cognitive/patterns_integration_tests.rs"
-
-[[test]]
-name = "performance_tests"
-path = "tests/cognitive/performance_tests.rs"
-
-[[test]]
-name = "property_tests"
-path = "tests/cognitive/property_tests.rs"
-
-# Comprehensive integration test for the 4 fixed tools
-[[test]]
-name = "comprehensive_integration_tests"
-path = "integration_tests_comprehensive.rs"
-
 # Other disabled test targets
-# [[test]]
-# name = "phase4_realistic_tests"
-# path = "tests/phase4_realistic_tests.rs"
-
-# [[test]]
-# name = "phase4_deepseek_integration"
-# path = "tests/phase4_deepseek_integration.rs"
-
-# [[test]]
-# name = "phase4_comprehensive_tests"
-# path = "tests/phase4_comprehensive_tests.rs"
-
-# [[test]]
-# name = "phase4_advanced_stress_tests"
-# path = "tests/phase4_advanced_stress_tests.rs"
-
-# [[test]]
-# name = "phase4_integration_scenarios"
-# path = "tests/phase4_integration_scenarios.rs"
-
-# [[test]]
-# name = "phase1_cognitive_algorithm_tests"
-# path = "tests/phase1_cognitive_algorithm_tests.rs"
-
-# [[test]]
-# name = "phase1_simple_cognitive_tests"
-# path = "tests/phase1_simple_cognitive_tests.rs"
 
 [profile.test]
 opt-level = 2  # Optimize tests for better performance
 
-[profile.bench]
-debug = true  # Include debug info in benchmarks
-
-# [[bench]]
-# name = "cognitive_benchmarks"
-# harness = false

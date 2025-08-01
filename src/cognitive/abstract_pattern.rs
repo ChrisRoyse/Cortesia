@@ -4,18 +4,18 @@ use std::time::{SystemTime, Instant};
 use async_trait::async_trait;
 
 use crate::cognitive::types::*;
-use crate::cognitive::pattern_detector::NeuralPatternDetector;
+use crate::cognitive::pattern_detector::PatternDetector;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::types::EntityKey;
 use crate::core::brain_types::{ActivationStep, ActivationOperation};
-// Neural server dependency removed - using pure graph operations
+// Pure graph operations
 use crate::error::Result;
 
 /// Abstract thinking pattern - identifies patterns, abstract concepts, meta-analysis
 pub struct AbstractThinking {
     pub graph: Arc<BrainEnhancedKnowledgeGraph>,
     pub pattern_models: AHashMap<String, String>,
-    pub pattern_detector: NeuralPatternDetector,
+    pub pattern_detector: PatternDetector,
 }
 
 impl AbstractThinking {
@@ -26,7 +26,7 @@ impl AbstractThinking {
         pattern_models.insert("n_beats".to_string(), "n_beats_pattern_model".to_string());
         pattern_models.insert("timesnet".to_string(), "timesnet_pattern_model".to_string());
         
-        let pattern_detector = NeuralPatternDetector::new(
+        let pattern_detector = PatternDetector::new(
             graph.clone(),
         );
         
@@ -42,7 +42,7 @@ impl AbstractThinking {
         analysis_scope: AnalysisScope,
         pattern_type: PatternType,
     ) -> Result<AbstractResult> {
-        // 1. Use enhanced neural pattern detection
+        // 1. Use enhanced pattern detection
         let patterns_found = self.pattern_detector.detect_patterns(
             analysis_scope.clone(),
             pattern_type,
@@ -94,8 +94,8 @@ impl AbstractThinking {
         })
     }
 
-    /// Use neural networks for pattern detection
-    async fn neural_pattern_detection(
+    /// Use graph-based pattern detection
+    async fn graph_pattern_detection(
         &self,
         structural_data: StructuralPatterns,
         pattern_type: PatternType,
@@ -962,7 +962,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_neural_pattern_detection() {
+    async fn test_graph_pattern_detection() {
         let abstract_thinking = create_test_abstract_thinking().await;
         
         // Create mock structural patterns
@@ -989,8 +989,8 @@ mod tests {
         };
         
         for pattern_type in [PatternType::Structural, PatternType::Temporal, PatternType::Semantic, PatternType::Usage] {
-            let result = abstract_thinking.neural_pattern_detection(structural_data.clone(), pattern_type).await;
-            assert!(result.is_ok(), "Neural pattern detection should succeed for {:?}", pattern_type);
+            let result = abstract_thinking.graph_pattern_detection(structural_data.clone(), pattern_type).await;
+            assert!(result.is_ok(), "Pattern detection should succeed for {:?}", pattern_type);
             
             let patterns = result.unwrap();
             // Patterns may be empty for some types (temporal, semantic, usage), but should not error

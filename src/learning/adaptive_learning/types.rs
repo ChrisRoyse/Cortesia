@@ -210,7 +210,7 @@ pub struct ScheduledLearningTask {
 }
 
 /// Resource requirements for learning tasks
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ResourceRequirement {
     pub memory_mb: f32,
     pub cpu_cores: f32,

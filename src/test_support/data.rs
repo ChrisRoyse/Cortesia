@@ -49,7 +49,7 @@ pub fn create_standard_test_entities() -> Vec<EntityKey> {
         EntityKey::from_hash("concept_ai"),
         EntityKey::from_hash("concept_ml"),
         EntityKey::from_hash("concept_quantum"),
-        EntityKey::from_hash("concept_neural_network"),
+        EntityKey::from_hash("concept_text_processing"),
         EntityKey::from_hash("concept_deep_learning"),
     ]
 }

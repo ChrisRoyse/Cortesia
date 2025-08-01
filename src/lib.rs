@@ -15,7 +15,6 @@ pub mod federation;
 pub mod versioning;
 pub mod math;
 pub mod extraction;
-pub mod neural;
 pub mod streaming;
 pub mod gpu;
 pub mod validation;
@@ -25,7 +24,7 @@ pub mod cognitive;
 pub mod learning;
 pub mod graph;
 pub mod api;
-// pub mod agents; // Removed as requested
+pub mod models;
 
 #[cfg(feature = "native")]
 pub mod production;
@@ -54,12 +53,15 @@ pub use crate::federation::{FederationManager, DatabaseRegistry, FederatedQuery}
 pub use crate::versioning::{MultiDatabaseVersionManager, VersionId, TemporalQuery};
 pub use crate::math::{MathEngine, SimilarityMetric, MathematicalResult};
 pub use crate::extraction::{AdvancedEntityExtractor, Entity as ExtractionEntity, Relation};
-pub use crate::neural::{NeuralSummarizer, NeuralCanonicalizer, EnhancedNeuralCanonicalizer, NeuralSalienceModel};
 pub use crate::streaming::{StreamingUpdateHandler, IncrementalIndexer, UpdateStream};
 pub use crate::gpu::GpuAccelerator;
 pub use crate::validation::{HumanValidationInterface, ValidationItem, ValidationResult};
 pub use crate::monitoring::{PerformanceMonitor, ObservabilityEngine, AlertManager};
-// pub use crate::agents::{Agent, ConstructionAgent, CoordinationAgent, AgentId, Request, Response, Task, TaskResult, TaskType, Complexity};
+pub use crate::models::{
+    Model, ModelMetadata, ModelCapabilities, ModelSize, ModelConfig, LoadingConfig, DeviceConfig, QuantizationConfig,
+    ModelLoader, AdvancedModelLoader, ModelRegistry, RecommendedModels, RegistryStatistics,
+    smollm, tinyllama, openelm, minilm, utils as model_utils
+};
 
 // Production system exports
 #[cfg(feature = "native")]
@@ -73,26 +75,27 @@ pub use crate::production::{
     create_production_system, create_production_system_with_config
 };
 
-// Phase 1 Brain-Inspired Exports
+// Brain-Inspired Exports
 pub use crate::core::brain_types::{
     BrainInspiredEntity, EntityDirection, LogicGate, LogicGateType,
     BrainInspiredRelationship, ActivationPattern, ActivationStep, GraphOperation, TrainingExample
 };
-pub use crate::core::{Phase1IntegrationLayer, Phase1Config, QueryResult as Phase1QueryResult, CognitiveQueryResult, Phase1Statistics};
 pub use crate::versioning::temporal_graph::{TemporalKnowledgeGraph, TimeRange, TemporalEntity, TemporalRelationship};
-pub use crate::neural::neural_server::{NeuralProcessingServer, NeuralOperation, NeuralParameters, NeuralRequest, NeuralResponse, TrainingResult, PredictionResult, ModelMetadata, ModelType};
-pub use crate::neural::structure_predictor::GraphStructurePredictor;
 pub use crate::streaming::temporal_updates::{IncrementalTemporalProcessor, TemporalUpdate, UpdateOperation, UpdateSource, UpdateStatistics, TemporalUpdateBuilder};
 
-#[cfg(feature = "native")]
-pub use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
+// #[cfg(feature = "native")]
+// pub use crate::mcp::brain_inspired_server::BrainInspiredMCPServer;
 #[cfg(feature = "native")]
 pub use crate::mcp::production_server::ProductionMCPServer;
 #[cfg(feature = "native")]
 pub use crate::mcp::shared_types::{MCPTool, MCPRequest, MCPResponse, MCPContent};
 
-// Text processing exports
-pub use crate::text::{TextCompressor, utils as text_utils, TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker};
+// Text processing exports  
+pub use crate::text::{
+    TextCompressor, utils as text_utils, TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker,
+    StringNormalizer, HeuristicImportanceScorer, GraphMetrics, GraphStructurePredictor
+    // GraphOperation re-exported from brain_types to avoid conflict
+};
 
 // Brain-Enhanced Knowledge Graph Exports
 pub use crate::core::brain_enhanced_graph::{
@@ -122,16 +125,15 @@ pub use crate::cognitive::{
     AttentionManager, AttentionState, AttentionFocus, AttentionType, AttentionTarget, AttentionTargetType, ExecutiveCommand,
     CompetitiveInhibitionSystem, InhibitionResult, CompetitionGroup, CompetitionType, InhibitionPerformanceMetrics,
     UnifiedMemorySystem, UnifiedRetrievalResult, RetrievalStrategy,
-    Phase3IntegratedCognitiveSystem, Phase3QueryResult, SystemDiagnostics,
-    Phase4CognitiveSystem, Phase4QueryResult, Phase4LearningResult
+    Phase3IntegratedCognitiveSystem, Phase3QueryResult, SystemDiagnostics
 };
 
-// Phase 4 Self-Organization & Learning Exports
+// Learning System Exports
 pub use crate::learning::{
     HebbianLearningEngine, SynapticHomeostasis, AdaptiveLearningSystem,
-    Phase4LearningSystem, ActivationEvent, LearningContext, WeightChange, LearningUpdate,
+    ActivationEvent, LearningContext, WeightChange, LearningUpdate,
     STDPResult, PlasticityType, HomeostasisUpdate, LearningResult,
-    ComprehensiveLearningResult, LearningGoal, LearningGoalType, ResourceRequirement
+    LearningGoal, LearningGoalType, ResourceRequirement
 };
 
 #[cfg(target_arch = "wasm32")]

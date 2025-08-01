@@ -4,7 +4,7 @@ use crate::error::Result;
 use std::collections::HashMap;
 
 /// Graph-based query engine for cognitive operations
-/// Replaces NeuralProcessingServer with pure graph operations
+/// Pure graph operations for cognitive query processing
 #[async_trait::async_trait]
 pub trait GraphQueryEngine: Send + Sync {
     /// Find patterns in graph structure
@@ -37,16 +37,16 @@ pub trait GraphQueryEngine: Send + Sync {
     /// Calculate activation state for working memory
     async fn calculate_activation_state(&self, subgraph: &Subgraph) -> Result<f32>;
     
-    /// Compute entity vector using graph structure (replaces neural embeddings)
+    /// Compute entity vector using graph structure
     async fn compute_entity_vector(&self, entity: EntityKey) -> Result<Vec<f32>>;
     
-    /// Traverse reasoning path through relationships (replaces neural reasoning)
+    /// Traverse reasoning path through relationships
     async fn traverse_reasoning_path(&self, start: EntityKey, goal: EntityKey) -> Result<Vec<Path>>;
     
-    /// Generate patterns from graph context (replaces neural completion)
+    /// Generate patterns from graph context
     async fn generate_from_patterns(&self, context: &Subgraph) -> Result<Vec<Pattern>>;
     
-    /// Classify entities by graph topology (replaces neural classification)
+    /// Classify entities by graph topology
     async fn classify_by_graph_topology(&self, entity: EntityKey) -> Result<String>;
     
     /// Find concept clusters in the graph

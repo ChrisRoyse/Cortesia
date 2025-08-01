@@ -175,8 +175,14 @@ impl Default for TextCompressor {
 }
 
 pub mod chunkers;
+pub mod normalizer;
+pub mod importance;
+pub mod structure_predictor;
 
 pub use chunkers::{TextChunk, Chunker, SlidingWindowChunker, SemanticChunker, AdaptiveChunker};
+pub use normalizer::StringNormalizer;
+pub use importance::{HeuristicImportanceScorer, GraphMetrics};
+pub use structure_predictor::{GraphStructurePredictor, GraphOperation};
 
 /// Fast text utilities
 pub mod utils {

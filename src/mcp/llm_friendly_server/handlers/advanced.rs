@@ -128,101 +128,6 @@ pub async fn handle_hierarchical_clustering(
     Ok((data, message, suggestions))
 }
 
-/// Handle neural structure prediction request
-pub async fn handle_predict_graph_structure(
-    knowledge_engine: &Arc<RwLock<KnowledgeEngine>>,
-    usage_stats: &Arc<RwLock<UsageStats>>,
-    params: Value,
-) -> std::result::Result<(Value, String, Vec<String>), String> {
-    log::debug!("handle_predict_graph_structure: Starting");
-    
-    let prediction_type = params.get("prediction_type")
-        .and_then(|v| v.as_str())
-        .unwrap_or("missing_links");
-    
-    let confidence_threshold = params.get("confidence_threshold")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.7) as f32;
-    
-    let max_predictions = params.get("max_predictions")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(20) as usize;
-    
-    let entity_filter = params.get("entity_filter")
-        .and_then(|v| v.as_str());
-    
-    let use_neural_features = params.get("use_neural_features")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
-    
-    // Get current graph state
-    let engine = knowledge_engine.read().await;
-    let current_graph = engine.query_triples(TripleQuery {
-        subject: None,
-        predicate: None,
-        object: None,
-        limit: 10000,
-        min_confidence: 0.0,
-        include_chunks: true,
-    }).map_err(|e| format!("Failed to get current graph: {}", e))?;
-    drop(engine);
-    
-    let start_time = std::time::Instant::now();
-    
-    // Execute neural prediction
-    let prediction_result = match prediction_type {
-        "missing_links" => predict_missing_links(&current_graph, confidence_threshold, max_predictions, entity_filter, use_neural_features).await,
-        "future_connections" => predict_future_connections(&current_graph, confidence_threshold, max_predictions, use_neural_features).await,
-        "community_evolution" => predict_community_evolution(&current_graph, confidence_threshold, max_predictions).await,
-        "knowledge_gaps" => predict_knowledge_gaps(&current_graph, confidence_threshold, max_predictions, entity_filter).await,
-        _ => return Err(format!("Unknown prediction type: {}", prediction_type))
-    };
-    
-    let prediction_time = start_time.elapsed();
-    
-    // Validate predictions against existing knowledge
-    let validation_result = validate_predictions(&prediction_result, &current_graph).await;
-    
-    let data = json!({
-        "predictions": prediction_result.predictions,
-        "prediction_metadata": {
-            "type": prediction_type,
-            "confidence_threshold": confidence_threshold,
-            "max_predictions": max_predictions,
-            "entity_filter": entity_filter,
-            "use_neural_features": use_neural_features,
-            "execution_time_ms": prediction_time.as_millis()
-        },
-        "neural_features": if use_neural_features { Some(prediction_result.neural_features) } else { None },
-        "validation": validation_result,
-        "insights": prediction_result.insights,
-        "confidence_distribution": calculate_confidence_distribution(&prediction_result.predictions)
-    });
-    
-    let message = format!(
-        "Neural Structure Prediction:\n\
-        🧠 Prediction Type: {}\n\
-        🎯 Generated {} predictions\n\
-        📊 Avg Confidence: {:.3}\n\
-        ⚡ Processing Time: {}ms\n\
-        ✅ Validation Score: {:.3}",
-        prediction_type,
-        prediction_result.predictions.len(),
-        calculate_average_confidence(&prediction_result.predictions),
-        prediction_time.as_millis(),
-        validation_result.get("overall_score").and_then(|v| v.as_f64()).unwrap_or(0.0)
-    );
-    
-    let suggestions = vec![
-        "Use 'missing_links' for discovering hidden connections".to_string(),
-        "Enable neural features for more accurate predictions".to_string(),
-        "Validate predictions before incorporating into knowledge base".to_string(),
-    ];
-    
-    let _ = update_usage_stats(usage_stats, StatsOperation::ExecuteQuery, 200).await;
-    
-    Ok((data, message, suggestions))
-}
 
 /// Handle cognitive reasoning chains request
 pub async fn handle_cognitive_reasoning_chains(
@@ -728,7 +633,6 @@ pub async fn handle_validate_knowledge(
     let include_metrics = params.get("include_metrics").and_then(|v| v.as_bool()).unwrap_or(false);
     let quality_threshold = params.get("quality_threshold").and_then(|v| v.as_f64()).unwrap_or(0.7) as f32;
     let importance_threshold = params.get("importance_threshold").and_then(|v| v.as_f64()).unwrap_or(0.6) as f32;
-    let neural_features = params.get("neural_features").and_then(|v| v.as_bool()).unwrap_or(true);
     
     // Validate validation type
     if !["consistency", "conflicts", "quality", "completeness", "all"].contains(&validation_type) {
@@ -817,7 +721,6 @@ pub async fn handle_validate_knowledge(
             &triples.triples,
             quality_threshold,
             importance_threshold,
-            neural_features,
             &engine
         ).await?);
     }
@@ -993,7 +896,6 @@ struct ClusteringResult {
 
 struct PredictionResult {
     predictions: Vec<serde_json::Value>,
-    neural_features: serde_json::Value,
     insights: Vec<String>,
 }
 
@@ -1059,37 +961,7 @@ fn analyze_clustering_quality(_result: &ClusteringResult, _triples: &KnowledgeRe
     })
 }
 
-async fn predict_missing_links(_graph: &KnowledgeResult, _threshold: f32, _max_pred: usize, _filter: Option<&str>, _neural: bool) -> PredictionResult {
-    PredictionResult {
-        predictions: vec![],
-        neural_features: json!({}),
-        insights: vec![],
-    }
-}
 
-async fn predict_future_connections(_graph: &KnowledgeResult, _threshold: f32, _max_pred: usize, _neural: bool) -> PredictionResult {
-    PredictionResult {
-        predictions: vec![],
-        neural_features: json!({}),
-        insights: vec![],
-    }
-}
-
-async fn predict_community_evolution(_graph: &KnowledgeResult, _threshold: f32, _max_pred: usize) -> PredictionResult {
-    PredictionResult {
-        predictions: vec![],
-        neural_features: json!({}),
-        insights: vec![],
-    }
-}
-
-async fn predict_knowledge_gaps(_graph: &KnowledgeResult, _threshold: f32, _max_pred: usize, _filter: Option<&str>) -> PredictionResult {
-    PredictionResult {
-        predictions: vec![],
-        neural_features: json!({}),
-        insights: vec![],
-    }
-}
 
 async fn validate_predictions(_result: &PredictionResult, _graph: &KnowledgeResult) -> serde_json::Value {
     json!({
@@ -1159,14 +1031,12 @@ async fn generate_quality_metrics(
     triples: &[Triple],
     quality_threshold: f32,
     _importance_threshold: f32,
-    neural_features: bool,
     _engine: &KnowledgeEngine,
 ) -> std::result::Result<Value, String> {
     let mut importance_scores = Vec::new();
     let mut below_threshold_entities = Vec::new();
     let content_quality;
     let knowledge_density;
-    let mut neural_assessment = json!({});
     
     // Calculate importance scores for entities
     let mut entity_connections: HashMap<String, usize> = HashMap::new();
@@ -1274,46 +1144,12 @@ async fn generate_quality_metrics(
         "isolated_entities": isolated
     });
     
-    // Neural assessment (simulated)
-    if neural_features {
-        let salience_scores = importance_scores.iter()
-            .take(10)
-            .map(|item| json!({
-                "entity": item["entity"],
-                "salience": item["importance"].as_f64().unwrap_or(0.0) * 0.9
-            }))
-            .collect::<Vec<_>>();
-        
-        let coherence_scores = json!({
-            "overall_coherence": avg_confidence * 0.85,
-            "topic_consistency": 0.78,
-            "semantic_density": avg_connections / 20.0
-        });
-        
-        let recommendations = vec![
-            if avg_confidence < 0.7 { 
-                Some("Consider adding more high-confidence facts".to_string())
-            } else { None },
-            if isolated.len() > entity_connections.len() / 3 {
-                Some("Many isolated entities detected - consider linking them".to_string())
-            } else { None },
-            if highly_connected.is_empty() {
-                Some("No hub entities found - consider identifying key concepts".to_string())
-            } else { None }
-        ].into_iter().filter_map(|x| x).collect::<Vec<_>>();
-        
-        neural_assessment = json!({
-            "salience_scores": salience_scores,
-            "coherence_scores": coherence_scores,
-            "content_recommendations": recommendations
-        });
-    }
+    // Heuristic assessment (simulated)
     
     Ok(json!({
         "importance_scores": importance_scores,
         "content_quality": content_quality,
         "knowledge_density": knowledge_density,
-        "neural_assessment": neural_assessment,
         "below_threshold_entities": below_threshold_entities,
         "quality_summary": {
             "overall_quality": if avg_confidence > 0.8 { "Excellent" }

@@ -318,7 +318,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                             "hash_tables": 16
                         }
                     }),
-                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Neural_Networks -> type_of -> machine_learning".to_string(),
+                    expected_output: "Found 12 results (hybrid search, lsh mode):\n⚡ Speedup: 8.5x vs standard\n🎯 Recall: 0.89\n\n1. Decision_Trees -> type_of -> machine_learning".to_string(),
                 }
             ],
             tips: vec![
@@ -487,8 +487,8 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
         // ========= SPECIALIZED TOOLS =========
         
         LLMMCPTool {
-            name: "neural_importance_scoring".to_string(),
-            description: "AI-powered content importance and quality assessment using neural salience models. Determines if content should be stored and provides quality metrics.".to_string(),
+            name: "importance_scoring".to_string(),
+            description: "Content importance and quality assessment using heuristic methods. Determines if content should be stored and provides quality metrics.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -512,7 +512,7 @@ pub fn get_tools() -> Vec<LLMMCPTool> {
                         "text": "Einstein's theory of general relativity revolutionized our understanding of gravity by describing it as curvature in spacetime caused by mass and energy.",
                         "context": "physics education"
                     }),
-                    expected_output: "Neural Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
+                    expected_output: "Heuristic Importance Analysis:\n📊 Importance Score: 0.92/1.0 (Store)\n🧠 Quality Level: Excellent\n💾 Storage Recommendation: HIGH - Store this content\n📈 Complexity: 0.78, Novelty: 0.85, Coherence: 0.94".to_string(),
                 }
             ],
             tips: vec![

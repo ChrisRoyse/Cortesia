@@ -8,17 +8,17 @@ use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::RelationType;
 use crate::core::types::EntityKey;
-// Neural server dependency removed - using pure graph operations
+// Pure graph operations for pattern detection
 use crate::error::Result;
 
-/// Neural pattern detector for identifying structural and semantic patterns
-pub struct NeuralPatternDetector {
+/// Pattern detector for identifying structural and semantic patterns
+pub struct PatternDetector {
     graph: Arc<BrainEnhancedKnowledgeGraph>,
     pattern_cache: Arc<RwLock<HashMap<String, Vec<DetectedPattern>>>>,
     minimum_pattern_frequency: f32,
 }
 
-impl NeuralPatternDetector {
+impl PatternDetector {
     pub fn new(
         graph: Arc<BrainEnhancedKnowledgeGraph>,
     ) -> Self {

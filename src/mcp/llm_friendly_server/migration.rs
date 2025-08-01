@@ -102,8 +102,7 @@ pub fn migrate_tool_call(method: &str, params: Value) -> Option<(String, Value)>
                 "prediction_type": params.get("prediction_type").unwrap_or(&json!("missing_links")),
                 "confidence_threshold": params.get("confidence_threshold").unwrap_or(&json!(0.7)),
                 "max_predictions": params.get("max_predictions").unwrap_or(&json!(20)),
-                "entity_filter": params.get("entity_filter"),
-                "use_neural_features": params.get("use_neural_features").unwrap_or(&json!(true))
+                "entity_filter": params.get("entity_filter")
             });
             
             let new_params = json!({

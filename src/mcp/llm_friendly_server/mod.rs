@@ -153,8 +153,8 @@ impl LLMFriendlyMCPServer {
             }
 
             // Tier 1 Advanced Cognitive Tools
-            "neural_importance_scoring" => {
-                handlers::cognitive::handle_neural_importance_scoring(
+            "importance_scoring" => {
+                handlers::cognitive::handle_importance_scoring(
                     &self.knowledge_engine,
                     &self.usage_stats,
                     params.clone(),

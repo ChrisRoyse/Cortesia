@@ -1,4 +1,3 @@
-// Phase 4.2: Persistent Memory-Mapped Storage with Product Quantization Integration
 // Enhanced memory-mapped storage with file persistence and zero-copy operations
 
 use crate::core::types::{EntityKey, EntityData};

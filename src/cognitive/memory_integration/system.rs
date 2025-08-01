@@ -343,13 +343,14 @@ impl UnifiedMemorySystem {
         let query_hash = query.chars().fold(0u32, |acc, c| acc.wrapping_add(c as u32));
         let query_embedding = vec![query_hash as f32 / u32::MAX as f32; 96]; // Assuming 96 dim embeddings
         
-        if let Ok(query_result) = self.long_term_graph.query(&query_embedding, &[], limit).await {
-            let items = query_result.entities.into_iter().map(|entity| {
+        if let Ok(query_result) = self.long_term_graph.similarity_search(&query_embedding, limit).await {
+            let items = query_result.entities.into_iter().map(|entity_key| {
+                let similarity = query_result.activations.get(&entity_key).copied().unwrap_or(0.0);
                 MemoryItem {
-                    content: MemoryContent::Concept(format!("entity_{:?}", entity.id)),
-                    activation_level: entity.similarity,
+                    content: MemoryContent::Concept(format!("entity_{:?}", entity_key)),
+                    activation_level: similarity,
                     timestamp: Instant::now(),
-                    importance_score: entity.similarity,
+                    importance_score: similarity,
                     access_count: 1,
                     decay_factor: 1.0,
                 }

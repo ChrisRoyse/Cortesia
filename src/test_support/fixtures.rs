@@ -26,7 +26,7 @@ pub fn create_standard_test_entities() -> Vec<EntityData> {
     vec![
         EntityData::new(1, "artificial_intelligence".to_string(), vec![0.1, 0.2, 0.3, 0.4]),
         EntityData::new(2, "machine_learning".to_string(), vec![0.2, 0.3, 0.4, 0.5]),
-        EntityData::new(3, "neural_network".to_string(), vec![0.3, 0.4, 0.5, 0.6]),
+        EntityData::new(3, "text_processing".to_string(), vec![0.3, 0.4, 0.5, 0.6]),
         EntityData::new(4, "deep_learning".to_string(), vec![0.4, 0.5, 0.6, 0.7]),
         EntityData::new(5, "natural_language_processing".to_string(), vec![0.5, 0.6, 0.7, 0.8]),
         EntityData::new(6, "computer_vision".to_string(), vec![0.6, 0.7, 0.8, 0.9]),

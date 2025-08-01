@@ -82,7 +82,7 @@ pub async fn handle_analyze_graph(
         ],
         "prediction" => vec![
             "Higher confidence thresholds give more reliable predictions".to_string(),
-            "Enable neural features for better accuracy".to_string(),
+            "Enable advanced features for better accuracy".to_string(),
         ],
         _ => vec![]
     };
@@ -353,9 +353,6 @@ async fn analyze_predictions(
     let entity_filter = config.get("entity_filter")
         .and_then(|v| v.as_str());
     
-    let use_neural_features = config.get("use_neural_features")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
     
     // Validate prediction type
     if !["missing_links", "future_connections", "community_evolution", "knowledge_gaps"].contains(&prediction_type) {
@@ -380,8 +377,7 @@ async fn analyze_predictions(
         &graph_data.triples,
         confidence_threshold,
         max_predictions,
-        entity_filter,
-        use_neural_features
+        entity_filter
     );
     
     // Calculate confidence distribution
@@ -656,8 +652,7 @@ fn generate_predictions(
     triples: &[Triple],
     confidence_threshold: f32,
     max_predictions: usize,
-    _entity_filter: Option<&str>,
-    _use_neural_features: bool
+    _entity_filter: Option<&str>
 ) -> Vec<Value> {
     // Simplified prediction generation
     let mut predictions = Vec::new();

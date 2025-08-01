@@ -460,11 +460,11 @@ pub struct BrainEnhancedConfig {
     pub learning_rate: f32,
     pub activation_threshold: f32,
     pub max_activation_spread: usize,
-    pub neural_dampening: f32,
+    pub activation_dampening: f32,
     pub concept_coherence_threshold: f32,
     pub enable_hebbian_learning: bool,
     pub enable_concept_formation: bool,
-    pub enable_neural_plasticity: bool,
+    pub enable_graph_plasticity: bool,
     pub memory_consolidation_threshold: f32,
     pub synaptic_strength_decay: f32,
     pub embedding_dim: usize,
@@ -479,11 +479,11 @@ impl Default for BrainEnhancedConfig {
             learning_rate: 0.1,
             activation_threshold: 0.5,
             max_activation_spread: 5,
-            neural_dampening: 0.95,
+            activation_dampening: 0.95,
             concept_coherence_threshold: 0.7,
             enable_hebbian_learning: true,
             enable_concept_formation: true,
-            enable_neural_plasticity: true,
+            enable_graph_plasticity: true,
             memory_consolidation_threshold: 0.8,
             synaptic_strength_decay: 0.99,
             embedding_dim: 384,
@@ -501,11 +501,11 @@ impl BrainEnhancedConfig {
             learning_rate: 0.2,
             activation_threshold: 0.3,
             max_activation_spread: 3,
-            neural_dampening: 0.9,
+            activation_dampening: 0.9,
             concept_coherence_threshold: 0.5,
             enable_hebbian_learning: true,
             enable_concept_formation: true,
-            enable_neural_plasticity: true,
+            enable_graph_plasticity: true,
             memory_consolidation_threshold: 0.6,
             synaptic_strength_decay: 0.95,
             embedding_dim: 128,
@@ -521,11 +521,11 @@ impl BrainEnhancedConfig {
             learning_rate: 0.05,
             activation_threshold: 0.7,
             max_activation_spread: 3,
-            neural_dampening: 0.98,
+            activation_dampening: 0.98,
             concept_coherence_threshold: 0.8,
             enable_hebbian_learning: true,
             enable_concept_formation: false, // Disable for performance
-            enable_neural_plasticity: true,
+            enable_graph_plasticity: true,
             memory_consolidation_threshold: 0.9,
             synaptic_strength_decay: 0.99,
             embedding_dim: 256,
@@ -541,11 +541,11 @@ impl BrainEnhancedConfig {
             learning_rate: 0.15,
             activation_threshold: 0.4,
             max_activation_spread: 7,
-            neural_dampening: 0.9,
+            activation_dampening: 0.9,
             concept_coherence_threshold: 0.6,
             enable_hebbian_learning: true,
             enable_concept_formation: true,
-            enable_neural_plasticity: true,
+            enable_graph_plasticity: true,
             memory_consolidation_threshold: 0.7,
             synaptic_strength_decay: 0.98,
             embedding_dim: 192,
@@ -569,15 +569,15 @@ impl BrainEnhancedConfig {
             return Err("Max activation spread must be greater than 0".to_string());
         }
         
-        if self.neural_dampening <= 0.0 || self.neural_dampening > 1.0 {
-            return Err("Neural dampening must be between 0 and 1".to_string());
+        if self.activation_dampening <= 0.0 || self.activation_dampening > 1.0 {
+            return Err("Dampening must be between 0 and 1".to_string());
         }
         
         Ok(())
     }
 }
 
-/// Neural activation patterns
+/// Activation patterns
 #[derive(Debug, Clone)]
 pub enum ActivationPattern {
     Focused,    // High activation in few entities
@@ -1176,11 +1176,11 @@ mod tests {
             assert_eq!(config.learning_rate, 0.1);
             assert_eq!(config.activation_threshold, 0.5);
             assert_eq!(config.max_activation_spread, 5);
-            assert_eq!(config.neural_dampening, 0.95);
+            assert_eq!(config.activation_dampening, 0.95);
             assert_eq!(config.concept_coherence_threshold, 0.7);
             assert!(config.enable_hebbian_learning);
             assert!(config.enable_concept_formation);
-            assert!(config.enable_neural_plasticity);
+            assert!(config.enable_graph_plasticity);
             assert_eq!(config.memory_consolidation_threshold, 0.8);
             assert_eq!(config.synaptic_strength_decay, 0.99);
             assert_eq!(config.embedding_dim, 384);
@@ -1194,7 +1194,7 @@ mod tests {
             assert_eq!(config.learning_rate, 0.2);
             assert_eq!(config.activation_threshold, 0.3);
             assert_eq!(config.max_activation_spread, 3);
-            assert_eq!(config.neural_dampening, 0.9);
+            assert_eq!(config.activation_dampening, 0.9);
             assert_eq!(config.concept_coherence_threshold, 0.5);
             assert_eq!(config.memory_consolidation_threshold, 0.6);
             assert_eq!(config.synaptic_strength_decay, 0.95);
@@ -1208,7 +1208,7 @@ mod tests {
             assert_eq!(config.learning_rate, 0.05);
             assert_eq!(config.activation_threshold, 0.7);
             assert_eq!(config.max_activation_spread, 3);
-            assert_eq!(config.neural_dampening, 0.98);
+            assert_eq!(config.activation_dampening, 0.98);
             assert_eq!(config.concept_coherence_threshold, 0.8);
             assert!(!config.enable_concept_formation); // Disabled for performance
             assert_eq!(config.memory_consolidation_threshold, 0.9);
@@ -1221,7 +1221,7 @@ mod tests {
             assert_eq!(config.learning_rate, 0.15);
             assert_eq!(config.activation_threshold, 0.4);
             assert_eq!(config.max_activation_spread, 7);
-            assert_eq!(config.neural_dampening, 0.9);
+            assert_eq!(config.activation_dampening, 0.9);
             assert_eq!(config.concept_coherence_threshold, 0.6);
             assert_eq!(config.memory_consolidation_threshold, 0.7);
             assert_eq!(config.synaptic_strength_decay, 0.98);
@@ -1275,19 +1275,19 @@ mod tests {
         }
 
         #[test]
-        fn test_validate_invalid_neural_dampening_zero() {
+        fn test_validate_invalid_activation_dampening_zero() {
             let mut config = BrainEnhancedConfig::default();
-            config.neural_dampening = 0.0;
+            config.activation_dampening = 0.0;
             assert!(config.validate().is_err());
-            assert!(config.validate().unwrap_err().contains("Neural dampening"));
+            assert!(config.validate().unwrap_err().contains("Dampening"));
         }
 
         #[test]
-        fn test_validate_invalid_neural_dampening_too_high() {
+        fn test_validate_invalid_activation_dampening_too_high() {
             let mut config = BrainEnhancedConfig::default();
-            config.neural_dampening = 1.1;
+            config.activation_dampening = 1.1;
             assert!(config.validate().is_err());
-            assert!(config.validate().unwrap_err().contains("Neural dampening"));
+            assert!(config.validate().unwrap_err().contains("Dampening"));
         }
 
         #[test]
@@ -1295,7 +1295,7 @@ mod tests {
             let mut config = BrainEnhancedConfig::default();
             config.learning_rate = 1.0; // Edge case: exactly 1.0
             config.activation_threshold = 0.0; // Edge case: exactly 0.0
-            config.neural_dampening = 1.0; // Edge case: exactly 1.0
+            config.activation_dampening = 1.0; // Edge case: exactly 1.0
             assert!(config.validate().is_ok());
         }
     }

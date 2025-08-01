@@ -90,8 +90,6 @@ pub enum GraphError {
     InvalidState(String),
     
     // Brain-inspired graph specific errors
-    #[error("Neural server error: {0}")]
-    NeuralServerError(String),
     
     #[error("Activation propagation failed: {0}")]
     ActivationPropagationFailed(String),

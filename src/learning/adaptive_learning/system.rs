@@ -214,7 +214,6 @@ impl AdaptiveLearningSystem {
     
     /// Execute structure optimization
     async fn execute_structure_optimization(&self) -> Result<bool> {
-        // Structure optimization removed - no agents in system
         println!("Structure optimization disabled - no agents");
         Ok(false)
     }

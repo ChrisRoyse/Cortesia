@@ -169,7 +169,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 
-                // Update existing entity activations (simulating neural activity)
+                // Update existing entity activations (simulating brain activity)
                 let activations = graph.get_all_activations().await;
                 let mut keys: Vec<_> = activations.keys().cloned().collect();
                 keys.extend(entity_keys_clone.iter().cloned());

@@ -66,7 +66,7 @@ impl std::fmt::Debug for Phase3IntegratedCognitiveSystem {
     }
 }
 
-/// Type alias for backward compatibility with Phase 4 integration
+/// Type alias for backward compatibility
 pub type IntegratedCognitiveSystem = Phase3IntegratedCognitiveSystem;
 
 #[derive(Debug, Clone)]
@@ -145,7 +145,6 @@ pub struct Phase3QueryResult {
     pub performance_metrics: QueryPerformanceMetrics,
     pub system_state_changes: SystemStateChanges,
     
-    // Phase 4 compatibility fields
     pub overall_confidence: f32,
     pub pattern_results: std::collections::HashMap<CognitivePatternType, PatternResultComponent>,
     pub response_time: Duration,
@@ -552,8 +551,7 @@ impl Phase3IntegratedCognitiveSystem {
             },
             system_state_changes,
             
-            // Phase 4 compatibility fields
-            overall_confidence: confidence,
+                    overall_confidence: confidence,
             pattern_results,
             response_time: total_time,
             query_complexity: ComplexityEstimate {
@@ -996,12 +994,12 @@ impl Phase3IntegratedCognitiveSystem {
         })
     }
 
-    /// Get abstract thinking pattern for Phase 4 integration
+    /// Get abstract thinking pattern
     pub async fn get_abstract_thinking_pattern(&self) -> Result<Arc<AbstractThinking>> {
         Ok(self.abstract_thinking.clone())
     }
 
-    /// Get orchestrator for Phase 4 integration
+    /// Get orchestrator
     pub async fn get_orchestrator(&self) -> Result<Arc<CognitiveOrchestrator>> {
         Ok(self.orchestrator.clone())
     }
@@ -1030,7 +1028,7 @@ impl Phase3IntegratedCognitiveSystem {
         Ok(metrics.overall_efficiency)
     }
 
-    /// Integrated query method for backward compatibility with Phase 4
+    /// Integrated query method for backward compatibility
     pub async fn integrated_query(
         &self,
         query: &str,
@@ -1047,7 +1045,7 @@ impl Phase3IntegratedCognitiveSystem {
         Ok(result)
     }
 
-    /// Get the base orchestrator for Phase 4 integration
+    /// Get the base orchestrator
     pub fn get_base_orchestrator(&self) -> Result<Arc<CognitiveOrchestrator>> {
         Ok(self.orchestrator.clone())
     }
@@ -1094,7 +1092,7 @@ pub struct InhibitionStatus {
     pub exception_rate: f32,
 }
 
-/// Performance data structure for Phase 4 learning
+/// Performance data structure
 #[derive(Debug, Clone)]
 pub struct PerformanceData {
     pub query_latencies: Vec<Duration>,
@@ -1570,7 +1568,7 @@ mod tests {
     async fn test_system_backward_compatibility() {
         let system = create_test_system().await.unwrap();
         
-        // Test integrated_query method for Phase 4 compatibility
+        // Test integrated_query method
         let result = system.integrated_query("test query", None).await;
         assert!(result.is_ok());
         

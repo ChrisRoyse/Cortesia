@@ -135,8 +135,8 @@ impl DivergentThinking {
         // Spread activation through the graph
         let activated_paths = self.spread_activation(graph, &activated_entities, &mut exploration_state).await?;
         
-        // Perform neural path exploration
-        let enhanced_paths = self.neural_path_exploration(graph, &activated_paths, &exploration_type, &mut exploration_state).await?;
+        // Perform graph path exploration
+        let enhanced_paths = self.graph_path_exploration(graph, &activated_paths, &exploration_type, &mut exploration_state).await?;
         
         // Find typed connections
         let typed_connections = self.find_typed_connections(&enhanced_paths, &exploration_type);
@@ -245,8 +245,8 @@ impl DivergentThinking {
         Ok(paths)
     }
 
-    /// Perform neural path exploration with enhancement
-    async fn neural_path_exploration(
+    /// Perform graph path exploration with enhancement
+    async fn graph_path_exploration(
         &self,
         graph: &BrainEnhancedKnowledgeGraph,
         paths: &[ExplorationPath],

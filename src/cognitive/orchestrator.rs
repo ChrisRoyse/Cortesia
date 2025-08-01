@@ -9,7 +9,6 @@ use crate::cognitive::{
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::monitoring::collectors::runtime_profiler::RuntimeProfiler;
 use crate::trace_function;
-// Neural server dependency removed - using pure graph operations
 use crate::monitoring::performance::{PerformanceMonitor, Operation};
 use crate::error::{Result, GraphError};
 

@@ -7,7 +7,7 @@ use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use crate::core::brain_types::{ActivationPattern, BrainInspiredEntity, EntityDirection, ActivationStep, ActivationOperation};
 use crate::core::types::EntityKey;
-// Neural server dependency removed - using pure graph operations
+// Using pure graph operations for convergent thinking
 use crate::error::{Result, GraphError};
 
 /// Convergent thinking pattern - focused, direct retrieval with single optimal answer
@@ -61,13 +61,13 @@ impl ConvergentThinking {
             reasoning_trace: propagation_result.activation_trace,
             supporting_facts: best_answer.supporting_entities,
             execution_time_ms: execution_time.as_millis() as u64,
-            semantic_similarity_score: 0.85, // Placeholder - would be calculated from neural processing
+            semantic_similarity_score: 0.85, // Placeholder - would be calculated from graph similarity
             attention_weights: vec![1.0; trace_len], // Equal weights for now
             uncertainty_estimate: 1.0 - best_answer.confidence, // Simple uncertainty estimate
         })
     }
     
-    /// Extract target concept from query using neural processing with context
+    /// Extract target concept from query using graph processing with context
     async fn extract_target_concept_with_context(&self, query: &str, context: Option<&str>) -> Result<String> {
         // Enhanced concept extraction that considers context
         let mut _combined_text = query.to_string();
@@ -90,7 +90,7 @@ impl ConvergentThinking {
         self.extract_target_concept(query).await
     }
     
-    /// Extract target concept from query using neural processing
+    /// Extract target concept from query using graph processing
     async fn extract_target_concept(&self, query: &str) -> Result<String> {
         let query_lower = query.to_lowercase();
         
@@ -149,7 +149,7 @@ impl ConvergentThinking {
             }
         }
         
-        // Use neural server for concept extraction
+        // Use graph-based concept extraction
         let query_embedding = self.generate_query_embedding(query).await?;
         
         // Simple concept extraction - in practice would use more sophisticated NLP
@@ -631,7 +631,7 @@ impl ConvergentThinking {
             
             // Technology hierarchy
             vec!["machine learning", "artificial intelligence", "ai", "technology"],
-            vec!["neural network", "deep learning", "machine learning", "ai", "technology"],
+            vec!["decision tree", "supervised learning", "machine learning", "ai", "technology"],
             vec!["computer science", "technology", "science"],
             
             // Science hierarchy
@@ -690,7 +690,7 @@ impl ConvergentThinking {
             
             // AI/Technology field  
             vec!["ai", "artificial", "intelligence", "machine", "computer", "algorithm", 
-                 "technology", "neural", "network", "learning", "deep"],
+                 "technology", "model", "network", "learning", "deep"],
             
             // Science field
             vec!["physics", "chemistry", "biology", "science", "theory", "experiment", 
@@ -773,8 +773,8 @@ impl ConvergentThinking {
             
             // AI patterns
             (vec!["machine", "learning"], vec!["ai", "artificial"], 0.95),
-            (vec!["neural", "network"], vec!["ai", "deep"], 0.95),
-            (vec!["deep", "learning"], vec!["neural", "ai"], 0.95),
+            (vec!["decision", "tree"], vec!["ai", "algorithm"], 0.95),
+            (vec!["deep", "learning"], vec!["model", "ai"], 0.95),
             
             // Science patterns
             (vec!["quantum", "mechanics"], vec!["physics", "science"], 0.95),

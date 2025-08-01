@@ -457,8 +457,21 @@ impl BrainEnhancedKnowledgeGraph {
             });
         }
 
-        // Perform neural query
-        let result = self.neural_query(query_embedding, k).await?;
+        // Perform similarity query using core graph
+        let similarity_results = self.core_graph.similarity_search(query_embedding, k)?;
+        
+        // Convert to BrainQueryResult format
+        let entities: Vec<EntityKey> = similarity_results.iter().map(|(key, _)| *key).collect();
+        let activations: HashMap<EntityKey, f32> = similarity_results.into_iter().collect();
+        
+        let result = BrainQueryResult {
+            entities: entities.clone(),
+            activations: activations.clone(),
+            query_time: std::time::Duration::from_millis(0), // Will be updated below
+            total_activation: activations.values().sum(),
+            activation_context: HashMap::new(), // Will be populated below
+            confidence: 0.8, // Default confidence
+        };
         
         // Enhance with activation context
         let activated_entities_vec = self.get_entities_above_threshold(0.1).await;
@@ -486,7 +499,7 @@ impl BrainEnhancedKnowledgeGraph {
             query_time: start_time.elapsed(),
             total_activation: enhanced_entities.iter().map(|(_, score)| score).sum(),
             activation_context: activated_entities,
-            confidence: result.confidence,
+            confidence: 0.8, // Use a reasonable confidence score
         })
     }
 }
@@ -624,11 +637,11 @@ mod tests {
             learning_rate: 0.05,
             activation_threshold: 0.8,
             max_activation_spread: 10,
-            neural_dampening: 0.9,
+            activation_dampening: 0.9,
             concept_coherence_threshold: 0.6,
             enable_hebbian_learning: true,
             enable_concept_formation: false,
-            enable_neural_plasticity: true,
+            enable_graph_plasticity: true,
             memory_consolidation_threshold: 0.7,
             synaptic_strength_decay: 0.95,
             embedding_dim: 512,
@@ -655,7 +668,7 @@ mod tests {
             learning_rate: 1.5, // Invalid: > 1.0
             activation_threshold: -0.1, // Invalid: < 0.0
             max_activation_spread: 0, // Invalid: must be > 0
-            neural_dampening: 1.1, // Invalid: > 1.0
+            activation_dampening: 1.1, // Invalid: > 1.0
             ..BrainEnhancedConfig::default()
         };
         

@@ -284,7 +284,6 @@ impl QueryContextBuilder {
             max_depth: self.max_depth,
             required_evidence: self.required_evidence,
             reasoning_trace: self.reasoning_trace,
-            // Phase 4 extensions with defaults
             user_id: None,
             session_id: None,
             conversation_history: Vec::new(),

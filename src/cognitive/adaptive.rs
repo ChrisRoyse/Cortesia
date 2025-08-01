@@ -5,7 +5,7 @@ use async_trait::async_trait;
 
 use crate::cognitive::types::*;
 use crate::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
-// Neural server dependency removed - using pure graph operations
+// Using pure graph operations for adaptive pattern selection
 // use crate::monitoring::performance::PerformanceMonitor;
 use crate::error::Result;
 
@@ -41,7 +41,7 @@ impl AdaptiveThinking {
         &self,
         query: &str,
         context: Option<&str>,
-        available_patterns: Vec<CognitivePatternType>,
+        _available_patterns: Vec<CognitivePatternType>,
     ) -> Result<AdaptiveResult> {
         let start_time = Instant::now();
         
@@ -52,7 +52,7 @@ impl AdaptiveThinking {
         let strategy_selection = self.select_cognitive_strategies(
             query,
             query_analysis.clone(),
-            available_patterns,
+            _available_patterns,
         ).await?;
         
         // 3. Execute selected patterns (possibly in parallel)
@@ -111,7 +111,7 @@ impl AdaptiveThinking {
         &self,
         query: &str,
         query_analysis: QueryCharacteristics,
-        available_patterns: Vec<CognitivePatternType>,
+        _available_patterns: Vec<CognitivePatternType>,
     ) -> Result<StrategySelection> {
         let mut selected_patterns = Vec::new();
         
@@ -142,22 +142,12 @@ impl AdaptiveThinking {
             selected_patterns.push(CognitivePatternType::Convergent);
         }
         
-        // Use neural model to refine selection
-        let neural_recommendations = self.get_neural_pattern_recommendations(
-            &query_analysis,
-            &available_patterns,
-        ).await?;
-        
-        // Combine heuristic and neural selections
-        let final_patterns = self.combine_pattern_selections(
-            selected_patterns,
-            neural_recommendations,
-        );
+        let final_patterns = selected_patterns;
         
         Ok(StrategySelection {
             selected_patterns: final_patterns.clone(),
             selection_confidence: self.calculate_selection_confidence(&final_patterns, &query_analysis),
-            reasoning: format!("Combined heuristic and neural selection: {} patterns", final_patterns.len()),
+            reasoning: format!("Heuristic selection: {} patterns", final_patterns.len()),
             execution_order: self.determine_execution_order(&final_patterns, &query_analysis),
         })
     }
@@ -407,30 +397,6 @@ impl AdaptiveThinking {
         })
     }
     
-    /// Get neural recommendations for pattern selection
-    async fn get_neural_pattern_recommendations(
-        &self,
-        query_analysis: &QueryCharacteristics,
-        available_patterns: &[CognitivePatternType],
-    ) -> Result<Vec<CognitivePatternType>> {
-        // Simulate neural model recommendation
-        // In a full implementation, this would use a trained MLP classifier
-        let mut recommendations = Vec::new();
-        
-        // Complex scoring based on query characteristics
-        for pattern in available_patterns {
-            let score = self.calculate_pattern_score(pattern, query_analysis);
-            if score > 0.5 {
-                recommendations.push(*pattern);
-            }
-        }
-        
-        if recommendations.is_empty() {
-            recommendations.push(CognitivePatternType::Convergent); // Fallback
-        }
-        
-        Ok(recommendations)
-    }
     
     /// Calculate pattern score based on query characteristics
     fn calculate_pattern_score(&self, pattern: &CognitivePatternType, analysis: &QueryCharacteristics) -> f32 {
@@ -462,31 +428,6 @@ impl AdaptiveThinking {
             CognitivePatternType::TreeOfThoughts => {
                 analysis.creative_requirement * 0.7 + analysis.complexity_score * 0.8
             }
-        }
-    }
-    
-    /// Combine heuristic and neural pattern selections
-    fn combine_pattern_selections(
-        &self,
-        heuristic: Vec<CognitivePatternType>,
-        neural: Vec<CognitivePatternType>,
-    ) -> Vec<CognitivePatternType> {
-        let mut combined = heuristic;
-        
-        // Add neural recommendations that aren't already selected
-        for pattern in neural {
-            if !combined.contains(&pattern) {
-                combined.push(pattern);
-            }
-        }
-        
-        // Limit to maximum of 4 patterns to avoid complexity
-        combined.truncate(4);
-        
-        if combined.is_empty() {
-            vec![CognitivePatternType::Convergent]
-        } else {
-            combined
         }
     }
     

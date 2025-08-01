@@ -77,7 +77,7 @@ impl MetricsCollector for KnowledgeEngineMetricsCollector {
         let avg_rel_gauge = registry.gauge("brain_avg_relationships_per_entity", HashMap::new());
         avg_rel_gauge.set(avg_relationships);
         
-        // Simulated activation metrics (in a real system, these would come from neural processing)
+        // Simulated activation metrics (in a real system, these would come from advanced processing)
         // For now, we'll base them on system activity
         let avg_activation = (graph_density * 0.5 + (avg_relationships / 10.0).min(0.5)).min(1.0);
         let avg_activation_gauge = registry.gauge("brain_avg_activation", HashMap::new());

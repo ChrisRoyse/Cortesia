@@ -479,3 +479,41 @@ pub enum LearningTargetType {
     StructureOptimization,
     BehaviorModification,
 }
+
+// Meta-learning types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LearningStrategy {
+    pub strategy_type: StrategyType,
+    pub priority_areas: Vec<String>,
+    pub resource_allocation: crate::learning::adaptive_learning::ResourceRequirement,
+    pub coordination_approach: CoordinationApproach,
+    pub safety_level: f32,
+    pub expected_duration: Duration,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum StrategyType {
+    Balanced,
+    Aggressive,
+    Conservative,
+    Exploratory,
+    Exploitative,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CoordinationApproach {
+    Synchronized,
+    Asynchronous,
+    Hierarchical,
+    Distributed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LearningAlgorithmType {
+    Hebbian,
+    Reinforcement,
+    Bayesian,
+    Unsupervised,
+    Supervised,
+    SemiSupervised,
+}
