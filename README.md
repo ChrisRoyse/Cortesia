@@ -1923,6 +1923,6 @@ Special thanks to all contributors who have helped make Cortesia a reality.
 
 **Cortesia** - Where Knowledge Comes Alive
 
-[Website](https://cortesia.ai) • [Documentation](https://docs.cortesia.ai) • [Community](https://discord.gg/cortesia) • [Twitter](https://twitter.com/cortesia)
+[Website - Pheromind](https://pheromind.ai)  • [Community - Discord Link](https://discord.gg/rTq3PBeThX) 
 
 </div>
