@@ -1164,8 +1164,8 @@ async fn generate_quality_metrics(
 ) -> std::result::Result<Value, String> {
     let mut importance_scores = Vec::new();
     let mut below_threshold_entities = Vec::new();
-    let mut content_quality = json!({});
-    let mut knowledge_density = json!({});
+    let content_quality;
+    let knowledge_density;
     let mut neural_assessment = json!({});
     
     // Calculate importance scores for entities

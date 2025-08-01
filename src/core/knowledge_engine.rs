@@ -596,13 +596,18 @@ impl KnowledgeEngine {
     
     /// Convenience method for tests - add a knowledge chunk with basic parameters
     pub fn add_knowledge_chunk(&self, title: &str, content: &str, category: Option<&str>, source: Option<&str>) -> Result<String> {
-        // For now, just store the content as text
-        // In a full implementation, we might want to add metadata handling
-        let text = if let Some(title_str) = Some(title) {
-            format!("{}: {}", title_str, content)
-        } else {
-            content.to_string()
-        };
+        // Build text with metadata
+        let mut text_parts = vec![format!("{}: {}", title, content)];
+        
+        if let Some(cat) = category {
+            text_parts.push(format!("Category: {}", cat));
+        }
+        
+        if let Some(src) = source {
+            text_parts.push(format!("Source: {}", src));
+        }
+        
+        let text = text_parts.join("\n");
         self.store_chunk(text, None)
     }
 }

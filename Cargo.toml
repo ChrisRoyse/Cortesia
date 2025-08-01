@@ -29,9 +29,6 @@ path = "src/bin/test_brain_metrics.rs"
 name = "llmkg_mcp_server"
 path = "src/bin/llmkg_mcp_server.rs"
 
-[[bin]]
-name = "test_4_tools_basic"
-path = "test_4_tools_basic.rs"
 
 [dependencies]
 # Core dependencies

@@ -485,7 +485,7 @@ pub async fn execute_analogical_reasoning(
     }
     
     // Convert to reasoning chains
-    for (analog, conclusion, confidence, shared_props) in analogies.iter().take(5) {
+    for (analog, conclusion, confidence, shared_props) in analogies.iter().take(max_chain_length) {
         let steps: Vec<Value> = shared_props.iter().enumerate().map(|(i, (pred, obj))| {
             json!({
                 "step": i + 1,
@@ -583,6 +583,10 @@ pub async fn generate_alternative_reasoning_chains(
         };
         
         alternatives.push(alternative);
+        
+        if alternatives.len() >= max_chain_length {
+            break;
+        }
     }
     
     alternatives
@@ -646,8 +650,8 @@ fn detect_contradictions(knowledge: &KnowledgeResult) -> Vec<String> {
                 ("possible", "impossible"),
             ];
             
-            for (prop1, obj1) in &properties {
-                for (prop2, obj2) in &properties {
+            for (_, obj1) in &properties {
+                for (_, obj2) in &properties {
                     for (ex1, ex2) in &exclusive_pairs {
                         if (obj1.contains(ex1) && obj2.contains(ex2)) || 
                            (obj1.contains(ex2) && obj2.contains(ex1)) {

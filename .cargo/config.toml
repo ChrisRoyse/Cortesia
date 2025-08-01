@@ -20,10 +20,7 @@ timeout = 30
 [env]
 RUST_TEST_THREADS = "1"
 RUST_BACKTRACE = "1"
-
-# Windows-specific environment
-[target.'cfg(windows)'.env]
-# Disable Windows Error Reporting for test crashes
+# Disable Windows Error Reporting for test crashes (applies to all platforms)
 RUST_TEST_NOCAPTURE = "1"
 
 [alias]

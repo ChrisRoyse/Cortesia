@@ -387,6 +387,14 @@ impl ErrorRecoveryManager {
                 continue;
             }
             
+            // Validate consistency - successful + failed should equal total
+            if successful + failed != total {
+                log::warn!(
+                    "Inconsistent stats for operation: total={}, successful={}, failed={}", 
+                    total, successful, failed
+                );
+            }
+            
             let success_rate = successful as f64 / total as f64;
             
             if success_rate >= 0.95 {
