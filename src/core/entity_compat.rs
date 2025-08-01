@@ -177,9 +177,6 @@ impl EntityKey {
         EntityKey::from(key_data)
     }
     
-    pub fn to_string(&self) -> String {
-        format!("{:?}", self)
-    }
     
     pub fn id(&self) -> String {
         format!("{:?}", self)

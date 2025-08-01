@@ -18,7 +18,6 @@ pub mod attention_manager_traits;
 pub mod inhibitory;
 pub mod inhibitory_logic;
 pub mod memory_integration;
-pub mod phase3_integration;
 pub mod graph_query_engine;
 
 pub use types::*;
@@ -38,5 +37,4 @@ pub use working_memory::{WorkingMemorySystem, MemoryQuery, MemoryRetrievalResult
 pub use attention_manager::{AttentionManager, AttentionState, AttentionFocus, AttentionType, AttentionTarget, AttentionTargetType, ExecutiveCommand};
 pub use inhibitory::{CompetitiveInhibitionSystem, InhibitionResult, CompetitionGroup, CompetitionType, InhibitionPerformanceMetrics};
 pub use memory_integration::{UnifiedMemorySystem, MemoryIntegrationResult, RetrievalStrategy, MemoryType, ConsolidationResult, UnifiedRetrievalResult};
-pub use phase3_integration::{Phase3IntegratedCognitiveSystem, Phase3QueryResult, SystemDiagnostics};
 pub use graph_query_engine::{GraphQueryEngine, GraphTraversalParams, GraphStructureAnalysis, GraphSynthesis};

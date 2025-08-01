@@ -583,17 +583,17 @@ impl BrainEnhancedKnowledgeGraph {
             
             Ok(similar_concepts)
         } else {
-            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept_name)))
+            Err(crate::error::GraphError::InvalidInput(format!("Concept not found: {concept_name}")))
         }
     }
 
     /// Perform concept merging
     pub async fn merge_concepts(&self, concept1_name: &str, concept2_name: &str, merged_name: String) -> Result<ConceptStructure> {
         let concept1 = self.get_concept_structure(concept1_name).await
-            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept1_name)))?;
+            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {concept1_name}")))?;
         
         let concept2 = self.get_concept_structure(concept2_name).await
-            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept2_name)))?;
+            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {concept2_name}")))?;
         
         // Merge concepts
         let mut merged_concept = ConceptStructure::new();
@@ -630,7 +630,7 @@ impl BrainEnhancedKnowledgeGraph {
     /// Perform concept splitting
     pub async fn split_concept(&self, concept_name: &str, split_criteria: SplitCriteria) -> Result<(ConceptStructure, ConceptStructure)> {
         let original_concept = self.get_concept_structure(concept_name).await
-            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {}", concept_name)))?;
+            .ok_or_else(|| crate::error::GraphError::InvalidInput(format!("Concept not found: {concept_name}")))?;
         
         let (concept1, concept2) = match split_criteria {
             SplitCriteria::ByConnectivity => self.split_by_connectivity(&original_concept).await,

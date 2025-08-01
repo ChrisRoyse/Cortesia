@@ -7,7 +7,6 @@ use super::scheduler::LearningScheduler;
 use crate::cognitive::orchestrator::CognitiveOrchestrator;
 use crate::cognitive::working_memory::WorkingMemorySystem;
 use crate::cognitive::attention_manager::AttentionManager;
-use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
 use crate::learning::hebbian::HebbianLearningEngine;
 
 use std::sync::{Arc, RwLock, Mutex};
@@ -18,7 +17,6 @@ use uuid::Uuid;
 /// Adaptive learning system that integrates with cognitive systems
 #[derive(Debug, Clone)]
 pub struct AdaptiveLearningSystem {
-    pub integrated_cognitive_system: Arc<Phase3IntegratedCognitiveSystem>,
     pub working_memory: Arc<WorkingMemorySystem>,
     pub attention_manager: Arc<AttentionManager>,
     pub orchestrator: Arc<CognitiveOrchestrator>,
@@ -471,8 +469,7 @@ pub struct SystemStatus {
 
 // Removed stub implementations - using actual implementations from respective modules
 
-// Removed duplicate impl block for Phase3IntegratedCognitiveSystem 
-// The proper implementation is in cognitive/phase3_integration.rs
+ 
 
 // Removed duplicate impl block for WorkingMemorySystem
 // The proper implementation is in cognitive/working_memory.rs
@@ -530,8 +527,7 @@ mod tests {
     }
     
     async fn create_test_adaptive_learning_system_async() -> AdaptiveLearningSystem {
-        use crate::cognitive::phase3_integration::Phase3IntegratedCognitiveSystem;
-        use crate::cognitive::working_memory::WorkingMemorySystem;
+                use crate::cognitive::working_memory::WorkingMemorySystem;
         use crate::cognitive::attention_manager::AttentionManager;
         use crate::cognitive::orchestrator::CognitiveOrchestrator;
         use crate::learning::hebbian::HebbianLearningEngine;
@@ -603,16 +599,8 @@ mod tests {
             inhibition_system.clone(),
         ).await.expect("Failed to create hebbian engine")));
         
-        // Create integrated cognitive system
-        let integrated_cognitive_system = Arc::new(Phase3IntegratedCognitiveSystem::new(
-            orchestrator.clone(),
-            activation_engine.clone(),
-            brain_graph.clone(),
-            sdr_storage.clone(),
-        ).await.expect("Failed to create integrated cognitive system"));
         
         AdaptiveLearningSystem {
-            integrated_cognitive_system,
             working_memory,
             attention_manager,
             orchestrator,

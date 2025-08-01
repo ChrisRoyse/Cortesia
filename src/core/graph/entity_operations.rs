@@ -98,12 +98,12 @@ impl KnowledgeGraph {
         let batch_size = entities.len();
         
         #[cfg(debug_assertions)]
-        log::trace!("Starting batch insert of {} entities", batch_size);
+        log::trace!("Starting batch insert of {batch_size} entities");
         
         // Use parallel validation for large batches
         if ParallelProcessor::should_use_parallel(batch_size, ParallelOperation::BatchValidation) {
             #[cfg(debug_assertions)]
-            log::trace!("Using parallel validation for {} entities", batch_size);
+            log::trace!("Using parallel validation for {batch_size} entities");
             
             ParallelProcessor::parallel_validate_entities(&entities, self.embedding_dim)?;
         } else {
@@ -196,7 +196,7 @@ impl KnowledgeGraph {
         
         if let Some(meta) = entity_store.get(key) {
             if let Some(data) = arena.get_entity(key) {
-                return Some((meta.clone(), data.clone()));
+                return Some((*meta, data.clone()));
             }
         }
         

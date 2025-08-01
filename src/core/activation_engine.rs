@@ -95,7 +95,7 @@ impl ActivationPropagationEngine {
         for (key, &activation) in &initial_pattern.activations {
             if !activation.is_finite() {
                 return Err(crate::error::GraphError::InvalidInput(
-                    format!("Invalid activation value for entity {:?}: {}", key, activation)
+                    format!("Invalid activation value for entity {key:?}: {activation}")
                 ));
             }
         }
@@ -904,7 +904,7 @@ mod tests {
             let mut entity_keys = Vec::new();
             for i in 0..50 {
                 let entity = BrainInspiredEntity::new(
-                    format!("entity_{}", i), 
+                    format!("entity_{i}"), 
                     if i == 0 { EntityDirection::Input } else { EntityDirection::Output }
                 );
                 let key = engine.add_entity(entity).await.unwrap();

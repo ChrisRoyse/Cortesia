@@ -125,7 +125,6 @@ pub use crate::cognitive::{
     AttentionManager, AttentionState, AttentionFocus, AttentionType, AttentionTarget, AttentionTargetType, ExecutiveCommand,
     CompetitiveInhibitionSystem, InhibitionResult, CompetitionGroup, CompetitionType, InhibitionPerformanceMetrics,
     UnifiedMemorySystem, UnifiedRetrievalResult, RetrievalStrategy,
-    Phase3IntegratedCognitiveSystem, Phase3QueryResult, SystemDiagnostics
 };
 
 // Learning System Exports

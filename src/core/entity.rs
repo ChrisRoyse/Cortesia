@@ -467,8 +467,8 @@ mod tests {
         // Insert entities and verify memory usage increases
         let mut sm: SlotMap<EntityKey, EntityData> = SlotMap::with_key();
         for i in 0..10 {
-            let key = sm.insert(create_test_entity_data(i, &format!("entity_{}", i)));
-            let data = create_test_entity_data(i, &format!("entity_{}", i));
+            let key = sm.insert(create_test_entity_data(i, &format!("entity_{i}")));
+            let data = create_test_entity_data(i, &format!("entity_{i}"));
             store.insert(key, &data).unwrap();
         }
         
@@ -554,7 +554,8 @@ mod tests {
         
         // Insert multiple entities with varying property sizes
         for i in 0..50 {
-            let prop = format!("entity_{}_properties_with_data_{}", i, "x".repeat(i % 10));
+            let repeated_x = "x".repeat(i % 10);
+            let prop = format!("entity_{i}_properties_with_data_{repeated_x}");
             let key = sm.insert(create_test_entity_data(i as u16, &prop));
             keys.push((key, prop.clone()));
             
@@ -716,8 +717,8 @@ mod tests {
         
         // Insert many entities
         for i in 0..entity_count {
-            let key = sm.insert(create_test_entity_data(i as u16, &format!("entity_{}", i)));
-            let data = create_test_entity_data(i as u16, &format!("entity_{}", i));
+            let key = sm.insert(create_test_entity_data(i as u16, &format!("entity_{i}")));
+            let data = create_test_entity_data(i as u16, &format!("entity_{i}"));
             store.insert(key, &data).unwrap();
         }
         
@@ -743,14 +744,14 @@ mod tests {
         for i in 0..5 {
             let key = sm.insert(EntityData {
                 type_id: i,
-                properties: format!("entity:{}", i),
+                properties: format!("entity:{i}"),
                 embedding: vec![0.0; 64],
             });
             keys.push(key);
             
             let data = EntityData {
                 type_id: i,
-                properties: format!("entity:{}", i),
+                properties: format!("entity:{i}"),
                 embedding: vec![0.0; 64],
             };
             

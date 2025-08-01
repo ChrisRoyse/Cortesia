@@ -216,7 +216,7 @@ impl MemoryHierarchy {
     /// Get consolidation path from source to target
     pub fn get_consolidation_path(&self, source: &MemoryType, target: &MemoryType) -> Vec<MemoryType> {
         // Define consolidation hierarchy
-        let hierarchy_order = vec![
+        let hierarchy_order = [
             MemoryType::SensoryBuffer,
             MemoryType::WorkingMemory,
             MemoryType::ShortTermMemory,

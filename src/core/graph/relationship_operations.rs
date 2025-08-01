@@ -23,7 +23,7 @@ impl KnowledgeGraph {
         
         // Add to edge buffer for dynamic insertion
         let mut edge_buffer = self.edge_buffer.write();
-        edge_buffer.push(relationship.clone());
+        edge_buffer.push(relationship);
         
         // If buffer is getting full, flush to main graph
         if edge_buffer.len() > 1000 {
@@ -223,7 +223,7 @@ impl KnowledgeGraph {
         let edge_buffer = self.edge_buffer.read();
         for relationship in edge_buffer.iter() {
             if relationship.from == entity || relationship.to == entity {
-                relationships.push(relationship.clone());
+                relationships.push(*relationship);
             }
         }
         
@@ -256,7 +256,7 @@ impl KnowledgeGraph {
         let edge_buffer = self.edge_buffer.read();
         for relationship in edge_buffer.iter() {
             if relationship.from == entity {
-                relationships.push(relationship.clone());
+                relationships.push(*relationship);
             }
         }
         
@@ -275,7 +275,7 @@ impl KnowledgeGraph {
         let edge_buffer = self.edge_buffer.read();
         for relationship in edge_buffer.iter() {
             if relationship.to == entity {
-                relationships.push(relationship.clone());
+                relationships.push(*relationship);
             }
         }
         
@@ -288,9 +288,9 @@ impl KnowledgeGraph {
         
         // Validate that entities exist
         let _from_id = self.get_entity_id(from)
-            .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
+            .ok_or(GraphError::EntityNotFound { id: 0 })?;
         let _to_id = self.get_entity_id(to)
-            .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
+            .ok_or(GraphError::EntityNotFound { id: 0 })?;
         
         // Note: CSRGraph doesn't support dynamic removal
         // All dynamic relationships are managed via edge_buffer
@@ -309,7 +309,7 @@ impl KnowledgeGraph {
     /// Update relationship weight
     pub fn update_relationship_weight(&self, from: EntityKey, to: EntityKey, new_weight: f32) -> Result<bool> {
         // Validate weight
-        if new_weight < 0.0 || new_weight > 1.0 {
+        if !(0.0..=1.0).contains(&new_weight) {
             return Err(GraphError::InvalidRelationshipWeight(new_weight));
         }
         
@@ -317,9 +317,9 @@ impl KnowledgeGraph {
         
         // Validate that entities exist
         let _from_id = self.get_entity_id(from)
-            .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
+            .ok_or(GraphError::EntityNotFound { id: 0 })?;
         let _to_id = self.get_entity_id(to)
-            .ok_or_else(|| GraphError::EntityNotFound { id: 0 })?;
+            .ok_or(GraphError::EntityNotFound { id: 0 })?;
         
         // Note: CSRGraph doesn't support dynamic weight updates
         // All dynamic relationships are managed via edge_buffer

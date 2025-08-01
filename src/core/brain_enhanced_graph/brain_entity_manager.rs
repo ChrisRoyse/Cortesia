@@ -88,7 +88,7 @@ impl BrainEnhancedKnowledgeGraph {
             self.sdr_storage.store_dense_vector(
                 entity_key,
                 &data.embedding,
-                format!("entity_{}", id)
+                format!("entity_{id}")
             ).await?;
         }
         
@@ -464,7 +464,7 @@ impl BrainEnhancedKnowledgeGraph {
         let mut embedding = vec![0.0; embedding_dim];
         
         for (key, value) in properties {
-            let combined = format!("{}:{}", key, value);
+            let combined = format!("{key}:{value}");
             let hash = self.hash_string(&combined);
             
             for (i, val) in embedding.iter_mut().enumerate() {
