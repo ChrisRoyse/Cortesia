@@ -7,9 +7,14 @@ pub mod resource_manager;
 pub mod model_loader;
 pub mod model_cache;
 pub mod model_registry;
+pub mod model_translation;
+
+#[cfg(test)]
+mod complexity_selection_tests;
 
 // Re-export public interface
 pub use resource_manager::*;
 pub use model_loader::*;
 pub use model_cache::*;
 pub use model_registry::*;
+pub use model_translation::*;

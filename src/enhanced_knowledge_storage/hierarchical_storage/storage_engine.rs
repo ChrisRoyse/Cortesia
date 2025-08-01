@@ -848,7 +848,7 @@ mod tests {
     #[tokio::test]
     async fn test_storage_engine_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let engine = HierarchicalStorageEngine::new(model_manager, storage_config);
@@ -861,7 +861,7 @@ mod tests {
     #[tokio::test]
     async fn test_document_storage_and_retrieval() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let engine = HierarchicalStorageEngine::new(model_manager, storage_config);
@@ -929,7 +929,7 @@ mod tests {
     #[tokio::test]
     async fn test_search_functionality() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let engine = HierarchicalStorageEngine::new(model_manager, storage_config);

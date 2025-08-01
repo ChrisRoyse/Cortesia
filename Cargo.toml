@@ -57,7 +57,7 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 
 # Random number generation
-rand = "0.8"
+rand = "0.9"
 
 # Error handling
 thiserror = "1.0"
@@ -85,14 +85,14 @@ dashmap = "5.5"
 sysinfo = "0.30"
 
 # Web and monitoring dependencies
-tokio-tungstenite = "0.20"
+tokio-tungstenite = "0.23"
 warp = "0.3"
 futures-util = "0.3"
 reqwest = { version = "0.11", features = ["json"] }
 axum = { version = "0.7", optional = true }
 tower = { version = "0.4", optional = true }
-tower-http = { version = "0.5", features = ["cors", "compression"], optional = true }
-axum-server = { version = "0.6", optional = true }
+tower-http = { version = "0.5", features = ["cors", "compression-br", "trace", "timeout", "limit"], optional = true }
+axum-server = { version = "0.6", features = ["tls-rustls"], optional = true }
 jsonwebtoken = "9.3"
 bcrypt = "0.15"
 utoipa = { version = "4.2", features = ["axum_extras"], optional = true }
@@ -100,14 +100,16 @@ utoipa-swagger-ui = { version = "7.1", features = ["axum"], optional = true }
 
 # Math and SIMD
 num-traits = "0.2"
+rand_distr = "0.4"  # For compatibility with other dependencies
+petgraph = "0.6"  # Graph processing for reasoning engine
 nalgebra = { version = "0.33", optional = true }
 
 # AI/ML Dependencies for Real Components
-candle-core = { version = "0.6", optional = true }
-candle-nn = { version = "0.6", optional = true }
-candle-transformers = { version = "0.6", optional = true }
+candle-core = { version = "0.9", optional = true }
+candle-nn = { version = "0.9", optional = true }
+candle-transformers = { version = "0.9", optional = true }
 tokenizers = { version = "0.19", optional = true }
-hf-hub = { version = "0.3", optional = true }
+hf-hub = { version = "0.3", features = ["tokio"], optional = true }
 ort = { version = "2.0.0-rc.10", optional = true }  # ONNX Runtime
 ndarray = "0.15"
 linfa = { version = "0.7", optional = true }
@@ -149,6 +151,9 @@ notify = "6.1"
 # Directory utilities for cache management
 dirs = "5.0"
 
+# Metrics for monitoring
+metrics = "0.23"
+
 # Test infrastructure dependencies (optional)
 rusqlite = { version = "0.30", features = ["bundled"], optional = true }
 handlebars = { version = "5.0", optional = true }
@@ -175,7 +180,7 @@ strip = true
 opt-level = "s"
 
 [features]
-default = ["native", "api", "ai"]
+default = ["native", "api"]
 wasm = ["wasm-bindgen", "wasm-bindgen-futures", "console_error_panic_hook", "wee_alloc", "js-sys", "web-sys", "getrandom"]
 native = ["nalgebra"]
 api = ["axum", "tower", "tower-http", "axum-server", "utoipa", "utoipa-swagger-ui"]

@@ -117,9 +117,6 @@ async fn explore_single_branch(
     let mut local_visited = HashSet::new();
     local_visited.insert(current_entity.clone());
     
-    use rand::SeedableRng;
-    let mut rng = rand::rngs::StdRng::from_entropy();
-    
     for depth in 0..max_depth {
         // Query all relationships from current entity
         let engine_lock = engine.read().await;
@@ -155,7 +152,13 @@ async fn explore_single_branch(
             
             let novelty_score = if global_visited.contains(neighbor) { 0.5 } else { 1.0 };
             let distance_score = calculate_semantic_distance(&current_entity, neighbor);
-            let random_score = rng.gen::<f32>();
+            // Use hash-based pseudo-randomness to avoid RNG Send issues
+            let hash = std::collections::hash_map::DefaultHasher::new();
+            use std::hash::{Hash, Hasher};
+            let mut hasher = hash;
+            neighbor.hash(&mut hasher);
+            depth.hash(&mut hasher);
+            let random_score = (hasher.finish() % 1000) as f32 / 1000.0;
             
             let total_score = (novelty_score * 0.3) + 
                             (distance_score * 0.4) + 
@@ -175,7 +178,12 @@ async fn explore_single_branch(
         let selection_index = if creativity_factor > 0.7 {
             // High creativity: pick from top 50% randomly
             let range = (scored_neighbors.len() as f32 * 0.5).ceil() as usize;
-            rng.gen_range(0..range.min(scored_neighbors.len()))
+            // Use hash-based selection to avoid RNG Send issues
+            use std::hash::{Hash, Hasher};
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            current_entity.hash(&mut hasher);
+            depth.hash(&mut hasher);
+            (hasher.finish() as usize) % range.min(scored_neighbors.len())
         } else {
             // Low creativity: pick the best
             0

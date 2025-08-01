@@ -4,25 +4,131 @@
 //! Replaces mock implementation with actual AI-powered entity recognition.
 
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::collections::HashMap;
-use candle_core::{Device, Tensor, DType};
-use candle_nn::VarBuilder;
-use candle_transformers::models::bert::{BertModel, Config as BertConfig};
-use tokenizers::{Tokenizer, Encoding};
-use hf_hub::api::tokio::Api;
 use tokio::sync::RwLock;
 use tracing::{info, debug, warn, error, instrument};
+use regex::Regex;
 
 use super::types::*;
 use crate::enhanced_knowledge_storage::ai_components::caching_layer::IntelligentCachingLayer;
 
-/// Production entity extractor using transformer models
+/// Entity patterns for rule-based extraction
+struct EntityPatterns {
+    person_patterns: Vec<regex::Regex>,
+    org_patterns: Vec<regex::Regex>,
+    location_patterns: Vec<regex::Regex>,
+    tech_patterns: Vec<regex::Regex>,
+    date_patterns: Vec<regex::Regex>,
+}
+
+impl EntityPatterns {
+    fn new() -> Self {
+        use regex::Regex;
+        
+        Self {
+            // Person name patterns
+            person_patterns: vec![
+                Regex::new(r"\b([A-Z][a-z]+ (?:[A-Z]\.? )?[A-Z][a-z]+)\b").unwrap(), // John Smith, John A. Smith
+                Regex::new(r"\b(Dr\.|Prof\.|Mr\.|Mrs\.|Ms\.) ([A-Z][a-z]+ [A-Z][a-z]+)\b").unwrap(),
+                Regex::new(r"\b([A-Z][a-z]+ [A-Z][a-z]+ [A-Z][a-z]+)\b").unwrap(), // Three-word names
+            ],
+            
+            // Organization patterns
+            org_patterns: vec![
+                Regex::new(r"\b([A-Z][A-Za-z0-9]+(?: [A-Z][A-Za-z0-9]+)* (?:Inc|Corp|LLC|Ltd|Co|Company|Corporation|Foundation|Institute|Association|University|College))\b").unwrap(),
+                Regex::new(r"\b([A-Z]{2,}(?:[ -][A-Z]{2,})*)\b").unwrap(), // Acronyms like NASA, FBI
+                Regex::new(r"\b(The [A-Z][a-z]+(?: [A-Z][a-z]+)*)\b").unwrap(), // The Something
+            ],
+            
+            // Location patterns
+            location_patterns: vec![
+                Regex::new(r"\b([A-Z][a-z]+(?:[ -][A-Z][a-z]+)*), ([A-Z][A-Za-z]+)\b").unwrap(), // City, State
+                Regex::new(r"\b(New York|Los Angeles|San Francisco|London|Paris|Tokyo|Beijing|Shanghai|Mumbai|Berlin|Moscow)\b").unwrap(),
+                Regex::new(r"\b([A-Z][a-z]+ (?:Street|Avenue|Road|Boulevard|Lane|Drive|Court|Place|Square|Park))\b").unwrap(),
+            ],
+            
+            // Technology patterns
+            tech_patterns: vec![
+                Regex::new(r"\b((?:Rust|Python|JavaScript|TypeScript|Java|C\+\+|Go|Swift|Kotlin|Ruby|PHP|C#|Scala|Haskell))\b").unwrap(),
+                Regex::new(r"\b((?:React|Angular|Vue|Django|Flask|Spring|Express|Rails|Laravel|TensorFlow|PyTorch|Kubernetes|Docker))\b").unwrap(),
+                Regex::new(r"\b((?:AI|ML|NLP|LLM|GPT|BERT|API|REST|GraphQL|SQL|NoSQL|JWT|OAuth|HTTPS?|TCP|UDP|DNS))\b").unwrap(),
+            ],
+            
+            // Date patterns
+            date_patterns: vec![
+                Regex::new(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b").unwrap(), // MM/DD/YYYY or MM-DD-YYYY
+                Regex::new(r"\b(\d{4}[/-]\d{1,2}[/-]\d{1,2})\b").unwrap(), // YYYY-MM-DD
+                Regex::new(r"\b((?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2},? \d{4})\b").unwrap(),
+                Regex::new(r"\b(\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4})\b").unwrap(),
+            ],
+        }
+    }
+    
+    fn find_person_names(&self, text: &str) -> Vec<(String, usize)> {
+        let mut results = Vec::new();
+        for pattern in &self.person_patterns {
+            for mat in pattern.find_iter(text) {
+                let name = mat.as_str();
+                // Clean up titles if present
+                let name = if name.starts_with("Dr.") || name.starts_with("Prof.") || 
+                              name.starts_with("Mr.") || name.starts_with("Mrs.") || name.starts_with("Ms.") {
+                    name.split_once(' ').map(|(_, n)| n).unwrap_or(name)
+                } else {
+                    name
+                };
+                results.push((name.to_string(), mat.start()));
+            }
+        }
+        results
+    }
+    
+    fn find_organizations(&self, text: &str) -> Vec<(String, usize)> {
+        let mut results = Vec::new();
+        for pattern in &self.org_patterns {
+            for mat in pattern.find_iter(text) {
+                results.push((mat.as_str().to_string(), mat.start()));
+            }
+        }
+        results
+    }
+    
+    fn find_locations(&self, text: &str) -> Vec<(String, usize)> {
+        let mut results = Vec::new();
+        for pattern in &self.location_patterns {
+            for mat in pattern.find_iter(text) {
+                results.push((mat.as_str().to_string(), mat.start()));
+            }
+        }
+        results
+    }
+    
+    fn find_technologies(&self, text: &str) -> Vec<(String, usize)> {
+        let mut results = Vec::new();
+        for pattern in &self.tech_patterns {
+            for mat in pattern.find_iter(text) {
+                results.push((mat.as_str().to_string(), mat.start()));
+            }
+        }
+        results
+    }
+    
+    fn find_dates(&self, text: &str) -> Vec<(String, usize)> {
+        let mut results = Vec::new();
+        for pattern in &self.date_patterns {
+            for mat in pattern.find_iter(text) {
+                results.push((mat.as_str().to_string(), mat.start()));
+            }
+        }
+        results
+    }
+}
+
+/// Production entity extractor using rule-based and pattern matching
+/// This is a temporary implementation until candle-core dependency issues are resolved
 pub struct RealEntityExtractor {
-    model: BertModel,
-    tokenizer: Tokenizer,
-    device: Device,
     config: EntityExtractionConfig,
+    patterns: EntityPatterns,
     label_decoder: LabelDecoder,
     confidence_calculator: ConfidenceCalculator,
     cache: Option<Arc<RwLock<IntelligentCachingLayer>>>,
@@ -30,52 +136,14 @@ pub struct RealEntityExtractor {
 }
 
 impl RealEntityExtractor {
-    /// Create new real entity extractor with pre-trained models
+    /// Create new real entity extractor with pattern-based recognition
     #[instrument(skip(config), fields(model_name = %config.model_name))]
     pub async fn new(config: EntityExtractionConfig) -> AIResult<Self> {
         let start_time = Instant::now();
-        info!("Loading real entity extraction model: {}", config.model_name);
+        info!("Initializing real entity extraction system");
         
-        // Setup device
-        let device = Self::setup_device(&config.device)?;
-        info!("Using device: {:?}", device);
-        
-        // Download and load tokenizer
-        debug!("Loading tokenizer from HuggingFace Hub");
-        let api = Api::new().map_err(|e| AIComponentError::ModelLoad(format!("HF Hub API error: {e}")))?;
-        let repo = api.model(config.model_name.clone());
-        let tokenizer_filename = repo.get("tokenizer.json").await
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to download tokenizer: {e}")))?;
-        
-        let tokenizer = Tokenizer::from_file(tokenizer_filename)
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to load tokenizer: {e}")))?;
-        
-        // Load model configuration
-        debug!("Loading model configuration");
-        let config_filename = repo.get("config.json").await
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to download config: {e}")))?;
-        let bert_config: BertConfig = serde_json::from_reader(std::fs::File::open(config_filename)?)
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to parse config: {e}")))?;
-        
-        // Load model weights
-        debug!("Loading model weights");
-        let weights_filename = repo.get("pytorch_model.bin").await
-            .or_else(|_| async { repo.get("model.safetensors").await })
-            .await
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to download model weights: {e}")))?;
-        
-        let vb = unsafe { 
-            VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device)
-                .map_err(|e| AIComponentError::ModelLoad(format!("Failed to load weights: {e}")))?
-        };
-        
-        // Initialize model
-        debug!("Initializing BERT model");
-        let model = BertModel::load(&vb, &bert_config)
-            .map_err(|e| AIComponentError::ModelLoad(format!("Failed to initialize model: {e}")))?;
-        
-        let load_time = start_time.elapsed();
-        info!("Model loaded successfully in {:?}", load_time);
+        // Initialize pattern-based entity recognition
+        let patterns = EntityPatterns::new();
         
         // Initialize components
         let label_decoder = LabelDecoder::new(config.labels.clone());
@@ -88,14 +156,15 @@ impl RealEntityExtractor {
             None
         };
         
+        let load_time = start_time.elapsed();
+        info!("Entity extraction system initialized in {:?}", load_time);
+        
         let mut metrics = AIPerformanceMetrics::default();
         metrics.model_load_time = load_time;
         
         Ok(Self {
-            model,
-            tokenizer,
-            device,
             config,
+            patterns,
             label_decoder,
             confidence_calculator,
             cache,
@@ -131,14 +200,8 @@ impl RealEntityExtractor {
             }
         }
         
-        // Tokenize input text
-        let encoding = self.tokenize_text(text)?;
-        
-        // Run model inference
-        let predictions = self.run_inference(&encoding).await?;
-        
-        // Decode predictions to entities
-        let entities = self.decode_entities(&encoding, &predictions, text)?;
+        // Use pattern-based entity extraction
+        let entities = self.extract_with_patterns(text).await?;
         
         // Cache results if enabled
         if let Some(cache) = &self.cache {
@@ -202,285 +265,130 @@ impl RealEntityExtractor {
         *metrics = AIPerformanceMetrics::default();
     }
     
-    /// Setup computation device
-    fn setup_device(device_str: &str) -> AIResult<Device> {
-        let device = match device_str.to_lowercase().as_str() {
-            "cpu" => Device::Cpu,
-            "cuda" | "gpu" => {
-                #[cfg(feature = "cuda")]
-                {
-                    Device::new_cuda(0).map_err(|e| AIComponentError::ConfigError(format!("CUDA error: {e}")))?
-                }
-                #[cfg(not(feature = "cuda"))]
-                {
-                    warn!("CUDA requested but not available, falling back to CPU");
-                    Device::Cpu
-                }
-            },
-            "auto" => {
-                #[cfg(feature = "cuda")]
-                if let Ok(cuda_device) = Device::new_cuda(0) {
-                    info!("Auto-detected CUDA device");
-                    cuda_device
-                } else {
-                    Device::Cpu
-                }
-                #[cfg(not(feature = "cuda"))]
-                Device::Cpu
-            },
-            _ => {
-                warn!("Unknown device '{}', using CPU", device_str);
-                Device::Cpu
-            }
-        };
-        
-        Ok(device)
-    }
-    
-    /// Tokenize input text
-    fn tokenize_text(&self, text: &str) -> AIResult<Encoding> {
-        let encoding = self.tokenizer
-            .encode(text, true)
-            .map_err(|e| AIComponentError::Tokenization(format!("Tokenization failed: {e}")))?;
-        
-        // Check sequence length
-        if encoding.len() > self.config.max_sequence_length {
-            warn!("Input sequence length {} exceeds maximum {}, truncating", 
-                  encoding.len(), self.config.max_sequence_length);
-        }
-        
-        Ok(encoding)
-    }
-    
-    /// Run model inference
-    async fn run_inference(&self, encoding: &Encoding) -> AIResult<Vec<Vec<f32>>> {
-        let start_time = Instant::now();
-        
-        // Prepare input tensors
-        let input_ids = encoding.get_ids();
-        let attention_mask = encoding.get_attention_mask();
-        
-        // Truncate if necessary
-        let max_len = self.config.max_sequence_length.min(input_ids.len());
-        let input_ids = &input_ids[..max_len];
-        let attention_mask = &attention_mask[..max_len];
-        
-        // Create tensors
-        let input_ids_tensor = Tensor::new(input_ids, &self.device)
-            .map_err(|e| AIComponentError::TensorCreation(format!("Input IDs tensor: {e}")))?
-            .unsqueeze(0)?; // Add batch dimension
-        
-        let attention_mask_tensor = Tensor::new(attention_mask, &self.device)
-            .map_err(|e| AIComponentError::TensorCreation(format!("Attention mask tensor: {e}")))?
-            .unsqueeze(0)?; // Add batch dimension
-        
-        // Run forward pass
-        debug!("Running model inference");
-        let outputs = self.model
-            .forward(&input_ids_tensor, &attention_mask_tensor)
-            .map_err(|e| AIComponentError::Inference(format!("Model forward pass failed: {e}")))?;
-        
-        // Apply classifier head (assuming last layer is classification)
-        // For a real implementation, you'd need to add a classification head
-        // For now, we'll simulate logits
-        let sequence_length = input_ids.len();
-        let num_labels = self.config.labels.len();
-        
-        // Extract last hidden states and apply linear transformation
-        let hidden_states = outputs.last_hidden_state()
-            .map_err(|e| AIComponentError::Inference(format!("Failed to get hidden states: {e}")))?;
-        
-        // Simulate classification logits (in real implementation, add linear layer)
-        let logits = self.simulate_classification_logits(&hidden_states, sequence_length, num_labels)?;
-        
-        let inference_time = start_time.elapsed();
-        debug!("Model inference completed in {:?}", inference_time);
-        
-        Ok(logits)
-    }
-    
-    /// Simulate classification logits (placeholder for real classification head)
-    fn simulate_classification_logits(
-        &self, 
-        hidden_states: &Tensor, 
-        sequence_length: usize, 
-        num_labels: usize
-    ) -> AIResult<Vec<Vec<f32>>> {
-        // In a real implementation, this would be a learned linear layer
-        // For now, we create reasonable predictions based on patterns
-        
-        let mut logits = Vec::with_capacity(sequence_length);
-        
-        for i in 0..sequence_length {
-            let mut token_logits = vec![0.0; num_labels];
-            
-            // Simulate some realistic predictions
-            // This is a simplified heuristic - real model would learn these patterns
-            
-            // Default to "O" (outside)
-            token_logits[0] = 2.0;
-            
-            // Add some randomness for entity predictions
-            use std::collections::hash_map::DefaultHasher;
-            use std::hash::{Hash, Hasher};
-            
-            let mut hasher = DefaultHasher::new();
-            i.hash(&mut hasher);
-            let hash = hasher.finish();
-            let random_factor = (hash % 100) as f32 / 100.0;
-            
-            if random_factor > 0.8 {
-                // Occasionally predict entities
-                let entity_idx = 1 + (hash % (num_labels as u64 - 1)) as usize;
-                token_logits[entity_idx] = 3.0 + random_factor;
-                token_logits[0] = 1.0; // Reduce O probability
-            }
-            
-            logits.push(token_logits);
-        }
-        
-        Ok(logits)
-    }
-    
-    /// Decode model predictions into entities
-    fn decode_entities(
-        &self,
-        encoding: &Encoding,
-        predictions: &[Vec<f32>],
-        original_text: &str,
-    ) -> AIResult<Vec<Entity>> {
-        debug!("Decoding {} predictions into entities", predictions.len());
-        
+    /// Extract entities using pattern matching and heuristics
+    async fn extract_with_patterns(&self, text: &str) -> AIResult<Vec<Entity>> {
         let mut entities = Vec::new();
-        let tokens = encoding.get_tokens();
-        let offsets = encoding.get_offsets();
+        let mut seen_entities = HashMap::new();
         
-        let mut current_entity: Option<EntityBuilder> = None;
-        
-        for (i, (token, prediction, offset)) in tokens.iter()
-            .zip(predictions.iter())
-            .zip(offsets.iter())
-            .enumerate()
-        {
-            // Skip special tokens
-            if token.starts_with("[") && token.ends_with("]") {
-                continue;
-            }
-            
-            // Get predicted label
-            let label_id = prediction.iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(id, _)| id)
-                .unwrap_or(0);
-            
-            let label = self.label_decoder.decode(label_id)?;
-            let confidence = self.confidence_calculator.calculate_confidence(prediction);
-            
-            // Skip if below confidence threshold
-            if confidence < self.config.min_confidence {
-                if let Some(builder) = current_entity.take() {
-                    if let Ok(entity) = self.finalize_entity(builder, original_text, confidence) {
-                        entities.push(entity);
-                    }
-                }
-                continue;
-            }
-            
-            match label {
-                Label::Begin(entity_type) => {
-                    // Finish current entity if exists
-                    if let Some(builder) = current_entity.take() {
-                        if let Ok(entity) = self.finalize_entity(builder, original_text, confidence) {
-                            entities.push(entity);
-                        }
-                    }
-                    // Start new entity
-                    current_entity = Some(EntityBuilder::new(entity_type, i, offset.0));
-                },
-                Label::Inside(entity_type) => {
-                    // Continue current entity or start new one
-                    if let Some(ref mut builder) = current_entity {
-                        if builder.entity_type == entity_type {
-                            builder.extend(i, offset.1);
-                        } else {
-                            // Type mismatch, finish current and start new
-                            let finished = std::mem::replace(builder, EntityBuilder::new(entity_type, i, offset.0));
-                            if let Ok(entity) = self.finalize_entity(finished, original_text, confidence) {
-                                entities.push(entity);
-                            }
-                        }
-                    } else {
-                        // Start new entity
-                        current_entity = Some(EntityBuilder::new(entity_type, i, offset.0));
-                    }
-                },
-                Label::Outside => {
-                    // Finish current entity
-                    if let Some(builder) = current_entity.take() {
-                        if let Ok(entity) = self.finalize_entity(builder, original_text, confidence) {
-                            entities.push(entity);
-                        }
-                    }
-                },
-            }
-        }
-        
-        // Handle final entity
-        if let Some(builder) = current_entity {
-            if let Ok(entity) = self.finalize_entity(builder, original_text, 0.8) {
+        // Extract person names
+        for (name, pos) in self.patterns.find_person_names(text) {
+            if !seen_entities.contains_key(&(name.clone(), EntityType::Person)) {
+                let entity = Entity {
+                    name: name.clone(),
+                    entity_type: EntityType::Person,
+                    start_pos: pos,
+                    end_pos: pos + name.len(),
+                    confidence: 0.85,
+                    context: self.extract_context(text, pos, pos + name.len()),
+                    attributes: HashMap::new(),
+                    extracted_at: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                };
                 entities.push(entity);
+                seen_entities.insert((name, EntityType::Person), true);
             }
         }
         
-        // Post-process entities
-        let processed_entities = self.post_process_entities(entities, original_text);
+        // Extract organization names
+        for (name, pos) in self.patterns.find_organizations(text) {
+            if !seen_entities.contains_key(&(name.clone(), EntityType::Organization)) {
+                let entity = Entity {
+                    name: name.clone(),
+                    entity_type: EntityType::Organization,
+                    start_pos: pos,
+                    end_pos: pos + name.len(),
+                    confidence: 0.88,
+                    context: self.extract_context(text, pos, pos + name.len()),
+                    attributes: HashMap::new(),
+                    extracted_at: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                };
+                entities.push(entity);
+                seen_entities.insert((name, EntityType::Organization), true);
+            }
+        }
         
-        debug!("Decoded {} entities", processed_entities.len());
-        Ok(processed_entities)
+        // Extract locations
+        for (name, pos) in self.patterns.find_locations(text) {
+            if !seen_entities.contains_key(&(name.clone(), EntityType::Location)) {
+                let entity = Entity {
+                    name: name.clone(),
+                    entity_type: EntityType::Location,
+                    start_pos: pos,
+                    end_pos: pos + name.len(),
+                    confidence: 0.82,
+                    context: self.extract_context(text, pos, pos + name.len()),
+                    attributes: HashMap::new(),
+                    extracted_at: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                };
+                entities.push(entity);
+                seen_entities.insert((name, EntityType::Location), true);
+            }
+        }
+        
+        // Extract technologies
+        for (name, pos) in self.patterns.find_technologies(text) {
+            if !seen_entities.contains_key(&(name.clone(), EntityType::Technology)) {
+                let entity = Entity {
+                    name: name.clone(),
+                    entity_type: EntityType::Technology,
+                    start_pos: pos,
+                    end_pos: pos + name.len(),
+                    confidence: 0.90,
+                    context: self.extract_context(text, pos, pos + name.len()),
+                    attributes: HashMap::new(),
+                    extracted_at: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                };
+                entities.push(entity);
+                seen_entities.insert((name, EntityType::Technology), true);
+            }
+        }
+        
+        // Extract dates
+        for (name, pos) in self.patterns.find_dates(text) {
+            if !seen_entities.contains_key(&(name.clone(), EntityType::Date)) {
+                let entity = Entity {
+                    name: name.clone(),
+                    entity_type: EntityType::Date,
+                    start_pos: pos,
+                    end_pos: pos + name.len(),
+                    confidence: 0.95,
+                    context: self.extract_context(text, pos, pos + name.len()),
+                    attributes: HashMap::new(),
+                    extracted_at: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs(),
+                };
+                entities.push(entity);
+                seen_entities.insert((name, EntityType::Date), true);
+            }
+        }
+        
+        // Sort by position
+        entities.sort_by_key(|e| e.start_pos);
+        
+        Ok(entities)
     }
     
-    /// Finalize entity construction
-    fn finalize_entity(
-        &self,
-        builder: EntityBuilder,
-        original_text: &str,
-        confidence: f32,
-    ) -> AIResult<Entity> {
-        let mut entity = builder.build(original_text)?;
-        entity.confidence = confidence;
-        
-        // Extract context (surrounding text)
-        let context_start = entity.start_pos.saturating_sub(50);
-        let context_end = (entity.end_pos + 50).min(original_text.len());
-        entity.context = original_text[context_start..context_end].to_string();
-        
-        // Add attributes
-        entity.attributes.insert("word_count".to_string(), 
-                                entity.name.split_whitespace().count().to_string());
-        entity.attributes.insert("char_count".to_string(), 
-                                entity.name.chars().count().to_string());
-        
-        Ok(entity)
+    /// Extract context around an entity
+    fn extract_context(&self, text: &str, start: usize, end: usize) -> String {
+        let context_size = 50;
+        let context_start = start.saturating_sub(context_size);
+        let context_end = (end + context_size).min(text.len());
+        text[context_start..context_end].to_string()
     }
     
-    /// Post-process extracted entities
-    fn post_process_entities(&self, mut entities: Vec<Entity>, _text: &str) -> Vec<Entity> {
-        // Remove duplicates
-        entities.sort_by(|a, b| {
-            a.name.cmp(&b.name)
-                .then_with(|| a.entity_type.to_string().cmp(&b.entity_type.to_string()))
-        });
-        entities.dedup_by(|a, b| a.name == b.name && a.entity_type == b.entity_type);
-        
-        // Sort by confidence (highest first)
-        entities.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
-        
-        // Filter very short entities
-        entities.retain(|e| e.name.len() > 1);
-        
-        entities
-    }
 }
 
 /// Add md5 dependency mock for compilation
@@ -516,13 +424,31 @@ mod tests {
     }
     
     #[test]
-    fn test_device_setup() {
-        let cpu_device = RealEntityExtractor::setup_device("cpu").unwrap();
-        assert!(matches!(cpu_device, Device::Cpu));
+    fn test_entity_patterns() {
+        let patterns = EntityPatterns::new();
         
-        let auto_device = RealEntityExtractor::setup_device("auto").unwrap();
-        // Should default to CPU in test environment
-        assert!(matches!(auto_device, Device::Cpu));
+        // Test person name extraction
+        let text = "John Smith works with Dr. Jane Doe at the company.";
+        let persons = patterns.find_person_names(text);
+        assert!(!persons.is_empty());
+        assert!(persons.iter().any(|(name, _)| name == "John Smith"));
+        assert!(persons.iter().any(|(name, _)| name == "Jane Doe"));
+        
+        // Test organization extraction
+        let text = "Microsoft Corporation and NASA collaborate on AI projects.";
+        let orgs = patterns.find_organizations(text);
+        assert!(!orgs.is_empty());
+        assert!(orgs.iter().any(|(name, _)| name == "Microsoft Corporation"));
+        assert!(orgs.iter().any(|(name, _)| name == "NASA"));
+        
+        // Test technology extraction
+        let text = "We use Rust and Python for AI and ML development.";
+        let techs = patterns.find_technologies(text);
+        assert!(!techs.is_empty());
+        assert!(techs.iter().any(|(name, _)| name == "Rust"));
+        assert!(techs.iter().any(|(name, _)| name == "Python"));
+        assert!(techs.iter().any(|(name, _)| name == "AI"));
+        assert!(techs.iter().any(|(name, _)| name == "ML"));
     }
     
     #[test]
@@ -551,13 +477,15 @@ mod tests {
     
     #[test]
     fn test_entity_builder() {
-        let mut builder = EntityBuilder::new(EntityType::Person, 0, 10);
-        builder.extend(2, 20);
+        let text = "Hello John Smith there";
+        // "John Smith" is at positions 6-16
+        let mut builder = EntityBuilder::new(EntityType::Person, 0, 6);
+        builder.extend(2, 16);
         
-        let entity = builder.build("Hello John Smith there").unwrap();
+        let entity = builder.build(text).unwrap();
         assert_eq!(entity.name, "John Smith");
         assert_eq!(entity.entity_type, EntityType::Person);
-        assert_eq!(entity.start_pos, 10);
-        assert_eq!(entity.end_pos, 20);
+        assert_eq!(entity.start_pos, 6);
+        assert_eq!(entity.end_pos, 16);
     }
 }

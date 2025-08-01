@@ -406,7 +406,7 @@ mod tests {
     #[tokio::test]
     async fn test_relationship_mapper_creation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let mapper_config = RelationshipExtractionConfig::default();
         
         let mapper = AdvancedRelationshipMapper::new(model_manager, mapper_config);
@@ -424,10 +424,10 @@ mod tests {
                    RelationshipType::Custom("custom_relationship".to_string()));
     }
     
-    #[test]
-    fn test_temporal_info_extraction() {
+    #[tokio::test]
+    async fn test_temporal_info_extraction() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let mapper_config = RelationshipExtractionConfig::default();
         
         let mapper = AdvancedRelationshipMapper::new(model_manager, mapper_config);
@@ -441,10 +441,10 @@ mod tests {
         assert!(temporal_info.is_none());
     }
     
-    #[test]
-    fn test_bidirectional_relationship_detection() {
+    #[tokio::test]
+    async fn test_bidirectional_relationship_detection() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let mapper_config = RelationshipExtractionConfig::default();
         
         let mapper = AdvancedRelationshipMapper::new(model_manager, mapper_config);
@@ -454,10 +454,10 @@ mod tests {
         assert!(!mapper.is_bidirectional_relationship(&RelationshipType::CreatedBy));
     }
     
-    #[test]
-    fn test_relationship_validation() {
+    #[tokio::test]
+    async fn test_relationship_validation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let mapper_config = RelationshipExtractionConfig::default();
         
         let mapper = AdvancedRelationshipMapper::new(model_manager, mapper_config);

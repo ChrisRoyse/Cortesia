@@ -6,9 +6,11 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::collections::{HashMap, HashSet, VecDeque};
+use uuid::Uuid;
 use tokio::sync::RwLock;
 use petgraph::{Graph, Direction};
 use petgraph::graph::{NodeIndex, EdgeIndex};
+use petgraph::visit::{IntoNodeReferences, EdgeRef};
 use tracing::{info, debug, warn, error, instrument};
 
 use super::types::*;
@@ -47,7 +49,7 @@ impl GraphPathFinder {
         
         // Sort paths by confidence and length
         paths.sort_by(|a, b| {
-            b.confidence.partial_cmp(&a.confidence)
+            b.total_confidence.partial_cmp(&a.total_confidence)
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| a.steps.len().cmp(&b.steps.len()))
         });
@@ -69,6 +71,7 @@ impl GraphPathFinder {
         
         // Initialize with start node
         queue.push_back(ReasoningPath {
+            path_id: uuid::Uuid::new_v4().to_string(),
             steps: vec![ReasoningStep {
                 step_number: 0,
                 hypothesis: format!("Starting from node {:?}", start),
@@ -77,8 +80,8 @@ impl GraphPathFinder {
                 confidence: 1.0,
                 step_type: StepType::DirectEvidence,
             }],
-            confidence: 1.0,
-            total_weight: 0.0,
+            total_confidence: 1.0,
+            path_length: 1,
         });
         
         while let Some(current_path) = queue.pop_front() {
@@ -118,10 +121,9 @@ impl GraphPathFinder {
                 };
                 
                 new_path.steps.push(step);
-                new_path.total_weight += edge_weight;
-                new_path.confidence = self.calculate_path_confidence(&new_path);
+                new_path.total_confidence = self.calculate_path_confidence(&new_path);
                 
-                if new_path.confidence > 0.3 { // Filter low-confidence paths early
+                if new_path.total_confidence > 0.3 { // Filter low-confidence paths early
                     queue.push_back(new_path);
                 }
             }
@@ -369,7 +371,7 @@ impl ReasoningConfidenceCalculator {
         let step_count = path.steps.len() as f32;
         let avg_confidence = total_confidence / step_count;
         let avg_evidence = evidence_quality / step_count;
-        let avg_consistency = if step_count > 1 { consistency_score / (step_count - 1.0) } else { 1.0 };
+        let avg_consistency = if step_count > 1.0 { consistency_score / (step_count - 1.0) } else { 1.0 };
         
         // Apply penalties and bonuses
         let length_penalty = 1.0 - (self.path_length_penalty * (step_count - 1.0));
@@ -666,13 +668,14 @@ impl RealReasoningEngine {
         let explanation = self.generate_explanation(&best_path, &processed_query).await?;
         
         let processing_time = start_time.elapsed();
+        let path_length = best_path.path.steps.len();
         let result = ReasoningResult {
             reasoning_chain: best_path.path.steps,
             confidence: best_path.confidence,
             explanation,
             source_entities: processed_query.entities,
             target_entities: processed_query.target_concepts,
-            path_length: best_path.path.steps.len(),
+            path_length,
             processing_time,
         };
         
@@ -859,6 +862,7 @@ mod tests {
         let calculator = ReasoningConfidenceCalculator::new();
         
         let path = ReasoningPath {
+            path_id: "test-path-1".to_string(),
             steps: vec![
                 ReasoningStep {
                     step_number: 1,
@@ -869,8 +873,8 @@ mod tests {
                     step_type: StepType::DirectEvidence,
                 }
             ],
-            confidence: 0.9,
-            total_weight: 1.0,
+            total_confidence: 0.9,
+            path_length: 1,
         };
         
         let scored = calculator.score_path(&path).unwrap();

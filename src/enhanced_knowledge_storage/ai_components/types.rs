@@ -43,9 +43,19 @@ pub enum AIComponentError {
     
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
+    
+    #[error("Candle error: {0}")]
+    CandleError(String),
 }
 
 pub type AIResult<T> = Result<T, AIComponentError>;
+
+#[cfg(feature = "ai")]
+impl From<candle_core::Error> for AIComponentError {
+    fn from(err: candle_core::Error) -> Self {
+        AIComponentError::CandleError(err.to_string())
+    }
+}
 
 /// Entity extracted by AI models
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -243,6 +253,15 @@ pub enum ReasoningStrategy {
     GraphTraversal,
 }
 
+/// A complete reasoning path through the knowledge graph
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReasoningPath {
+    pub path_id: String,
+    pub steps: Vec<ReasoningStep>,
+    pub total_confidence: f32,
+    pub path_length: usize,
+}
+
 /// Reasoning step in a chain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReasoningStep {
@@ -398,7 +417,7 @@ impl Default for ConfidenceCalculator {
 }
 
 /// Cached result type for caching layer
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CachedResult {
     Entities(Vec<Entity>),
     Chunks(Vec<SemanticChunk>),

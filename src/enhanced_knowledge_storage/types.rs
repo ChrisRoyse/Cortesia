@@ -139,6 +139,12 @@ pub enum EnhancedStorageError {
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
     
+    #[error("Model error: {0}")]
+    ModelError(String),
+    
+    #[error("Resource exhausted: {0}")]
+    ResourceExhausted(String),
+    
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     

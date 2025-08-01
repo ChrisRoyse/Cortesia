@@ -300,7 +300,7 @@ pub struct FeatureFlags {
 
 // Supporting configuration structures
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Environment {
     Development,
     Testing,

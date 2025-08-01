@@ -32,7 +32,9 @@ lazy_static! {
             idle_timeout: std::time::Duration::from_secs(300), // 5 minutes
             min_memory_threshold: 100_000_000, // 100MB
         };
-        Arc::new(ModelResourceManager::new(config))
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            Arc::new(ModelResourceManager::new(config).await.unwrap())
+        })
     };
     
     /// Global knowledge processing configuration

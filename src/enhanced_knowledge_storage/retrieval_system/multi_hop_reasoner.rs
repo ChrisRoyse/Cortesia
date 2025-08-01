@@ -818,7 +818,7 @@ mod tests {
     #[tokio::test]
     async fn test_multi_hop_reasoner_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let reasoner = MultiHopReasoner::new(model_manager, retrieval_config);
@@ -826,10 +826,10 @@ mod tests {
         assert_eq!(reasoner.config.reasoning_model_id, "smollm2_360m");
     }
     
-    #[test]
-    fn test_key_term_extraction() {
+    #[tokio::test]
+    async fn test_key_term_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let reasoner = MultiHopReasoner::new(model_manager, retrieval_config);
@@ -846,10 +846,10 @@ mod tests {
         assert!(terms.contains(&"mechanics".to_string()));
     }
     
-    #[test]
-    fn test_relevance_calculation() {
+    #[tokio::test]
+    async fn test_relevance_calculation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let reasoner = MultiHopReasoner::new(model_manager, retrieval_config);
@@ -863,10 +863,10 @@ mod tests {
         assert!(relevance > 0.5); // Should have high relevance
     }
     
-    #[test]
-    fn test_step_type_determination() {
+    #[tokio::test]
+    async fn test_step_type_determination() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let reasoner = MultiHopReasoner::new(model_manager, retrieval_config);

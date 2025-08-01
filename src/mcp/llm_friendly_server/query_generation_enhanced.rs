@@ -1,5 +1,5 @@
 //! Enhanced query generation with advanced NLP and pattern matching
-//! Phase 1.1 Implementation: Fix generate_graph_query NLP entity extraction
+//! Advanced NLP entity extraction for query pattern matching
 
 use crate::error::Result;
 use regex::Regex;

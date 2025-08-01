@@ -10,14 +10,13 @@ use std::net::SocketAddr;
 
 use axum::{
     Router, Json, Extension,
-    extract::{State, Path, Query},
+    extract::{State, Query},
     response::{Response, IntoResponse},
-    http::{StatusCode, HeaderMap, HeaderValue, Method},
+    http::{StatusCode, HeaderValue, Method},
     middleware::{self, Next},
     routing::{get, post},
 };
 use axum_server::tls_rustls::RustlsConfig;
-use tower::ServiceBuilder;
 use tower_http::{
     cors::{CorsLayer, Any},
     trace::TraceLayer,
@@ -27,22 +26,20 @@ use tower_http::{
 };
 use tokio::sync::{RwLock, Semaphore};
 use serde::{Serialize, Deserialize};
-use jsonwebtoken::{encode, decode, Header, Algorithm, Validation, EncodingKey, DecodingKey};
+use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use uuid::Uuid;
 use chrono::{DateTime, Utc, Duration as ChronoDuration};
 use metrics::{counter, histogram, gauge};
 use tracing::{info, warn, error, debug, instrument};
 use utoipa::{OpenApi, ToSchema};
 use utoipa_swagger_ui::SwaggerUi;
-use rand::Rng;
 
 use super::{
-    ApiConfig, SecurityConfig, SystemErrorHandler, ErrorHandlingConfig,
-    ProductionConfig, RateLimitConfig
+    config::{ApiConfig, SecurityConfig, RateLimitConfig, ProductionConfig},
+    error_handling::SystemErrorHandler,
 };
 use super::system_orchestrator::{
-    ProductionKnowledgeSystem, DocumentProcessingResult, ReasoningQueryResult,
-    SystemError
+    ProductionKnowledgeSystem
 };
 
 /// Main API server structure
@@ -377,13 +374,13 @@ pub struct ApiError {
 }
 
 /// Query parameters for health endpoint
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct HealthQuery {
     pub detailed: Option<bool>,
 }
 
 /// Query parameters for metrics endpoint
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct MetricsQuery {
     pub format: Option<String>,
     pub timerange: Option<String>,
@@ -536,28 +533,27 @@ impl ApiServer {
                     .url("/api-docs/openapi.json", ApiDoc::openapi())
             )
             
-            // State and middleware
-            .with_state(state)
-            .layer(
-                ServiceBuilder::new()
-                    .layer(TraceLayer::new_for_http())
-                    .layer(cors)
-                    .layer(CompressionLayer::new())
-                    .layer(TimeoutLayer::new(Duration::from_secs(30)))
-                    .layer(RequestBodyLimitLayer::new(self.config.max_request_size))
-                    .layer(middleware::from_fn(request_id_middleware))
-                    .layer(middleware::from_fn(rate_limit_middleware))
-                    .layer(middleware::from_fn(auth_middleware))
-                    .layer(middleware::from_fn(metrics_middleware))
-                    .layer(middleware::from_fn(request_limit_middleware))
-            );
+            // Add middleware layers individually
+            .layer(TraceLayer::new_for_http())
+            .layer(cors)
+            .layer(CompressionLayer::new())
+            .layer(TimeoutLayer::new(Duration::from_secs(30)))
+            .layer(RequestBodyLimitLayer::new(self.config.max_request_size))
+            // Add stateful middleware
+            .layer(middleware::from_fn_with_state(state.clone(), request_limit_middleware))
+            .layer(middleware::from_fn_with_state(state.clone(), metrics_middleware))
+            .layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+            .layer(middleware::from_fn_with_state(state.clone(), rate_limit_middleware))
+            .layer(middleware::from_fn_with_state(state.clone(), request_id_middleware))
+            // Finally add state
+            .with_state(state);
         
         Ok(router)
     }
     
     /// Start HTTP server
     async fn start_http_server(&self, app: Router, addr: SocketAddr) -> Result<(), ApiError> {
-        axum::Server::bind(&addr)
+        axum_server::Server::bind(addr)
             .serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .await
             .map_err(|e| ApiError::server_error(&format!("HTTP server failed: {}", e)))
@@ -730,6 +726,7 @@ pub async fn retrieve_knowledge(
     // Update metrics
     state.metrics_collector.record_request("retrieve_knowledge", query_time).await;
     
+    let total_results = retrieval_result.supporting_documents.len();
     let response = RetrieveKnowledgeResponse {
         request_id: ctx.request_id.clone(),
         query: request.query.clone(),
@@ -747,7 +744,7 @@ pub async fn retrieve_knowledge(
             relationships: Vec::new(), // Would need to be extracted from the result
             explanation: Some(retrieval_result.response.clone()),
         }).collect(),
-        total_results: retrieval_result.supporting_documents.len(),
+        total_results,
         reasoning_steps: Some(retrieval_result.reasoning_chain.into_iter().map(|step| ReasoningStep {
             step: step.step_number,
             description: format!("{}: {}", step.operation, step.input),
@@ -787,7 +784,7 @@ pub async fn health_check(
     let start_time = Instant::now();
     
     // Get system health status
-    let health_status = state.system_orchestrator.get_system_health().await;
+    let _health_status = state.system_orchestrator.get_system_health().await;
     let detailed = query.detailed.unwrap_or(false);
     
     let mut components = HashMap::new();
@@ -989,7 +986,7 @@ pub async fn request_id_middleware(
 /// Rate limiting middleware
 pub async fn rate_limit_middleware(
     State(state): State<ApiState>,
-    Extension(mut ctx): Extension<RequestContext>,
+    Extension(ctx): Extension<RequestContext>,
     request: axum::extract::Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
@@ -1058,16 +1055,9 @@ pub async fn metrics_middleware(
     let response_time = ctx.start_time.elapsed();
     
     // Record metrics
-    counter!("http_requests_total", 1,
-        "method" => ctx.method.clone(),
-        "endpoint" => ctx.endpoint.clone(),
-        "status" => response.status().as_u16().to_string()
-    );
+    counter!("http_requests_total").increment(1);
     
-    histogram!("http_request_duration_seconds", response_time.as_secs_f64(),
-        "method" => ctx.method.clone(),
-        "endpoint" => ctx.endpoint.clone()
-    );
+    histogram!("http_request_duration_seconds").record(response_time.as_secs_f64());
     
     state.metrics_collector.record_request(&ctx.endpoint, response_time).await;
     state.metrics_collector.decrement_active_connections().await;
@@ -1297,7 +1287,7 @@ impl MetricsCollector {
     pub async fn increment_active_connections(&self) {
         let mut connections = self.active_connections.write().await;
         *connections += 1;
-        gauge!("active_connections", *connections as f64);
+        gauge!("active_connections").set(*connections as f64);
     }
     
     pub async fn decrement_active_connections(&self) {
@@ -1305,7 +1295,7 @@ impl MetricsCollector {
         if *connections > 0 {
             *connections -= 1;
         }
-        gauge!("active_connections", *connections as f64);
+        gauge!("active_connections").set(*connections as f64);
     }
     
     pub async fn get_health_metrics(&self) -> HealthMetrics {
@@ -1387,7 +1377,7 @@ impl MetricsCollector {
 }
 
 impl ApiError {
-    pub fn new(error: &str, message: &str, status: StatusCode) -> Self {
+    pub fn new(error: &str, message: &str, _status: StatusCode) -> Self {
         Self {
             error: error.to_string(),
             message: message.to_string(),
@@ -1485,7 +1475,7 @@ fn validate_credentials(username: &str, password: &str) -> Option<String> {
     }
 }
 
-async fn get_user_permissions(user_id: &str) -> Vec<String> {
+async fn get_user_permissions(_user_id: &str) -> Vec<String> {
     // In production, this would fetch from a database
     vec![
         "document:process".to_string(),
@@ -1507,7 +1497,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_rate_limiter() {
-        use super::super::RateLimitConfig;
+        use crate::enhanced_knowledge_storage::production::api_layer::RateLimitConfig;
         
         let config = RateLimitConfig {
             requests_per_minute: 10,

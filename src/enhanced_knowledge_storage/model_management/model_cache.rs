@@ -7,6 +7,14 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use crate::enhanced_knowledge_storage::types::*;
 
+/// Backend type for model handle
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BackendType {
+    Local,
+    Remote,
+    Mock,
+}
+
 /// Handle to a loaded model instance
 #[derive(Debug, Clone)]
 pub struct ModelHandle {
@@ -15,6 +23,7 @@ pub struct ModelHandle {
     pub metadata: ModelMetadata,
     pub loaded_at: Instant,
     pub memory_usage: u64,
+    pub backend_type: BackendType,
 }
 
 impl ModelHandle {
@@ -25,7 +34,13 @@ impl ModelHandle {
             model_type,
             metadata,
             loaded_at: Instant::now(),
+            backend_type: BackendType::Remote, // Default to remote
         }
+    }
+    
+    pub fn with_backend_type(mut self, backend_type: BackendType) -> Self {
+        self.backend_type = backend_type;
+        self
     }
 }
 

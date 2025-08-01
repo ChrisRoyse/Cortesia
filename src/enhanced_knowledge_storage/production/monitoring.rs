@@ -638,11 +638,11 @@ impl MetricsCollector {
         op_metrics.record_failure(duration);
     }
     
-    async fn record_processing_metrics(&self, duration: Duration, peak_memory: u64) {
+    async fn record_processing_metrics(&self, _duration: Duration, _peak_memory: u64) {
         // Implementation would record detailed processing metrics
     }
     
-    async fn record_query_metrics(&self, duration: Duration, peak_memory: u64) {
+    async fn record_query_metrics(&self, _duration: Duration, _peak_memory: u64) {
         // Implementation would record detailed query metrics
     }
     

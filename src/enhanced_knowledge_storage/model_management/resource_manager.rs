@@ -10,6 +10,8 @@ use tracing::{info, warn, error, debug, instrument};
 use crate::enhanced_knowledge_storage::types::*;
 use crate::enhanced_knowledge_storage::model_management::*;
 use crate::enhanced_knowledge_storage::logging::LogContext;
+#[cfg(feature = "ai")]
+use crate::enhanced_knowledge_storage::ai_components::ai_model_backend::{AIModelBackend, AIBackendConfig};
 
 /// Central resource manager for model loading, caching, and task processing
 pub struct ModelResourceManager {
@@ -70,21 +72,68 @@ impl ResourceMonitor {
 }
 
 impl ModelResourceManager {
-    /// Create a new model resource manager
-    pub fn new(config: ModelResourceConfig) -> Self {
+    /// Create a new model resource manager with async initialization
+    pub async fn new(config: ModelResourceConfig) -> Result<Self> {
         let registry = Arc::new(RwLock::new(ModelRegistry::with_default_models()));
-        let backend = Arc::new(MockModelBackend::new());
-        let loader_config = ModelLoaderConfig::default();
-        let loader = Arc::new(ModelLoader::new(backend, registry.clone(), loader_config));
-        let cache = Arc::new(Mutex::new(ModelCache::with_capacity(config.max_concurrent_models)));
-        let resource_monitor = Arc::new(Mutex::new(ResourceMonitor::new(config.max_memory_usage)));
         
-        Self {
-            config,
-            registry,
-            loader,
-            cache,
-            resource_monitor,
+        // Use hybrid backend that supports both local and remote models
+        #[cfg(feature = "ai")]
+        let backend: Arc<dyn ModelBackend> = {
+            // Check if we should use local models
+            let use_local = std::env::var("LLMKG_USE_LOCAL_MODELS")
+                .map(|v| v.to_lowercase() == "true")
+                .unwrap_or(false);
+            
+            if use_local {
+                // Try hybrid backend first
+                match crate::enhanced_knowledge_storage::ai_components::hybrid_model_backend::HybridModelBackend::new(
+                    crate::enhanced_knowledge_storage::ai_components::hybrid_model_backend::HybridModelConfig::default()
+                ).await {
+                    Ok(hybrid_backend) => {
+                        info!("Using hybrid model backend with local model support");
+                        Arc::new(hybrid_backend)
+                    }
+                    Err(e) => {
+                        warn!("Failed to initialize hybrid backend, falling back to remote: {}", e);
+                        let ai_config = AIBackendConfig::default();
+                        let ai_backend = AIModelBackend::new(ai_config).await
+                            .map_err(|e| EnhancedStorageError::ModelLoadingFailed(
+                                format!("Failed to initialize AI backend: {}", e)
+                            ))?;
+                        Arc::new(ai_backend)
+                    }
+                }
+            } else {
+                // Use standard AI backend
+                let ai_config = AIBackendConfig::default();
+                let ai_backend = AIModelBackend::new(ai_config).await
+                    .map_err(|e| EnhancedStorageError::ModelLoadingFailed(
+                        format!("Failed to initialize AI backend: {}", e)
+                    ))?;
+                Arc::new(ai_backend)
+            }
+        };
+        
+        // Error when AI features are not enabled - no more mock fallback
+        #[cfg(not(feature = "ai"))]
+        return Err(EnhancedStorageError::ConfigurationError(
+            "AI features must be enabled for full functionality. Enable the 'ai' feature.".to_string()
+        ));
+        
+        #[cfg(feature = "ai")]
+        {
+            let loader_config = ModelLoaderConfig::default();
+            let loader = Arc::new(ModelLoader::new(backend, registry.clone(), loader_config));
+            let cache = Arc::new(Mutex::new(ModelCache::with_capacity(config.max_concurrent_models)));
+            let resource_monitor = Arc::new(Mutex::new(ResourceMonitor::new(config.max_memory_usage)));
+            
+            Ok(Self {
+                config,
+                registry,
+                loader,
+                cache,
+                resource_monitor,
+            })
         }
     }
     
@@ -498,7 +547,7 @@ mod tests {
     #[tokio::test]
     async fn test_resource_manager_creation() {
         let config = ModelResourceConfig::default();
-        let manager = ModelResourceManager::new(config);
+        let manager = ModelResourceManager::new(config).await.unwrap();
         
         let stats = manager.get_stats().await;
         assert_eq!(stats.active_models, 0);
@@ -508,7 +557,7 @@ mod tests {
     #[tokio::test]
     async fn test_task_processing() {
         let config = ModelResourceConfig::default();
-        let manager = ModelResourceManager::new(config);
+        let manager = ModelResourceManager::new(config).await.unwrap();
         
         let task = ProcessingTask::new(ComplexityLevel::Low, "Test processing task");
         let result = manager.process_with_optimal_model(task).await.unwrap();
@@ -525,7 +574,7 @@ mod tests {
         config.max_memory_usage = 1_000_000_000; // 1GB limit
         config.max_concurrent_models = 2;
         
-        let manager = ModelResourceManager::new(config);
+        let manager = ModelResourceManager::new(config).await.unwrap();
         
         // Process multiple tasks to load multiple models
         let task1 = ProcessingTask::new(ComplexityLevel::Low, "First task");
@@ -543,12 +592,21 @@ mod tests {
         // Use a config with enough memory to fit the high complexity model (3.4GB)
         let mut config = ModelResourceConfig::default();
         config.max_memory_usage = 5_000_000_000; // 5GB to ensure all models can fit
-        let manager = Arc::new(ModelResourceManager::new(config));
+        let manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         
-        // Verify that different complexity levels select different models
-        let low_model = manager.select_optimal_model(ComplexityLevel::Low).await.unwrap();
-        let medium_model = manager.select_optimal_model(ComplexityLevel::Medium).await.unwrap();
-        let high_model = manager.select_optimal_model(ComplexityLevel::High).await.unwrap();
+        // Create tasks with different complexity levels to verify model selection
+        let low_task = ProcessingTask::new(ComplexityLevel::Low, "test");
+        let medium_task = ProcessingTask::new(ComplexityLevel::Medium, "test");
+        let high_task = ProcessingTask::new(ComplexityLevel::High, "test");
+        
+        // Process tasks to see which models are selected
+        let low_result = manager.process_with_optimal_model(low_task).await.unwrap();
+        let medium_result = manager.process_with_optimal_model(medium_task).await.unwrap();
+        let high_result = manager.process_with_optimal_model(high_task).await.unwrap();
+        
+        let low_model = low_result.model_used;
+        let medium_model = medium_result.model_used;
+        let high_model = high_result.model_used;
         
         // Ensure we have unique models for each complexity level
         assert_ne!(low_model, medium_model, "Low and Medium should select different models");
@@ -598,7 +656,7 @@ mod tests {
         let mut config = ModelResourceConfig::default();
         config.idle_timeout = Duration::from_millis(100); // Very short timeout
         
-        let manager = ModelResourceManager::new(config);
+        let manager = ModelResourceManager::new(config).await.unwrap();
         
         // Process a task to load a model
         let task = ProcessingTask::new(ComplexityLevel::Low, "Test task");

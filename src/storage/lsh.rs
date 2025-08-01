@@ -38,7 +38,7 @@ impl LshIndex {
         for _ in 0..(num_hashes * num_tables) {
             let mut hyperplane = Vec::with_capacity(dimension);
             for _ in 0..dimension {
-                hyperplane.push(rng.gen_range(-1.0..1.0));
+                hyperplane.push(rng.random_range(-1.0..1.0));
             }
             
             // Normalize the hyperplane
@@ -286,7 +286,7 @@ impl LshIndex {
         let mut rng = rand::thread_rng();
         
         for _ in 0..sample_size {
-            let idx = rng.gen_range(0..entities.len());
+            let idx = rng.random_range(0..entities.len());
             let test_entity = entities[idx];
             
             // Search for this entity and see if it's found

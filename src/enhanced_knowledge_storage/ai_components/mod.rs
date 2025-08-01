@@ -7,9 +7,14 @@ pub mod real_entity_extractor;
 pub mod real_semantic_chunker;  
 pub mod real_reasoning_engine;
 pub mod ai_model_backend;
+pub mod local_model_backend;
+pub mod hybrid_model_backend;
 pub mod caching_layer;
 pub mod performance_monitor;
 pub mod types;
+
+#[cfg(test)]
+mod model_translation_tests;
 
 // Re-export commonly used types and traits
 pub use types::*;

@@ -531,7 +531,7 @@ mod tests {
     #[tokio::test]
     async fn test_context_analyzer_creation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let context_config = ContextAnalysisConfig::default();
         
         let analyzer = ContextAnalyzer::new(model_manager, context_config);
@@ -540,10 +540,10 @@ mod tests {
         assert!(analyzer.config.enable_global_context);
     }
     
-    #[test]
-    fn test_context_preservation_score_calculation() {
+    #[tokio::test]
+    async fn test_context_preservation_score_calculation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let context_config = ContextAnalysisConfig::default();
         
         let analyzer = ContextAnalyzer::new(model_manager, context_config);
@@ -558,10 +558,10 @@ mod tests {
         assert!((score - 0.2).abs() < 0.01);
     }
     
-    #[test]
-    fn test_temporal_indicators_detection() {
+    #[tokio::test]
+    async fn test_temporal_indicators_detection() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let context_config = ContextAnalysisConfig::default();
         
         let analyzer = ContextAnalyzer::new(model_manager, context_config);
@@ -571,10 +571,10 @@ mod tests {
         assert!(!analyzer.has_temporal_indicators("This is a simple statement without temporal markers."));
     }
     
-    #[test]
-    fn test_entity_cross_references() {
+    #[tokio::test]
+    async fn test_entity_cross_references() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let context_config = ContextAnalysisConfig::default();
         
         let analyzer = ContextAnalyzer::new(model_manager, context_config);
@@ -616,10 +616,10 @@ mod tests {
         assert_eq!(cross_refs[0].bridging_content, Some("Einstein".to_string()));
     }
     
-    #[test]
-    fn test_connected_chunks_counting() {
+    #[tokio::test]
+    async fn test_connected_chunks_counting() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let context_config = ContextAnalysisConfig::default();
         
         let analyzer = ContextAnalyzer::new(model_manager, context_config);

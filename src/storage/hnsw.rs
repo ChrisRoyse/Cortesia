@@ -308,7 +308,7 @@ impl HnswIndex {
 
     fn generate_random_level(&self) -> usize {
         let mut rng = rand::thread_rng();
-        let random_value: f64 = rng.gen();
+        let random_value: f64 = rng.random();
         (-random_value.ln() * self.level_multiplier).floor() as usize
     }
 

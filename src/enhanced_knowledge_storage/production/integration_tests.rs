@@ -137,7 +137,7 @@ mod tests {
             
             println!("✅ Performance monitoring test completed!");
             println!("   Memory usage: {} bytes", health.memory_usage.current_usage);
-            println!("   Cache hit rate: {:.2}%", health.cache_statistics.hit_rate * 100.0);
+            println!("   Cache hit rate: {:.2}%", health.cache_statistics.hit_rate() * 100.0);
             println!("   Average response time: {:?}", health.performance_metrics.average_response_time);
             println!("   Error rate: {:.2}%", health.performance_metrics.error_rate);
             

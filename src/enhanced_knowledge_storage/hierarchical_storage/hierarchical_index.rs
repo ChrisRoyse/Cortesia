@@ -756,7 +756,7 @@ mod tests {
     #[tokio::test]
     async fn test_index_manager_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = HierarchicalIndexManager::new(model_manager, storage_config);
@@ -764,10 +764,10 @@ mod tests {
         assert!(manager.config.enable_semantic_clustering);
     }
     
-    #[test]
-    fn test_tokenization() {
+    #[tokio::test]
+    async fn test_tokenization() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = HierarchicalIndexManager::new(model_manager, storage_config);
@@ -781,10 +781,10 @@ mod tests {
         assert_eq!(tokens[8], "dog");
     }
     
-    #[test]
-    fn test_stop_word_detection() {
+    #[tokio::test]
+    async fn test_stop_word_detection() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = HierarchicalIndexManager::new(model_manager, storage_config);
@@ -795,10 +795,10 @@ mod tests {
         assert!(!manager.is_stop_word("brown"));
     }
     
-    #[test]
-    fn test_embedding_similarity() {
+    #[tokio::test]
+    async fn test_embedding_similarity() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = HierarchicalIndexManager::new(model_manager, storage_config);

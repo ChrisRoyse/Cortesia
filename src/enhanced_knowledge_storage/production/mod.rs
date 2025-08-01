@@ -8,8 +8,10 @@ pub mod system_orchestrator;
 pub mod config;
 pub mod monitoring;
 pub mod error_handling;
+#[cfg(feature = "api")]
 pub mod api_layer;
 pub mod caching;
+#[cfg(feature = "ai")]
 pub mod ai_integration;
 
 #[cfg(test)]
@@ -22,6 +24,8 @@ pub use config::{ProductionConfig, Environment, ScalingConfig, MonitoringConfig,
 pub use monitoring::{PerformanceMonitor, MonitoringError, CurrentPerformanceMetrics, 
                     PerformanceReport, TimeRange, MemoryUsage};
 pub use error_handling::{SystemErrorHandler, ErrorHandlingError};
+#[cfg(feature = "api")]
 pub use api_layer::*;
 pub use caching::*;
+#[cfg(feature = "ai")]
 pub use ai_integration::{EntityExtractionAdapter, SemanticChunkingAdapter, ReasoningAdapter};

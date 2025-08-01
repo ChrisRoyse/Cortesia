@@ -146,14 +146,15 @@ impl ModelRegistry {
             ],
         });
         
-        // SmolLM2-1.7B - High complexity tasks
-        self.register_model("smollm2_1_7b", ModelMetadata {
-            name: "SmolLM2-1.7B".to_string(),
-            parameters: 1_700_000_000,
-            memory_footprint: 3_400_000_000, // ~3.4GB
+        // For high complexity tasks, register a variant that maps to the NER model
+        // The 1.7B model has been removed as it's too large
+        self.register_model("smollm2_high", ModelMetadata {
+            name: "SmolLM2-High".to_string(),
+            parameters: 340_000_000, // Maps to BERT large
+            memory_footprint: 1_360_000_000, // ~1.36GB
             complexity_level: ComplexityLevel::High,
             model_type: "Language Model".to_string(),
-            huggingface_id: "HuggingFaceTB/SmolLM2-1.7B".to_string(),
+            huggingface_id: "dbmdz/bert-large-cased-finetuned-conll03-english".to_string(),
             supported_tasks: vec![
                 "text_generation".to_string(),
                 "complex_reasoning".to_string(),
@@ -161,7 +162,6 @@ impl ModelRegistry {
                 "entity_extraction".to_string(),
                 "relationship_extraction".to_string(),
                 "semantic_analysis".to_string(),
-                "summarization".to_string(),
             ],
         });
     }

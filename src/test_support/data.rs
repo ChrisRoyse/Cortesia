@@ -353,7 +353,7 @@ pub mod generators {
     pub fn generate_attention_scores(count: usize, min: f32, max: f32, seed: u64) -> Vec<f32> {
         let mut rng = StdRng::seed_from_u64(seed);
         (0..count)
-            .map(|_| rng.gen_range(min..=max))
+            .map(|_| rng.random_range(min..=max))
             .collect()
     }
 

@@ -535,7 +535,7 @@ mod tests {
     #[tokio::test]
     async fn test_semantic_chunker_creation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let chunker_config = SemanticChunkingConfig::default();
         
         let chunker = SemanticChunker::new(model_manager, chunker_config);
@@ -544,10 +544,10 @@ mod tests {
         assert!(chunker.config.preserve_sentence_integrity);
     }
     
-    #[test]
-    fn test_chunk_type_determination() {
+    #[tokio::test]
+    async fn test_chunk_type_determination() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let chunker_config = SemanticChunkingConfig::default();
         
         let chunker = SemanticChunker::new(model_manager, chunker_config);
@@ -573,10 +573,10 @@ mod tests {
         assert_eq!(chunk_type, ChunkType::Code);
     }
     
-    #[test]
-    fn test_overlap_start_calculation() {
+    #[tokio::test]
+    async fn test_overlap_start_calculation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let chunker_config = SemanticChunkingConfig::default();
         
         let chunker = SemanticChunker::new(model_manager, chunker_config);

@@ -79,7 +79,7 @@
 //! # use std::sync::Arc;
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! # let processor = IntelligentKnowledgeProcessor::new(
-//! #     Arc::new(ModelResourceManager::new(ModelResourceConfig::default())),
+//! #     Arc::new(ModelResourceManager::new(ModelResourceConfig::default().await.unwrap())),
 //! #     KnowledgeProcessingConfig::default()
 //! # );
 //! let result = processor.process_knowledge("content", "title").await?;
@@ -316,7 +316,7 @@ impl IntelligentKnowledgeProcessor {
     ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let processor = IntelligentKnowledgeProcessor::new(
-    ///     Arc::new(ModelResourceManager::new(ModelResourceConfig::default())),
+    ///     Arc::new(ModelResourceManager::new(ModelResourceConfig::default().await.unwrap())),
     ///     KnowledgeProcessingConfig::default()
     /// );
     ///
@@ -363,7 +363,7 @@ impl IntelligentKnowledgeProcessor {
     /// # use std::sync::Arc;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// # let processor = IntelligentKnowledgeProcessor::new(
-    /// #     Arc::new(ModelResourceManager::new(ModelResourceConfig::default())),
+    /// #     Arc::new(ModelResourceManager::new(ModelResourceConfig::default().await.unwrap())),
     /// #     KnowledgeProcessingConfig::default()
     /// # );
     /// match processor.process_knowledge("content", "title").await {
@@ -925,7 +925,7 @@ mod tests {
     #[tokio::test]
     async fn test_intelligent_processor_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let processing_config = KnowledgeProcessingConfig::default();
         
         let processor = IntelligentKnowledgeProcessor::new(model_manager, processing_config);
@@ -934,10 +934,10 @@ mod tests {
         assert_eq!(processor.config.max_chunk_size, 2048);
     }
     
-    #[test]
-    fn test_document_id_generation() {
+    #[tokio::test]
+    async fn test_document_id_generation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let processing_config = KnowledgeProcessingConfig::default();
         
         let processor = IntelligentKnowledgeProcessor::new(model_manager, processing_config);
@@ -952,10 +952,10 @@ mod tests {
         assert!(id1.starts_with("doc_"));
     }
     
-    #[test]
-    fn test_entity_deduplication() {
+    #[tokio::test]
+    async fn test_entity_deduplication() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let processing_config = KnowledgeProcessingConfig::default();
         
         let processor = IntelligentKnowledgeProcessor::new(model_manager, processing_config);
@@ -997,10 +997,10 @@ mod tests {
         assert_eq!(deduplicated[1].confidence, 0.9);  // Einstein (higher confidence version kept)
     }
     
-    #[test]
-    fn test_relationship_deduplication() {
+    #[tokio::test]
+    async fn test_relationship_deduplication() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let processing_config = KnowledgeProcessingConfig::default();
         
         let processor = IntelligentKnowledgeProcessor::new(model_manager, processing_config);
@@ -1037,7 +1037,7 @@ mod tests {
     #[tokio::test]
     async fn test_processing_validation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let processing_config = KnowledgeProcessingConfig::default();
         
         let processor = IntelligentKnowledgeProcessor::new(model_manager, processing_config);

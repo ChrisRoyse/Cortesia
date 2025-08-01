@@ -807,7 +807,7 @@ mod tests {
     #[tokio::test]
     async fn test_semantic_link_manager_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = SemanticLinkManager::new(model_manager, storage_config);
@@ -815,10 +815,10 @@ mod tests {
         assert_eq!(manager.config.semantic_similarity_threshold, 0.7);
     }
     
-    #[test]
-    fn test_embedding_similarity_calculation() {
+    #[tokio::test]
+    async fn test_embedding_similarity_calculation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = SemanticLinkManager::new(model_manager, storage_config);
@@ -834,10 +834,10 @@ mod tests {
         assert!((similarity2 - 1.0).abs() < 0.001); // Identical vectors
     }
     
-    #[test]
-    fn test_categorical_similarity() {
+    #[tokio::test]
+    async fn test_categorical_similarity() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = SemanticLinkManager::new(model_manager, storage_config);

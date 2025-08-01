@@ -481,7 +481,7 @@ mod tests {
     #[tokio::test]
     async fn test_context_aggregator_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);
@@ -489,10 +489,10 @@ mod tests {
         assert!(aggregator.config.enable_result_reranking);
     }
     
-    #[test]
-    fn test_key_term_extraction() {
+    #[tokio::test]
+    async fn test_key_term_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);
@@ -508,10 +508,10 @@ mod tests {
         assert!(terms.contains(&"duality".to_string()));
     }
     
-    #[test]
-    fn test_snippet_extraction() {
+    #[tokio::test]
+    async fn test_snippet_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);
@@ -525,10 +525,10 @@ mod tests {
         assert!(snippet.contains("..."));
     }
     
-    #[test]
-    fn test_entity_type_inference() {
+    #[tokio::test]
+    async fn test_entity_type_inference() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);
@@ -539,10 +539,10 @@ mod tests {
         assert_eq!(aggregator.infer_entity_type("physics"), EntityType::Concept);
     }
     
-    #[test]
-    fn test_relationship_extraction() {
+    #[tokio::test]
+    async fn test_relationship_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let aggregator = ContextAggregator::new(model_manager, retrieval_config);

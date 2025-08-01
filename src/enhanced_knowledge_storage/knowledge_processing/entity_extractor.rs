@@ -320,7 +320,7 @@ mod tests {
     #[tokio::test]
     async fn test_entity_extractor_creation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let extractor_config = EntityExtractionConfig::default();
         
         let extractor = AdvancedEntityExtractor::new(model_manager, extractor_config);
@@ -332,7 +332,7 @@ mod tests {
     #[tokio::test]
     async fn test_entity_extraction_prompt_creation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let extractor_config = EntityExtractionConfig::default();
         
         let extractor = AdvancedEntityExtractor::new(model_manager, extractor_config);
@@ -345,10 +345,10 @@ mod tests {
         assert!(prompt.contains("JSON"));
     }
     
-    #[test]
-    fn test_text_span_finding() {
+    #[tokio::test]
+    async fn test_text_span_finding() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let extractor_config = EntityExtractionConfig::default();
         
         let extractor = AdvancedEntityExtractor::new(model_manager, extractor_config);
@@ -369,10 +369,10 @@ mod tests {
         assert_eq!(EntityType::from_string("unknown"), EntityType::Other("unknown".to_string()));
     }
     
-    #[test]
-    fn test_entity_validation() {
+    #[tokio::test]
+    async fn test_entity_validation() {
         let config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(config));
+        let model_manager = Arc::new(ModelResourceManager::new(config).await.unwrap());
         let extractor_config = EntityExtractionConfig::default();
         
         let extractor = AdvancedEntityExtractor::new(model_manager, extractor_config);

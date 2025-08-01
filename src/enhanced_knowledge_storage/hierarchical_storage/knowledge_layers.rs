@@ -676,7 +676,7 @@ mod tests {
     #[tokio::test]
     async fn test_knowledge_layer_manager_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = KnowledgeLayerManager::new(model_manager, storage_config);
@@ -684,10 +684,10 @@ mod tests {
         assert_eq!(manager.config.max_layers_per_document, 1000);
     }
     
-    #[test]
-    fn test_sentence_splitting() {
+    #[tokio::test]
+    async fn test_sentence_splitting() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = KnowledgeLayerManager::new(model_manager, storage_config);
@@ -701,10 +701,10 @@ mod tests {
         assert_eq!(sentences[2], "And this is the third");
     }
     
-    #[test]
-    fn test_key_phrase_extraction() {
+    #[tokio::test]
+    async fn test_key_phrase_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         
         let manager = KnowledgeLayerManager::new(model_manager, storage_config);

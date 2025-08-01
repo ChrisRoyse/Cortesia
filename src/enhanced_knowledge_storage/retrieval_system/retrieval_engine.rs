@@ -866,7 +866,7 @@ mod tests {
     #[tokio::test]
     async fn test_retrieval_engine_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         let storage_engine = Arc::new(HierarchicalStorageEngine::new(
             model_manager.clone(),
@@ -880,10 +880,10 @@ mod tests {
         assert!(engine.config.enable_result_reranking);
     }
     
-    #[test]
-    fn test_query_id_generation() {
+    #[tokio::test]
+    async fn test_query_id_generation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         let storage_engine = Arc::new(HierarchicalStorageEngine::new(
             model_manager.clone(),
@@ -906,10 +906,10 @@ mod tests {
         assert_ne!(id1, id2); // Different timestamps
     }
     
-    #[test]
-    fn test_query_hash_calculation() {
+    #[tokio::test]
+    async fn test_query_hash_calculation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         let storage_engine = Arc::new(HierarchicalStorageEngine::new(
             model_manager.clone(),
@@ -937,10 +937,10 @@ mod tests {
         assert_ne!(hash1, hash2); // Different modes should produce different hashes
     }
     
-    #[test]
-    fn test_ranking_parser() {
+    #[tokio::test]
+    async fn test_ranking_parser() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let storage_config = HierarchicalStorageConfig::default();
         let storage_engine = Arc::new(HierarchicalStorageEngine::new(
             model_manager.clone(),

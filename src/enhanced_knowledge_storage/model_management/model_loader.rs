@@ -314,13 +314,11 @@ impl ModelBackend for MockModelBackend {
             parameters: match model_id {
                 id if id.contains("135m") => 135_000_000,
                 id if id.contains("360m") => 360_000_000,
-                id if id.contains("1_7b") => 1_700_000_000,
                 _ => 100_000_000,
             },
             memory_footprint: match model_id {
                 id if id.contains("135m") => 270_000_000,
                 id if id.contains("360m") => 720_000_000,
-                id if id.contains("1_7b") => 3_400_000_000,
                 _ => 200_000_000,
             },
             complexity_level: ComplexityLevel::Medium,

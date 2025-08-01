@@ -25,21 +25,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let entity_keys = {
         let graph = brain_graph.write().await;
         let mut keys = Vec::new();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         
         // Add some entities
         for i in 0..20 {
             let entity_data = llmkg::core::types::EntityData {
                 type_id: 1,
                 properties: format!("{{\"name\": \"Entity {i}\", \"index\": {i}}}"),
-                embedding: vec![rng.gen::<f32>(); 384],
+                embedding: vec![rng.random::<f32>(); 384],
             };
             
             match graph.core_graph.add_entity(entity_data) {
                 Ok(entity_key) => {
                     keys.push(entity_key);
                     // Set random activation levels
-                    graph.set_entity_activation(entity_key, rng.gen::<f32>()).await;
+                    graph.set_entity_activation(entity_key, rng.random::<f32>()).await;
                 },
                 Err(e) => eprintln!("Warning: Failed to add entity {i}: {e}"),
             }
@@ -53,12 +53,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let source = keys[source_idx];
                 let target = keys[target_idx];
                 
-                if let Err(e) = graph.core_graph.add_relationship(source, target, rng.gen::<f32>()) {
+                if let Err(e) = graph.core_graph.add_relationship(source, target, rng.random::<f32>()) {
                     eprintln!("Warning: Failed to add relationship: {e}");
                 }
                 
                 // Set synaptic weights
-                graph.set_synaptic_weight(source, target, rng.gen::<f32>()).await;
+                graph.set_synaptic_weight(source, target, rng.random::<f32>()).await;
             }
         }
         
@@ -142,7 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut simulation_handle = tokio::spawn(async move {
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(10));
         let mut operation_count = 0;
-        let mut rng = rand::rngs::StdRng::from_entropy();
+        let mut rng = rand::rngs::StdRng::from_rng(&mut rand::rng());
         
         loop {
             interval.tick().await;
@@ -158,12 +158,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         type_id: 2,
                         properties: format!("{{\"name\": \"Dynamic Entity {}\", \"timestamp\": {}}}", 
                             operation_count, chrono::Utc::now().timestamp()),
-                        embedding: vec![rng.gen::<f32>(); 384],
+                        embedding: vec![rng.random::<f32>(); 384],
                     };
                     
                     if let Ok(entity_key) = graph.core_graph.add_entity(entity_data) {
                         // Set initial activation
-                        graph.set_entity_activation(entity_key, rng.gen::<f32>()).await;
+                        graph.set_entity_activation(entity_key, rng.random::<f32>()).await;
                         println!("🧠 Added new entity: {entity_key:?}");
                     }
                 }
@@ -176,7 +176,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if !keys.is_empty() {
                     for _ in 0..3 {  // Update 3 random entities
                         if let Some(&key) = keys.choose(&mut rng) {
-                            let new_activation = rng.gen::<f32>();
+                            let new_activation = rng.random::<f32>();
                             graph.set_entity_activation(key, new_activation).await;
                         }
                     }
@@ -189,7 +189,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let target = keys.choose(&mut rng).unwrap();
                     
                     if source != target {
-                        let weight = rng.gen::<f32>();
+                        let weight = rng.random::<f32>();
                         let _ = graph.core_graph.add_relationship(*source, *target, weight);
                         graph.set_synaptic_weight(*source, *target, weight).await;
                         println!("🔗 Added relationship: {source:?} -> {target:?} (weight: {weight:.3})");

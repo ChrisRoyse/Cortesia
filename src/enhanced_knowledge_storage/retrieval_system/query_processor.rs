@@ -530,7 +530,7 @@ mod tests {
     #[tokio::test]
     async fn test_query_processor_creation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let processor = QueryProcessor::new(model_manager, retrieval_config);
@@ -538,10 +538,10 @@ mod tests {
         assert!(processor.config.enable_fuzzy_matching);
     }
     
-    #[test]
-    fn test_keyword_extraction() {
+    #[tokio::test]
+    async fn test_keyword_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let processor = QueryProcessor::new(model_manager, retrieval_config);
@@ -556,10 +556,10 @@ mod tests {
         assert!(!keywords.contains(&"what".to_string())); // Stop word
     }
     
-    #[test]
-    fn test_temporal_context_extraction() {
+    #[tokio::test]
+    async fn test_temporal_context_extraction() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let processor = QueryProcessor::new(model_manager, retrieval_config);
@@ -581,10 +581,10 @@ mod tests {
         assert_eq!(ctx2.temporal_type, TemporalType::Range);
     }
     
-    #[test]
-    fn test_boolean_query_generation() {
+    #[tokio::test]
+    async fn test_boolean_query_generation() {
         let model_config = ModelResourceConfig::default();
-        let model_manager = Arc::new(ModelResourceManager::new(model_config));
+        let model_manager = Arc::new(ModelResourceManager::new(model_config).await.unwrap());
         let retrieval_config = RetrievalConfig::default();
         
         let processor = QueryProcessor::new(model_manager, retrieval_config);

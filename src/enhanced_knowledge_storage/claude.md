@@ -12,9 +12,13 @@ This system serves as the core knowledge infrastructure for LLMKG, enabling inte
 - **Async Runtime:** tokio
 - **Serialization:** serde (JSON)
 - **Logging:** tracing ecosystem
-- **AI Models:** Local models (135M, 360M, 1.5B, 7B parameters)
+- **AI Components:** 
+  - Pattern-based entity extraction with regex
+  - Hash-based word embeddings (384 dimensions)
+  - Semantic chunking with boundary detection
+  - Graph-based multi-hop reasoning (petgraph)
 - **Storage:** File-based hierarchical storage
-- **Embeddings:** 384-dimensional semantic embeddings
+- **Performance:** Comprehensive monitoring and metrics
 
 ## 3. Directory Structure
 
@@ -339,19 +343,33 @@ enum ComplexityLevel {
 - **Fields:** `reasoning_steps`, `final_conclusion`, `confidence`, `evidence_strength`, `reasoning_type`
 - **Purpose:** Multi-hop reasoning results with step-by-step logic
 
-## 10. AI Model Integration
+## 10. AI Component Implementation
 
-### Model Selection Strategy
-- **135M models:** Simple tasks, entity extraction
-- **360M models:** Standard processing, relationship mapping
-- **1.5B models:** Complex analysis, semantic understanding
-- **7B models:** Advanced reasoning, query understanding
+### Entity Extraction
+- **Pattern-based recognition:** Uses regex patterns for persons, organizations, locations, technologies, dates
+- **Confidence scoring:** Assigns confidence based on pattern match quality
+- **Context extraction:** Captures surrounding text for each entity
+- **Deduplication:** Prevents duplicate entity detection
 
-### Model Management Features
-- **Caching:** LRU cache for loaded models
-- **Resource allocation:** Memory and compute management
-- **Dynamic loading:** Models loaded on-demand
-- **Optimal selection:** Automatic model selection based on task complexity
+### Semantic Chunking
+- **Sentence splitting:** Language-aware sentence boundary detection
+- **Hash-based embeddings:** Word embeddings using hashing and dimensionality reduction
+- **Boundary detection:** Identifies semantic shifts using similarity analysis
+- **Coherence scoring:** Measures semantic consistency within chunks
+- **Adaptive chunking:** Merges small chunks to maintain minimum size
+
+### Multi-hop Reasoning
+- **Graph-based reasoning:** Uses petgraph for knowledge graph representation
+- **Path finding:** BFS-based path discovery between concepts
+- **Confidence calculation:** Scores reasoning paths based on edge weights
+- **Step type classification:** Categorizes reasoning steps (direct evidence, inference, etc.)
+
+### Performance Monitoring
+- **Operation tracking:** Monitors all AI component operations
+- **Latency percentiles:** Tracks p50, p90, p95, p99 latencies
+- **Memory usage:** Before/after/peak memory tracking
+- **Throughput metrics:** Tokens processed per second
+- **Aggregated statistics:** Per-model and overall system stats
 
 ## 11. API and Communication Patterns
 

@@ -115,7 +115,7 @@ impl SemanticChunkingAdapter {
         title: &str,
     ) -> Result<Vec<ProcessedChunk>, String> {
         let semantic_chunks = self.chunker
-            .create_chunks(content)
+            .chunk_document(content)
             .await
             .map_err(|e| e.to_string())?;
         
