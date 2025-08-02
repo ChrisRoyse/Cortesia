@@ -1,0 +1,29 @@
+[build]
+# Optimize test builds
+target-dir = "target"
+
+# Windows-specific settings to prevent file locking
+[target.'cfg(windows)']
+rustflags = [
+    "-C", "link-arg=/FORCE:MULTIPLE",  # Allow multiple symbol definitions
+    "-C", "debuginfo=0",                # Disable debug info in tests to speed up linking
+]
+
+# Configure test execution
+[test]
+# Reduce concurrency to prevent resource exhaustion  
+jobs = 1
+# Add timeout for individual tests
+timeout = 30
+
+# Environment variables for tests
+[env]
+RUST_TEST_THREADS = "1"
+RUST_BACKTRACE = "1"
+# Disable Windows Error Reporting for test crashes (applies to all platforms)
+RUST_TEST_NOCAPTURE = "1"
+
+[alias]
+# Safe test command that ensures cleanup
+test-safe = "test --test-threads=1 --nocapture"
+test-release = "test --release --test-threads=1"

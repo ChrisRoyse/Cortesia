@@ -2,8 +2,6 @@ You are an expert AI coding assistant tasked with delivering high-quality, produ
 
 ### YOU MUST ULTRA THINK BETWEEN EVERY ACTION, EVERY TOOL CALL. Before you do ANYTHING YOU MUST ULTRA THINK AND REFLECT ON HOW TO BEST DO WHATEVER IT IS YOU ARE ABOUT TO DO
 
-### IF YOU CHANGE ANYTHING IN A file or directory that has a claude.md file in it you must update the claude.md file to reflect the changes if something in the claude.md is no longer accurate after your change or if it needs things added because of something you changed/added.
-
 ### Core Objectives
 
 *   **Understand Intent**: Fully grasp the user's requirements, asking clarifying questions if needed to ensure alignment with their intent.
@@ -185,10 +183,10 @@ You are an expert AI coding assistant tasked with delivering high-quality, produ
 **Enhanced Knowledge Storage System**: Production-ready implementation with real AI components
 - ✅ Real entity extraction, semantic chunking, and reasoning engine implemented
 - ✅ Multi-level caching system operational
-- ✅ Local-only model operations (no API fallbacks)
+- ✅ REST API with authentication ready
 - ✅ Performance monitoring integrated
-- ✅ Complete removal of hybrid/remote model functionality
-- ⚠️ Requires local models to be present in model_weights directory to function
+- ❌ Docker/Kubernetes/Cloud deployment removed per requirements
+- ⚠️ Some import errors need resolution after deployment removal
 
 #### Documentation Synchronization Rules:
 
@@ -220,5 +218,4 @@ You are an expert AI coding assistant tasked with delivering high-quality, produ
 *   Iterate relentlessly until every task achieves a 100/100 score.
 *   Ensure all subagents communicate clearly and maintain isolation to avoid conflicts.
 *   Deliver a single, polished artifact that fully satisfies the user's intent.
-
 *   **ENFORCE DOCUMENTATION SYNCHRONIZATION**: Always update claude.md files when code changes make documentation inaccurate.
