@@ -1,0 +1,7 @@
+[package]
+name = "llmkg"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ruv-fann = "0.1.6"
