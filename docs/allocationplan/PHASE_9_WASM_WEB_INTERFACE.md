@@ -85,24 +85,192 @@ class CortexKGWebApp {
 
 #### R - Refinement Architecture
 
-**WASM-Optimized Data Structures**:
+**WASM-Optimized Data Structures with SIMD Support**:
 ```rust
-// Memory-efficient structures for WASM
+use std::arch::wasm32::*;
+
+// Memory-efficient structures for WASM with SIMD alignment
 #[wasm_bindgen]
+#[repr(align(16))] // SIMD 128-bit alignment
 pub struct WasmCorticalColumn {
     id: u32,
     allocated_concept_id: Option<u32>,
     activation_level: f32,
     lateral_connections: Box<[u32]>, // Fixed array for efficiency
+    simd_activation_vector: [f32; 4], // SIMD-aligned activation data
 }
 
-// Optimized sparse graph for web
+// SIMD-accelerated neural processing
+pub struct SIMDNeuralProcessor {
+    // Aligned memory for SIMD operations
+    weights: Vec<f32>, // Must be 16-byte aligned
+    activations: Vec<f32>,
+    spike_times: Vec<f32>,
+}
+
+impl SIMDNeuralProcessor {
+    pub unsafe fn process_activations_simd(&mut self, inputs: &[f32]) -> Vec<f32> {
+        let mut outputs = vec![0.0f32; inputs.len()];
+        
+        // Process 4 neurons at a time using WASM SIMD
+        for (input_chunk, output_chunk) in inputs.chunks_exact(4)
+            .zip(outputs.chunks_exact_mut(4)) {
+            
+            // Load 4 inputs into SIMD register
+            let input_vec = v128_load(input_chunk.as_ptr() as *const v128);
+            
+            // Load 4 weights into SIMD register
+            let weight_vec = v128_load(self.weights.as_ptr() as *const v128);
+            
+            // Multiply inputs by weights (4 operations in parallel)
+            let weighted = f32x4_mul(input_vec, weight_vec);
+            
+            // Apply activation function (ReLU with threshold)
+            let threshold = f32x4_splat(0.5);
+            let zeros = f32x4_splat(0.0);
+            let activated = f32x4_max(f32x4_sub(weighted, threshold), zeros);
+            
+            // Store results
+            v128_store(output_chunk.as_mut_ptr() as *mut v128, activated);
+        }
+        
+        // Handle remaining elements without SIMD
+        let remainder_start = (inputs.len() / 4) * 4;
+        for i in remainder_start..inputs.len() {
+            outputs[i] = (inputs[i] * self.weights[i] - 0.5).max(0.0);
+        }
+        
+        outputs
+    }
+    
+    pub unsafe fn compute_lateral_inhibition_simd(
+        &self, 
+        activations: &[f32], 
+        inhibition_matrix: &[f32]
+    ) -> Vec<f32> {
+        let n = activations.len();
+        let mut inhibited = vec![0.0f32; n];
+        
+        // Process inhibition in blocks of 4x4
+        for i in (0..n).step_by(4) {
+            let act_vec = v128_load(&activations[i] as *const f32 as *const v128);
+            
+            for j in (0..n).step_by(4) {
+                if i != j {
+                    // Load inhibition weights for this block
+                    let inhib_weights = v128_load(
+                        &inhibition_matrix[i * n + j] as *const f32 as *const v128
+                    );
+                    
+                    // Load target activations
+                    let target_acts = v128_load(&activations[j] as *const f32 as *const v128);
+                    
+                    // Compute inhibition: act[i] * inhib[i,j] * act[j]
+                    let inhibition = f32x4_mul(f32x4_mul(act_vec, inhib_weights), target_acts);
+                    
+                    // Accumulate inhibition
+                    let current = v128_load(&inhibited[i] as *const f32 as *const v128);
+                    let updated = f32x4_add(current, inhibition);
+                    v128_store(&mut inhibited[i] as *mut f32 as *mut v128, updated);
+                }
+            }
+        }
+        
+        inhibited
+    }
+    
+    pub unsafe fn ttfs_encoding_simd(&self, concept_complexities: &[f32]) -> Vec<f32> {
+        let mut spike_times = vec![0.0f32; concept_complexities.len()];
+        
+        // SIMD constants for TTFS calculation
+        let base_time = f32x4_splat(0.1); // 100μs base
+        let scale_factor = f32x4_splat(0.8); // 800μs range
+        let one = f32x4_splat(1.0);
+        
+        for (complexity_chunk, spike_chunk) in concept_complexities.chunks_exact(4)
+            .zip(spike_times.chunks_exact_mut(4)) {
+            
+            let complexity = v128_load(complexity_chunk.as_ptr() as *const v128);
+            
+            // TTFS formula: base_time + scale_factor * (1 - complexity)
+            // Higher complexity = earlier spike
+            let inverted = f32x4_sub(one, complexity);
+            let scaled = f32x4_mul(scale_factor, inverted);
+            let spike_time = f32x4_add(base_time, scaled);
+            
+            v128_store(spike_chunk.as_mut_ptr() as *mut v128, spike_time);
+        }
+        
+        spike_times
+    }
+}
+
+// Optimized sparse graph for web with SIMD support
 pub struct WasmSparseGraph {
     vertices: Vec<u32>,
     edges: Vec<(u32, u32, f32)>,
     csr_row_ptr: Vec<usize>,
     csr_col_indices: Vec<u32>,
     csr_values: Vec<f32>,
+    simd_processor: SIMDNeuralProcessor,
+}
+
+impl WasmSparseGraph {
+    pub unsafe fn spreading_activation_simd(
+        &self,
+        initial_activations: &[f32],
+        steps: usize
+    ) -> Vec<f32> {
+        let n = self.vertices.len();
+        let mut current_act = initial_activations.to_vec();
+        let mut next_act = vec![0.0f32; n];
+        
+        for _ in 0..steps {
+            // Process nodes in groups of 4
+            for start_idx in (0..n).step_by(4) {
+                let end_idx = (start_idx + 4).min(n);
+                
+                // Load current activations for this group
+                if end_idx - start_idx == 4 {
+                    let curr_vec = v128_load(&current_act[start_idx] as *const f32 as *const v128);
+                    
+                    // Process edges for these 4 nodes
+                    for node_offset in 0..4 {
+                        let node = start_idx + node_offset;
+                        let row_start = self.csr_row_ptr[node];
+                        let row_end = self.csr_row_ptr[node + 1];
+                        
+                        // Accumulate activation from neighbors
+                        let mut accumulated = f32x4_splat(0.0);
+                        
+                        for edge_idx in row_start..row_end {
+                            let neighbor = self.csr_col_indices[edge_idx] as usize;
+                            let weight = self.csr_values[edge_idx];
+                            
+                            // This could be further optimized with gather operations
+                            let neighbor_act = current_act[neighbor];
+                            let contribution = f32x4_splat(weight * neighbor_act);
+                            accumulated = f32x4_add(accumulated, contribution);
+                        }
+                        
+                        // Extract and store result
+                        let result_array: [f32; 4] = std::mem::transmute(accumulated);
+                        next_act[node] = result_array[0];
+                    }
+                }
+            }
+            
+            // Apply activation decay and swap buffers
+            for i in 0..n {
+                next_act[i] = (next_act[i] * 0.9).min(1.0).max(0.0);
+            }
+            
+            std::mem::swap(&mut current_act, &mut next_act);
+            next_act.fill(0.0);
+        }
+        
+        current_act
+    }
 }
 
 // IndexedDB integration

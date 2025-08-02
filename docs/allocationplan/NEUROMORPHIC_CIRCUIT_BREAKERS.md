@@ -655,6 +655,610 @@ pub enum NeuromorphicError {
     #[error("Circuit breaker is open")]
     CircuitBreakerOpen,
 }
+
+// Practical fallback implementations
+impl NeuromorphicCircuitBreaker {
+    async fn single_column_fallback<T>(&self) -> Result<T, NeuromorphicError> 
+    where 
+        T: Default + Send + 'static
+    {
+        // Use only the semantic column as primary fallback
+        let semantic_result = self.execute_semantic_only_processing().await?;
+        
+        // Convert result to expected type
+        Ok(T::default()) // Simplified for demonstration
+    }
+    
+    async fn feature_vector_fallback<T>(&self) -> Result<T, NeuromorphicError>
+    where
+        T: Default + Send + 'static
+    {
+        // Convert spike patterns to simple feature vectors
+        let features = self.extract_simple_features().await?;
+        
+        // Use traditional ML instead of spiking networks
+        let result = self.apply_traditional_ml(features).await?;
+        
+        Ok(T::default())
+    }
+    
+    async fn static_weights_fallback<T>(&self) -> Result<T, NeuromorphicError>
+    where
+        T: Default + Send + 'static
+    {
+        // Load pre-trained static weights
+        let static_weights = self.load_static_weights().await?;
+        
+        // Apply without STDP updates
+        let result = self.apply_static_network(static_weights).await?;
+        
+        Ok(T::default())
+    }
+    
+    async fn static_network_fallback<T>(&self) -> Result<T, NeuromorphicError>
+    where
+        T: Default + Send + 'static
+    {
+        // Use fixed network topology without cascade correlation
+        let fixed_topology = self.get_fixed_topology().await?;
+        
+        // Process with no dynamic growth
+        let result = self.process_fixed_network(fixed_topology).await?;
+        
+        Ok(T::default())
+    }
+    
+    async fn execute_semantic_only_processing(&self) -> Result<SemanticResult, NeuromorphicError> {
+        // Fallback to semantic column only processing
+        let semantic_column = self.get_semantic_column().await?;
+        
+        // Simple keyword matching and embedding similarity
+        let result = semantic_column.simple_allocation().await?;
+        
+        Ok(result)
+    }
+    
+    async fn extract_simple_features(&self) -> Result<Vec<f32>, NeuromorphicError> {
+        // Extract basic features without spike encoding
+        Ok(vec![0.0; 128]) // Placeholder feature vector
+    }
+    
+    async fn apply_traditional_ml(&self, features: Vec<f32>) -> Result<MLResult, NeuromorphicError> {
+        // Use simple cosine similarity instead of neural processing
+        Ok(MLResult::default())
+    }
+}
+
+// Advanced degradation strategies
+#[derive(Debug, Clone)]
+pub struct AdaptiveDegradationStrategy {
+    pub current_level: DegradationLevel,
+    pub performance_history: Arc<RwLock<VecDeque<PerformanceSnapshot>>>,
+    pub recovery_threshold: f32,
+    pub degradation_threshold: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DegradationLevel {
+    Normal = 0,
+    ReducedPrecision = 1,
+    SingleColumn = 2,
+    StaticWeights = 3,
+    EmergencyMode = 4,
+}
+
+impl AdaptiveDegradationStrategy {
+    pub async fn should_degrade(&self) -> bool {
+        let history = self.performance_history.read().await;
+        if history.len() < 5 {
+            return false;
+        }
+        
+        // Calculate recent performance trend
+        let recent_performance: f32 = history.iter()
+            .rev()
+            .take(5)
+            .map(|snapshot| snapshot.success_rate)
+            .sum::<f32>() / 5.0;
+        
+        recent_performance < self.degradation_threshold
+    }
+    
+    pub async fn should_recover(&self) -> bool {
+        let history = self.performance_history.read().await;
+        if history.len() < 10 {
+            return false;
+        }
+        
+        // Need sustained good performance to recover
+        let recent_performance: f32 = history.iter()
+            .rev()
+            .take(10)
+            .map(|snapshot| snapshot.success_rate)
+            .sum::<f32>() / 10.0;
+        
+        recent_performance > self.recovery_threshold
+    }
+    
+    pub fn next_degradation_level(&self) -> Option<DegradationLevel> {
+        match self.current_level {
+            DegradationLevel::Normal => Some(DegradationLevel::ReducedPrecision),
+            DegradationLevel::ReducedPrecision => Some(DegradationLevel::SingleColumn),
+            DegradationLevel::SingleColumn => Some(DegradationLevel::StaticWeights),
+            DegradationLevel::StaticWeights => Some(DegradationLevel::EmergencyMode),
+            DegradationLevel::EmergencyMode => None,
+        }
+    }
+    
+    pub fn previous_degradation_level(&self) -> Option<DegradationLevel> {
+        match self.current_level {
+            DegradationLevel::Normal => None,
+            DegradationLevel::ReducedPrecision => Some(DegradationLevel::Normal),
+            DegradationLevel::SingleColumn => Some(DegradationLevel::ReducedPrecision),
+            DegradationLevel::StaticWeights => Some(DegradationLevel::SingleColumn),
+            DegradationLevel::EmergencyMode => Some(DegradationLevel::StaticWeights),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PerformanceSnapshot {
+    pub timestamp: Instant,
+    pub success_rate: f32,
+    pub average_latency: Duration,
+    pub error_types: HashMap<String, u32>,
+}
+
+// Integration with MCP Server
+impl MCPServer {
+    pub fn with_circuit_breaker(mut self, circuit_breaker: NeuromorphicCircuitBreaker) -> Self {
+        self.circuit_breaker = Some(circuit_breaker);
+        self
+    }
+    
+    pub async fn handle_protected_request(&self, request: MCPRequest) -> Result<MCPResponse, MCPError> {
+        if let Some(ref circuit_breaker) = self.circuit_breaker {
+            // Wrap MCP operations with circuit breaker protection
+            circuit_breaker.execute_with_protection(
+                async {
+                    self.handle_request_internal(request).await
+                        .map_err(|e| NeuromorphicError::from(e))
+                },
+                NeuromorphicOperationType::from(&request),
+            ).await
+            .map_err(|e| MCPError::from(e))
+        } else {
+            self.handle_request_internal(request).await
+        }
+    }
+}
+
+// Monitoring and alerting integration
+#[derive(Debug)]
+pub struct CircuitBreakerMonitor {
+    pub prometheus_registry: prometheus::Registry,
+    pub state_gauge: IntGauge,
+    pub failure_counter: IntCounter,
+    pub success_counter: IntCounter,
+    pub fallback_counter: IntCounter,
+    pub recovery_histogram: Histogram,
+}
+
+impl CircuitBreakerMonitor {
+    pub fn new() -> Result<Self, prometheus::Error> {
+        let registry = prometheus::Registry::new();
+        
+        let state_gauge = IntGauge::new("circuit_breaker_state", "Current circuit breaker state")?;
+        let failure_counter = IntCounter::new("circuit_breaker_failures_total", "Total failures")?;
+        let success_counter = IntCounter::new("circuit_breaker_successes_total", "Total successes")?;
+        let fallback_counter = IntCounter::new("circuit_breaker_fallbacks_total", "Total fallback executions")?;
+        let recovery_histogram = Histogram::with_opts(
+            HistogramOpts::new("circuit_breaker_recovery_duration_seconds", "Recovery time distribution")
+        )?;
+        
+        registry.register(Box::new(state_gauge.clone()))?;
+        registry.register(Box::new(failure_counter.clone()))?;
+        registry.register(Box::new(success_counter.clone()))?;
+        registry.register(Box::new(fallback_counter.clone()))?;
+        registry.register(Box::new(recovery_histogram.clone()))?;
+        
+        Ok(Self {
+            prometheus_registry: registry,
+            state_gauge,
+            failure_counter,
+            success_counter,
+            fallback_counter,
+            recovery_histogram,
+        })
+    }
+    
+    pub fn record_state_change(&self, new_state: CircuitState) {
+        let state_value = match new_state {
+            CircuitState::Closed => 0,
+            CircuitState::Open => 1,
+            CircuitState::HalfOpen => 2,
+            CircuitState::Degraded => 3,
+        };
+        self.state_gauge.set(state_value);
+    }
+    
+    pub fn record_failure(&self) {
+        self.failure_counter.inc();
+    }
+    
+    pub fn record_success(&self) {
+        self.success_counter.inc();
+    }
+    
+    pub fn record_fallback(&self) {
+        self.fallback_counter.inc();
+    }
+    
+    pub fn record_recovery(&self, duration: Duration) {
+        self.recovery_histogram.observe(duration.as_secs_f64());
+    }
+}
+
+// Configuration and deployment
+#[derive(Debug, Clone, Deserialize)]
+pub struct CircuitBreakerConfig {
+    // Basic circuit breaker settings
+    pub failure_threshold: u32,
+    pub success_threshold: u32,
+    pub timeout_duration_ms: u64,
+    pub half_open_timeout_ms: u64,
+    
+    // Neuromorphic-specific settings
+    pub spike_failure_threshold: f32,
+    pub refractory_violation_threshold: u32,
+    pub column_consensus_threshold: f32,
+    pub lateral_inhibition_timeout_ms: u64,
+    
+    // Degradation strategy
+    pub degradation_strategy: DegradationStrategyConfig,
+    
+    // Fallback configuration
+    pub fallback_config: FallbackConfig,
+    
+    // Monitoring settings
+    pub monitoring_enabled: bool,
+    pub alert_webhook_url: Option<String>,
+    pub metrics_export_interval_secs: u64,
+}
+
+impl Default for CircuitBreakerConfig {
+    fn default() -> Self {
+        Self {
+            failure_threshold: 5,
+            success_threshold: 3,
+            timeout_duration_ms: 60000,
+            half_open_timeout_ms: 30000,
+            
+            spike_failure_threshold: 0.5,
+            refractory_violation_threshold: 3,
+            column_consensus_threshold: 0.7,
+            lateral_inhibition_timeout_ms: 500,
+            
+            degradation_strategy: DegradationStrategyConfig::default(),
+            fallback_config: FallbackConfig::default(),
+            
+            monitoring_enabled: true,
+            alert_webhook_url: None,
+            metrics_export_interval_secs: 60,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DegradationStrategyConfig {
+    pub initial_level: DegradationLevel,
+    pub degradation_threshold: f32,
+    pub recovery_threshold: f32,
+    pub history_window_size: usize,
+    pub auto_recovery_enabled: bool,
+}
+
+impl Default for DegradationStrategyConfig {
+    fn default() -> Self {
+        Self {
+            initial_level: DegradationLevel::Normal,
+            degradation_threshold: 0.7,  // Degrade if success rate < 70%
+            recovery_threshold: 0.9,     // Recover if success rate > 90%
+            history_window_size: 100,
+            auto_recovery_enabled: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct FallbackConfig {
+    pub strategy_type: FallbackStrategyType,
+    pub cache_size: usize,
+    pub cache_ttl_secs: u64,
+    pub minimum_columns_for_degraded: usize,
+    pub emergency_mode_settings: EmergencyModeSettings,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub enum FallbackStrategyType {
+    SimplifiedProcessing,
+    CachedResponse,
+    DegradedService,
+    EmergencyMode,
+    Adaptive, // Automatically choose based on failure type
+}
+
+impl Default for FallbackConfig {
+    fn default() -> Self {
+        Self {
+            strategy_type: FallbackStrategyType::Adaptive,
+            cache_size: 1000,
+            cache_ttl_secs: 300,
+            minimum_columns_for_degraded: 2,
+            emergency_mode_settings: EmergencyModeSettings::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmergencyModeSettings {
+    pub disable_stdp: bool,
+    pub disable_cascade: bool,
+    pub use_static_weights: bool,
+    pub max_processing_time_ms: u64,
+}
+
+impl Default for EmergencyModeSettings {
+    fn default() -> Self {
+        Self {
+            disable_stdp: true,
+            disable_cascade: true,
+            use_static_weights: true,
+            max_processing_time_ms: 100,
+        }
+    }
+}
+```
+
+## Real-World Usage Examples
+
+```rust
+// Example 1: Basic circuit breaker setup
+use cortexkg::circuit_breaker::{NeuromorphicCircuitBreaker, CircuitBreakerConfig};
+use cortexkg::multi_column::MultiColumnProcessor;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load configuration
+    let config = CircuitBreakerConfig::default();
+    
+    // Create circuit breaker
+    let circuit_breaker = NeuromorphicCircuitBreaker::from_config(config);
+    
+    // Create multi-column processor with circuit breaker
+    let processor = MultiColumnProcessor::new()
+        .with_circuit_breaker(circuit_breaker);
+    
+    // Process with fault tolerance
+    let spike_pattern = create_spike_pattern("Machine learning concept");
+    let result = processor.fault_tolerant_processing(&spike_pattern).await?;
+    
+    println!("Processing result: {:?}", result);
+    Ok(())
+}
+
+// Example 2: Custom fallback strategy
+use cortexkg::circuit_breaker::{FallbackStrategy, DegradedModeConfig};
+
+async fn setup_custom_fallback() -> NeuromorphicCircuitBreaker {
+    let fallback_strategy = FallbackStrategy::DegradedService {
+        minimum_columns: 2,
+        reduced_precision: true,
+        simplified_voting: true,
+    };
+    
+    let mut circuit_breaker = NeuromorphicCircuitBreaker::new();
+    circuit_breaker.set_fallback_strategy(fallback_strategy);
+    
+    // Configure degradation thresholds
+    circuit_breaker.set_spike_failure_threshold(0.6); // More tolerant
+    circuit_breaker.set_column_consensus_threshold(0.5); // Lower consensus requirement
+    
+    circuit_breaker
+}
+
+// Example 3: Monitoring integration
+use cortexkg::circuit_breaker::CircuitBreakerMonitor;
+use prometheus::{Encoder, TextEncoder};
+
+async fn setup_monitoring() -> Result<(), Box<dyn std::error::Error>> {
+    let monitor = CircuitBreakerMonitor::new()?;
+    
+    // Export metrics endpoint
+    let metrics_handler = || {
+        let encoder = TextEncoder::new();
+        let metric_families = monitor.prometheus_registry.gather();
+        let mut buffer = vec![];
+        encoder.encode(&metric_families, &mut buffer)?;
+        String::from_utf8(buffer)
+    };
+    
+    // Start metrics server
+    warp::path!("metrics")
+        .map(metrics_handler)
+        .run(([0, 0, 0, 0], 9090))
+        .await;
+    
+    Ok(())
+}
+
+// Example 4: Adaptive degradation
+use cortexkg::circuit_breaker::{AdaptiveDegradationStrategy, DegradationLevel};
+
+async fn adaptive_degradation_example() {
+    let mut strategy = AdaptiveDegradationStrategy {
+        current_level: DegradationLevel::Normal,
+        performance_history: Arc::new(RwLock::new(VecDeque::new())),
+        recovery_threshold: 0.9,
+        degradation_threshold: 0.7,
+    };
+    
+    // Simulate performance monitoring
+    loop {
+        let performance = measure_current_performance().await;
+        
+        let snapshot = PerformanceSnapshot {
+            timestamp: Instant::now(),
+            success_rate: performance.success_rate,
+            average_latency: performance.latency,
+            error_types: performance.errors,
+        };
+        
+        strategy.performance_history.write().await.push_back(snapshot);
+        
+        // Check if we should degrade
+        if strategy.should_degrade().await {
+            if let Some(next_level) = strategy.next_degradation_level() {
+                println!("Degrading to {:?}", next_level);
+                strategy.current_level = next_level;
+                apply_degradation_level(next_level).await;
+            }
+        }
+        
+        // Check if we can recover
+        if strategy.should_recover().await {
+            if let Some(prev_level) = strategy.previous_degradation_level() {
+                println!("Recovering to {:?}", prev_level);
+                strategy.current_level = prev_level;
+                apply_degradation_level(prev_level).await;
+            }
+        }
+        
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+}
+
+// Example 5: Integration with MCP server
+use cortexkg::mcp::{MCPServer, MCPRequest, MCPResponse};
+
+async fn mcp_with_circuit_breaker() -> Result<(), Box<dyn std::error::Error>> {
+    // Create MCP server with circuit breaker
+    let circuit_breaker = NeuromorphicCircuitBreaker::new();
+    let mcp_server = MCPServer::new()
+        .with_circuit_breaker(circuit_breaker);
+    
+    // Handle requests with protection
+    let request = MCPRequest::StoreMemory {
+        content: "Quantum computing breakthrough".to_string(),
+        context: Some("Technology news".to_string()),
+        confidence: Some(0.95),
+    };
+    
+    match mcp_server.handle_protected_request(request).await {
+        Ok(response) => {
+            println!("Success: {:?}", response);
+        }
+        Err(MCPError::CircuitBreakerOpen) => {
+            println!("Circuit breaker is open, using fallback");
+            // Fallback logic handled internally
+        }
+        Err(e) => {
+            println!("Error: {:?}", e);
+        }
+    }
+    
+    Ok(())
+}
+```
+
+## Production Deployment Guidelines
+
+### 1. Configuration Best Practices
+
+```yaml
+# config/circuit_breaker.yaml
+circuit_breaker:
+  # Conservative settings for production
+  failure_threshold: 5
+  success_threshold: 3
+  timeout_duration_ms: 60000
+  
+  # Neuromorphic thresholds based on hardware capabilities
+  spike_failure_threshold: 0.4  # Stricter in production
+  refractory_violation_threshold: 2
+  column_consensus_threshold: 0.8  # Higher consensus requirement
+  
+  # Degradation strategy
+  degradation_strategy:
+    initial_level: Normal
+    degradation_threshold: 0.6  # Degrade earlier in production
+    recovery_threshold: 0.95    # Require excellent performance to recover
+    auto_recovery_enabled: true
+  
+  # Monitoring
+  monitoring_enabled: true
+  alert_webhook_url: "https://alerts.example.com/neuromorphic"
+  metrics_export_interval_secs: 30
+```
+
+### 2. Alerting Rules
+
+```yaml
+# prometheus/alerts.yml
+groups:
+  - name: circuit_breaker_alerts
+    rules:
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Neuromorphic processing circuit breaker has been open for >1 minute"
+      
+      - alert: HighFailureRate
+        expr: rate(circuit_breaker_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High neuromorphic failure rate"
+          description: "Failure rate >10/min for 2 minutes"
+      
+      - alert: DegradedMode
+        expr: circuit_breaker_state == 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "System in degraded mode"
+          description: "Neuromorphic system operating in degraded mode for >5 minutes"
+```
+
+### 3. Health Check Endpoints
+
+```rust
+// Health check implementation
+pub async fn health_check(circuit_breaker: &NeuromorphicCircuitBreaker) -> HealthStatus {
+    let state = circuit_breaker.get_current_state().await;
+    let monitor = circuit_breaker.get_monitor();
+    let health_score = monitor.get_health_score().await;
+    
+    HealthStatus {
+        status: match state {
+            CircuitState::Closed => "healthy",
+            CircuitState::Open => "unhealthy",
+            CircuitState::HalfOpen => "recovering",
+            CircuitState::Degraded => "degraded",
+        },
+        circuit_state: format!("{:?}", state),
+        health_score,
+        recent_errors: monitor.get_recent_error_count().await,
+        fallback_active: circuit_breaker.is_using_fallback().await,
+        details: monitor.get_detailed_metrics().await,
+    }
+}
 ```
 
 ## Testing and Validation
