@@ -32,12 +32,14 @@
 - [ ] Refractory period compliance: 100% (no timing violations)
 - [ ] No synaptic weight drift over 24-hour continuous learning
 
-### Scalability Metrics (Phase 2A)
-- [ ] 1M nodes: Sub-millisecond allocation decisions
-- [ ] 100M nodes: <10ms allocation with 95%+ accuracy
-- [ ] 1B+ nodes: <100ms allocation with distributed processing
-- [ ] Search complexity: O(log n) with HNSW indexing
-- [ ] Memory reduction: 4-32x through adaptive quantization
+### Scalability Preparation (Phase 2 Foundation)
+- [ ] 1K nodes: Sub-millisecond allocation decisions (baseline)
+- [ ] 10K nodes: <5ms allocation with 95%+ accuracy (target)
+- [ ] 100K nodes: <50ms allocation foundation (Phase 2A will optimize this)
+- [ ] Search complexity: O(n) linear baseline (Phase 2A will implement O(log n))
+- [ ] Memory usage: Standard implementation (Phase 2A will add compression)
+
+**Note**: Advanced scalability features (1M+ nodes, HNSW indexing, quantization) are implemented in PHASE_2A as separate optimization modules that build on this foundation.
 
 ## SPARC Methodology Application
 
@@ -465,6 +467,208 @@ impl TTFSSpikeEncoder {
 - [ ] Spike pattern confidence scores between 0.0 and 1.0
 - [ ] Neural feature vectors compatible with ruv-FANN networks
 - [ ] Temporal precision < 0.1ms (100,000 nanoseconds)
+
+## ruv-FANN Integration Strategy for Cortical Columns
+
+### CRITICAL: Neural Network Selection Philosophy
+
+**The ruv-FANN library provides access to 29 different neural network architectures. However, the CortexKG system is NOT required to use all 29 networks.** Instead:
+
+- **1-3 network types may be sufficient** for the entire system
+- **Each cortical column can reuse the same network architecture** with different parameters
+- **The 29 networks are OPTIONS, not requirements** - they exist for flexibility
+- **Simplicity is preferred** - using fewer network types reduces complexity and improves maintainability
+
+For example, the entire system could effectively operate using only:
+1. **LSTM** for all temporal/sequential processing
+2. **Standard MLP** for all classification/transformation tasks
+3. **TCN** as an optional performance optimization
+
+### Revised Column Implementations
+
+#### 1. Semantic Column Revision
+
+```rust
+use ruv_fann::{Network, NetworkType, ActivationFunc};
+
+pub struct SemanticProcessingColumn {
+    // Use MLP for feature extraction instead of embeddings
+    feature_extractor: Network,  // MLP with 3 hidden layers
+    
+    // Use LSTM for sequence understanding
+    context_processor: Network,  // LSTM for temporal context
+    
+    // Similarity computation outside network
+    similarity_computer: CosineSimilarityEngine,
+}
+
+impl SemanticProcessingColumn {
+    pub fn new() -> Result<Self, NetworkError> {
+        // Create MLP for feature extraction
+        let feature_extractor = Network::new(NetworkType::Standard)
+            .input_layer(512)  // Encoded input features
+            .hidden_layer(256, ActivationFunc::ReLU)
+            .hidden_layer(128, ActivationFunc::ReLU)
+            .hidden_layer(64, ActivationFunc::Tanh)
+            .output_layer(32)?;  // Compact representation
+        
+        // Create LSTM for context
+        let context_processor = Network::new(NetworkType::LSTM)
+            .input_layer(512)
+            .lstm_layer(128)
+            .output_layer(32)?;
+        
+        Ok(Self {
+            feature_extractor,
+            context_processor,
+            similarity_computer: CosineSimilarityEngine::new(),
+        })
+    }
+    
+    pub async fn process_semantic_features(&self, concept: &EncodedConcept) -> SemanticScore {
+        // Extract features using MLP
+        let features = self.feature_extractor.forward(&concept.encoded_features)?;
+        
+        // Process context with LSTM if sequential
+        let context_features = if concept.has_temporal_context() {
+            self.context_processor.forward(&concept.temporal_features)?
+        } else {
+            features.clone()
+        };
+        
+        // Compute similarity outside the network
+        let similarity = self.similarity_computer.compute(&features, &context_features);
+        
+        SemanticScore {
+            feature_vector: features,
+            context_vector: context_features,
+            similarity_score: similarity,
+        }
+    }
+}
+```
+
+#### 2. Structural Column Revision
+
+```rust
+pub struct StructuralAnalysisColumn {
+    // Use standard networks with graph features as inputs
+    topology_network: Network,     // MLP for topology patterns
+    hierarchy_network: Network,    // TCN for hierarchical patterns
+    connectivity_network: Network, // Standard network for connectivity
+    
+    // Graph feature extractor (preprocessing)
+    graph_feature_extractor: GraphFeatureExtractor,
+}
+
+impl StructuralAnalysisColumn {
+    pub async fn analyze_graph_topology(&self, concept: &GraphConcept) -> StructuralScore {
+        // Extract graph features BEFORE neural processing
+        let features = self.graph_feature_extractor.extract(concept);
+        
+        // Process through networks
+        let topology_score = self.topology_network.forward(&features.topology_vector)?;
+        let hierarchy_score = self.hierarchy_network.forward(&features.hierarchy_vector)?;
+        let connectivity_score = self.connectivity_network.forward(&features.connectivity_vector)?;
+        
+        StructuralScore::combine(topology_score, hierarchy_score, connectivity_score)
+    }
+}
+
+// Critical: Graph feature extraction happens OUTSIDE the neural network
+pub struct GraphFeatureExtractor {
+    feature_configs: Vec<GraphFeatureConfig>,
+}
+
+impl GraphFeatureExtractor {
+    pub fn extract(&self, concept: &GraphConcept) -> GraphFeatures {
+        GraphFeatures {
+            topology_vector: vec![
+                concept.in_degree as f32,
+                concept.out_degree as f32,
+                concept.clustering_coefficient,
+                concept.betweenness_centrality,
+                concept.eigenvector_centrality,
+                concept.is_bridge_node as f32,
+                concept.triangle_count as f32,
+                // ... more topological features
+            ],
+            hierarchy_vector: vec![
+                concept.depth_in_hierarchy as f32,
+                concept.num_children as f32,
+                concept.num_ancestors as f32,
+                concept.inheritance_ratio,
+                // ... more hierarchical features
+            ],
+            connectivity_vector: vec![
+                concept.connection_density,
+                concept.avg_path_length,
+                concept.has_cycles as f32,
+                // ... more connectivity features
+            ],
+        }
+    }
+}
+```
+
+#### 3. Exception Detection Column Revision
+
+```rust
+pub struct ExceptionDetectionColumn {
+    // Train networks to recognize patterns of exceptions
+    exception_classifier: Network,     // Binary classifier
+    anomaly_detector: Network,        // Autoencoder for anomalies
+    inheritance_validator: Network,   // Validates inheritance rules
+    
+    // Preprocessing for exception patterns
+    exception_encoder: ExceptionPatternEncoder,
+}
+
+impl ExceptionDetectionColumn {
+    pub async fn find_inhibitory_patterns(&self, concept: &ConceptWithInheritance) -> ExceptionScore {
+        // Encode the exception detection problem
+        let encoded = self.exception_encoder.encode(
+            &concept.inherited_properties,
+            &concept.actual_properties,
+            &concept.context
+        );
+        
+        // Classify as exception or normal
+        let exception_prob = self.exception_classifier.forward(&encoded)?;
+        
+        // Detect anomalies
+        let reconstruction = self.anomaly_detector.forward(&encoded)?;
+        let anomaly_score = self.compute_reconstruction_error(&encoded, &reconstruction);
+        
+        // Validate inheritance
+        let inheritance_valid = self.inheritance_validator.forward(&encoded)?;
+        
+        ExceptionScore {
+            is_exception: exception_prob[1] > 0.5,
+            exception_confidence: exception_prob[1],
+            anomaly_score,
+            inheritance_validity: inheritance_valid[0],
+        }
+    }
+}
+```
+
+### Recommended Minimal Network Set
+
+For initial implementation, use **only 2-3 network types**:
+
+```rust
+pub struct MinimalNetworkSet {
+    // One LSTM for ALL temporal/sequential needs
+    temporal_network: NetworkType::LSTM,
+    
+    // One Standard MLP for ALL classification/transformation
+    standard_network: NetworkType::Standard,
+    
+    // Optional: One TCN for performance-critical paths
+    performance_network: Option<NetworkType::TCN>,
+}
+```
 
 ### Task 2.2: Multi-Column Parallel Processing with ruv-FANN Networks (Day 2)
 
@@ -1616,35 +1820,307 @@ impl EarlyConflictDetector {
 - [ ] Justification tracking complete
 - [ ] Integration tests pass
 
-## Scalable Architecture Integration (Phase 2A)
+## Scalable Architecture Integration (Billion-Node Capability)
 
-This phase includes the foundation for billion-node scalability through advanced architectural enhancements. See [PHASE_2A_SCALABLE_ALLOCATION_ARCHITECTURE.md](./PHASE_2A_SCALABLE_ALLOCATION_ARCHITECTURE.md) for complete implementation details.
+**Duration**: 2 weeks (overlaps with core Phase 2)  
+**Team Size**: 2-3 senior engineers  
+**Goal**: Implement billion-node scalability for the neuromorphic allocation engine  
+**Core Innovation**: HNSW hierarchical indexing + multi-tier caching + distributed SNN processing  
 
-### Core Scalability Features
+### Executive Summary
 
-**Hierarchical Indexing with HNSW**:
-- Multi-layer navigable graph structure
-- O(log n) search complexity instead of O(n)
-- 95%+ recall accuracy with proper parameters
-- Logarithmic scaling for billion-node graphs
+This phase extends the Phase 2 allocation engine with advanced scalability features to handle knowledge graphs from millions to billions of nodes. The architecture combines Hierarchical Navigable Small World (HNSW) indexing, multi-tier memory management, distributed graph partitioning, and SNN-specific optimizations to achieve logarithmic scaling while maintaining sub-millisecond allocation performance.
 
-**Multi-Tier Memory Architecture**:
-- L1 Cache: 10K-100K ultra-fast nodes (1-2 cycles)
-- L2 Cache: 1M-10M medium-speed nodes (10-50 cycles)
-- L3 Store: Unlimited persistent storage (100-1000+ cycles)
-- Adaptive prefetching with ML prediction
+### Core Scalability Challenges
 
-**Distributed Processing Framework**:
-- Hypergraph partitioning for optimal load distribution
-- Sparse communication protocols (73% overhead reduction)
-- Distributed lateral inhibition across partitions
-- Context-aware partition routing
+**The Fundamental Bottleneck**:
+- **Quadratic scaling problem**: O(n) search becomes O(n²) comparisons
+- **Memory explosion**: Billions of embeddings and connections
+- **Communication overhead**: Inter-partition coordination costs
+- **Spike pattern storage**: Temporal data accumulation
 
-**Memory Optimization Strategies**:
-- Adaptive quantization (Full/Half/Q8/Q4/Binary)
-- 4-32x memory reduction through intelligent compression
-- Sparse representation leveraging natural graph sparsity
-- Dynamic precision based on node importance
+### 1. HNSW-Based Hierarchical Navigation
+
+**Multi-Layer Graph Structure**:
+```rust
+pub struct HNSWAllocationIndex {
+    // Hierarchical layers (L0 = all nodes, L4+ = most central)
+    layers: Vec<NavigableLayer>,
+    
+    // Entry points for search
+    entry_points: Vec<NodeId>,
+    
+    // Connection parameters
+    m_max: usize,        // Max connections per node
+    m_l: f32,           // Level assignment probability
+    ef_construction: usize, // Search width during construction
+}
+
+impl HNSWAllocationIndex {
+    pub fn allocate_with_hnsw(&mut self, fact: &TTFSSpikePattern) -> AllocationResult {
+        // Start from top layer
+        let mut candidates = self.search_layer(self.max_layer(), fact);
+        
+        // Progressively refine through layers
+        for layer in (0..self.max_layer()).rev() {
+            candidates = self.refine_candidates(candidates, fact, layer);
+            
+            // Early termination if confident
+            if self.confidence_threshold_met(&candidates) {
+                break;
+            }
+        }
+        
+        // Final SNN lateral inhibition
+        self.apply_lateral_inhibition(candidates)
+    }
+}
+```
+
+**Performance Characteristics**:
+- Search complexity: O(log n) instead of O(n)
+- Build complexity: O(n log n)
+- Memory usage: O(n × m_max)
+- Accuracy: 95%+ recall with proper parameters
+
+### 2. Multi-Tier Memory Architecture
+
+**Three-Tier Caching System**:
+
+```rust
+pub struct MultiTierMemorySystem {
+    // L1: Ultra-fast spike pattern cache (10K-100K nodes)
+    l1_cache: SpikingPatternCache<TTFSSpikePattern>,
+    
+    // L2: Medium-speed graph cache (1M-10M nodes)
+    l2_cache: GraphNodeCache,
+    
+    // L3: Persistent graph store (unlimited)
+    l3_store: PersistentKnowledgeGraph,
+    
+    // Adaptive cache management
+    cache_predictor: MLCachePredictor,
+}
+
+impl MultiTierMemorySystem {
+    pub async fn adaptive_fetch(&mut self, node_id: NodeId) -> Option<GraphNode> {
+        // Try L1 first (1-2 cycles)
+        if let Some(node) = self.l1_cache.get(&node_id) {
+            return Some(node);
+        }
+        
+        // Try L2 (10-50 cycles)
+        if let Some(node) = self.l2_cache.get(&node_id) {
+            // Promote to L1 if frequently accessed
+            if self.should_promote(&node_id) {
+                self.l1_cache.insert(node_id, node.clone());
+            }
+            return Some(node);
+        }
+        
+        // Fetch from L3 (100-1000+ cycles)
+        let node = self.l3_store.fetch(&node_id).await?;
+        
+        // Predictive caching
+        let predicted_nodes = self.cache_predictor.predict_related(&node_id);
+        self.prefetch_nodes(predicted_nodes).await;
+        
+        Some(node)
+    }
+}
+```
+
+### 3. Distributed Graph Partitioning
+
+**Intelligent Partitioning Strategy**:
+
+```rust
+pub struct DistributedAllocationEngine {
+    // Local partition data
+    local_partition: GraphPartition,
+    partition_id: PartitionId,
+    
+    // Inter-partition communication
+    partition_router: PartitionRouter,
+    
+    // Hypergraph partitioning metadata
+    partition_boundaries: PartitionBoundaries,
+    
+    // SNN cores per partition
+    local_snn_cores: Vec<SpikingNeuralCore>,
+}
+
+impl DistributedAllocationEngine {
+    pub async fn distributed_allocate(&mut self, fact: Fact) -> AllocationResult {
+        // Check local allocation possibility
+        if self.can_allocate_locally(&fact) {
+            return self.local_snn_allocation(fact);
+        }
+        
+        // Identify relevant partitions using hypergraph boundaries
+        let relevant_partitions = self.identify_partitions(&fact);
+        
+        // Gather candidates with sparse communication
+        let candidates = self.sparse_gather_candidates(
+            &fact, 
+            relevant_partitions
+        ).await;
+        
+        // Distributed lateral inhibition
+        self.distributed_winner_take_all(candidates).await
+    }
+}
+```
+
+### 4. Memory Optimization Techniques
+
+**Adaptive Quantization System**:
+
+```rust
+pub struct AdaptiveQuantizationEngine {
+    importance_scorer: NodeImportanceScorer,
+    quantization_levels: Vec<QuantizationLevel>,
+}
+
+#[derive(Clone, Copy)]
+pub enum QuantizationLevel {
+    Full(f32),      // 32-bit full precision
+    Half(f16),      // 16-bit half precision  
+    Q8(i8),         // 8-bit quantization
+    Q4(u8),         // 4-bit packed quantization
+    Binary(bool),   // 1-bit binary
+}
+
+impl AdaptiveQuantizationEngine {
+    pub fn quantize_node(&self, node: &GraphNode) -> QuantizedNode {
+        let importance = self.importance_scorer.score(node);
+        
+        let quantization_level = match importance {
+            score if score > 0.9 => QuantizationLevel::Full,
+            score if score > 0.7 => QuantizationLevel::Half,
+            score if score > 0.5 => QuantizationLevel::Q8,
+            score if score > 0.3 => QuantizationLevel::Q4,
+            _ => QuantizationLevel::Binary,
+        };
+        
+        QuantizedNode {
+            id: node.id,
+            data: self.quantize_data(&node.data, quantization_level),
+            connections: self.quantize_connections(&node.connections),
+            level: quantization_level,
+        }
+    }
+}
+```
+
+### 5. SNN-Specific Scaling Optimizations
+
+**Distributed Spiking Neural Processing**:
+
+```rust
+pub struct ScalableSNNProcessor {
+    // Distributed spike encoding
+    distributed_encoder: DistributedTTFSEncoder,
+    
+    // Parallel lateral inhibition
+    inhibition_network: DistributedLateralInhibition,
+    
+    // Online learning with STDP
+    plasticity_manager: ScalableSTDPManager,
+    
+    // Sparse spike routing
+    spike_router: SparseSpikingRouter,
+}
+
+impl ScalableSNNProcessor {
+    pub async fn process_at_scale(&mut self, spike_pattern: TTFSSpikePattern) -> AllocationDecision {
+        // Encode as sparse distributed representation
+        let sparse_encoding = self.distributed_encoder
+            .encode_sparse(spike_pattern).await;
+        
+        // Route spikes to relevant neuromorphic cores
+        let core_assignments = self.spike_router
+            .route_to_cores(&sparse_encoding);
+        
+        // Parallel processing across cores
+        let parallel_responses = futures::future::join_all(
+            core_assignments.into_iter().map(|(core_id, spikes)| {
+                self.process_on_core(core_id, spikes)
+            })
+        ).await;
+        
+        // Distributed winner-take-all
+        let winner = self.inhibition_network
+            .distributed_competition(parallel_responses).await;
+        
+        // Update weights with bounded STDP
+        self.plasticity_manager
+            .update_distributed_weights(&winner).await;
+        
+        winner.to_allocation_decision()
+    }
+}
+```
+
+### 6. Multi-Level Filtering Pipeline
+
+**Cascaded Decision Architecture**:
+
+```rust
+pub struct CascadedAllocationPipeline {
+    stages: Vec<Box<dyn FilteringStage>>,
+}
+
+impl CascadedAllocationPipeline {
+    pub fn new() -> Self {
+        Self {
+            stages: vec![
+                Box::new(CoarseHNSWFilter::new()),      // 99% reduction
+                Box::new(SemanticEmbeddingFilter::new()), // 90% reduction
+                Box::new(StructuralGraphFilter::new()),   // 80% reduction
+                Box::new(SNNLateralInhibition::new()),    // Final selection
+            ],
+        }
+    }
+    
+    pub async fn cascade_allocate(&self, fact: Fact) -> AllocationResult {
+        let mut candidates = self.get_all_nodes(); // Billions
+        
+        for stage in &self.stages {
+            candidates = stage.filter(candidates, &fact).await;
+            
+            // Early termination if single candidate
+            if candidates.len() == 1 {
+                break;
+            }
+        }
+        
+        self.final_selection(candidates, fact)
+    }
+}
+```
+
+### Expected Performance Metrics
+
+**Scaling Characteristics**:
+
+| Graph Size | Allocation Time | Memory Usage | Accuracy |
+|------------|----------------|--------------|----------|
+| 1K nodes | <0.1ms | 10MB | 99.9% |
+| 10K nodes | <0.5ms | 50MB | 99.5% |
+| 100K nodes | <1ms | 200MB | 99% |
+| 1M nodes | <2ms | 800MB | 98% |
+| 10M nodes | <5ms | 3GB | 97% |
+| 100M nodes | <10ms | 15GB | 95% |
+| 1B nodes | <50ms | 100GB | 93% |
+| 10B nodes | <100ms | 500GB | 90% |
+
+**Performance Improvements**:
+- **Search Complexity**: O(n) → O(log n)
+- **Memory Efficiency**: 4-32x reduction via quantization
+- **Communication**: 73% reduction in distributed overhead
+- **Energy Usage**: 5-10x improvement over traditional NNs
+- **Parallelism**: Near-linear scaling up to 128 cores
 
 ### Integration Points
 
@@ -1657,7 +2133,7 @@ pub struct ScalableNeuromorphicEngine {
     multi_column_processor: MultiColumnProcessor,
     lateral_inhibition: LateralInhibition,
     
-    // Phase 2A scalability extensions
+    // Scalability extensions
     hnsw_index: HNSWAllocationIndex,
     memory_hierarchy: MultiTierMemorySystem,
     distributed_engine: DistributedAllocationEngine,
@@ -1665,24 +2141,19 @@ pub struct ScalableNeuromorphicEngine {
 }
 ```
 
-**Performance Scaling Targets**:
-- 1M nodes: <1ms allocation (Phase 2: <8ms baseline)
-- 100M nodes: <10ms allocation
-- 1B nodes: <100ms allocation
-- Memory usage: <100GB for 1B nodes
-- Energy efficiency: 5-10x improvement over traditional NNs
-
-### Implementation Strategy
+### Scalable Implementation Timeline
 
 **Week 1**: Foundation (parallel with core Phase 2)
-- Implement HNSW hierarchical indexing
-- Design multi-tier cache architecture
-- Create adaptive quantization system
+- [ ] Implement HNSW index structure
+- [ ] Build multi-tier cache system
+- [ ] Create quantization engine
+- [ ] Design partition boundaries
 
 **Week 2**: Integration and optimization
-- Integrate with existing SNN allocation engine
-- Implement distributed processing framework
-- Performance testing and benchmarking
+- [ ] Integrate with Phase 2 allocation engine
+- [ ] Implement distributed SNN processing
+- [ ] Add cascaded filtering pipeline
+- [ ] Performance testing and optimization
 
 ## Phase 2 Deliverables
 

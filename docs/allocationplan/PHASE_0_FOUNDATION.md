@@ -19,15 +19,76 @@ Phase 0 establishes the neuromorphic groundwork for CortexKG, implementing core 
 
 ### Specification
 
-**Objective**: Create the foundational structures and development environment for an allocation-first system.
+**Objective**: Create the complete foundational infrastructure for the entire neuromorphic allocation system (PHASE_0 through PHASE_11).
 
-**Neuromorphic Requirements**:
-1. Rust + SNN + WASM neuromorphic stack
-2. Time-to-First-Spike encoded cortical structures
-3. Lateral inhibition circuit implementations
-4. SIMD-accelerated WASM compilation
-5. Spiking neural network benchmarking
-6. Neuromorphic validation test harness
+**Complete System Requirements**:
+1. **Neuromorphic Core** (PHASE_1-2): Rust + SNN + WASM neuromorphic stack with 29 neural network architectures
+2. **Allocation Engine** (PHASE_2-3): Time-to-First-Spike encoded cortical structures with lateral inhibition
+3. **Knowledge Integration** (PHASE_3-4): Multi-modal reasoning and knowledge graph integration
+4. **Advanced Features** (PHASE_5-7): Truth maintenance, temporal reasoning, optimization algorithms
+5. **Production Systems** (PHASE_8-11): MCP integration, web interface, advanced algorithms, enterprise deployment
+
+**Infrastructure Dependencies for All Phases**:
+```rust
+// Complete system architecture foundation
+pub struct CortexKGFoundation {
+    // Phase 1-2: Cortical column infrastructure
+    pub neural_architectures: HashMap<NetworkType, NeuralArchitecture>,
+    pub cortical_columns: Vec<CorticalColumn>,
+    pub allocation_engine: AllocationEngine,
+    
+    // Phase 3-4: Knowledge integration
+    pub knowledge_graph: KnowledgeGraph,
+    pub reasoning_engine: ReasoningEngine,
+    pub truth_maintenance: TruthMaintenanceSystem,
+    
+    // Phase 5-7: Advanced features
+    pub temporal_system: TemporalVersioning,
+    pub optimization_suite: OptimizationSuite,
+    pub circuit_breakers: CircuitBreakerSystem,
+    
+    // Phase 8-11: Production features
+    pub mcp_server: MCPServerFramework,
+    pub wasm_interface: WASMInterface,
+    pub monitoring_system: ProductionMonitoring,
+    pub security_framework: SecurityFramework,
+}
+
+// Neural Network Type System (29 Architectures)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum NetworkType {
+    // Feedforward Networks (PHASE_1)
+    MLP, RBF, PNN,
+    
+    // Recurrent Networks (PHASE_1-2)
+    LSTM, GRU, ELMAN, JORDAN,
+    
+    // Convolutional Networks (PHASE_2)
+    CNN, RESNET, DENSENET,
+    
+    // Attention-based Networks (PHASE_3)
+    TRANSFORMER, BERT_VARIANT, GPT_VARIANT,
+    
+    // Graph Neural Networks (PHASE_3-4)
+    GCN, GAT, GRAPHSAGE, GIN,
+    
+    // Time Series Networks (PHASE_5)
+    TIDETNN, TST, TSMixer, PatchTST, iTransformer,
+    
+    // Specialized Networks (PHASE_6-7)
+    StemGNN, TFT, NBEATS, DeepAR, TiDE,
+    
+    // Advanced Networks (PHASE_10-11)
+    CascadeCorrelation, SparseConnected, DLinear,
+}
+```
+
+**Sequential Build Dependencies**:
+- **PHASE_0** → **PHASE_1**: Complete development environment → Cortical column implementation
+- **PHASE_1** → **PHASE_2**: Cortical columns → Allocation engine using columns
+- **PHASE_2** → **PHASE_3**: Allocation engine → Knowledge graph integration with allocation
+- **PHASE_3** → **PHASE_4**: Knowledge integration → Advanced optimization features
+- **Continue through PHASE_11**: Each phase builds on all previous phases
 
 **Spiking Neural Inspiration**:
 - Architecture mirrors cortical column organization
@@ -203,25 +264,99 @@ edition = "2021"
 license = "MIT"
 
 [workspace.dependencies]
-# Core async and serialization
-tokio = { version = "1.35", features = ["full"] }
+# Core async runtime and concurrency (ALL PHASES)
+tokio = { version = "1.35", features = ["full", "tracing"] }
+async-trait = "0.1"
+futures = "0.3"
+rayon = "1.0"
+crossbeam = "0.8"
+parking_lot = "0.12"
+once_cell = "1.0"
+dashmap = "5.0"
+
+# Serialization and data handling (ALL PHASES)
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+bincode = "1.3"
+uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling and logging (ALL PHASES)
 anyhow = "1.0"
 thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 
-# Neuromorphic computing dependencies
-rfann = "0.1"                    # Pure Rust Fast Artificial Neural Network
+# Neural network framework - 29 architectures (PHASE_1-11)
+candle-core = "0.3"
+candle-nn = "0.3"
+candle-transformers = "0.3"
+ndarray = "0.15"
+ndarray-linalg = "0.16"
+faer = "0.19"                    # Linear algebra
+rfann = "0.1"                    # Fast Artificial Neural Network
 spiking_neural_networks = "0.2"  # Spiking Neural Network implementation
-ndarray = "0.15"                 # N-dimensional arrays for neural processing
 blas = "0.22"                    # Basic Linear Algebra Subprograms
 
-# WASM and SIMD support
-wasm-bindgen = "0.2"
+# Graph storage and processing (PHASE_2-11)
+petgraph = "0.6"
+sled = "0.34"
+neo4rs = "0.7"                   # Neo4j driver
+cypher-dto = "0.2"               # Cypher query building
+redb = "1.0"                     # Embedded database
+
+# Memory management and optimization (ALL PHASES)
+jemallocator = "0.5"
+mimalloc = "0.1"
+wee_alloc = "0.4"                # WASM allocator
+
+# Network protocols and web services (PHASE_8-11)
+tonic = "0.10"                   # gRPC
+prost = "0.12"                   # Protocol buffers
+hyper = { version = "0.14", features = ["full"] }
+axum = "0.7"                     # Web framework
+tower = "0.4"                    # Service abstractions
+warp = "0.3"                     # Alternative web framework
+
+# Security and encryption (PHASE_8-11)
+ring = "0.17"                    # Crypto primitives
+rustls = "0.21"                  # TLS implementation
+oauth2 = "4.0"                   # OAuth 2.0
+jsonwebtoken = "8.0"             # JWT tokens
+argon2 = "0.5"                   # Password hashing
+
+# Database drivers for multi-store support (PHASE_6-11)
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+redis = { version = "0.23", features = ["tokio-comp"] }
+mongodb = "2.0"
+sqlite = "0.30"
+
+# WASM and SIMD support (PHASE_9-11)
+wasm-bindgen = { version = "0.2", features = ["spans"] }
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
-web-sys = "0.3"
+web-sys = { version = "0.3", features = ["console", "Performance", "Window"] }
+
+# MCP protocol support (PHASE_8-11)
+mcp-core = "0.1"
+mcp-server = "0.1"
+serde-wasm-bindgen = "0.4"
+
+# Testing and benchmarking (ALL PHASES)
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"
+mockall = "0.11"
+tokio-test = "0.4"
+
+# Monitoring and observability (PHASE_11)
+prometheus = "0.13"
+opentelemetry = "0.20"
+tracing-opentelemetry = "0.21"
+
+# Time series and scientific computing (PHASE_5, 10)
+polars = { version = "0.33", features = ["lazy", "temporal"] }
+arrow2 = "0.18"
 wee_alloc = "0.4"               # Small allocator for WASM
 
 # High-performance computing

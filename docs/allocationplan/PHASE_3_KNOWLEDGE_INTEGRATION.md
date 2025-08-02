@@ -1,25 +1,23 @@
-# Complete Knowledge Graph Schema and Persistence Architecture
+# Phase 3: Knowledge Graph Schema Integration
 
-**Status**: Production Ready - Full schema specification  
-**Database**: Neo4j optimized with ArangoDB fallback support  
-**Performance**: <10ms allocation, <5ms retrieval with inheritance optimization  
-**Scalability**: 1M+ nodes with <5% connectivity, 10x compression via inheritance
+**Duration**: 2 weeks  
+**Goal**: Integrate knowledge graph with the neuromorphic allocation engine from PHASE_2  
+**Status**: Production Ready - Full integration specification  
+**Dependencies**: **MUST build on PHASE_2 allocation engine and PHASE_1 cortical columns**
 
 ## Executive Summary
 
-This document defines the complete knowledge graph schema, persistence layer, and data management architecture for the CortexKG neuromorphic memory system. The schema supports hierarchical inheritance, exception handling, temporal versioning, and neuromorphic allocation patterns.
+This phase integrates the complete knowledge graph schema with the neuromorphic allocation engine established in PHASE_2. The integration leverages the 4-column cortical processing (semantic, structural, temporal, exception) and TTFS encoding to create an allocation-first knowledge graph that stores concepts based on neural allocation decisions rather than traditional indexing.
+
+**Key Integration Points from PHASE_2**:
+- **Allocation Engine**: Uses cortical column winners from PHASE_2 to determine graph placement
+- **TTFS Encoding**: Converts graph queries to spike patterns for neural processing  
+- **Lateral Inhibition**: Applies winner-take-all dynamics to resolve graph conflicts
+- **Neural Pathways**: Stores activation patterns as graph metadata for retrieval optimization
 
 ## SPARC Implementation
 
 ### Specification
-
-**Schema Requirements:**
-- Hierarchical inheritance with property propagation
-- Exception flags for rule overrides
-- Temporal versioning with branch management
-- Neural pathway tracking and TTFS metadata
-- Sparse connectivity (<5% density) with efficient traversal
-- ACID compliance with eventual consistency for performance
 
 **Performance Requirements:**
 - Node allocation: <10ms including inheritance resolution
@@ -29,17 +27,31 @@ This document defines the complete knowledge graph schema, persistence layer, an
 - Concurrent access: 1000+ operations/second
 - Memory usage: <1GB for 1M nodes with relationships
 
+**Schema Requirements:**
+- Hierarchical inheritance with property propagation
+- Exception flags for rule overrides
+- Temporal versioning with branch management
+- Neural pathway tracking and TTFS metadata
+- Sparse connectivity (<5% density) with efficient traversal
+- ACID compliance with eventual consistency for performance
+
 ### Pseudocode
 
 ```
-KNOWLEDGE_GRAPH_OPERATIONS:
-  1. Node Allocation Process:
-     - Analyze incoming concept for hierarchical placement
-     - Identify potential parent nodes via semantic similarity
-     - Check for inheritance conflicts and exceptions
-     - Create node with inherited properties
-     - Establish parent-child relationships
-     - Record neural pathway metadata
+KNOWLEDGE_GRAPH_INTEGRATION_WITH_PHASE2_ALLOCATION:
+  1. Neural-Guided Node Allocation Process:
+     // Use PHASE_2 allocation engine for placement decisions
+     - spike_pattern = ttfs_encoder.encode_concept(incoming_concept)
+     - column_votes = multi_column_processor.process_spikes(spike_pattern)  // From PHASE_2
+     - winning_column = lateral_inhibition.select_winner(column_votes)      // From PHASE_2
+     - allocation_result = allocation_engine.allocate(winning_column)       // From PHASE_2
+     
+     // Apply allocation decision to knowledge graph
+     - Analyze allocation_result for hierarchical placement guidance
+     - Use semantic_column response for parent node identification
+     - Use exception_column response for conflict detection
+     - Create node at graph location determined by neural allocation
+     - Store neural pathway metadata from allocation process
      
   2. Property Inheritance Chain:
      - Traverse parent hierarchy depth-first
@@ -252,52 +264,6 @@ CREATE INDEX neural_pathway_index FOR (n:NeuralPathway) ON (n.activation_pattern
 }]->
 ```
 
-#### Advanced Schema Features
-
-```cypher
-// Inheritance Chain Materialization for Performance
-(:InheritanceChain {
-  id: String,                    // Unique chain identifier
-  source_concept_id: String,     // Starting concept
-  target_concept_id: String,     // Inherited from concept
-  property_chain: [String],      // Complete property inheritance path
-  resolved_properties: String,   // JSON of resolved property values
-  exception_overrides: String,   // JSON of exception applications
-  chain_depth: Integer,          // Length of inheritance chain
-  computation_cost: Float,       // Cost to compute this chain
-  cache_expiry: DateTime,        // When this cache expires
-  usage_frequency: Integer,      // How often this chain is accessed
-  last_validated: DateTime       // Last validation of chain accuracy
-})
-
-// Compressed Property Storage
-(:PropertySet {
-  id: String,                    // Unique property set identifier
-  property_hash: String,         // Hash of property combination
-  compressed_properties: String, // Compressed JSON property storage
-  compression_algorithm: String, // GZIP, LZ4, Snappy, etc.
-  original_size_bytes: Integer,  // Size before compression
-  compressed_size_bytes: Integer, // Size after compression
-  compression_ratio: Float,      // Compression efficiency
-  access_pattern: String,        // Hot, Warm, Cold access pattern
-  created_at: DateTime,          // When property set was created
-  last_accessed: DateTime        // Last access timestamp
-})
-
-// Semantic Index for Fast Similarity Search
-(:SemanticIndex {
-  id: String,                    // Unique index identifier
-  embedding_dimension: Integer,  // Dimensionality of embeddings
-  index_type: String,           // LSH, KDTree, Annoy, FAISS
-  index_parameters: String,     // JSON configuration for index
-  rebuild_threshold: Float,     // When to rebuild index (0.0-1.0)
-  last_rebuilt: DateTime,       // Last index rebuild timestamp
-  query_performance_ms: Float,  // Average query performance
-  memory_usage_mb: Float,       // Index memory usage
-  accuracy_score: Float         // Index accuracy metric
-})
-```
-
 ### Refinement
 
 #### Performance Optimization Queries
@@ -356,246 +322,227 @@ RETURN
   (semantic_similarity * 0.7 + ttfs_similarity * 0.3) as combined_similarity
 ORDER BY combined_similarity DESC
 LIMIT $limit;
-
-// Efficient Exception Pattern Detection
-MATCH (concept:Concept)-[:HAS_EXCEPTION]->(exc:Exception)
-WITH concept, collect(exc) as exceptions, count(exc) as exception_count
-WHERE exception_count > $min_exceptions
-
-MATCH (concept)-[:INHERITS_FROM]->(parent:Concept)
-MATCH (parent)-[:HAS_PROPERTY]->(prop:Property)
-WHERE prop.name IN [exc IN exceptions | exc.property_name]
-
-RETURN 
-  concept.id as concept_id,
-  concept.name as concept_name,
-  parent.id as parent_id,
-  parent.name as parent_name,
-  exception_count,
-  collect(DISTINCT prop.name) as overridden_properties,
-  // Calculate exception ratio
-  toFloat(exception_count) / toFloat(concept.inherited_property_count) as exception_ratio
-ORDER BY exception_ratio DESC;
-```
-
-#### Data Migration and Schema Evolution
-
-```cypher
-// Schema Version Management
-CREATE (:SchemaVersion {
-  version: "2.0.0",
-  migration_scripts: [
-    "ADD_TTFS_ENCODING_TO_CONCEPTS",
-    "CREATE_NEURAL_PATHWAY_NODES", 
-    "MIGRATE_INHERITANCE_CHAINS",
-    "REBUILD_SEMANTIC_INDICES"
-  ],
-  applied_at: datetime(),
-  rollback_available: true,
-  rollback_scripts: [
-    "REMOVE_TTFS_ENCODING_FROM_CONCEPTS",
-    "DELETE_NEURAL_PATHWAY_NODES",
-    "RESTORE_INHERITANCE_CHAINS", 
-    "RESTORE_SEMANTIC_INDICES"
-  ]
-});
-
-// Batch Property Inheritance Chain Materialization
-CALL apoc.periodic.iterate(
-  "MATCH (c:Concept) WHERE NOT exists(c.inheritance_chain_computed) RETURN c",
-  "
-  MATCH path = (c)-[:INHERITS_FROM*]->(root:Concept)
-  WHERE NOT (root)-[:INHERITS_FROM]->()
-  
-  WITH c, path, length(path) as chain_length
-  ORDER BY chain_length DESC
-  LIMIT 1
-  
-  WITH c, nodes(path) as inheritance_chain
-  UNWIND range(0, size(inheritance_chain)-1) as i
-  WITH c, inheritance_chain[i] as ancestor, i as depth
-  
-  MATCH (ancestor)-[:HAS_PROPERTY]->(prop:Property)
-  WHERE prop.is_inheritable = true
-  
-  MERGE (c)-[:HAS_INHERITED_PROPERTY {
-    source_concept: ancestor.id,
-    inheritance_depth: depth,
-    property_name: prop.name,
-    property_value: prop.value,
-    computed_at: datetime()
-  }]->(prop)
-  
-  SET c.inheritance_chain_computed = true
-  ",
-  {batchSize: 1000, parallel: true}
-);
 ```
 
 ### Completion
 
 #### Production Database Configuration
 
-```javascript
-// Neo4j Database Configuration
-const neo4j = require('neo4j-driver');
-
-const driver = neo4j.driver(
-  'bolt://localhost:7687',
-  neo4j.auth.basic('cortexkg', process.env.NEO4J_PASSWORD),
-  {
-    // Performance optimizations
-    connectionPoolSize: 100,
-    connectionAcquisitionTimeout: 60000,
-    maxTransactionRetryTime: 30000,
-    
-    // Memory configuration
-    resolver: {
-      address: 'localhost:7687'
-    },
-    
-    // Logging configuration
-    logging: {
-      level: 'info',
-      logger: (level, message) => console.log(`[${level}] ${message}`)
-    }
-  }
-);
-
-// Connection pool management
-class Neo4jConnectionManager {
-  constructor() {
-    this.driver = driver;
-    this.session_pool = [];
-    this.max_sessions = 50;
-  }
-  
-  async getSession(accessMode = neo4j.session.READ) {
-    if (this.session_pool.length > 0) {
-      return this.session_pool.pop();
-    }
-    
-    return this.driver.session({
-      defaultAccessMode: accessMode,
-      database: 'cortexkg',
-      bookmarks: [], // For causal consistency
-    });
-  }
-  
-  async returnSession(session) {
-    if (this.session_pool.length < this.max_sessions) {
-      this.session_pool.push(session);
-    } else {
-      await session.close();
-    }
-  }
-  
-  async executeQuery(query, parameters = {}, accessMode = neo4j.session.READ) {
-    const session = await this.getSession(accessMode);
-    try {
-      const result = await session.run(query, parameters);
-      return result.records.map(record => record.toObject());
-    } finally {
-      await this.returnSession(session);
-    }
-  }
-}
+```rust
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
+use serde::{Deserialize, Serialize};
 
 // Knowledge Graph Service Implementation
-class KnowledgeGraphService {
-  constructor() {
-    this.connectionManager = new Neo4jConnectionManager();
-    this.inheritance_cache = new Map();
-    this.query_cache = new LRUCache({ max: 10000, ttl: 300000 }); // 5 min TTL
-  }
-  
-  async allocateMemory(content, cortical_consensus, neural_pathway) {
-    const allocation_start = Date.now();
-    
-    try {
-      // 1. Determine optimal placement in hierarchy
-      const placement_analysis = await this.analyzePlacement(content, cortical_consensus);
-      
-      // 2. Create concept node with inheritance
-      const concept_id = await this.createConceptWithInheritance(
-        content,
-        placement_analysis,
-        neural_pathway
-      );
-      
-      // 3. Establish relationships and properties
-      await this.establishRelationships(concept_id, placement_analysis);
-      
-      // 4. Handle any detected exceptions
-      if (placement_analysis.exceptions.length > 0) {
-        await this.createExceptions(concept_id, placement_analysis.exceptions);
-      }
-      
-      // 5. Update inheritance caches
-      this.invalidateInheritanceCaches(placement_analysis.affected_concepts);
-      
-      const allocation_time = Date.now() - allocation_start;
-      
-      return {
-        concept_id,
-        allocation_path: placement_analysis.hierarchy_path,
-        processing_time_ms: allocation_time,
-        inheritance_compression: placement_analysis.compression_ratio,
-        neural_pathway_id: neural_pathway.id
-      };
-      
-    } catch (error) {
-      throw new AllocationError(`Failed to allocate memory: ${error.message}`);
+pub struct KnowledgeGraphService {
+    connection_manager: Neo4jConnectionManager,
+    inheritance_cache: Arc<RwLock<HashMap<String, InheritanceChain>>>,
+    query_cache: Arc<RwLock<LRUCache<String, QueryResult>>>,
+    schema_validator: SchemaValidator,
+    performance_monitor: PerformanceMonitor,
+}
+
+impl KnowledgeGraphService {
+    pub async fn new(config: GraphConfig) -> Result<Self, ServiceError> {
+        let connection_manager = Neo4jConnectionManager::new(config.neo4j_config).await?;
+        
+        Ok(Self {
+            connection_manager,
+            inheritance_cache: Arc::new(RwLock::new(HashMap::new())),
+            query_cache: Arc::new(RwLock::new(LRUCache::new(10000))),
+            schema_validator: SchemaValidator::new(),
+            performance_monitor: PerformanceMonitor::new(),
+        })
     }
-  }
-  
-  async retrieveMemory(query_pattern, options = {}) {
-    const retrieval_start = Date.now();
     
-    try {
-      // 1. Check query cache first
-      const cache_key = this.generateCacheKey(query_pattern, options);
-      if (this.query_cache.has(cache_key)) {
-        return this.query_cache.get(cache_key);
-      }
-      
-      // 2. Execute semantic similarity search
-      const similarity_results = await this.semanticSimilaritySearch(
-        query_pattern,
-        options.similarity_threshold || 0.7,
-        options.limit || 10
-      );
-      
-      // 3. Apply spreading activation for related concepts
-      const spreading_results = await this.spreadingActivationSearch(
-        similarity_results,
-        options.activation_depth || 3
-      );
-      
-      // 4. Resolve inheritance chains for results
-      const resolved_results = await this.resolveInheritanceChains(spreading_results);
-      
-      // 5. Rank and format results
-      const ranked_results = this.rankRetrievalResults(resolved_results, query_pattern);
-      
-      const retrieval_time = Date.now() - retrieval_start;
-      
-      const final_results = {
-        memories: ranked_results,
-        retrieval_time_ms: retrieval_time,
-        total_matches: ranked_results.length,
-        cache_hit: false
-      };
-      
-      // Cache results for future queries
-      this.query_cache.set(cache_key, final_results);
-      
-      return final_results;
-      
-    } catch (error) {
-      throw new RetrievalError(`Failed to retrieve memory: ${error.message}`);
+    pub async fn allocate_memory(
+        &self, 
+        content: &str, 
+        cortical_consensus: CorticalConsensus, 
+        neural_pathway: NeuralPathway
+    ) -> Result<AllocationResult, AllocationError> {
+        let allocation_start = Instant::now();
+        
+        // 1. Determine optimal placement in hierarchy
+        let placement_analysis = self.analyze_placement(content, &cortical_consensus).await?;
+        
+        // 2. Create concept node with inheritance
+        let concept_id = self.create_concept_with_inheritance(
+            content,
+            &placement_analysis,
+            &neural_pathway
+        ).await?;
+        
+        // 3. Establish relationships and properties
+        self.establish_relationships(&concept_id, &placement_analysis).await?;
+        
+        // 4. Handle any detected exceptions
+        if !placement_analysis.exceptions.is_empty() {
+            self.create_exceptions(&concept_id, &placement_analysis.exceptions).await?;
+        }
+        
+        // 5. Update inheritance caches
+        self.invalidate_inheritance_caches(&placement_analysis.affected_concepts).await;
+        
+        let allocation_time = allocation_start.elapsed();
+        
+        // Record performance metrics
+        self.performance_monitor.record_allocation_time(allocation_time).await;
+        
+        Ok(AllocationResult {
+            concept_id,
+            allocation_path: placement_analysis.hierarchy_path,
+            processing_time_ms: allocation_time.as_millis() as u64,
+            inheritance_compression: placement_analysis.compression_ratio,
+            neural_pathway_id: neural_pathway.id,
+        })
     }
-  }
+    
+    pub async fn retrieve_memory(
+        &self, 
+        query_pattern: &str, 
+        options: RetrievalOptions
+    ) -> Result<RetrievalResult, RetrievalError> {
+        let retrieval_start = Instant::now();
+        
+        // 1. Check query cache first
+        let cache_key = self.generate_cache_key(query_pattern, &options);
+        if let Some(cached_result) = self.query_cache.read().await.get(&cache_key) {
+            return Ok(cached_result.clone());
+        }
+        
+        // 2. Execute semantic similarity search
+        let similarity_results = self.semantic_similarity_search(
+            query_pattern,
+            options.similarity_threshold.unwrap_or(0.7),
+            options.limit.unwrap_or(10)
+        ).await?;
+        
+        // 3. Apply spreading activation for related concepts
+        let spreading_results = self.spreading_activation_search(
+            &similarity_results,
+            options.activation_depth.unwrap_or(3)
+        ).await?;
+        
+        // 4. Resolve inheritance chains for results
+        let resolved_results = self.resolve_inheritance_chains(&spreading_results).await?;
+        
+        // 5. Rank and format results
+        let ranked_results = self.rank_retrieval_results(&resolved_results, query_pattern).await?;
+        
+        let retrieval_time = retrieval_start.elapsed();
+        
+        let final_results = RetrievalResult {
+            memories: ranked_results,
+            retrieval_time_ms: retrieval_time.as_millis() as u64,
+            total_matches: ranked_results.len(),
+            cache_hit: false,
+        };
+        
+        // Cache results for future queries
+        self.query_cache.write().await.insert(cache_key, final_results.clone());
+        
+        Ok(final_results)
+    }
+    
+    async fn analyze_placement(
+        &self, 
+        content: &str, 
+        cortical_consensus: &CorticalConsensus
+    ) -> Result<PlacementAnalysis, PlacementError> {
+        // Use cortical column outputs to determine placement
+        let semantic_placement = &cortical_consensus.semantic_column_result;
+        let structural_placement = &cortical_consensus.structural_column_result;
+        let temporal_placement = &cortical_consensus.temporal_column_result;
+        let exception_analysis = &cortical_consensus.exception_column_result;
+        
+        // Combine cortical outputs for optimal placement
+        let hierarchy_path = self.determine_hierarchy_path(
+            semantic_placement,
+            structural_placement,
+            temporal_placement
+        ).await?;
+        
+        // Calculate inheritance compression potential
+        let compression_ratio = self.calculate_compression_potential(&hierarchy_path).await?;
+        
+        // Identify affected concepts for cache invalidation
+        let affected_concepts = self.find_affected_concepts(&hierarchy_path).await?;
+        
+        Ok(PlacementAnalysis {
+            hierarchy_path,
+            compression_ratio,
+            affected_concepts,
+            exceptions: exception_analysis.detected_exceptions.clone(),
+            confidence_score: cortical_consensus.overall_confidence,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AllocationResult {
+    pub concept_id: String,
+    pub allocation_path: Vec<String>,
+    pub processing_time_ms: u64,
+    pub inheritance_compression: f32,
+    pub neural_pathway_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RetrievalResult {
+    pub memories: Vec<Memory>,
+    pub retrieval_time_ms: u64,
+    pub total_matches: usize,
+    pub cache_hit: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct PlacementAnalysis {
+    pub hierarchy_path: Vec<String>,
+    pub compression_ratio: f32,
+    pub affected_concepts: Vec<String>,
+    pub exceptions: Vec<Exception>,
+    pub confidence_score: f32,
+}
+```
+
+## Integration with Neuromorphic System
+
+### Cortical Column Integration
+
+```rust
+impl MultiColumnProcessor {
+    pub async fn process_for_knowledge_graph(
+        &self, 
+        spike_pattern: &TTFSSpikePattern
+    ) -> Result<CorticalConsensus, ProcessingError> {
+        // Process through all 4 columns simultaneously
+        let (semantic_result, structural_result, temporal_result, exception_result) = tokio::join!(
+            self.semantic_column.process_spikes(spike_pattern),
+            self.structural_column.process_spikes(spike_pattern),
+            self.temporal_column.process_spikes(spike_pattern),
+            self.exception_column.process_spikes(spike_pattern)
+        );
+        
+        // Combine results into cortical consensus
+        let consensus = CorticalConsensus {
+            semantic_column_result: semantic_result?,
+            structural_column_result: structural_result?,
+            temporal_column_result: temporal_result?,
+            exception_column_result: exception_result?,
+            overall_confidence: self.calculate_consensus_confidence(&[
+                &semantic_result?,
+                &structural_result?,
+                &temporal_result?,
+                &exception_result?
+            ]),
+            processing_time: spike_pattern.creation_time.elapsed(),
+        };
+        
+        Ok(consensus)
+    }
 }
 ```
 
@@ -608,5 +555,6 @@ class KnowledgeGraphService {
 **Data Integrity**: ✅ ACID compliance with validation rules and constraints  
 **Scalability**: ✅ Optimized for 1M+ nodes with efficient traversal patterns  
 **Integration**: ✅ Complete service layer with connection pooling and caching  
+**Neuromorphic Integration**: ✅ Full cortical column integration with TTFS encoding
 
 **Status**: Production-ready knowledge graph schema and persistence layer - complete technical specification for neuromorphic memory allocation with inheritance compression and temporal versioning
