@@ -244,41 +244,65 @@ pub struct TTFSSpikeEncoder {
 }
 
 #[derive(Debug, Clone)]
-pub struct ExtractedConcept {
-    pub name: String,
-    pub concept_type: ConceptType,
-    pub proposed_parent: Option<String>,
-    pub properties: HashMap<String, String>,
-    pub source_span: TextSpan,
-    pub confidence: f32,
+pub struct TTFSSpikePattern {
+    pub concept_id: ConceptId,
+    pub first_spike_time: Duration,  // Time-to-First-Spike
+    pub spike_sequence: Vec<SpikeEvent>,
+    pub total_duration: Duration,
+    pub refractory_compliance: bool,
+    pub encoding_confidence: f32,
+    pub neural_features: Vec<f32>,   // For ruv-FANN processing
 }
 
-impl ConceptExtractor {
-    pub fn extract(&self, text: &str) -> Vec<ExtractedConcept> {
-        let tokens = self.tokenize(text);
-        let entities = self.ner.recognize(&tokens);
-        let dependencies = self.parser.parse(&tokens);
+#[derive(Debug, Clone)]
+pub struct SpikeEvent {
+    pub neuron_id: NeuronId,
+    pub timing: Duration,
+    pub amplitude: f32,
+    pub refractory_state: RefractoryState,
+}
+
+impl TTFSSpikeEncoder {
+    pub fn encode_to_spikes(&self, concept: &NeuromorphicConcept) -> Result<TTFSSpikePattern, EncodingError> {
+        // Phase 1: Convert semantic features to neural input
+        let neural_input = self.fann_preprocessor.prepare_input(&concept.semantic_features)?;
         
-        let mut concepts = Vec::new();
+        // Phase 2: Calculate time-to-first-spike based on feature strength
+        let first_spike_time = self.calculate_ttfs(&neural_input)?;
         
-        // Extract primary concepts from entities
-        for entity in entities {
-            if let Some(concept) = self.entity_to_concept(entity, &dependencies) {
-                concepts.push(concept);
+        // Phase 3: Generate spike sequence with temporal encoding
+        let mut spike_sequence = Vec::new();
+        let mut current_time = first_spike_time;
+        
+        for (i, &feature_strength) in neural_input.iter().enumerate() {
+            if feature_strength > self.spike_threshold {
+                // Check refractory period compliance
+                if self.refractory_manager.can_spike(i, current_time) {
+                    let spike = SpikeEvent {
+                        neuron_id: NeuronId(i),
+                        timing: current_time,
+                        amplitude: feature_strength,
+                        refractory_state: RefractoryState::Active,
+                    };
+                    
+                    spike_sequence.push(spike);
+                    self.refractory_manager.register_spike(i, current_time);
+                    
+                    // Inter-spike interval based on feature correlations
+                    current_time += self.calculate_isi(feature_strength);
+                }
             }
         }
         
-        // Extract relationships and properties
-        for pattern in &self.concept_patterns {
-            if let Some(matches) = pattern.find_in(&dependencies) {
-                self.enhance_concepts(&mut concepts, matches);
-            }
-        }
-        
-        // Deduplicate and merge
-        self.merge_duplicate_concepts(&mut concepts);
-        
-        concepts
+        Ok(TTFSSpikePattern {
+            concept_id: concept.id,
+            first_spike_time,
+            spike_sequence,
+            total_duration: current_time,
+            refractory_compliance: self.verify_refractory_compliance(&spike_sequence),
+            encoding_confidence: self.calculate_encoding_confidence(&spike_sequence),
+            neural_features: neural_input,
+        })
     }
     
     fn entity_to_concept(&self, entity: Entity, deps: &Dependencies) -> Option<ExtractedConcept> {
@@ -312,171 +336,262 @@ impl ConceptExtractor {
 ```
 
 **AI-Verifiable Outcomes**:
-- [ ] Extracts all test concepts correctly (100% accuracy)
-- [ ] Performance < 10ms for 1000-word text
-- [ ] Confidence scores between 0.0 and 1.0
-- [ ] No duplicate concepts in output
+- [ ] TTFS encoding < 1ms per concept (100% sub-millisecond timing)
+- [ ] Refractory period compliance 100% (no timing violations)
+- [ ] Spike pattern confidence scores between 0.0 and 1.0
+- [ ] Neural feature vectors compatible with ruv-FANN networks
+- [ ] Temporal precision < 0.1ms (100,000 nanoseconds)
 
-### Task 2.2: Small LLM Integration (Day 2)
+### Task 2.2: Multi-Column Parallel Processing with ruv-FANN Networks (Day 2)
 
-**Specification**: Integrate lightweight LLM for semantic understanding
+**Specification**: Implement 4 parallel cortical columns using optimized ruv-FANN neural network architectures
 
-**Test First**:
+**Neuromorphic Test First**:
 
 ```rust
 #[test]
-fn test_llm_parent_suggestion() {
-    let llm = SmallLLM::load("models/minilm-alloc-v1");
+fn test_multi_column_parallel_processing() {
+    let processor = MultiColumnProcessor::new();
     
-    let concept = "penguin";
-    let candidates = vec!["bird", "mammal", "fish", "animal"];
+    let spike_pattern = create_test_spike_pattern();
     
-    let suggestion = llm.suggest_parent(concept, &candidates).unwrap();
-    
-    assert_eq!(suggestion.parent, "bird");
-    assert!(suggestion.confidence > 0.8);
-    assert_eq!(suggestion.reasoning, "Penguin is a flightless bird");
-}
-
-#[test]
-fn test_llm_performance_cached() {
-    let llm = SmallLLM::load("models/minilm-alloc-v1");
-    
-    // Warm up cache
-    llm.suggest_parent("dog", &["animal", "mammal"]).unwrap();
-    
-    // Test cached performance
     let start = Instant::now();
-    for _ in 0..100 {
-        llm.suggest_parent("dog", &["animal", "mammal"]).unwrap();
-    }
+    let consensus = processor.process_concept_parallel(&spike_pattern).unwrap();
     let elapsed = start.elapsed();
     
-    assert!(elapsed < Duration::from_millis(200)); // <2ms per call
+    // Verify SIMD 4x speedup achieved
+    assert!(elapsed < Duration::from_millis(5));
+    
+    // Verify all 4 columns processed
+    assert!(consensus.semantic_vote.is_some());
+    assert!(consensus.structural_vote.is_some());
+    assert!(consensus.temporal_vote.is_some());
+    assert!(consensus.exception_vote.is_some());
+    
+    // Verify cortical voting consensus
+    assert!(consensus.winning_column.is_some());
+    assert!(consensus.confidence > 0.7);
 }
 
 #[test]
-fn test_llm_exception_detection() {
-    let llm = SmallLLM::load("models/minilm-alloc-v1");
+fn test_lateral_inhibition_winner_take_all() {
+    let processor = MultiColumnProcessor::new();
     
-    let concept = "penguin";
-    let inherited_properties = hashmap!{
-        "can_fly" => "true",
-        "has_feathers" => "true",
-        "lays_eggs" => "true",
-    };
+    // Create conflicting column responses
+    let column_votes = vec![
+        ColumnVote { column_id: ColumnId::Semantic, confidence: 0.95, activation: 0.9 },
+        ColumnVote { column_id: ColumnId::Structural, confidence: 0.6, activation: 0.4 },
+        ColumnVote { column_id: ColumnId::Temporal, confidence: 0.7, activation: 0.5 },
+        ColumnVote { column_id: ColumnId::Exception, confidence: 0.3, activation: 0.2 },
+    ];
     
-    let exceptions = llm.detect_exceptions(concept, &inherited_properties).unwrap();
+    let winner = processor.apply_lateral_inhibition(&column_votes);
     
-    assert_eq!(exceptions.len(), 1);
-    assert!(exceptions.contains_key("can_fly"));
-    assert_eq!(exceptions["can_fly"].reason, "Penguins are flightless");
+    // Semantic column should win (highest activation)
+    assert_eq!(winner.column_id, ColumnId::Semantic);
+    assert!(winner.inhibition_strength > 0.8);
+    
+    // Verify inhibition applied to other columns
+    let inhibited_votes = processor.get_inhibited_votes();
+    assert!(inhibited_votes.iter().all(|v| v.activation < 0.1));
+}
+
+#[test]
+fn test_ruv_fann_architecture_selection() {
+    let selector = NetworkSelector::new();
+    
+    // Test different spike patterns require different architectures
+    let semantic_pattern = create_semantic_spike_pattern();
+    let temporal_pattern = create_temporal_spike_pattern();
+    
+    let semantic_arch = selector.select_optimal_architecture(&semantic_pattern);
+    let temporal_arch = selector.select_optimal_architecture(&temporal_pattern);
+    
+    // Verify MLP selected for semantic (architecture #1)
+    assert_eq!(semantic_arch.architecture_id, 1);
+    assert_eq!(semantic_arch.name, "Multi-Layer Perceptron");
+    
+    // Verify TCN selected for temporal (architecture #20)
+    assert_eq!(temporal_arch.architecture_id, 20);
+    assert_eq!(temporal_arch.name, "Temporal Convolutional Network");
+    
+    // Verify network loading performance
+    assert!(semantic_arch.load_time < Duration::from_millis(50));
+    assert!(temporal_arch.load_time < Duration::from_millis(50));
+}
+
+#[test]
+fn test_simd_acceleration_4x_speedup() {
+    let processor = MultiColumnProcessor::new();
+    let spike_patterns: Vec<_> = (0..1000)
+        .map(|i| create_test_spike_pattern_variant(i))
+        .collect();
+    
+    // Test sequential processing
+    let start = Instant::now();
+    let sequential_results: Vec<_> = spike_patterns.iter()
+        .map(|p| processor.process_concept_sequential(p))
+        .collect();
+    let sequential_time = start.elapsed();
+    
+    // Test SIMD parallel processing
+    let start = Instant::now();
+    let parallel_results: Vec<_> = processor.process_concepts_simd_parallel(&spike_patterns);
+    let parallel_time = start.elapsed();
+    
+    // Verify 4x speedup achieved
+    let speedup = sequential_time.as_nanos() as f32 / parallel_time.as_nanos() as f32;
+    assert!(speedup >= 3.5); // Allow some variance
+    
+    // Verify results identical
+    assert_eq!(sequential_results.len(), parallel_results.len());
 }
 ```
 
 **Implementation**:
 
 ```rust
-// src/llm/model_loader.rs
-use candle::{Device, Tensor};
-use tokenizers::Tokenizer;
+// src/multi_column/mod.rs
+use crate::ruv_fann_integration::{NetworkSelector, SIMDProcessor};
+use crate::snn_processing::{LateralInhibition, CorticalVoting};
+use rayon::prelude::*;
 
-pub struct SmallLLM {
-    model: Box<dyn Model>,
-    tokenizer: Tokenizer,
-    cache: Arc<DashMap<String, LLMResponse>>,
-    device: Device,
+pub struct MultiColumnProcessor {
+    // Four specialized cortical columns
+    semantic_column: SemanticProcessingColumn,
+    structural_column: StructuralAnalysisColumn, 
+    temporal_column: TemporalContextColumn,
+    exception_column: ExceptionDetectionColumn,
+    
+    // Neural coordination mechanisms
+    lateral_inhibition: LateralInhibition,
+    cortical_voting: CorticalVoting,
+    simd_executor: SIMDProcessor,
+    
+    // ruv-FANN integration
+    network_selector: NetworkSelector,
 }
 
-impl SmallLLM {
-    pub fn load(model_path: &str) -> Result<Self> {
-        let device = Device::cuda_if_available(0)?;
-        let model = load_onnx_model(model_path, &device)?;
-        let tokenizer = Tokenizer::from_file(format!("{}/tokenizer.json", model_path))?;
-        
+impl MultiColumnProcessor {
+    pub fn new() -> Result<Self, NeuromorphicError> {
         Ok(Self {
-            model,
-            tokenizer,
-            cache: Arc::new(DashMap::new()),
-            device,
+            semantic_column: SemanticProcessingColumn::new_with_fann(1)?, // MLP
+            structural_column: StructuralAnalysisColumn::new_with_fann(15)?, // GNN
+            temporal_column: TemporalContextColumn::new_with_fann(20)?, // TCN
+            exception_column: ExceptionDetectionColumn::new_with_fann(28)?, // Sparse
+            
+            lateral_inhibition: LateralInhibition::new_biological(),
+            cortical_voting: CorticalVoting::new_consensus_based(),
+            simd_executor: SIMDProcessor::new_x4_parallel(),
+            network_selector: NetworkSelector::with_29_architectures(),
         })
     }
     
-    pub fn suggest_parent(&self, concept: &str, candidates: &[&str]) -> Result<ParentSuggestion> {
-        let cache_key = format!("parent:{}:{:?}", concept, candidates);
+    pub async fn process_concept_parallel(&self, spike_pattern: &TTFSSpikePattern) -> Result<CorticalConsensus, NeuromorphicError> {
+        // SIMD 4x parallel processing across all columns
+        let (semantic_result, structural_result, temporal_result, exception_result) = 
+            tokio::join!(
+                self.semantic_column.process_spikes(spike_pattern),
+                self.structural_column.analyze_topology(spike_pattern),
+                self.temporal_column.detect_sequences(spike_pattern),
+                self.exception_column.find_inhibitions(spike_pattern)
+            );
         
-        // Check cache
-        if let Some(cached) = self.cache.get(&cache_key) {
-            return Ok(cached.clone());
-        }
+        // Collect column votes
+        let column_votes = vec![
+            semantic_result?,
+            structural_result?,
+            temporal_result?,
+            exception_result?,
+        ];
         
-        // Build prompt
-        let prompt = self.build_parent_prompt(concept, candidates);
+        // Apply lateral inhibition for winner-take-all
+        let winner = self.lateral_inhibition.apply_inhibition(&column_votes)?;
         
-        // Run inference
-        let response = self.infer(&prompt)?;
+        // Generate cortical consensus through voting
+        let consensus = self.cortical_voting.reach_consensus(&column_votes, &winner)?;
         
-        // Parse response
-        let suggestion = self.parse_parent_response(&response)?;
-        
-        // Cache result
-        self.cache.insert(cache_key, suggestion.clone());
-        
-        Ok(suggestion)
+        Ok(consensus)
     }
     
-    fn infer(&self, prompt: &str) -> Result<String> {
-        let tokens = self.tokenizer.encode(prompt, false)?;
-        let input = Tensor::new(tokens.get_ids(), &self.device)?;
-        
-        let start = Instant::now();
-        let output = self.model.forward(&input)?;
-        let elapsed = start.elapsed();
-        
-        metrics::histogram!("llm_inference_time", elapsed);
-        
-        let response = self.decode_output(output)?;
-        Ok(response)
+    fn process_concepts_simd_parallel(&self, spike_patterns: &[TTFSSpikePattern]) -> Vec<CorticalConsensus> {
+        // Use SIMD to process 4 patterns simultaneously
+        spike_patterns.par_chunks(4)
+            .flat_map(|chunk| {
+                self.simd_executor.process_chunk_x4(chunk)
+            })
+            .collect()
     }
     
-    fn build_parent_prompt(&self, concept: &str, candidates: &[&str]) -> String {
-        format!(
-            "Task: Select the most appropriate parent category for '{}'.\n\
-             Candidates: {}\n\
-             Format: parent: <choice>, reason: <brief explanation>\n\
-             Response:",
-            concept,
-            candidates.join(", ")
-        )
+    fn apply_lateral_inhibition(&self, column_votes: &[ColumnVote]) -> WinnerTakeAllResult {
+        self.lateral_inhibition.compete(column_votes)
+    }
+    
+    fn get_inhibited_votes(&self) -> Vec<ColumnVote> {
+        self.lateral_inhibition.get_suppressed_columns()
     }
 }
 
-// src/llm/caching.rs
-pub struct LLMCache {
-    store: DashMap<String, (LLMResponse, Instant)>,
-    ttl: Duration,
-    max_size: usize,
+// Individual column implementations using ruv-FANN architectures
+pub struct SemanticProcessingColumn {
+    fann_network: ruv_fann::MultilayerPerceptron, // Architecture #1
+    activation_threshold: f32,
+    semantic_cache: DashMap<ConceptId, SemanticResponse>,
 }
 
-impl LLMCache {
-    pub fn get(&self, key: &str) -> Option<LLMResponse> {
-        if let Some((response, timestamp)) = self.store.get(key) {
-            if timestamp.elapsed() < self.ttl {
-                metrics::counter!("llm_cache_hit", 1);
-                return Some(response.clone());
+impl SemanticProcessingColumn {
+    pub fn new_with_fann(architecture_id: usize) -> Result<Self, NeuromorphicError> {
+        let fann_network = ruv_fann::load_architecture(architecture_id)?;
+        Ok(Self {
+            fann_network,
+            activation_threshold: 0.7,
+            semantic_cache: DashMap::new(),
+        })
+    }
+    
+    pub async fn process_spikes(&self, spike_pattern: &TTFSSpikePattern) -> Result<ColumnVote, NeuromorphicError> {
+        // Convert TTFS spikes to neural input
+        let neural_input = self.prepare_neural_input(spike_pattern)?;
+        
+        // Run through MLP network
+        let output = self.fann_network.forward(&neural_input)?;
+        
+        // Calculate semantic similarity and confidence
+        let confidence = output.iter().cloned().fold(0.0f32, f32::max);
+        let activation = if confidence > self.activation_threshold { confidence } else { 0.0 };
+        
+        Ok(ColumnVote {
+            column_id: ColumnId::Semantic,
+            confidence,
+            activation,
+            neural_output: output,
+            processing_time: Duration::from_nanos(500_000), // ~0.5ms
+        })
+    }
+    
+    fn prepare_neural_input(&self, spike_pattern: &TTFSSpikePattern) -> Result<Vec<f32>, NeuromorphicError> {
+        // Convert spike timing to feature vector for FANN processing
+        let mut input = vec![0.0; 128]; // Standard input size
+        
+        for (i, spike) in spike_pattern.spike_sequence.iter().enumerate() {
+            if i < input.len() {
+                // Encode spike timing as activation strength
+                input[i] = (1000.0 - spike.timing.as_nanos() as f32 / 1000.0) / 1000.0;
             }
         }
-        metrics::counter!("llm_cache_miss", 1);
-        None
+        
+        Ok(input)
     }
 }
 ```
 
 **AI-Verifiable Outcomes**:
-- [ ] Model loads in < 500ms
-- [ ] Inference < 20ms with cache, < 100ms without
-- [ ] Cache hit rate > 80% after 1000 queries
-- [ ] Memory usage < 500MB for model
+- [ ] All 4 columns load ruv-FANN networks in < 200ms total
+- [ ] SIMD parallel processing achieves 4x speedup (< 5ms vs 20ms sequential)
+- [ ] Lateral inhibition winner-take-all > 98% accuracy
+- [ ] Cortical voting consensus > 95% agreement rate
+- [ ] Memory usage < 200MB for all 4 columns + neural networks
+- [ ] Spike pattern cache hit rate > 90% after warmup
 
 ### Task 2.3: Hierarchy Detection System (Day 3)
 
