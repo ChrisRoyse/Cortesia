@@ -73,12 +73,21 @@ Neuromorphic Hardware (Intel Loihi / IBM TrueNorth acceleration)
 
 ### Core Modules
 
+0. **Parsing Quality Assurance System (CRITICAL PREREQUISITE)**
+   - Multi-stage validation pipeline (syntax → semantic → logical)
+   - Confidence scoring for every parsed fact (>95% accuracy required)
+   - Ambiguity detection and resolution mechanisms
+   - Error recovery with fallback parsing strategies
+   - Quality gates preventing low-confidence facts from entering allocation
+   - **Without this, the entire system fails - "garbage in, garbage out"**
+
 1. **Neuromorphic Cortical Allocation Engine**
    - <1ms TTFS fact allocation with spike timing precision
    - Multi-column parallel processing (semantic, structural, temporal, exception)
    - Lateral inhibition circuits with winner-take-all dynamics
    - Cascade correlation network growth and adaptation
    - SIMD-accelerated spike pattern processing
+   - **Scalable Architecture (Phase 2A)**: HNSW indexing + multi-tier caching for billion-node scaling
 
 2. **Neuromorphic Temporal Versioning System**
    - Git-like branching with STDP learning integration
@@ -136,6 +145,12 @@ Neuromorphic Hardware (Intel Loihi / IBM TrueNorth acceleration)
 - Concept analysis with LLMs
 - Synaptic strengthening
 
+### Phase 2A: Scalable Allocation Architecture (Week 3-4, parallel)
+- HNSW hierarchical indexing for O(log n) search
+- Multi-tier memory architecture (L1/L2/L3 caching)
+- Distributed processing framework
+- Adaptive quantization for memory optimization
+
 ### Phase 3: Sparse Storage (Week 4)
 - Graph storage (<5% connectivity)
 - Memory-mapped persistence
@@ -146,10 +161,13 @@ Neuromorphic Hardware (Intel Loihi / IBM TrueNorth acceleration)
 - Exception handling
 - 10x compression achievement
 
-### Phase 5: Temporal Versioning (Week 6)
+### Phase 5: Temporal Versioning with Truth Maintenance (Week 6)
 - Branch management system
 - Time-travel capabilities
 - Memory consolidation
+- Truth Maintenance System (JTMS/ATMS)
+- AGM belief revision
+- Conflict resolution strategies
 
 ### Phase 6: Multi-Database Bridge (Week 7)
 - Cross-database connections
@@ -178,8 +196,10 @@ Neuromorphic Hardware (Intel Loihi / IBM TrueNorth acceleration)
 
 ### Phase 11: Production Features (Week 12)
 - Performance optimization
-- Monitoring and observability
+- Monitoring and observability (including TMS health)
 - Documentation
+- Belief consistency monitoring
+- Conflict resolution tracking
 
 ## Key Innovations
 
@@ -251,16 +271,58 @@ pub enum MemoryType {
 }
 ```
 
-## Performance Targets
+### 5. Neuromorphic Truth Maintenance System
+```rust
+// Hybrid JTMS-ATMS with belief revision
+pub struct NeuromorphicTMS {
+    jtms_layer: JustificationBasedTMS,      // Dependency tracking
+    atms_layer: AssumptionBasedTMS,         // Multi-context reasoning
+    belief_revision: AGMBeliefRevision,     // Principled belief updates
+    
+    pub async fn handle_contradiction(&mut self, conflict: &Conflict) -> Resolution {
+        // Multi-strategy conflict resolution
+        // Source reliability, temporal reasoning, evidence-based
+        // All implemented through spiking neural networks
+    }
+}
+```
 
-| Operation | Target | Reasoning |
-|-----------|--------|-----------|
-| Fact Allocation | <5ms | Cortical column activation |
-| Document Processing | <50ms | Parallel scene processing |
-| Cross-DB Pattern | <100ms | Neural bridge activation |
-| Time-Travel Query | <20ms | Indexed temporal states |
-| Branch Creation | <10ms | Copy-on-write columns |
-| LLM Enhancement | <30ms | Cached small model |
+## Performance Targets (Flexible Goals)
+
+**Note**: These are aspirational targets for a novel neuromorphic system. As this architecture has never been implemented before, actual performance will be discovered through experimentation. The primary goal is to **outperform existing knowledge graph systems** rather than hit specific numbers.
+
+### Comparative Performance Goals
+
+| Operation | Goal | Baseline Comparison |
+|-----------|------|---------------------|
+| Fact Allocation | Better than Neo4j | Neo4j: ~50ms for complex patterns |
+| Document Processing | Better than traditional | SQL JOIN: ~200ms for multi-table |
+| Cross-DB Pattern | Better than Federation | GraphQL Federation: ~500ms |
+| Time-Travel Query | Better than git | Git history: ~100ms for deep search |
+| Branch Creation | Better than git branch | Git: ~50ms for large repos |
+| LLM Enhancement | Better than API calls | OpenAI API: ~1000ms |
+| Belief Revision | <5ms per revision | Traditional TMS: ~20ms |
+| Conflict Resolution | >95% success rate | Rule engines: ~80% |
+| **Scalable Allocation (Phase 2A)** | **O(log n) scaling** | **Linear search: O(n)** |
+| 1M nodes | <1ms allocation | Traditional: ~100ms |
+| 100M nodes | <10ms allocation | Traditional: ~10s |
+| 1B nodes | <100ms allocation | Traditional: impractical |
+
+### CPU-Optimized Performance
+
+**Important**: All performance targets assume **CPU-only execution** (no GPU required):
+- Optimized for modern multi-core CPUs (like Intel i9)
+- SIMD acceleration where available
+- No CUDA/GPU dependencies
+- Parallel processing via CPU threads
+
+### Flexible Benchmarking Philosophy
+
+1. **Relative Performance**: Success = faster than current best-in-class
+2. **Progressive Improvement**: Initial versions may be slower, optimize iteratively
+3. **Hardware Adaptive**: Performance scales with available CPU cores
+4. **No Hard Failures**: Missing targets doesn't break the system
+5. **Continuous Monitoring**: Track trends rather than absolute numbers
 
 ## SPARC Methodology
 
@@ -283,19 +345,25 @@ Following London School TDD:
 
 ## Success Criteria
 
-### Functional Requirements
-- [ ] 5ms cortical allocation
-- [ ] 10x inheritance compression
+### Functional Requirements (Must Have)
+- [ ] Cortical allocation faster than traditional KG insertion
+- [ ] Inheritance compression better than baseline storage
 - [ ] Temporal versioning with branches
 - [ ] Cross-database pattern detection
 - [ ] LLM-enhanced allocation
 - [ ] WASM compilation
 
-### Performance Requirements
-- [ ] 10,000 facts/second throughput
-- [ ] <5% memory connectivity
-- [ ] <100ms cross-database analysis
-- [ ] <1GB memory for 1M facts
+### Performance Goals (Flexible Targets)
+- [ ] Throughput: Better than Neo4j (~5K nodes/second)
+- [ ] Memory efficiency: Better than in-memory graphs
+- [ ] Cross-database analysis: Faster than GraphQL federation
+- [ ] Storage: More efficient than traditional triple stores
+
+**Note**: Specific numbers (5ms, 10K/sec, etc.) are aspirational goals. Success is measured by:
+1. **Relative improvement** over existing systems
+2. **Consistent performance** on CPU-only hardware
+3. **Scalability** with available resources
+4. **User-perceptible** improvements
 
 ### Advanced Features
 - [ ] Automatic knowledge emergence
@@ -307,6 +375,7 @@ Following London School TDD:
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
+| **Parsing quality failure** | **CRITICAL** | **Phase 0A mandatory quality assurance** |
 | LLM latency | High | Local small models, caching |
 | Cross-DB complexity | High | Start with 2 DBs, scale gradually |
 | Memory usage | Medium | Aggressive pruning, compression |
@@ -316,12 +385,24 @@ Following London School TDD:
 
 "We're not building a database - we're building a brain. Every decision should ask: How does biological memory do this?"
 
-Key principles:
-- Allocation over validation
-- Structure over statistics  
-- Emergence over explicit programming
-- Compression through inheritance
-- Time as a first-class concept
+### Core Principles (In Priority Order)
+
+1. **Quality-First Parsing** (Phase 0A) - Without high-quality input parsing, everything fails
+2. **Allocation over validation** - The brain allocates first, validates later
+3. **Structure over statistics** - Relationships matter more than counts
+4. **Emergence over explicit programming** - Let patterns arise naturally
+5. **Compression through inheritance** - Biological efficiency through hierarchy
+6. **Time as a first-class concept** - Memory is inherently temporal
+
+### Critical Foundation: Parsing Quality Assurance
+
+**Phase 0A is MANDATORY** - The system's intelligence is only as good as its input quality:
+- Multi-stage validation pipeline ensures >95% parsing accuracy
+- Every fact must have confidence scores and pass quality gates
+- Ambiguity resolution prevents confusion in the knowledge graph
+- Without this foundation, even perfect neuromorphic processing produces garbage
+
+The allocation-first paradigm only works when we're allocating validated, high-quality facts.
 
 ## Dependency Analysis and Phase Interdependencies
 
@@ -329,7 +410,8 @@ Key principles:
 
 ```mermaid
 graph TD
-    P0[Phase 0: Foundation] --> P1[Phase 1: Cortical Core]
+    P0[Phase 0: Foundation] --> P0A[Phase 0A: Parsing Quality]
+    P0A --> P1[Phase 1: Cortical Core]
     P1 --> P2[Phase 2: Allocation System]
     P1 --> P3[Phase 3: Sparse Storage]
     P2 --> P4[Phase 4: Inheritance]
@@ -345,6 +427,7 @@ graph TD
     P10 --> P11
     
     style P0 fill:#f9f,stroke:#333,stroke-width:4px
+    style P0A fill:#ff6b6b,stroke:#333,stroke-width:4px
     style P1 fill:#f9f,stroke:#333,stroke-width:4px
     style P4 fill:#f9f,stroke:#333,stroke-width:4px
     style P8 fill:#f9f,stroke:#333,stroke-width:4px
@@ -609,6 +692,67 @@ Architecture Deep Dive (2 hours):
 ├── Biological fidelity check
 └── Go/No-Go preliminary assessment
 ```
+
+## Operational Monitoring and Health Management
+
+### Neural Health Monitoring System
+
+The CortexKG system includes comprehensive autonomous health monitoring designed for AI-to-AI operation without human intervention. See `NEUROMORPHIC_HEALTH_MONITORING.md` for detailed implementation.
+
+#### Core Monitoring Components
+
+1. **Real-Time Health Metrics**
+   - Spike rate monitoring (40-60 Hz healthy range)
+   - Refractory violation detection (<0.1% threshold)
+   - Allocation latency tracking (<1ms target)
+   - Convergence rate analysis (>95% healthy)
+   - Memory pressure monitoring (<80% optimal)
+
+2. **Synaptic Weight Drift Detection**
+   - Continuous weight stability tracking
+   - Drift velocity calculations
+   - Pathological pattern recognition
+   - Automatic remediation strategies
+
+3. **Performance Degradation Patterns**
+   - Early warning system (5%/15%/30% thresholds)
+   - Predictive failure analysis (1-hour horizon)
+   - Degradation pattern classification
+   - Intervention point identification
+
+4. **Maintenance Scheduling**
+   - Adaptive maintenance windows
+   - Proactive component refresh
+   - Load-aware scheduling
+   - Emergency maintenance triggers
+
+#### Integration with MCP Tools
+
+```rust
+// Health monitoring exposed as MCP tool
+pub struct NeuralHealthTool {
+    name: "neural_health_monitor",
+    description: "Monitor and maintain neural network health",
+    actions: ["check_health", "predict_failure", "schedule_maintenance"]
+}
+```
+
+#### Operational Overhead
+
+- Health monitoring: <0.1% CPU overhead
+- Drift detection: <0.5% memory overhead  
+- Maintenance windows: 0-20% temporary impact
+- Total monitoring cost: <2% performance
+
+### Neural Network Architecture Philosophy
+
+**Important**: The system has access to 29 different neural network architectures through ruv-FANN, but **only 1-3 network types are expected to be used** in practice:
+
+- **LSTM**: For all temporal/sequential processing
+- **Standard MLP**: For all classification/transformation tasks  
+- **TCN** (optional): For performance-critical paths
+
+The 29 available networks are OPTIONS for future optimization, not requirements. This simplification strategy reduces complexity while maintaining full neuromorphic capabilities.
 
 ## Next Steps
 

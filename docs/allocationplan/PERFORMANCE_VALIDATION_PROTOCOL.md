@@ -9,19 +9,54 @@
 
 This document defines the complete performance validation framework for the CortexKG neuromorphic memory system. The protocol ensures all components meet production targets while maintaining biological accuracy and provides comprehensive benchmarking for continuous optimization.
 
+## Flexible Benchmarking Philosophy
+
+### Core Principles
+
+1. **Comparative Over Absolute**: Success is measured by outperforming existing systems, not hitting specific numbers
+2. **CPU-Only Design**: All benchmarks assume no GPU availability - optimized for multi-core CPUs
+3. **Progressive Improvement**: Initial versions establish baselines, subsequent versions improve
+4. **Adaptive Targets**: Performance goals adjust based on hardware capabilities and real-world results
+5. **Novel System Reality**: As this architecture has never been built before, we discover performance through experimentation
+
+### Why Flexible Benchmarks?
+
+- **Unprecedented Architecture**: Neuromorphic knowledge graphs with TTFS encoding are novel
+- **Hardware Variability**: Performance varies significantly across CPU architectures
+- **Iterative Discovery**: Each implementation reveals new optimization opportunities
+- **User-Centric Success**: "Faster than what exists" matters more than arbitrary numbers
+
 ## SPARC Implementation
 
 ### Specification
 
-**Performance Target Validation:**
-- MCP Response Time: <100ms (99th percentile)
-- Neural Network Allocation: <5ms (average)
-- Training Completion: <100ms basic, <500ms complex
-- Memory Allocation: <10ms including inheritance
-- Graph Traversal: <50ms for 6-hop queries
-- Throughput: >1000 operations/minute sustained
-- Memory Usage: <2GB for 1M memories
-- Availability: 99.9% uptime
+**Performance Target Validation (Flexible Goals):**
+
+**Note**: These targets are aspirational for a novel neuromorphic system. Success is measured by outperforming existing knowledge graph systems, not hitting specific numbers.
+
+**Comparative Performance Targets:**
+- MCP Response Time: Better than REST API calls (baseline: ~200ms)
+- Neural Network Allocation: Faster than graph DB insertion (baseline: Neo4j ~50ms)
+- Training Completion: Competitive with lightweight ML models
+- Memory Allocation: More efficient than traditional KG storage
+- Graph Traversal: Faster than SPARQL/Cypher queries
+- Throughput: Better than existing KG systems (Neo4j: ~500 ops/min)
+- Memory Usage: More efficient than in-memory graphs
+- Availability: Industry standard (99.9% remains the goal)
+
+**CPU-Only Optimization:**
+- All targets assume CPU-only execution (no GPU required)
+- Optimized for multi-core processors (Intel i9 class)
+- SIMD acceleration where available
+- No CUDA dependencies
+
+**Parsing Quality Validation (CRITICAL):**
+- **Parsing Accuracy**: >95% precision on fact extraction (mandatory threshold)
+- **Confidence Scoring**: 100% coverage - every fact must have confidence score
+- **Ambiguity Resolution**: >90% successful disambiguation rate
+- **Error Recovery**: <5% unrecoverable parsing failures
+- **Quality Gate Effectiveness**: <0.1% low-quality facts reaching allocation
+- **Multi-stage Validation**: All facts pass syntax → semantic → logical checks
 
 **Biological Accuracy Validation:**
 - TTFS Encoding Precision: ±10μs accuracy
@@ -76,58 +111,107 @@ use tokio::time::timeout;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceTargets {
-    // MCP Performance Targets
-    pub mcp_response_time_p99: Duration,
-    pub mcp_response_time_avg: Duration,
-    pub mcp_throughput_ops_per_min: u32,
+    // Flexible Performance Goals (not hard requirements)
+    pub goals: PerformanceGoals,
     
-    // Neural Network Targets
-    pub nn_allocation_time_avg: Duration,
-    pub nn_training_time_basic: Duration,
-    pub nn_training_time_complex: Duration,
-    pub nn_inference_time_max: Duration,
+    // Baseline Comparisons (what we're trying to beat)
+    pub baselines: BaselineComparisons,
     
-    // Knowledge Graph Targets
-    pub kg_allocation_time_max: Duration,
-    pub kg_retrieval_time_avg: Duration,
-    pub kg_traversal_time_6hop: Duration,
+    // Parsing Quality Targets (CRITICAL - these are mandatory)
+    pub parsing_quality: ParsingQualityTargets,
     
-    // Biological Accuracy Targets
+    // Biological Accuracy Targets (these remain precise)
+    pub biological_accuracy: BiologicalTargets,
+    
+    // System Configuration
+    pub system_config: SystemConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceGoals {
+    // These are aspirational - actual performance will vary
+    pub mcp_response_time_goal: Duration,
+    pub throughput_goal_ops_per_min: u32,
+    pub allocation_time_goal: Duration,
+    pub traversal_time_goal: Duration,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BaselineComparisons {
+    // What existing systems achieve (we aim to beat these)
+    pub neo4j_insertion_time: Duration,
+    pub rest_api_response_time: Duration,
+    pub sparql_query_time: Duration,
+    pub sql_join_time: Duration,
+    pub graphql_federation_time: Duration,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParsingQualityTargets {
+    // These are MANDATORY thresholds - system fails if not met
+    pub parsing_accuracy_threshold: f32,
+    pub confidence_coverage_percent: f32,
+    pub ambiguity_resolution_rate: f32,
+    pub error_recovery_rate: f32,
+    pub quality_gate_effectiveness: f32,
+    pub validation_stage_compliance: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BiologicalTargets {
+    // These remain precise for biological accuracy
     pub ttfs_precision_tolerance: Duration,
     pub lateral_inhibition_convergence: Duration,
     pub cortical_sync_drift_max: Duration,
     pub spike_timing_precision: Duration,
-    
-    // System Targets
-    pub memory_usage_limit_gb: f32,
-    pub cpu_utilization_max_percent: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemConfig {
+    pub cpu_only_mode: bool,
+    pub target_cpu_utilization: f32,
     pub availability_target_percent: f32,
 }
 
 impl Default for PerformanceTargets {
     fn default() -> Self {
         Self {
-            mcp_response_time_p99: Duration::from_millis(100),
-            mcp_response_time_avg: Duration::from_millis(50),
-            mcp_throughput_ops_per_min: 1000,
-            
-            nn_allocation_time_avg: Duration::from_millis(5),
-            nn_training_time_basic: Duration::from_millis(100),
-            nn_training_time_complex: Duration::from_millis(500),
-            nn_inference_time_max: Duration::from_millis(25),
-            
-            kg_allocation_time_max: Duration::from_millis(10),
-            kg_retrieval_time_avg: Duration::from_millis(5),
-            kg_traversal_time_6hop: Duration::from_millis(50),
-            
-            ttfs_precision_tolerance: Duration::from_micros(10),
-            lateral_inhibition_convergence: Duration::from_micros(500),
-            cortical_sync_drift_max: Duration::from_millis(1),
-            spike_timing_precision: Duration::from_micros(100),
-            
-            memory_usage_limit_gb: 2.0,
-            cpu_utilization_max_percent: 80.0,
-            availability_target_percent: 99.9,
+            goals: PerformanceGoals {
+                // Aspirational goals - will adjust based on actual performance
+                mcp_response_time_goal: Duration::from_millis(100),
+                throughput_goal_ops_per_min: 1000,
+                allocation_time_goal: Duration::from_millis(10),
+                traversal_time_goal: Duration::from_millis(50),
+            },
+            baselines: BaselineComparisons {
+                // Typical performance of existing systems
+                neo4j_insertion_time: Duration::from_millis(50),
+                rest_api_response_time: Duration::from_millis(200),
+                sparql_query_time: Duration::from_millis(100),
+                sql_join_time: Duration::from_millis(200),
+                graphql_federation_time: Duration::from_millis(500),
+            },
+            parsing_quality: ParsingQualityTargets {
+                // CRITICAL: These are mandatory minimums
+                parsing_accuracy_threshold: 0.95,  // 95% accuracy required
+                confidence_coverage_percent: 1.0,  // 100% facts must have confidence
+                ambiguity_resolution_rate: 0.9,    // 90% disambiguation success
+                error_recovery_rate: 0.95,         // 95% recovery from errors
+                quality_gate_effectiveness: 0.999, // <0.1% bad facts pass gate
+                validation_stage_compliance: 1.0,  // All stages must pass
+            },
+            biological_accuracy: BiologicalTargets {
+                // These remain precise for neuromorphic accuracy
+                ttfs_precision_tolerance: Duration::from_micros(10),
+                lateral_inhibition_convergence: Duration::from_micros(500),
+                cortical_sync_drift_max: Duration::from_millis(1),
+                spike_timing_precision: Duration::from_micros(100),
+            },
+            system_config: SystemConfig {
+                cpu_only_mode: true,  // No GPU required
+                target_cpu_utilization: 80.0,
+                availability_target_percent: 99.9,
+            },
         }
     }
 }

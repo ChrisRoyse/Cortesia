@@ -32,6 +32,13 @@
 - [ ] Refractory period compliance: 100% (no timing violations)
 - [ ] No synaptic weight drift over 24-hour continuous learning
 
+### Scalability Metrics (Phase 2A)
+- [ ] 1M nodes: Sub-millisecond allocation decisions
+- [ ] 100M nodes: <10ms allocation with 95%+ accuracy
+- [ ] 1B+ nodes: <100ms allocation with distributed processing
+- [ ] Search complexity: O(log n) with HNSW indexing
+- [ ] Memory reduction: 4-32x through adaptive quantization
+
 ## SPARC Methodology Application
 
 ### Specification
@@ -62,11 +69,22 @@ Spike Patterns   [Semantic│Structural│    Winner-Take-All      Cortical
 
 ```
 NEUROMORPHIC_ALLOCATION:
-    INPUT: raw_concepts, existing_neural_graph
+    INPUT: validated_facts (from Phase 0A), existing_neural_graph
     OUTPUT: spike_allocation_results
     
+    // CRITICAL: Only process high-quality validated facts
+    // Facts must have passed Phase 0A quality gates:
+    // - Parsing accuracy > 95%
+    // - Confidence scores attached
+    // - Ambiguities resolved
+    // - Multi-stage validation complete
+    
+    FOR EACH fact IN validated_facts:
+        ASSERT fact.quality_score > MINIMUM_QUALITY_THRESHOLD (0.8)
+        ASSERT fact.validation_stages == ["syntax", "semantic", "logical"]
+    
     // Phase 1: TTFS Encoding (< 1ms)
-    spike_patterns = encode_concepts_to_ttfs(raw_concepts)
+    spike_patterns = encode_validated_facts_to_ttfs(validated_facts)
     
     FOR EACH spike_pattern IN spike_patterns:
         // Phase 2: Multi-Column Parallel Processing (< 5ms)
@@ -108,6 +126,12 @@ NEUROMORPHIC_ALLOCATION:
 ```
 neuromorphic-allocation-engine/
 ├── src/
+│   ├── quality_integration/        # CRITICAL: Phase 0A Integration
+│   │   ├── mod.rs
+│   │   ├── fact_validator.rs      # Verify Phase 0A quality scores
+│   │   ├── confidence_filter.rs   # Filter low-confidence facts
+│   │   ├── quality_gates.rs       # Enforce minimum thresholds
+│   │   └── validation_metrics.rs  # Track quality compliance
 │   ├── ttfs_encoding/
 │   │   ├── mod.rs
 │   │   ├── spike_encoder.rs       # Time-to-First-Spike encoding
@@ -132,11 +156,17 @@ neuromorphic-allocation-engine/
 │   │   ├── network_selector.rs    # Choose optimal architecture
 │   │   ├── ephemeral_networks.rs  # On-demand network creation
 │   │   └── simd_acceleration.rs   # 4x parallel SIMD processing
-│   └── cortical_columns/
+│   ├── cortical_columns/
+│   │   ├── mod.rs
+│   │   ├── column_manager.rs      # Cortical column allocation
+│   │   ├── neural_inheritance.rs  # Biological inheritance rules
+│   │   └── circuit_breaker.rs     # Fault-tolerant processing
+│   └── belief_integration/
 │       ├── mod.rs
-│       ├── column_manager.rs      # Cortical column allocation
-│       ├── neural_inheritance.rs  # Biological inheritance rules
-│       └── circuit_breaker.rs     # Fault-tolerant processing
+│       ├── belief_aware_allocation.rs  # TMS-integrated allocation
+│       ├── justification_tracker.rs    # Track allocation justifications
+│       ├── context_switcher.rs         # Multi-context allocation
+│       └── conflict_detector.rs        # Early conflict detection
 ```
 
 ### Refinement
@@ -158,7 +188,101 @@ Phase complete when:
 
 ## Task Breakdown
 
-### Task 2.1: TTFS Encoding and Spike Pattern Generation (Day 1)
+### Task 2.0: Phase 0A Quality Integration (CRITICAL - Day 1 Morning)
+
+**Specification**: Integrate with Phase 0A to ensure only high-quality validated facts enter allocation
+
+**Quality-First Test-Driven Development**:
+
+```rust
+#[test]
+fn test_quality_gate_enforcement() {
+    let quality_gate = QualityGate::new(ParsingQualityConfig {
+        min_confidence_for_allocation: 0.8,
+        require_all_validations: true,
+        ..Default::default()
+    });
+    
+    // High-quality fact should pass
+    let good_fact = ValidatedFact {
+        content: FactContent::new("Elephants have trunks"),
+        quality_score: 0.95,
+        validation_chain: vec!["syntax", "semantic", "logical"],
+        confidence_components: ConfidenceComponents {
+            syntax_confidence: 0.98,
+            entity_confidence: 0.92,
+            semantic_confidence: 0.94,
+            ..Default::default()
+        },
+    };
+    
+    assert!(quality_gate.should_allocate(&good_fact));
+    
+    // Low-quality fact should be rejected
+    let bad_fact = ValidatedFact {
+        content: FactContent::new("Thing stuff whatever"),
+        quality_score: 0.3,
+        validation_chain: vec!["syntax"], // Missing validations
+        ..Default::default()
+    };
+    
+    assert!(!quality_gate.should_allocate(&bad_fact));
+}
+
+#[test]
+fn test_confidence_propagation() {
+    let allocator = QualityAwareAllocator::new();
+    let validated_fact = create_test_validated_fact(0.85);
+    
+    let allocation_result = allocator.allocate_with_confidence(validated_fact).await?;
+    
+    // Confidence should propagate to allocation
+    assert_eq!(allocation_result.source_confidence, 0.85);
+    assert!(allocation_result.allocation_confidence > 0.8);
+}
+```
+
+**Implementation**:
+
+```rust
+pub struct QualityGate {
+    config: ParsingQualityConfig,
+    metrics: QualityMetrics,
+}
+
+impl QualityGate {
+    pub fn should_allocate(&self, fact: &ValidatedFact) -> bool {
+        // Enforce minimum quality score
+        if fact.quality_score < self.config.min_confidence_for_allocation {
+            self.metrics.record_rejection(fact, "low_quality_score");
+            return false;
+        }
+        
+        // Verify all validation stages passed
+        if self.config.require_all_validations {
+            let required_stages = ["syntax", "semantic", "logical"];
+            let has_all_stages = required_stages.iter()
+                .all(|stage| fact.validation_chain.contains(&stage.to_string()));
+            
+            if !has_all_stages {
+                self.metrics.record_rejection(fact, "incomplete_validation");
+                return false;
+            }
+        }
+        
+        // Additional quality checks
+        if fact.ambiguity_flags.len() > 0 && !fact.ambiguity_resolved {
+            self.metrics.record_rejection(fact, "unresolved_ambiguity");
+            return false;
+        }
+        
+        self.metrics.record_acceptance(fact);
+        true
+    }
+}
+```
+
+### Task 2.1: TTFS Encoding and Spike Pattern Generation (Day 1 Afternoon)
 
 **Specification**: Encode concepts as Time-to-First-Spike patterns with sub-millisecond precision
 
@@ -1220,6 +1344,346 @@ fn test_performance_benchmarks() {
 - [ ] Zero memory leaks in 24-hour test
 - [ ] Documentation coverage 100%
 
+### Task 2.9: Belief-Aware Allocation Integration (Day 7)
+
+**Specification**: Integrate Truth Maintenance System with allocation engine
+
+**Test-Driven Development**:
+
+```rust
+#[test]
+fn test_belief_aware_allocation() {
+    let mut engine = BeliefAwareAllocationEngine::new();
+    
+    // Add existing belief
+    let existing_belief = Belief::new(
+        "Tomatoes are vegetables",
+        vec![Justification::Common("Culinary classification")]
+    );
+    engine.add_belief(existing_belief).unwrap();
+    
+    // Try to allocate contradictory fact
+    let new_fact = ValidatedFact::new(
+        "Tomatoes are fruits",
+        vec![Justification::Scientific("Botanical classification")]
+    );
+    
+    let result = engine.allocate_with_belief_revision(new_fact).await.unwrap();
+    
+    // Should detect conflict and resolve
+    assert!(result.conflict_detected);
+    assert_eq!(result.resolution_strategy, ResolutionStrategy::SourceReliability);
+    assert!(result.revised_beliefs.contains("Tomatoes are fruits"));
+    
+    // Both beliefs maintained in different contexts
+    assert_eq!(result.contexts.len(), 2);
+    assert!(result.contexts.contains("culinary_context"));
+    assert!(result.contexts.contains("botanical_context"));
+}
+
+#[test]
+fn test_multi_context_allocation() {
+    let engine = MultiContextAllocationEngine::new();
+    
+    // Create market contexts
+    let optimistic_context = Context::new(vec![
+        Assumption::new("Economic growth continues"),
+        Assumption::new("Interest rates remain low"),
+    ]);
+    
+    let pessimistic_context = Context::new(vec![
+        Assumption::new("Recession imminent"),
+        Assumption::new("Interest rates will rise"),
+    ]);
+    
+    // Allocate fact in both contexts
+    let fact = ValidatedFact::new("Tech stocks will perform well");
+    
+    let results = engine.allocate_in_contexts(
+        fact, 
+        vec![optimistic_context, pessimistic_context]
+    ).await.unwrap();
+    
+    // Different allocations based on context
+    assert_eq!(results.len(), 2);
+    assert_ne!(results[0].allocation_pattern, results[1].allocation_pattern);
+    assert!(results[0].confidence > results[1].confidence);
+}
+
+#[test]
+fn test_justification_tracking() {
+    let mut engine = JustificationTrackingEngine::new();
+    
+    // Allocate with justifications
+    let fact = ValidatedFact::new(
+        "Paris is the capital of France",
+        vec![
+            Justification::Authority("Encyclopedia Britannica"),
+            Justification::Consensus("Universal agreement"),
+        ]
+    );
+    
+    let allocation = engine.allocate_with_justifications(fact).await.unwrap();
+    
+    // Verify justifications tracked
+    assert_eq!(allocation.justifications.len(), 2);
+    assert!(allocation.dependency_network.has_edges());
+    
+    // Test belief propagation
+    let dependent_fact = ValidatedFact::new(
+        "The Eiffel Tower is in the capital of France"
+    );
+    
+    let dependent_allocation = engine.allocate_dependent(
+        dependent_fact,
+        vec![allocation.id]
+    ).await.unwrap();
+    
+    // Should inherit justifications
+    assert!(dependent_allocation.inherited_justifications.len() > 0);
+}
+```
+
+**Implementation**:
+
+```rust
+// src/belief_integration/belief_aware_allocation.rs
+pub struct BeliefAwareAllocationEngine {
+    base_engine: AllocationEngine,
+    tms: TruthMaintenanceSystem,
+    conflict_resolver: ConflictResolver,
+}
+
+impl BeliefAwareAllocationEngine {
+    pub async fn allocate_with_belief_revision(&mut self, 
+                                             fact: ValidatedFact) 
+                                             -> Result<BeliefAwareAllocation> {
+        // Check for conflicts with existing beliefs
+        let potential_conflicts = self.tms.find_conflicts(&fact)?;
+        
+        if potential_conflicts.is_empty() {
+            // No conflicts, standard allocation
+            let allocation = self.base_engine.allocate(fact).await?;
+            
+            // Add to TMS
+            let belief = fact.to_belief();
+            self.tms.add_belief(belief)?;
+            
+            Ok(BeliefAwareAllocation {
+                allocation,
+                conflict_detected: false,
+                revised_beliefs: vec![],
+                contexts: vec!["default".to_string()],
+            })
+        } else {
+            // Resolve conflicts
+            let resolution = self.conflict_resolver.resolve(
+                &fact,
+                &potential_conflicts
+            )?;
+            
+            match resolution {
+                Resolution::AcceptNew => {
+                    // Revise beliefs and allocate
+                    let revised = self.tms.revise_beliefs(fact.to_belief())?;
+                    let allocation = self.base_engine.allocate(fact).await?;
+                    
+                    Ok(BeliefAwareAllocation {
+                        allocation,
+                        conflict_detected: true,
+                        resolution_strategy: resolution.strategy,
+                        revised_beliefs: revised,
+                        contexts: vec!["default".to_string()],
+                    })
+                }
+                Resolution::MaintainContexts(contexts) => {
+                    // Allocate in multiple contexts
+                    let mut context_allocations = Vec::new();
+                    
+                    for context in contexts {
+                        let contextual_allocation = self.allocate_in_context(
+                            &fact,
+                            &context
+                        ).await?;
+                        context_allocations.push(contextual_allocation);
+                    }
+                    
+                    Ok(BeliefAwareAllocation {
+                        allocation: context_allocations[0].clone(),
+                        conflict_detected: true,
+                        resolution_strategy: ResolutionStrategy::ContextSeparation,
+                        revised_beliefs: vec![],
+                        contexts: contexts.iter().map(|c| c.name.clone()).collect(),
+                    })
+                }
+            }
+        }
+    }
+}
+
+// src/belief_integration/context_switcher.rs
+pub struct MultiContextAllocationEngine {
+    contexts: HashMap<ContextId, ContextSpecificEngine>,
+    base_engine: AllocationEngine,
+}
+
+impl MultiContextAllocationEngine {
+    pub async fn allocate_in_contexts(&self,
+                                    fact: ValidatedFact,
+                                    contexts: Vec<Context>) 
+                                    -> Result<Vec<ContextualAllocation>> {
+        // Process in parallel across contexts
+        let futures: Vec<_> = contexts.into_iter()
+            .map(|ctx| self.allocate_in_context_async(fact.clone(), ctx))
+            .collect();
+        
+        futures::future::try_join_all(futures).await
+    }
+    
+    async fn allocate_in_context_async(&self,
+                                     fact: ValidatedFact,
+                                     context: Context) 
+                                     -> Result<ContextualAllocation> {
+        // Get context-specific engine
+        let engine = self.get_or_create_context_engine(&context).await?;
+        
+        // Apply context assumptions
+        let contextualized_fact = self.apply_context_assumptions(
+            &fact,
+            &context
+        )?;
+        
+        // Allocate with context-specific patterns
+        let allocation = engine.allocate(contextualized_fact).await?;
+        
+        Ok(ContextualAllocation {
+            context_id: context.id,
+            allocation,
+            confidence: self.calculate_contextual_confidence(&allocation, &context),
+        })
+    }
+}
+
+// src/belief_integration/conflict_detector.rs
+pub struct EarlyConflictDetector {
+    spike_pattern_cache: SpikePatternCache,
+    conflict_patterns: ConflictPatternLibrary,
+}
+
+impl EarlyConflictDetector {
+    pub fn detect_conflicts_early(&self, 
+                                spike_pattern: &SpikePattern) 
+                                -> Vec<PotentialConflict> {
+        let mut conflicts = Vec::new();
+        
+        // Check against known conflict patterns
+        for conflict_pattern in &self.conflict_patterns {
+            let similarity = self.calculate_spike_similarity(
+                spike_pattern,
+                &conflict_pattern.pattern
+            );
+            
+            if similarity > conflict_pattern.threshold {
+                conflicts.push(PotentialConflict {
+                    pattern_type: conflict_pattern.conflict_type.clone(),
+                    similarity,
+                    existing_belief: conflict_pattern.belief_id,
+                });
+            }
+        }
+        
+        // Use lateral inhibition to detect competition
+        let inhibition_result = self.simulate_lateral_inhibition(spike_pattern);
+        if inhibition_result.suppressed_patterns.len() > 0 {
+            for suppressed in inhibition_result.suppressed_patterns {
+                conflicts.push(PotentialConflict {
+                    pattern_type: ConflictType::CompetitiveInhibition,
+                    similarity: inhibition_result.inhibition_strength,
+                    existing_belief: suppressed.belief_id,
+                });
+            }
+        }
+        
+        conflicts
+    }
+}
+```
+
+**AI-Verifiable Outcomes**:
+- [ ] Belief-aware allocation working
+- [ ] Conflict detection < 2ms
+- [ ] Multi-context allocation functional
+- [ ] Justification tracking complete
+- [ ] Integration tests pass
+
+## Scalable Architecture Integration (Phase 2A)
+
+This phase includes the foundation for billion-node scalability through advanced architectural enhancements. See [PHASE_2A_SCALABLE_ALLOCATION_ARCHITECTURE.md](./PHASE_2A_SCALABLE_ALLOCATION_ARCHITECTURE.md) for complete implementation details.
+
+### Core Scalability Features
+
+**Hierarchical Indexing with HNSW**:
+- Multi-layer navigable graph structure
+- O(log n) search complexity instead of O(n)
+- 95%+ recall accuracy with proper parameters
+- Logarithmic scaling for billion-node graphs
+
+**Multi-Tier Memory Architecture**:
+- L1 Cache: 10K-100K ultra-fast nodes (1-2 cycles)
+- L2 Cache: 1M-10M medium-speed nodes (10-50 cycles)
+- L3 Store: Unlimited persistent storage (100-1000+ cycles)
+- Adaptive prefetching with ML prediction
+
+**Distributed Processing Framework**:
+- Hypergraph partitioning for optimal load distribution
+- Sparse communication protocols (73% overhead reduction)
+- Distributed lateral inhibition across partitions
+- Context-aware partition routing
+
+**Memory Optimization Strategies**:
+- Adaptive quantization (Full/Half/Q8/Q4/Binary)
+- 4-32x memory reduction through intelligent compression
+- Sparse representation leveraging natural graph sparsity
+- Dynamic precision based on node importance
+
+### Integration Points
+
+The scalable architecture seamlessly integrates with the core Phase 2 components:
+
+```rust
+pub struct ScalableNeuromorphicEngine {
+    // Core Phase 2 components
+    ttfs_encoder: TTFSSpikeEncoder,
+    multi_column_processor: MultiColumnProcessor,
+    lateral_inhibition: LateralInhibition,
+    
+    // Phase 2A scalability extensions
+    hnsw_index: HNSWAllocationIndex,
+    memory_hierarchy: MultiTierMemorySystem,
+    distributed_engine: DistributedAllocationEngine,
+    quantization_manager: AdaptiveQuantizationEngine,
+}
+```
+
+**Performance Scaling Targets**:
+- 1M nodes: <1ms allocation (Phase 2: <8ms baseline)
+- 100M nodes: <10ms allocation
+- 1B nodes: <100ms allocation
+- Memory usage: <100GB for 1B nodes
+- Energy efficiency: 5-10x improvement over traditional NNs
+
+### Implementation Strategy
+
+**Week 1**: Foundation (parallel with core Phase 2)
+- Implement HNSW hierarchical indexing
+- Design multi-tier cache architecture
+- Create adaptive quantization system
+
+**Week 2**: Integration and optimization
+- Integrate with existing SNN allocation engine
+- Implement distributed processing framework
+- Performance testing and benchmarking
+
 ## Phase 2 Deliverables
 
 ### Code Artifacts
@@ -1247,6 +1711,12 @@ fn test_performance_benchmarks() {
    - Chunking and parallelism
    - Stream processing
    - Metrics collection
+
+6. **Belief Integration**
+   - TMS-aware allocation
+   - Multi-context support
+   - Conflict detection
+   - Justification tracking
 
 ### Performance Report
 ```

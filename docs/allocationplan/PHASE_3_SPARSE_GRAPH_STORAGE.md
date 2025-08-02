@@ -119,11 +119,17 @@ sparse-storage/
 │   │   ├── atomic.rs           # Atomic operations
 │   │   ├── batch.rs            # Batch updates
 │   │   └── recovery.rs         # Crash recovery
-│   └── query/
+│   ├── query/
+│   │   ├── mod.rs
+│   │   ├── traversal.rs        # Graph traversal
+│   │   ├── shortest_path.rs    # Pathfinding
+│   │   └── pattern.rs          # Pattern matching
+│   └── belief_storage/
 │       ├── mod.rs
-│       ├── traversal.rs        # Graph traversal
-│       ├── shortest_path.rs    # Pathfinding
-│       └── pattern.rs          # Pattern matching
+│       ├── belief_persistence.rs   # Persist belief states
+│       ├── justification_store.rs  # Store justification networks
+│       ├── temporal_index.rs       # Time-based belief queries
+│       └── context_partitions.rs   # Multi-context storage
 ```
 
 ### Refinement
@@ -1032,7 +1038,269 @@ impl EdgeBloomFilter {
 - [ ] Bloom filter FP rate < 0.1%
 - [ ] Index build time reasonable
 
-### Task 3.5: Query Engine (Day 5)
+### Task 3.5: Belief Storage Integration (Day 5)
+
+**Specification**: Persist belief states and justification networks
+
+**Test-Driven Development**:
+
+```rust
+#[test]
+fn test_belief_persistence() {
+    let mut storage = BeliefStorage::new();
+    
+    // Create belief with justifications
+    let belief = Belief {
+        id: BeliefId::new(),
+        content: "Water boils at 100°C at sea level".to_string(),
+        justifications: vec![
+            Justification::Scientific("Physics textbook"),
+            Justification::Experimental("Lab measurement"),
+        ],
+        confidence: 0.95,
+        timestamp: SystemTime::now(),
+        contexts: vec!["physics", "chemistry"],
+    };
+    
+    // Persist belief
+    storage.store_belief(&belief).unwrap();
+    
+    // Retrieve and verify
+    let retrieved = storage.get_belief(&belief.id).unwrap();
+    assert_eq!(retrieved.content, belief.content);
+    assert_eq!(retrieved.justifications.len(), 2);
+    assert_eq!(retrieved.contexts, belief.contexts);
+}
+
+#[test]
+fn test_justification_network_storage() {
+    let mut storage = JustificationStore::new();
+    
+    // Create justification network
+    let j1 = JustificationId::new();
+    let j2 = JustificationId::new();
+    let j3 = JustificationId::new();
+    
+    // j3 depends on j1 and j2
+    storage.add_justification(j1, "Primary source", vec![]);
+    storage.add_justification(j2, "Secondary source", vec![]);
+    storage.add_justification(j3, "Derived conclusion", vec![j1, j2]);
+    
+    // Query dependencies
+    let deps = storage.get_dependencies(j3).unwrap();
+    assert_eq!(deps.len(), 2);
+    assert!(deps.contains(&j1));
+    assert!(deps.contains(&j2));
+    
+    // Query dependents
+    let dependents = storage.get_dependents(j1).unwrap();
+    assert!(dependents.contains(&j3));
+}
+
+#[test]
+fn test_temporal_belief_queries() {
+    let mut storage = TemporalBeliefIndex::new();
+    
+    // Add beliefs at different times
+    let t1 = SystemTime::now() - Duration::from_days(10);
+    let t2 = SystemTime::now() - Duration::from_days(5);
+    let t3 = SystemTime::now();
+    
+    storage.add_belief_at_time("Earth is flat", t1);
+    storage.add_belief_at_time("Earth might be round", t2);
+    storage.add_belief_at_time("Earth is round", t3);
+    
+    // Query beliefs at specific time
+    let beliefs_at_t1 = storage.beliefs_at_time(t1);
+    assert_eq!(beliefs_at_t1.len(), 1);
+    assert!(beliefs_at_t1[0].content.contains("flat"));
+    
+    // Query belief evolution
+    let evolution = storage.belief_evolution("Earth");
+    assert_eq!(evolution.len(), 3);
+    assert!(evolution[0].timestamp < evolution[1].timestamp);
+}
+
+#[test]
+fn test_multi_context_partitioning() {
+    let mut storage = ContextPartitionedStorage::new();
+    
+    // Store beliefs in different contexts
+    let medical_context = ContextId::new("medical");
+    let legal_context = ContextId::new("legal");
+    
+    storage.store_in_context(
+        medical_context,
+        Belief::new("Treatment X is effective")
+    );
+    
+    storage.store_in_context(
+        legal_context,
+        Belief::new("Treatment X is not approved")
+    );
+    
+    // Query by context
+    let medical_beliefs = storage.get_context_beliefs(medical_context);
+    assert_eq!(medical_beliefs.len(), 1);
+    
+    // Cross-context query
+    let all_about_x = storage.query_across_contexts("Treatment X");
+    assert_eq!(all_about_x.len(), 2);
+    assert_ne!(all_about_x[0].context, all_about_x[1].context);
+}
+```
+
+**Implementation**:
+
+```rust
+// src/belief_storage/belief_persistence.rs
+pub struct BeliefStorage {
+    graph: CSRGraph,
+    belief_index: HashMap<BeliefId, NodeId>,
+    content_index: InvertedIndex,
+}
+
+impl BeliefStorage {
+    pub fn store_belief(&mut self, belief: &Belief) -> Result<NodeId> {
+        // Create node for belief
+        let node_data = NodeData {
+            id: belief.id,
+            content: belief.content.clone(),
+            metadata: self.serialize_metadata(belief)?,
+        };
+        
+        let node_id = self.graph.add_node(node_data);
+        
+        // Store justifications as edges
+        for justification in &belief.justifications {
+            let just_node = self.get_or_create_justification_node(justification)?;
+            self.graph.add_edge(node_id, just_node, 1.0);
+        }
+        
+        // Update indices
+        self.belief_index.insert(belief.id, node_id);
+        self.content_index.add_document(node_id, &belief.content);
+        
+        Ok(node_id)
+    }
+    
+    pub fn get_belief(&self, belief_id: &BeliefId) -> Result<Belief> {
+        let node_id = self.belief_index.get(belief_id)
+            .ok_or(Error::BeliefNotFound)?;
+        
+        let node_data = self.graph.get_node(*node_id)?;
+        let justifications = self.get_justifications(*node_id)?;
+        
+        Ok(self.reconstruct_belief(node_data, justifications))
+    }
+}
+
+// src/belief_storage/temporal_index.rs
+pub struct TemporalBeliefIndex {
+    time_index: BTreeMap<SystemTime, Vec<BeliefId>>,
+    belief_timeline: HashMap<BeliefId, Timeline>,
+}
+
+impl TemporalBeliefIndex {
+    pub fn beliefs_at_time(&self, timestamp: SystemTime) -> Vec<Belief> {
+        // Find all beliefs valid at timestamp
+        let mut active_beliefs = Vec::new();
+        
+        for (time, belief_ids) in self.time_index.range(..=timestamp).rev() {
+            for belief_id in belief_ids {
+                if let Some(timeline) = self.belief_timeline.get(belief_id) {
+                    if timeline.is_valid_at(timestamp) {
+                        active_beliefs.push(belief_id.clone());
+                    }
+                }
+            }
+        }
+        
+        active_beliefs.into_iter()
+            .map(|id| self.get_belief(&id))
+            .collect()
+    }
+    
+    pub fn belief_evolution(&self, keyword: &str) -> Vec<BeliefSnapshot> {
+        let mut evolution = Vec::new();
+        
+        for (time, belief_ids) in &self.time_index {
+            for belief_id in belief_ids {
+                if let Some(belief) = self.get_belief(belief_id) {
+                    if belief.content.contains(keyword) {
+                        evolution.push(BeliefSnapshot {
+                            belief: belief.clone(),
+                            timestamp: *time,
+                        });
+                    }
+                }
+            }
+        }
+        
+        evolution.sort_by_key(|s| s.timestamp);
+        evolution
+    }
+}
+
+// src/belief_storage/context_partitions.rs
+pub struct ContextPartitionedStorage {
+    partitions: HashMap<ContextId, PartitionedGraph>,
+    cross_context_index: CrossContextIndex,
+}
+
+impl ContextPartitionedStorage {
+    pub fn store_in_context(&mut self, 
+                           context_id: ContextId,
+                           belief: Belief) -> Result<()> {
+        // Get or create partition
+        let partition = self.partitions.entry(context_id)
+            .or_insert_with(|| PartitionedGraph::new(context_id));
+        
+        // Store in partition
+        let node_id = partition.add_belief(belief)?;
+        
+        // Update cross-context index
+        self.cross_context_index.add_reference(
+            &belief.content,
+            context_id,
+            node_id
+        );
+        
+        Ok(())
+    }
+    
+    pub fn query_across_contexts(&self, query: &str) -> Vec<ContextualBelief> {
+        let mut results = Vec::new();
+        
+        // Get all contexts containing relevant beliefs
+        let contexts = self.cross_context_index.find_contexts(query);
+        
+        for (context_id, node_ids) in contexts {
+            let partition = &self.partitions[&context_id];
+            
+            for node_id in node_ids {
+                if let Ok(belief) = partition.get_belief(node_id) {
+                    results.push(ContextualBelief {
+                        belief,
+                        context: context_id.clone(),
+                    });
+                }
+            }
+        }
+        
+        results
+    }
+}
+```
+
+**AI-Verifiable Outcomes**:
+- [ ] Belief persistence working
+- [ ] Justification networks stored
+- [ ] Temporal queries < 100ms
+- [ ] Multi-context partitioning functional
+- [ ] Storage overhead < 20% of graph size
+
+### Task 3.6: Query Engine (Day 6)
 
 **Specification**: Implement efficient graph queries
 
@@ -1347,6 +1615,12 @@ fn bench_sparse_operations(b: &mut Bencher) {
    - Pattern matching
    - K-hop traversal
 
+6. **Belief Storage System**
+   - Belief persistence
+   - Justification networks
+   - Temporal indexing
+   - Context partitioning
+
 ### Performance Report
 ```
 Storage Benchmarks:
@@ -1365,6 +1639,9 @@ Storage Benchmarks:
 - [ ] Atomic batches verified ✓
 - [ ] All indices built ✓
 - [ ] Query engine complete ✓
+- [ ] Belief storage integrated ✓
+- [ ] Temporal queries functional ✓
+- [ ] Context partitioning working ✓
 - [ ] Sparsity < 5% maintained ✓
 - [ ] All performance targets met ✓
 - [ ] Zero corruption in tests ✓

@@ -68,7 +68,7 @@ class ContextualAwareness:
 
 **Intelligence Layer Stack**:
 ```rust
-// Core intelligence components
+// Core intelligence components with TMS integration
 pub struct MCPIntelligence {
     intent_parser: SmallLLMProcessor,
     allocation_advisor: AllocationGuidance,
@@ -76,24 +76,39 @@ pub struct MCPIntelligence {
     learning_engine: AdaptiveLearning,
     context_manager: ContextualAwareness,
     session_store: PersistentSessions,
+    tms: Arc<TruthMaintenanceSystem>,
+    belief_integration: BeliefIntegrationLayer,
 }
 
-// Intent understanding
+// Intent understanding with belief awareness
 pub struct IntentAnalysis {
     pub intent_type: IntentType,
     pub confidence: f32,
     pub entities_mentioned: Vec<String>,
     pub operation_suggested: Vec<MCPTool>,
     pub context_requirements: Vec<String>,
+    pub belief_implications: Vec<BeliefImplication>,
+    pub revision_requirements: Vec<RevisionRequirement>,
 }
 
-// Allocation guidance
+// Allocation guidance with belief integration
 pub struct AllocationSuggestion {
     pub target_column: Option<ColumnId>,
     pub reasoning: String,
     pub confidence: f32,
     pub alternative_options: Vec<ColumnId>,
     pub learning_opportunity: bool,
+    pub belief_conflicts: Vec<BeliefConflict>,
+    pub justification_strength: f32,
+    pub temporal_consistency: bool,
+}
+
+// Belief integration layer
+pub struct BeliefIntegrationLayer {
+    belief_tracker: BeliefTracker,
+    conflict_detector: ConflictDetector,
+    revision_engine: RevisionEngine,
+    justification_tracer: JustificationTracer,
 }
 ```
 
@@ -196,6 +211,83 @@ mod tool_recommendation_tests {
         // Should suggest simpler tools for beginners
         assert!(tools.contains(&MCPTool::StoreKnowledge));
         assert!(!tools.contains(&MCPTool::CognitiveReasoningChains));
+    }
+}
+```
+
+#### Test Suite 4: TMS Tool Integration
+```rust
+#[cfg(test)]
+mod tms_tool_tests {
+    use super::*;
+    
+    #[test]
+    fn test_belief_query_tool() {
+        let tms = Arc::new(TruthMaintenanceSystem::new());
+        let tool = BeliefQueryTool::new(tms);
+        
+        let params = ToolParams::new()
+            .with("query", BeliefQuery {
+                pattern: "machine learning algorithms".into(),
+                time_point: None,
+                context: None,
+            });
+        
+        let result = tool.execute(params).await.unwrap();
+        
+        match result {
+            ToolResult::BeliefSet(beliefs) => {
+                for belief in beliefs {
+                    assert!(!belief.justifications.is_empty());
+                    assert!(belief.confidence > 0.0);
+                }
+            }
+            _ => panic!("Expected BeliefSet result"),
+        }
+    }
+    
+    #[test]
+    fn test_conflict_resolution_tool() {
+        let tms = setup_test_tms_with_conflicts();
+        let tool = ConflictResolutionTool::new(tms);
+        
+        let params = ToolParams::new()
+            .with("scope", ConflictScope::Global);
+        
+        let result = tool.execute(params).await.unwrap();
+        
+        match result {
+            ToolResult::ConflictResolutions(resolutions) => {
+                assert!(!resolutions.is_empty());
+                for resolution in resolutions {
+                    assert!(resolution.confidence > 0.7);
+                    assert!(matches!(
+                        resolution.strategy,
+                        ResolutionStrategy::SourceReliability |
+                        ResolutionStrategy::TemporalRecency |
+                        ResolutionStrategy::EvidenceWeight
+                    ));
+                }
+            }
+            _ => panic!("Expected ConflictResolutions result"),
+        }
+    }
+    
+    #[test]
+    fn test_belief_aware_allocation() {
+        let mut intelligence = setup_test_intelligence_with_tms();
+        let concept = Concept::new("quantum computing", ConceptType::Technology);
+        let context = default_context();
+        
+        let suggestion = intelligence.suggest_allocation_with_beliefs(&concept, &context).await;
+        
+        // Should detect and warn about conflicts
+        if suggestion.reasoning.contains("conflict") {
+            assert!(suggestion.confidence < 0.9);
+        }
+        
+        // Should provide belief-based alternatives
+        assert!(!suggestion.alternative_options.is_empty());
     }
 }
 ```
@@ -328,6 +420,208 @@ impl MCPServer {
 }
 ```
 
+#### Task 8.5: Truth Maintenance System MCP Tools
+**Duration**: 3 days
+**Deliverable**: TMS-aware MCP tools for belief management
+
+```rust
+// TMS-specific MCP tools
+pub mod tms_tools {
+    use super::*;
+    
+    // Tool for querying belief states
+    pub struct BeliefQueryTool {
+        name: "query_beliefs",
+        description: "Query current belief states and justifications",
+        tms: Arc<TruthMaintenanceSystem>,
+    }
+    
+    impl MCPTool for BeliefQueryTool {
+        async fn execute(&self, params: ToolParams) -> ToolResult {
+            let query = params.get::<BeliefQuery>("query")?;
+            
+            // Query belief states with temporal context
+            let beliefs = self.tms.query_beliefs(
+                &query.pattern,
+                query.time_point,
+                query.context
+            ).await?;
+            
+            // Include justification paths
+            let enriched_beliefs = beliefs.into_iter()
+                .map(|belief| {
+                    let justifications = self.tms.trace_justifications(&belief.id);
+                    EnrichedBelief {
+                        belief,
+                        justifications,
+                        confidence: self.tms.calculate_confidence(&belief),
+                        conflicts: self.tms.detect_conflicts(&belief),
+                    }
+                })
+                .collect();
+            
+            ToolResult::BeliefSet(enriched_beliefs)
+        }
+    }
+    
+    // Tool for belief revision operations
+    pub struct BeliefRevisionTool {
+        name: "revise_belief",
+        description: "Perform AGM belief revision operations",
+        tms: Arc<TruthMaintenanceSystem>,
+    }
+    
+    impl MCPTool for BeliefRevisionTool {
+        async fn execute(&self, params: ToolParams) -> ToolResult {
+            let revision = params.get::<BeliefRevision>("revision")?;
+            
+            match revision.operation {
+                RevisionOp::Expansion(new_belief) => {
+                    let result = self.tms.expand_beliefs(new_belief).await?;
+                    ToolResult::RevisionResult(result)
+                }
+                RevisionOp::Contraction(belief_id) => {
+                    let result = self.tms.contract_belief(belief_id).await?;
+                    ToolResult::RevisionResult(result)
+                }
+                RevisionOp::Revision(old_id, new_belief) => {
+                    let result = self.tms.revise_belief(old_id, new_belief).await?;
+                    ToolResult::RevisionResult(result)
+                }
+            }
+        }
+    }
+    
+    // Tool for conflict detection and resolution
+    pub struct ConflictResolutionTool {
+        name: "resolve_conflicts",
+        description: "Detect and resolve belief conflicts",
+        tms: Arc<TruthMaintenanceSystem>,
+    }
+    
+    impl MCPTool for ConflictResolutionTool {
+        async fn execute(&self, params: ToolParams) -> ToolResult {
+            let scope = params.get::<ConflictScope>("scope")?;
+            
+            // Detect conflicts in specified scope
+            let conflicts = match scope {
+                ConflictScope::Global => self.tms.detect_all_conflicts().await?,
+                ConflictScope::Context(ctx) => self.tms.detect_context_conflicts(ctx).await?,
+                ConflictScope::Temporal(range) => self.tms.detect_temporal_conflicts(range).await?,
+            };
+            
+            // Apply resolution strategies
+            let resolutions = conflicts.into_iter()
+                .map(|conflict| {
+                    let strategy = self.select_resolution_strategy(&conflict);
+                    let resolution = self.tms.resolve_conflict(&conflict, strategy).await?;
+                    ConflictResolution {
+                        conflict,
+                        strategy,
+                        resolution,
+                        confidence: self.calculate_resolution_confidence(&resolution),
+                    }
+                })
+                .collect();
+            
+            ToolResult::ConflictResolutions(resolutions)
+        }
+    }
+    
+    // Tool for multi-context reasoning
+    pub struct MultiContextTool {
+        name: "manage_contexts",
+        description: "Manage multiple reasoning contexts",
+        tms: Arc<TruthMaintenanceSystem>,
+    }
+    
+    impl MCPTool for MultiContextTool {
+        async fn execute(&self, params: ToolParams) -> ToolResult {
+            let operation = params.get::<ContextOperation>("operation")?;
+            
+            match operation {
+                ContextOperation::Create(assumptions) => {
+                    let context = self.tms.create_context(assumptions).await?;
+                    ToolResult::Context(context)
+                }
+                ContextOperation::Switch(context_id) => {
+                    self.tms.switch_context(context_id).await?;
+                    ToolResult::Success
+                }
+                ContextOperation::Merge(ctx1, ctx2) => {
+                    let merged = self.tms.merge_contexts(ctx1, ctx2).await?;
+                    ToolResult::Context(merged)
+                }
+                ContextOperation::Compare(contexts) => {
+                    let comparison = self.tms.compare_contexts(contexts).await?;
+                    ToolResult::ContextComparison(comparison)
+                }
+            }
+        }
+    }
+}
+
+// Integration with intelligent MCP server
+impl MCPIntelligence {
+    fn register_tms_tools(&mut self, tms: Arc<TruthMaintenanceSystem>) {
+        // Register belief management tools
+        self.tool_registry.register(BeliefQueryTool::new(tms.clone()));
+        self.tool_registry.register(BeliefRevisionTool::new(tms.clone()));
+        self.tool_registry.register(ConflictResolutionTool::new(tms.clone()));
+        self.tool_registry.register(MultiContextTool::new(tms.clone()));
+        
+        // Add TMS-aware intent parsing
+        self.intent_parser.add_domain_knowledge(TMSDomainKnowledge {
+            belief_patterns: vec![
+                "what do we believe about",
+                "justify why",
+                "resolve conflict between",
+                "in context of",
+            ],
+            revision_patterns: vec![
+                "update belief",
+                "retract",
+                "add evidence for",
+                "change assumption",
+            ],
+        });
+    }
+    
+    // Enhanced allocation suggestions with belief awareness
+    async fn suggest_allocation_with_beliefs(
+        &self,
+        concept: &Concept,
+        context: &ContextWindow
+    ) -> AllocationSuggestion {
+        // Check for conflicting beliefs
+        let belief_conflicts = self.tms.check_allocation_conflicts(concept).await;
+        
+        // Get existing beliefs about similar concepts
+        let related_beliefs = self.tms.find_related_beliefs(concept).await;
+        
+        // Generate belief-aware suggestion
+        let mut suggestion = self.allocation_advisor.suggest_placement(concept, context);
+        
+        // Adjust confidence based on belief consistency
+        if !belief_conflicts.is_empty() {
+            suggestion.confidence *= 0.8;
+            suggestion.reasoning.push_str(&format!(
+                " Warning: {} potential belief conflicts detected.",
+                belief_conflicts.len()
+            ));
+        }
+        
+        // Add belief-based alternatives
+        for belief in related_beliefs {
+            if let Some(column) = belief.suggested_column {
+                suggestion.alternative_options.push(column);
+            }
+        }
+        
+        suggestion
+    }
+}
+
 ### Performance Benchmarks
 
 #### Benchmark 8.1: Response Time Measurement
@@ -369,6 +663,53 @@ fn bench_learning_throughput(b: &mut Bencher) {
 }
 ```
 
+#### Benchmark 8.3: TMS Tool Performance
+```rust
+#[bench]
+fn bench_belief_query_performance(b: &mut Bencher) {
+    let tms = setup_large_belief_network(10000); // 10K beliefs
+    let tool = BeliefQueryTool::new(tms);
+    
+    b.iter(|| {
+        let params = ToolParams::new()
+            .with("query", BeliefQuery {
+                pattern: "test pattern",
+                time_point: Some(Instant::now()),
+                context: None,
+            });
+        
+        let start = Instant::now();
+        let result = tool.execute(params).await.unwrap();
+        let duration = start.elapsed();
+        
+        assert!(duration < Duration::from_millis(50)); // <50ms query time
+    });
+}
+
+#[bench]
+fn bench_conflict_resolution_speed(b: &mut Bencher) {
+    let tms = setup_conflicting_beliefs(100); // 100 conflicts
+    let tool = ConflictResolutionTool::new(tms);
+    
+    b.iter(|| {
+        let params = ToolParams::new()
+            .with("scope", ConflictScope::Global);
+        
+        let start = Instant::now();
+        let result = tool.execute(params).await.unwrap();
+        let duration = start.elapsed();
+        
+        match result {
+            ToolResult::ConflictResolutions(resolutions) => {
+                assert_eq!(resolutions.len(), 100);
+                assert!(duration < Duration::from_millis(500)); // <500ms for 100 conflicts
+            }
+            _ => panic!("Unexpected result type"),
+        }
+    });
+}
+```
+
 ### Deliverables
 
 #### 8.1 MCP Intelligence Core
@@ -394,6 +735,14 @@ fn bench_learning_throughput(b: &mut Bencher) {
 - Client integration examples
 - Performance tuning guides
 - API reference documentation
+
+#### 8.5 Truth Maintenance System Integration
+- Belief query and revision MCP tools
+- Conflict detection and resolution tools
+- Multi-context management tools
+- Belief-aware allocation suggestions
+- TMS-specific intent patterns
+- Justification tracing capabilities
 
 ### Integration Points
 

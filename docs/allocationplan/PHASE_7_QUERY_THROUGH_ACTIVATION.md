@@ -171,12 +171,18 @@ query-activation/
 │   │   ├── semantic_processor.rs # Semantic understanding
 │   │   ├── context_analyzer.rs   # Context analysis
 │   │   └── learning.rs          # Adaptive learning
-│   └── optimization/
+│   ├── optimization/
+│   │   ├── mod.rs
+│   │   ├── parallel.rs          # Parallel activation
+│   │   ├── caching.rs           # Activation caching
+│   │   ├── indexing.rs          # Activation indices
+│   │   └── profiler.rs          # Performance profiling
+│   └── belief_query/
 │       ├── mod.rs
-│       ├── parallel.rs          # Parallel activation
-│       ├── caching.rs           # Activation caching
-│       ├── indexing.rs          # Activation indices
-│       └── profiler.rs          # Performance profiling
+│       ├── belief_aware_query.rs    # TMS-integrated queries
+│       ├── temporal_activation.rs   # Time-based activation
+│       ├── context_switching.rs     # Multi-context queries
+│       └── justification_paths.rs   # Query with justifications
 ```
 
 ### Refinement
@@ -1834,7 +1840,307 @@ fn create_default_templates() -> HashMap<TemplateKey, ExplanationTemplate> {
 - [ ] Multi-hop reasoning clearly explained
 - [ ] Templates work for common patterns
 
-### Task 7.6: Integration and Performance (Day 5)
+### Task 7.6: Belief-Aware Query Integration (Day 5)
+
+**Specification**: Integrate TMS with spreading activation queries
+
+**Test-Driven Development**:
+
+```rust
+#[test]
+fn test_belief_aware_query() {
+    let mut engine = BeliefAwareQueryEngine::new();
+    
+    // Add beliefs with different confidence levels
+    engine.add_belief(Belief::new(
+        "Paris is the capital of France",
+        0.99, // High confidence
+        vec![Justification::Authority("Encyclopedia")]
+    ));
+    
+    engine.add_belief(Belief::new(
+        "Paris was the capital of France",
+        0.80, // Lower confidence, past tense
+        vec![Justification::Historical("Old text")]
+    ));
+    
+    // Query should prefer high-confidence current belief
+    let result = engine.query("What is the capital of France?").await.unwrap();
+    
+    assert!(result.primary_answer.contains("Paris is"));
+    assert!(result.confidence > 0.95);
+    assert!(result.justifications.len() > 0);
+}
+
+#[test]
+fn test_temporal_activation_query() {
+    let engine = TemporalActivationEngine::new();
+    
+    // Query at specific time point
+    let timestamp = SystemTime::now() - Duration::from_days(365);
+    let query = TemporalQuery {
+        content: "COVID-19 treatment guidelines",
+        time_point: Some(timestamp),
+        time_range: None,
+    };
+    
+    let results = engine.query_at_time(query).await.unwrap();
+    
+    // Should return beliefs valid at that time
+    assert!(results.all_valid_at(timestamp));
+    assert!(!results.contains_future_knowledge(timestamp));
+}
+
+#[test]
+fn test_multi_context_query() {
+    let engine = MultiContextQueryEngine::new();
+    
+    // Query across different contexts
+    let query = "Is treatment X recommended?";
+    
+    let results = engine.query_all_contexts(query).await.unwrap();
+    
+    // Should return different answers from different contexts
+    assert!(results.contexts.len() > 1);
+    
+    let medical_result = results.get_context("medical").unwrap();
+    let legal_result = results.get_context("legal").unwrap();
+    
+    assert_ne!(medical_result.answer, legal_result.answer);
+}
+
+#[test]
+fn test_justification_path_query() {
+    let engine = JustificationPathEngine::new();
+    
+    // Query requiring justification chain
+    let query = "Why is the Earth round?";
+    
+    let result = engine.query_with_justifications(query).await.unwrap();
+    
+    // Should trace justification paths
+    assert!(!result.justification_paths.is_empty());
+    
+    for path in &result.justification_paths {
+        assert!(path.is_valid_chain());
+        assert!(path.leads_to_answer(&result.answer));
+    }
+}
+```
+
+**Implementation**:
+
+```rust
+// src/belief_query/belief_aware_query.rs
+pub struct BeliefAwareQueryEngine {
+    base_engine: SpreadingActivationEngine,
+    tms: TruthMaintenanceSystem,
+    belief_weighter: BeliefWeighter,
+}
+
+impl BeliefAwareQueryEngine {
+    pub async fn query(&self, query: &str) -> Result<BeliefAwareResult> {
+        // Parse query intent
+        let intent = self.parse_query_intent(query)?;
+        
+        // Find relevant beliefs
+        let relevant_beliefs = self.tms.find_relevant_beliefs(&intent)?;
+        
+        // Weight beliefs by confidence and entrenchment
+        let weighted_beliefs = self.belief_weighter.weight_beliefs(
+            &relevant_beliefs,
+            &intent.context
+        )?;
+        
+        // Create activation seeds from high-confidence beliefs
+        let seeds = self.create_belief_seeds(&weighted_beliefs)?;
+        
+        // Run spreading activation with belief weights
+        let activation_result = self.base_engine
+            .spread_with_weights(seeds, weighted_beliefs)
+            .await?;
+        
+        // Extract answer from activated beliefs
+        let answer = self.extract_belief_based_answer(
+            &activation_result,
+            &weighted_beliefs
+        )?;
+        
+        Ok(BeliefAwareResult {
+            answer,
+            confidence: self.calculate_answer_confidence(&activation_result),
+            justifications: self.collect_justifications(&activation_result),
+            belief_sources: weighted_beliefs.into_iter()
+                .map(|b| b.belief_id)
+                .collect(),
+        })
+    }
+}
+
+// src/belief_query/temporal_activation.rs
+pub struct TemporalActivationEngine {
+    temporal_index: TemporalBeliefIndex,
+    activation_engine: SpreadingActivationEngine,
+}
+
+impl TemporalActivationEngine {
+    pub async fn query_at_time(&self, query: TemporalQuery) -> Result<TemporalResults> {
+        // Get beliefs valid at specified time
+        let time_point = query.time_point.unwrap_or(SystemTime::now());
+        let valid_beliefs = self.temporal_index.beliefs_at_time(time_point)?;
+        
+        // Filter graph to temporal slice
+        let temporal_graph = self.create_temporal_subgraph(
+            &valid_beliefs,
+            time_point
+        )?;
+        
+        // Run activation on temporal slice
+        let seeds = self.create_temporal_seeds(&query, &valid_beliefs)?;
+        let activation = self.activation_engine
+            .spread_in_subgraph(seeds, &temporal_graph)
+            .await?;
+        
+        // Build temporal results
+        Ok(TemporalResults {
+            time_point,
+            results: self.extract_temporal_results(&activation),
+            temporal_context: self.build_temporal_context(time_point),
+        })
+    }
+    
+    pub async fn query_evolution(&self, 
+                                query: &str, 
+                                time_range: TimeRange) -> Result<BeliefEvolution> {
+        let mut evolution = Vec::new();
+        
+        // Sample time points
+        let time_points = self.sample_time_points(time_range, 10);
+        
+        for time_point in time_points {
+            let temporal_query = TemporalQuery {
+                content: query.to_string(),
+                time_point: Some(time_point),
+                time_range: None,
+            };
+            
+            let result = self.query_at_time(temporal_query).await?;
+            evolution.push(BeliefSnapshot {
+                timestamp: time_point,
+                belief_state: result,
+            });
+        }
+        
+        Ok(BeliefEvolution {
+            query: query.to_string(),
+            timeline: evolution,
+            major_changes: self.detect_major_changes(&evolution),
+        })
+    }
+}
+
+// src/belief_query/context_switching.rs
+pub struct MultiContextQueryEngine {
+    contexts: HashMap<ContextId, ContextualEngine>,
+    context_merger: ContextMerger,
+}
+
+impl MultiContextQueryEngine {
+    pub async fn query_all_contexts(&self, query: &str) -> Result<MultiContextResults> {
+        // Query each context in parallel
+        let context_futures: Vec<_> = self.contexts.iter()
+            .map(|(ctx_id, engine)| {
+                let query = query.to_string();
+                async move {
+                    let result = engine.query(&query).await?;
+                    Ok((ctx_id.clone(), result))
+                }
+            })
+            .collect();
+        
+        let context_results = futures::future::try_join_all(context_futures).await?;
+        
+        // Merge results across contexts
+        let merged = self.context_merger.merge_results(&context_results)?;
+        
+        Ok(MultiContextResults {
+            contexts: context_results.into_iter().collect(),
+            merged_answer: merged,
+            context_conflicts: self.detect_conflicts(&context_results),
+        })
+    }
+    
+    pub async fn query_in_context(&self, 
+                                 query: &str, 
+                                 context_id: ContextId) -> Result<ContextualResult> {
+        let engine = self.contexts.get(&context_id)
+            .ok_or(Error::ContextNotFound)?;
+        
+        let result = engine.query(query).await?;
+        
+        Ok(ContextualResult {
+            context: context_id,
+            result,
+            context_assumptions: engine.get_assumptions(),
+        })
+    }
+}
+
+// src/belief_query/justification_paths.rs
+pub struct JustificationPathEngine {
+    graph: BeliefGraph,
+    path_tracer: PathTracer,
+}
+
+impl JustificationPathEngine {
+    pub async fn query_with_justifications(&self, 
+                                         query: &str) -> Result<JustifiedResult> {
+        // Standard query processing
+        let query_result = self.process_query(query).await?;
+        
+        // Trace justification paths
+        let justification_paths = self.trace_justification_paths(
+            &query_result.answer_nodes
+        )?;
+        
+        // Rank paths by strength
+        let ranked_paths = self.rank_justification_paths(&justification_paths)?;
+        
+        Ok(JustifiedResult {
+            answer: query_result.answer,
+            justification_paths: ranked_paths,
+            confidence: self.calculate_justified_confidence(&ranked_paths),
+            primary_sources: self.extract_primary_sources(&ranked_paths),
+        })
+    }
+    
+    fn trace_justification_paths(&self, 
+                                answer_nodes: &[NodeId]) -> Result<Vec<JustificationPath>> {
+        let mut paths = Vec::new();
+        
+        for node in answer_nodes {
+            // Backward trace to find justifications
+            let node_paths = self.path_tracer.trace_backward(
+                *node,
+                |n| self.graph.is_justification_node(n)
+            )?;
+            
+            paths.extend(node_paths);
+        }
+        
+        Ok(paths)
+    }
+}
+```
+
+**AI-Verifiable Outcomes**:
+- [ ] Belief-aware queries working
+- [ ] Temporal queries functional
+- [ ] Multi-context queries operational
+- [ ] Justification paths traced
+- [ ] Integration tests pass
+
+### Task 7.7: Integration and Performance (Day 6)
 
 **Specification**: Complete activation-based query system
 
