@@ -1,0 +1,1 @@
+parking_lot::lock_api::RwLockWriteGuard<'_, parking_lot::RawRwLock, HashMap<types::AllocationPriority, VecDeque<u32>>>

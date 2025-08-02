@@ -1,12 +1,8 @@
 # Rust build artifacts
-target/
 /target/
+target/
 **/*.rs.bk
 *.pdb
-*.rlib
-*.dll
-*.dll.exp
-*.d
 
 # Cargo lock file (include for applications, exclude for libraries)
 Cargo.lock
@@ -158,27 +154,8 @@ settings.local.json
 *.exe
 *.lib
 Cargo.lock.bk
-/Cargo.lock
 **/*.orig
 **/*.rej
-
-# IDE and editor temp files
-*.swp
-*.swo
-.#*
-#*#
-*~
-
-# OS and filesystem artifacts
-.DS_Store?
-.Spotlight-V100
-.Trashes
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/target/
-tests/target/
-
 
 # Claude Flow generated files
 .claude/settings.local.json
