@@ -3,7 +3,7 @@
 **Duration**: 1 week  
 **Team Size**: 2-3 neuromorphic developers  
 **Methodology**: SPARC + London School TDD + SNN Validation  
-**Goal**: Implement production-ready spiking neural cortical columns with TTFS encoding and lateral inhibition  
+**Goal**: Implement production-ready spiking neural cortical columns with TTFS encoding and lateral inhibition using intelligently selected ruv-FANN architectures (1-4 optimal types)  
 
 ## AI-Verifiable Success Criteria
 
@@ -14,6 +14,8 @@
 - [ ] SIMD-accelerated allocations: > 10,000/second
 - [ ] Spike timing precision: ±10μs accuracy
 - [ ] Refractory period compliance: 100% enforcement
+- [ ] Neural architecture selection: < 1 week for optimization per architecture type
+- [ ] Selected architectures memory usage: < 200KB per instance (MLP/LSTM baseline)
 
 ### Neuromorphic Functional Requirements
 - [ ] 100% of TTFS allocations succeed or return neurobiological error
@@ -48,6 +50,8 @@ Real Cortex → SNN Implementation
 5. Strong spike correlations strengthen inhibitory connections
 6. Refractory periods prevent temporal conflicts
 7. SIMD acceleration processes multiple spikes in parallel
+8. **Neural architecture selection**: Start with MLP + LSTM, add others only if performance benchmarks justify complexity
+9. **Memory constraints**: Selected architectures must fit within cortical column memory budgets
 
 ### Pseudocode
 
@@ -793,7 +797,40 @@ cargo bench --bench cortical_core_bench
 - [ ] Documentation complete ✓
 - [ ] Code review passed ✓
 - [ ] Integration tests green ✓
+- [ ] **Neural architecture selection complete** ✓
+- [ ] **Selected architectures meet performance/memory constraints** ✓
+- [ ] **Architecture selection rationale documented** ✓
 - [ ] Phase 2 ready to start ✓
+
+## Architecture-Specific Recommendations for Phase 1
+
+### For Semantic Cortical Columns
+- **Primary**: MLP for fast semantic similarity and classification
+- **Upgrade**: LSTM only if context significantly improves accuracy (>15% improvement)
+- **Advanced**: Transformer variant only if attention mechanisms show >20% accuracy improvement
+- **Memory Budget**: 50KB for MLP, 200KB if LSTM added
+- **Performance Target**: <0.1ms inference for MLP, <0.5ms for LSTM
+
+### For Structural Cortical Columns  
+- **Primary**: MLP with graph feature preprocessing for topology analysis
+- **Upgrade**: Simple GNN only if graph topology provides clear benefits (>10% improvement)
+- **Advanced**: Complex graph networks only for highly connected scenarios
+- **Memory Budget**: 100KB for MLP+preprocessing, 300KB if GNN added
+- **Performance Target**: <0.2ms inference for MLP, <1ms for GNN
+
+### For Temporal Cortical Columns
+- **Primary**: LSTM for sequence processing and temporal context
+- **Upgrade**: TCN if parallelization benefits outweigh complexity
+- **Advanced**: Specialized time-series networks only for specific temporal patterns
+- **Memory Budget**: 200KB for LSTM, 100KB for TCN alternative
+- **Performance Target**: <0.5ms inference for LSTM, <0.3ms for TCN
+
+### For Exception Detection Columns
+- **Primary**: MLP for anomaly detection and pattern recognition
+- **Upgrade**: Autoencoder architecture if reconstruction improves detection (>10% improvement)
+- **Advanced**: Specialized networks only for complex exception patterns
+- **Memory Budget**: 50KB for MLP, 150KB if autoencoder added
+- **Performance Target**: <0.1ms inference for MLP, <0.4ms for autoencoder
 
 ## Next Phase Preview
 

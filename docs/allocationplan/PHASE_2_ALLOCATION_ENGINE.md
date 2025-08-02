@@ -4,7 +4,7 @@
 **Team Size**: 2-3 neuromorphic developers  
 **Methodology**: SPARC + London School TDD  
 **Goal**: Build spiking neural network allocation system with multi-column parallel processing and TTFS encoding  
-**Core Innovation**: Replace traditional LLM processing with Time-to-First-Spike encoded cortical columns using ruv-FANN architectures  
+**Core Innovation**: Replace traditional LLM processing with Time-to-First-Spike encoded cortical columns using optimally selected ruv-FANN architectures  
 
 ## AI-Verifiable Success Criteria
 
@@ -154,7 +154,7 @@ neuromorphic-allocation-engine/
 │   │   └── cascade_correlation.rs # Dynamic network growth
 │   ├── ruv_fann_integration/
 │   │   ├── mod.rs
-│   │   ├── fann_loader.rs         # Load 29 ruv-FANN architectures
+│   │   ├── fann_loader.rs         # Load available ruv-FANN architectures for selection
 │   │   ├── network_selector.rs    # Choose optimal architecture
 │   │   ├── ephemeral_networks.rs  # On-demand network creation
 │   │   └── simd_acceleration.rs   # 4x parallel SIMD processing
@@ -468,21 +468,37 @@ impl TTFSSpikeEncoder {
 - [ ] Neural feature vectors compatible with ruv-FANN networks
 - [ ] Temporal precision < 0.1ms (100,000 nanoseconds)
 
-## ruv-FANN Integration Strategy for Cortical Columns
+## Intelligent ruv-FANN Integration Strategy for Cortical Columns
 
 ### CRITICAL: Neural Network Selection Philosophy
 
-**The ruv-FANN library provides access to 29 different neural network architectures. However, the CortexKG system is NOT required to use all 29 networks.** Instead:
+**The ruv-FANN library provides access to 29 different neural network architectures as a comprehensive toolkit. However, the CortexKG system should intelligently SELECT only the most optimal architectures rather than implementing all available options.** Key principles:
 
-- **1-3 network types may be sufficient** for the entire system
-- **Each cortical column can reuse the same network architecture** with different parameters
-- **The 29 networks are OPTIONS, not requirements** - they exist for flexibility
-- **Simplicity is preferred** - using fewer network types reduces complexity and improves maintainability
+- **1-4 network types are typically sufficient** for high-performance operation across the entire system
+- **Each cortical column can reuse the same optimal architecture** with task-specific parameters
+- **The 29 networks are AVAILABLE OPTIONS, not implementation requirements** - they provide flexibility for optimization
+- **Intelligent selection is preferred** - choosing fewer, well-optimized network types reduces complexity and improves maintainability while maximizing performance
 
-For example, the entire system could effectively operate using only:
-1. **LSTM** for all temporal/sequential processing
-2. **Standard MLP** for all classification/transformation tasks
-3. **TCN** as an optional performance optimization
+### Task-Specific Optimization Guidelines
+
+**For Phase 2 Implementation**:
+1. **LSTM** for all temporal/sequential processing across multiple columns
+2. **Standard MLP** for all classification/transformation tasks system-wide
+3. **TCN** as an optional performance optimization when benchmarks justify the additional complexity
+4. **Graph Neural Network** only if graph-specific processing shows measurable benefits
+
+### Success Metrics for Selection Process
+
+#### System-Level Metrics (from Phase 0 foundation)
+- **Total Memory Usage**: <200MB for all selected networks across 4 columns
+- **Allocation Speed**: <1ms end-to-end with selected architectures
+- **Accuracy**: >95% correct allocation decisions
+- **Maintainability**: <4 different network types in production
+
+#### Selection Process Metrics
+- **Time to Selection**: <1 week for architecture benchmarking
+- **Implementation Effort**: <2 weeks additional complexity per new architecture
+- **Performance Validation**: All selected architectures must pass threshold tests
 
 ### Revised Column Implementations
 
@@ -653,22 +669,7 @@ impl ExceptionDetectionColumn {
 }
 ```
 
-### Recommended Minimal Network Set
-
-For initial implementation, use **only 2-3 network types**:
-
-```rust
-pub struct MinimalNetworkSet {
-    // One LSTM for ALL temporal/sequential needs
-    temporal_network: NetworkType::LSTM,
-    
-    // One Standard MLP for ALL classification/transformation
-    standard_network: NetworkType::Standard,
-    
-    // Optional: One TCN for performance-critical paths
-    performance_network: Option<NetworkType::TCN>,
-}
-```
+**Note**: Detailed network selection criteria and implementation guidelines are defined in PHASE_0_FOUNDATION.md. Phase 2 implements the selected architectures based on those benchmarking results.
 
 ### Task 2.2: Multi-Column Parallel Processing with ruv-FANN Networks (Day 2)
 
@@ -780,9 +781,74 @@ fn test_simd_acceleration_4x_speedup() {
 
 ```rust
 // src/multi_column/mod.rs
-use crate::ruv_fann_integration::{NetworkSelector, SIMDProcessor};
+use crate::ruv_fann_integration::{NetworkArchitectureSelector, SIMDProcessor};
 use crate::snn_processing::{LateralInhibition, CorticalVoting};
 use rayon::prelude::*;
+
+// Intelligent architecture selection system
+pub struct NetworkArchitectureSelector {
+    performance_benchmarks: PerformanceBenchmarks,
+    resource_constraints: ResourceConstraints,
+    task_requirements: TaskRequirements,
+}
+
+#[derive(Debug, Clone)]
+pub struct OptimalArchitecture {
+    pub id: usize,
+    pub name: String,
+    pub performance_score: f32,
+    pub memory_usage: usize,
+    pub inference_time: Duration,
+    pub justification: String,
+}
+
+impl NetworkArchitectureSelector {
+    pub fn select_for_semantic_processing(&self) -> Result<OptimalArchitecture, SelectionError> {
+        // Evaluate available architectures for semantic tasks
+        let candidates = self.get_semantic_candidates();
+        let scored_candidates = self.benchmark_candidates(candidates, TaskType::Semantic)?;
+        
+        // Select highest scoring architecture that meets constraints
+        scored_candidates.into_iter()
+            .filter(|arch| self.meets_constraints(arch))
+            .max_by(|a, b| a.performance_score.partial_cmp(&b.performance_score).unwrap())
+            .ok_or(SelectionError::NoCandidatesMeetCriteria)
+    }
+    
+    pub fn select_for_temporal_processing(&self) -> Result<OptimalArchitecture, SelectionError> {
+        // Focus on temporal/sequential architectures (LSTM, TCN, etc.)
+        let candidates = vec![
+            CandidateArchitecture::new(4, "LSTM", TaskType::Temporal),
+            CandidateArchitecture::new(20, "TCN", TaskType::Temporal),
+            CandidateArchitecture::new(5, "GRU", TaskType::Temporal),
+        ];
+        
+        let optimal = self.benchmark_and_select(candidates)?;
+        Ok(optimal)
+    }
+    
+    pub fn select_for_classification(&self) -> Result<OptimalArchitecture, SelectionError> {
+        // Focus on classification architectures (MLP, shallow networks)
+        let candidates = vec![
+            CandidateArchitecture::new(1, "MLP", TaskType::Classification),
+            CandidateArchitecture::new(2, "RBF", TaskType::Classification),
+            CandidateArchitecture::new(3, "PNN", TaskType::Classification),
+        ];
+        
+        let optimal = self.benchmark_and_select(candidates)?;
+        Ok(optimal)
+    }
+    
+    fn get_semantic_candidates(&self) -> Vec<CandidateArchitecture> {
+        // Return only the most promising architectures for semantic processing
+        // Rather than all 29, focus on proven semantic performers
+        vec![
+            CandidateArchitecture::new(1, "MLP", TaskType::Semantic),
+            CandidateArchitecture::new(4, "LSTM", TaskType::Semantic),
+            CandidateArchitecture::new(13, "TRANSFORMER", TaskType::Semantic),
+        ]
+    }
+}
 
 pub struct MultiColumnProcessor {
     // Four specialized cortical columns
@@ -802,16 +868,17 @@ pub struct MultiColumnProcessor {
 
 impl MultiColumnProcessor {
     pub fn new() -> Result<Self, NeuromorphicError> {
+        // Intelligently select optimal architectures based on performance benchmarks
         Ok(Self {
-            semantic_column: SemanticProcessingColumn::new_with_fann(1)?, // MLP
-            structural_column: StructuralAnalysisColumn::new_with_fann(15)?, // GNN
-            temporal_column: TemporalContextColumn::new_with_fann(20)?, // TCN
-            exception_column: ExceptionDetectionColumn::new_with_fann(28)?, // Sparse
+            semantic_column: SemanticProcessingColumn::new_with_optimal_arch()?, // Auto-select: likely MLP
+            structural_column: StructuralAnalysisColumn::new_with_optimal_arch()?, // Auto-select: likely MLP or simple GNN
+            temporal_column: TemporalContextColumn::new_with_optimal_arch()?, // Auto-select: likely LSTM or TCN
+            exception_column: ExceptionDetectionColumn::new_with_optimal_arch()?, // Auto-select: likely MLP
             
             lateral_inhibition: LateralInhibition::new_biological(),
             cortical_voting: CorticalVoting::new_consensus_based(),
             simd_executor: SIMDProcessor::new_x4_parallel(),
-            network_selector: NetworkSelector::with_29_architectures(),
+            network_selector: NetworkSelector::with_available_architectures(),
         })
     }
     
@@ -868,7 +935,21 @@ pub struct SemanticProcessingColumn {
 }
 
 impl SemanticProcessingColumn {
-    pub fn new_with_fann(architecture_id: usize) -> Result<Self, NeuromorphicError> {
+    pub fn new_with_optimal_arch() -> Result<Self, NeuromorphicError> {
+        // Intelligently select architecture based on semantic processing requirements
+        let architecture_selector = NetworkArchitectureSelector::new();
+        let optimal_arch = architecture_selector.select_for_semantic_processing()?;
+        
+        let fann_network = ruv_fann::load_architecture(optimal_arch.id)?;
+        Ok(Self {
+            fann_network,
+            activation_threshold: 0.7,
+            semantic_cache: DashMap::new(),
+        })
+    }
+    
+    pub fn new_with_specific_arch(architecture_id: usize) -> Result<Self, NeuromorphicError> {
+        // For explicit architecture selection when specific type is proven optimal
         let fann_network = ruv_fann::load_architecture(architecture_id)?;
         Ok(Self {
             fann_network,
@@ -914,12 +995,18 @@ impl SemanticProcessingColumn {
 ```
 
 **AI-Verifiable Outcomes**:
-- [ ] All 4 columns load ruv-FANN networks in < 200ms total
+- [ ] All 4 columns load optimal ruv-FANN networks in < 200ms total
+- [ ] Selected architectures achieve target performance with minimal resource usage
 - [ ] SIMD parallel processing achieves 4x speedup (< 5ms vs 20ms sequential)
 - [ ] Lateral inhibition winner-take-all > 98% accuracy
 - [ ] Cortical voting consensus > 95% agreement rate
-- [ ] Memory usage < 200MB for all 4 columns + neural networks
+- [ ] Memory usage < 200MB for all 4 columns + selected neural networks
 - [ ] Spike pattern cache hit rate > 90% after warmup
+- [ ] Architecture selection meets performance/complexity trade-off criteria
+- [ ] **Selection algorithm completes within 1 week for all architectures**
+- [ ] **Selected networks show >5% improvement over baseline MLP**
+- [ ] **Total system uses ≤4 different neural network types**
+- [ ] **All selected architectures fit within memory constraints (<512 bytes per column)**
 
 ### Task 2.3: Hierarchy Detection System (Day 3)
 
@@ -2217,6 +2304,11 @@ Benchmark Results:
 - [ ] Memory usage < 500MB ✓
 - [ ] Zero memory leaks ✓
 - [ ] 100% documentation ✓
+- [ ] **Neural architecture selection algorithm implemented** ✓
+- [ ] **Selected architectures documented with justification** ✓
+- [ ] **Performance benchmarks for selected networks completed** ✓
+- [ ] **Memory usage verified for all selected architectures** ✓
+- [ ] **Selection criteria framework operational** ✓
 - [ ] Ready for Phase 3 ✓
 
 ## Next Phase Preview

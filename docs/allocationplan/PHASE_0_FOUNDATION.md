@@ -22,7 +22,7 @@ Phase 0 establishes the neuromorphic groundwork for CortexKG, implementing core 
 **Objective**: Create the complete foundational infrastructure for the entire neuromorphic allocation system (PHASE_0 through PHASE_11).
 
 **Complete System Requirements**:
-1. **Neuromorphic Core** (PHASE_1-2): Rust + SNN + WASM neuromorphic stack with 29 neural network architectures
+1. **Neuromorphic Core** (PHASE_1-2): Rust + SNN + WASM neuromorphic stack with intelligent selection from 29 available neural network architectures (typically 1-4 optimal types for entire system)
 2. **Allocation Engine** (PHASE_2-3): Time-to-First-Spike encoded cortical structures with lateral inhibition
 3. **Knowledge Integration** (PHASE_3-4): Multi-modal reasoning and knowledge graph integration
 4. **Advanced Features** (PHASE_5-7): Truth maintenance, temporal reasoning, optimization algorithms
@@ -54,31 +54,33 @@ pub struct CortexKGFoundation {
     pub security_framework: SecurityFramework,
 }
 
-// Neural Network Type System (29 Architectures)
+// Neural Network Architecture Options (29 Available Types)
+// CRITICAL: These are AVAILABLE OPTIONS, not requirements
+// System intelligently selects optimal types based on specific needs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum NetworkType {
-    // Feedforward Networks (PHASE_1)
+    // Feedforward Networks (PHASE_1) - Select based on classification needs
     MLP, RBF, PNN,
     
-    // Recurrent Networks (PHASE_1-2)
+    // Recurrent Networks (PHASE_1-2) - Select for temporal/sequential processing
     LSTM, GRU, ELMAN, JORDAN,
     
-    // Convolutional Networks (PHASE_2)
+    // Convolutional Networks (PHASE_2) - Select for pattern recognition
     CNN, RESNET, DENSENET,
     
-    // Attention-based Networks (PHASE_3)
+    // Attention-based Networks (PHASE_3) - Select for complex relationships
     TRANSFORMER, BERT_VARIANT, GPT_VARIANT,
     
-    // Graph Neural Networks (PHASE_3-4)
+    // Graph Neural Networks (PHASE_3-4) - Select for graph processing
     GCN, GAT, GRAPHSAGE, GIN,
     
-    // Time Series Networks (PHASE_5)
+    // Time Series Networks (PHASE_5) - Select for temporal analysis
     TIDETNN, TST, TSMixer, PatchTST, iTransformer,
     
-    // Specialized Networks (PHASE_6-7)
+    // Specialized Networks (PHASE_6-7) - Select for specific tasks
     StemGNN, TFT, NBEATS, DeepAR, TiDE,
     
-    // Advanced Networks (PHASE_10-11)
+    // Advanced Networks (PHASE_10-11) - Select for optimization
     CascadeCorrelation, SparseConnected, DLinear,
 }
 ```
@@ -288,16 +290,21 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 
-# Neural network framework - 29 architectures (PHASE_1-11)
+# Neural network framework - intelligently select 1-4 optimal types from 29 available architectures (PHASE_1-11)
+# CRITICAL: ruv-FANN provides 29 architecture OPTIONS - system selects 1-4 optimal types based on performance
 candle-core = "0.3"
 candle-nn = "0.3"
 candle-transformers = "0.3"
 ndarray = "0.15"
 ndarray-linalg = "0.16"
 faer = "0.19"                    # Linear algebra
-rfann = "0.1"                    # Fast Artificial Neural Network
+rfann = "0.1"                    # Fast Artificial Neural Network - 29 available architectures
 spiking_neural_networks = "0.2"  # Spiking Neural Network implementation
 blas = "0.22"                    # Basic Linear Algebra Subprograms
+
+# Neural Architecture Selection Dependencies
+criterion = { version = "0.5", features = ["html_reports"] }  # For architecture benchmarking
+tokio = { version = "1.35", features = ["full"] }              # For async architecture loading
 
 # Graph storage and processing (PHASE_2-11)
 petgraph = "0.6"
@@ -1432,13 +1439,150 @@ jobs:
    - Test coverage reports
    - WASM build process
 
+## Intelligent Neural Network Selection Strategy
+
+**CRITICAL: The ruv-FANN library provides 29 neural network architecture options as a toolkit, but the CortexKG system should intelligently SELECT only 1-4 optimal types for efficient implementation.**
+
+**This is the foundation for all neural network selection decisions throughout the entire system - Phases 1-11 will reference this selection framework.**
+
+### Key Principles for Neural Network Selection
+
+#### 1. Intelligent Selection Over Comprehensive Coverage
+- **The 29 ruv-FANN architectures are OPTIONS, not requirements**
+- Select 1-4 optimal types based on performance benchmarks and system requirements
+- Focus on architectures that provide measurable benefits for specific cortical column tasks
+- Avoid implementing networks that don't significantly improve system performance
+
+#### 2. Performance-Driven Decision Making
+- **WASM+SIMD Compatibility**: Prioritize architectures that work efficiently with WebAssembly and SIMD acceleration
+- **Memory Efficiency**: Select networks that fit within cortical column memory budgets (< 512 bytes per column)
+- **Inference Speed**: Ensure sub-millisecond allocation times with selected architectures
+- **Training Stability**: Choose networks with proven convergence characteristics
+
+#### 3. Task-Specific Optimization
+- **Semantic Processing**: Focus on proven text/semantic understanding architectures (MLP, LSTM, Transformer variants)
+- **Temporal Analysis**: Select architectures optimized for sequence processing (LSTM, TCN, GRU)
+- **Graph Processing**: Choose networks suited for structural analysis (basic GNN, standard feedforward)
+- **Exception Detection**: Use architectures effective for anomaly detection (autoencoders, MLPs)
+
+### Recommended Minimal Architecture Set
+
+#### Primary Architectures (Start Here)
+1. **Multi-Layer Perceptron (MLP)** - Architecture #1
+   - **Use Case**: General classification, semantic similarity, exception detection
+   - **Justification**: Simple, fast, well-understood, excellent WASM performance
+   - **Memory**: ~10-50KB per instance
+   - **Inference**: <0.1ms
+
+2. **Long Short-Term Memory (LSTM)** - Architecture #4
+   - **Use Case**: Temporal sequence processing, context understanding
+   - **Justification**: Proven temporal modeling, moderate complexity
+   - **Memory**: ~50-200KB per instance
+   - **Inference**: <0.5ms
+
+#### Optional Optimizations (Add If Justified)
+3. **Temporal Convolutional Network (TCN)** - Architecture #20
+   - **Use Case**: High-performance temporal processing where LSTM isn't sufficient
+   - **Justification**: Better parallelization than LSTM, competitive accuracy
+   - **Memory**: ~30-100KB per instance
+   - **Inference**: <0.3ms
+
+4. **Simple Graph Neural Network** - Architecture #15 or #16
+   - **Use Case**: Complex structural relationship processing
+   - **Justification**: Only if graph-specific processing shows >10% improvement over MLP
+   - **Memory**: ~100-300KB per instance
+   - **Inference**: <1ms
+
+### Selection Criteria Framework
+
+#### Performance Thresholds Structure
+```rust
+pub struct PerformanceThresholds {
+    pub min_accuracy_improvement: f32,      // Must improve baseline by 5%+
+    pub max_memory_per_column: usize,       // 512 bytes max per cortical column
+    pub max_inference_time: Duration,       // Sub-millisecond requirement
+    pub min_wasm_compatibility: f32,        // 90%+ WASM performance retention
+}
+```
+
+#### Selection Algorithm Details
+1. **Benchmark baseline performance** using simplest architecture (MLP)
+2. **Test candidate architectures** against representative workloads
+3. **Apply performance thresholds** to filter candidates
+4. **Rank by efficiency ratio**: `(accuracy_improvement) / (complexity_cost)`
+5. **Select top 1-4 architectures** that pass all criteria
+
+### Benchmarking Infrastructure Setup
+
+#### Neural Network Performance Benchmarks
+```rust
+// benches/neural_architecture_selection_bench.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use neuromorphic_core::{NetworkArchitectureSelector, PerformanceThresholds};
+
+fn architecture_selection_benchmark(c: &mut Criterion) {
+    let selector = NetworkArchitectureSelector::new();
+    
+    c.bench_function("mlp_baseline_inference", |b| {
+        let mlp = selector.load_architecture(1).unwrap(); // MLP
+        let test_input = create_test_input_vector();
+        
+        b.iter(|| {
+            mlp.forward(black_box(&test_input))
+        });
+    });
+    
+    c.bench_function("lstm_temporal_inference", |b| {
+        let lstm = selector.load_architecture(4).unwrap(); // LSTM
+        let temporal_sequence = create_temporal_test_sequence();
+        
+        b.iter(|| {
+            lstm.process_sequence(black_box(&temporal_sequence))
+        });
+    });
+    
+    c.bench_function("architecture_selection_time", |b| {
+        let test_workload = create_representative_workload();
+        
+        b.iter(|| {
+            selector.select_optimal_architecture(black_box(&test_workload))
+        });
+    });
+}
+
+criterion_group!(benches, architecture_selection_benchmark);
+criterion_main!(benches);
+```
+
+### Implementation Philosophy
+
+- **Intelligent Selection Over Comprehensive Coverage**: Choose 1-4 optimal architectures based on performance metrics rather than implementing all available options
+- **Reuse Over Variety**: Use the same optimal network types across multiple cortical columns with different parameters
+- **Quality Over Quantity**: Focus on excellent implementation of chosen types rather than broad architectural coverage
+- **Iterative Refinement**: Start with 1-2 proven types, add more only when specific performance needs justify the complexity
+- **Consistent Architecture**: Maintain uniform patterns across the system for maintainability and debugging
+
+### Language Guidelines for All Phases
+
+#### Preferred Language (use throughout Phases 1-11)
+- ✅ "Select optimal neural network architectures from 29 available types"
+- ✅ "Intelligently choose 1-4 network architectures based on performance requirements"
+- ✅ "Available neural network options provide flexibility for optimization"
+- ✅ "Adaptive network selection for different cortical column tasks"
+
+#### Avoid This Language (in all phase documentation)
+- ❌ "Implement all 29 neural network architectures"
+- ❌ "Use comprehensive neural network coverage"
+- ❌ "Deploy the complete set of available networks"
+- ❌ "Mandatory implementation of ruv-FANN architecture suite"
+
 ## Next Phase Preview
 
 Phase 1 will implement the production spiking neural allocation system:
-- Real-time TTFS allocation engine
-- Multi-column lateral inhibition networks
-- Parallel cortical processing with SIMD
+- Real-time TTFS allocation engine with selected neural network types
+- Multi-column lateral inhibition networks using 1-4 optimal architectures
+- Parallel cortical processing with SIMD optimization
 - Neuromorphic hardware acceleration preparation
 - Integration with spike-encoded core structures
 
-The foundation laid in Phase 0 ensures we can build the brain-inspired system incrementally while maintaining quality and performance targets.
+The foundation laid in Phase 0 ensures we can build the brain-inspired system incrementally while maintaining quality and performance targets. The neural network selection strategy allows for focused optimization on the most effective architectures rather than attempting comprehensive implementation of all available options.
