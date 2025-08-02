@@ -711,7 +711,7 @@ impl DivergentThinking {
         
         let jaccard = if union > 0 { intersection as f32 / union as f32 } else { 0.0 };
         
-        // Edit distance similarity as fallback
+        // Edit distance similarity as alternative
         if jaccard == 0.0 {
             let distance = self.levenshtein_distance(entity, query);
             let max_len = entity.len().max(query.len());

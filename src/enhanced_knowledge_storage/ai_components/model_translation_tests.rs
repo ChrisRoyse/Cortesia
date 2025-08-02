@@ -7,15 +7,15 @@ mod tests {
     use super::super::*;
     use crate::enhanced_knowledge_storage::{
         model_management::{get_backend_model_id, translate_model_id},
-        ai_components::ai_model_backend::{AIModelBackend, AIBackendConfig},
+        ai_components::local_model_backend::{LocalModelBackend, LocalModelConfig},
     };
     
     #[tokio::test]
-    async fn test_ai_backend_loads_translated_models() {
-        let config = AIBackendConfig::default();
-        let backend = AIModelBackend::new(config).await.unwrap();
+    async fn test_local_backend_loads_translated_models() {
+        let config = LocalModelConfig::default();
+        let backend = LocalModelBackend::new(config).unwrap();
         
-        // Test loading SmolLM models through translation
+        // Test loading models through translation with local backend
         let test_cases = vec![
             ("smollm2_135m", "sentence-transformers/all-MiniLM-L6-v2"),
             ("smollm2_360m", "bert-base-uncased"),
@@ -26,6 +26,14 @@ mod tests {
             let translated = get_backend_model_id(registry_id);
             assert_eq!(translated, expected_backend_id, 
                 "Model {} should translate to {}", registry_id, expected_backend_id);
+                
+            // Test that the translated model can be used with local backend
+            let available_models = backend.list_available_models();
+            if available_models.contains(&expected_backend_id.to_string()) {
+                println!("✓ Local model available: {}", expected_backend_id);
+            } else {
+                println!("⚠ Local model not found: {}", expected_backend_id);
+            }
         }
     }
     

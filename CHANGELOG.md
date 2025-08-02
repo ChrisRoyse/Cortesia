@@ -6,7 +6,7 @@
 
 #### Local Model Support
 - Implemented `LocalModelBackend` for offline AI model inference using pre-downloaded weights
-- Added `HybridModelBackend` that intelligently switches between local and remote models
+- Created local-only model system with no remote dependencies or fallbacks
 - Created model weight storage infrastructure in `model_weights/` directory
 - Added support for BERT, MiniLM, and BERT-NER models with Candle framework
 - Implemented model metadata and configuration management

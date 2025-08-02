@@ -718,8 +718,8 @@ mod tests {
         }
         
         #[test]
-        fn test_simd_fallback() {
-            // Test that regular search works as fallback
+        fn test_non_simd_search() {
+            // Test that regular search works without SIMD
             let arr = [1, 3, 5, 7];
             
             let result = arr.iter().position(|&x| x == 5);

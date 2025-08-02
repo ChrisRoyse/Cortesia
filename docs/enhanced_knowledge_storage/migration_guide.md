@@ -183,7 +183,7 @@ pub async fn analyze_migration_impact() -> MigrationImpact {
 
 ### Strategy 1: Gradual Migration (Recommended)
 
-Migrate documents incrementally while maintaining the old system for fallback.
+Migrate documents incrementally while maintaining the old system for rollback capability.
 
 ```rust
 pub struct GradualMigrationPlan {

@@ -423,10 +423,10 @@ impl SystemMetricsCollector {
         #[cfg(not(target_os = "linux"))]
         {
             Ok(MemoryInfo {
-                total: 8 * 1024 * 1024 * 1024, // 8GB fallback
-                available: 4 * 1024 * 1024 * 1024, // 4GB fallback
-                swap_total: 2 * 1024 * 1024 * 1024, // 2GB fallback
-                swap_free: 1024 * 1024 * 1024, // 1GB fallback
+                total: 8 * 1024 * 1024 * 1024, // 8GB default
+                available: 4 * 1024 * 1024 * 1024, // 4GB default
+                swap_total: 2 * 1024 * 1024 * 1024, // 2GB default
+                swap_free: 1024 * 1024 * 1024, // 1GB default
             })
         }
     }
@@ -589,8 +589,8 @@ impl ApplicationMetricsCollector {
         
         #[cfg(not(target_os = "linux"))]
         {
-            // Fallback implementation
-            Ok(100 * 1024 * 1024) // 100MB fallback
+            // Default implementation
+            Ok(100 * 1024 * 1024) // 100MB default
         }
     }
     

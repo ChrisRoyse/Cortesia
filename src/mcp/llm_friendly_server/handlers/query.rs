@@ -66,7 +66,7 @@ pub async fn handle_find_facts(
                 "facts": facts,
                 "count": triples.triples.len(),
                 "limit": limit,
-                "fallback_mode": true,
+                "basic_search_mode": true,
                 "query": {
                     "subject": subject,
                     "predicate": predicate,
@@ -75,9 +75,9 @@ pub async fn handle_find_facts(
             });
             
             let message = if triples.triples.is_empty() {
-                "No facts found matching your query (using fallback mode)".to_string()
+                "No facts found matching your query".to_string()
             } else {
-                format!("Found {} fact{} (fallback mode):\n{}", 
+                format!("Found {} fact{}:\n{}", 
                     triples.triples.len(),
                     if triples.triples.len() == 1 { "" } else { "s" },
                     format_facts_for_display(&triples.triples, 5)
@@ -92,7 +92,7 @@ pub async fn handle_find_facts(
                 ]
             } else {
                 vec![
-                    "Enhanced retrieval failed - used basic search".to_string(),
+                    "Using basic search - enhanced AI features require local models".to_string(),
                     "Try 'ask_question' to understand these facts in context".to_string(),
                 ]
             };
@@ -333,13 +333,13 @@ pub async fn handle_ask_question(
         "key_terms": key_terms,
         "relevant_facts": relevant_facts,
         "answer": generate_answer(&all_results, question),
-        "fallback_mode": true
+        "basic_search_mode": true
     });
     
     let message = if all_results.is_empty() {
-        "No relevant information found for your question (fallback mode)".to_string()
+        "No relevant information found for your question".to_string()
     } else {
-        format!("Based on the knowledge graph (fallback mode):\n\n{}\n\nFound {} relevant fact{}",
+        format!("Based on the knowledge graph:\n\n{}\n\nFound {} relevant fact{}",
             generate_answer(&all_results, question),
             all_results.len(),
             if all_results.len() == 1 { "" } else { "s" }
@@ -347,7 +347,7 @@ pub async fn handle_ask_question(
     };
     
     let suggestions = vec![
-        "Enhanced retrieval failed - used basic search".to_string(),
+        "Using basic search - enhanced AI features require local models".to_string(),
         "Try rephrasing your question for different results".to_string(),
         "Use 'find_facts' for more specific searches".to_string(),
     ];

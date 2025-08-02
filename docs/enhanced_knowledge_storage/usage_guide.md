@@ -769,13 +769,9 @@ pub async fn robust_knowledge_processing(
                 }
             },
             Err(EnhancedStorageError::ModelNotFound(model)) => {
-                eprintln!("Model {} not found, trying fallback", model);
-                // Try with different model configuration
-                if attempt < max_retries {
-                    continue;
-                } else {
-                    return Err(ProcessingError::ModelUnavailable(model));
-                }
+                eprintln!("Model {} not found locally - ensure all required models are in model_weights directory", model);
+                // All models must be available locally - no fallbacks available
+                return Err(ProcessingError::ModelUnavailable(model));
             },
             Err(EnhancedStorageError::InsufficientResources(msg)) => {
                 eprintln!("Resource issue: {}, cleaning up", msg);

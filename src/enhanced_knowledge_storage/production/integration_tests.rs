@@ -158,10 +158,10 @@ mod tests {
         match validation_result {
             Ok(()) => {
                 println!("✅ Production configuration validation passed!");
-                println!("   AI backend models: {}", config.ai_backend_config.model_registry.len());
-                println!("   Max loaded models: {}", config.ai_backend_config.max_loaded_models);
-                println!("   Memory threshold: {} GB", config.ai_backend_config.memory_threshold / (1024 * 1024 * 1024));
-                println!("   Enable quantization: {}", config.ai_backend_config.enable_quantization);
+                println!("   Model cache size: {}", config.model_config.model_cache_size);
+                println!("   Local models directory: {:?}", config.local_model_config.model_weights_path);
+                println!("   Memory pool size: {} MB", config.performance_config.memory_pool_size / (1024 * 1024));
+                println!("   Enable compression: {}", config.caching_config.enable_compression);
             }
             Err(e) => {
                 eprintln!("❌ Configuration validation failed: {}", e);

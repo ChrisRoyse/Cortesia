@@ -933,8 +933,8 @@ impl MockErrorScenarios {
             ],
             network_error_scenarios: vec![
                 ErrorScenario {
-                    name: "Model Download Failure".to_string(),
-                    description: "Failed to download model from remote repository".to_string(),
+                    name: "Model Loading Failure".to_string(),
+                    description: "Failed to load model from local model_weights directory".to_string(),
                     setup: || {
                         Ok(())
                     },

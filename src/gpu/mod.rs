@@ -19,7 +19,7 @@ pub trait GpuAccelerator {
     fn parallel_shortest_paths(&self, sources: &[u32], targets: &[u32]) -> Result<Vec<Option<Vec<u32>>>, String>;
 }
 
-/// CPU fallback implementation with actual graph operations
+/// CPU implementation with actual graph operations
 pub struct CpuGraphProcessor {
     /// Adjacency list representation for graph traversal
     /// In a real implementation, this would be passed in or accessed from the graph

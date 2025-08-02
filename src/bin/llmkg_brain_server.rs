@@ -8,9 +8,8 @@ use llmkg::monitoring::BrainMetricsCollector;
 use llmkg::core::brain_enhanced_graph::BrainEnhancedKnowledgeGraph;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use rand::Rng;
-use rand::prelude::SliceRandom;
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
+use rand::seq::SliceRandom;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

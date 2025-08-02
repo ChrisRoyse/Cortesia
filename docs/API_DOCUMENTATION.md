@@ -26,7 +26,7 @@ The Enhanced Knowledge Storage API provides a production-ready REST interface fo
 
 ### Production Features
 - **Circuit Breakers**: Automatic failure detection and recovery
-- **Graceful Degradation**: Fallback modes for system resilience
+- **Graceful Degradation**: Local resource management for system resilience
 - **Auto-scaling**: Dynamic resource allocation based on load
 - **Comprehensive Logging**: Structured logging with multiple levels
 

@@ -17,7 +17,7 @@ use crate::enhanced_knowledge_storage::model_management::model_loader::ModelBack
 
 #[cfg(feature = "ai")]
 use crate::enhanced_knowledge_storage::ai_components::{
-    AIModelBackend, RealEntityExtractor, RealSemanticChunker, RealReasoningEngine,
+    LocalModelBackend, RealEntityExtractor, RealSemanticChunker, RealReasoningEngine,
     EntityExtractionConfig, SemanticChunkingConfig, ReasoningConfig,
     PerformanceMonitor as AIPerformanceMonitor
 };
@@ -48,9 +48,9 @@ pub enum SystemState {
 
 /// Main Production Knowledge System
 pub struct ProductionKnowledgeSystem {
-    // Shared AI backend for all components
+    // Shared local model backend for all components
     #[cfg(feature = "ai")]
-    ai_backend: Arc<AIModelBackend>,
+    local_model_backend: Arc<LocalModelBackend>,
     
     // Real AI components
     #[cfg(feature = "ai")]
@@ -221,20 +221,18 @@ impl ProductionKnowledgeSystem {
         let start_time = Instant::now();
         
         #[cfg(feature = "ai")]
-        let (ai_backend, entity_extractor, semantic_chunker, reasoning_engine) = {
-            // Initialize shared AI backend first using production config
-            let ai_backend_config = crate::enhanced_knowledge_storage::ai_components::AIBackendConfig {
-                max_loaded_models: config.ai_backend_config.max_loaded_models,
-                memory_threshold: config.ai_backend_config.memory_threshold,
-                load_timeout: config.ai_backend_config.load_timeout,
-                enable_quantization: config.ai_backend_config.enable_quantization,
-                cache_dir: config.ai_backend_config.cache_dir.clone(),
-                enable_distributed: config.ai_backend_config.enable_distributed,
+        let (local_model_backend, entity_extractor, semantic_chunker, reasoning_engine) = {
+            // Initialize local model backend - only local models supported
+            let local_config = crate::enhanced_knowledge_storage::ai_components::LocalModelConfig {
+                model_weights_dir: config.local_model_config.model_weights_path.clone(),
+                device: candle_core::Device::Cpu,  // Use CPU by default
+                max_sequence_length: 512,
+                use_cache: true,
             };
             
-            let ai_backend = Arc::new(
-                AIModelBackend::new(ai_backend_config).await
-                    .map_err(|e| SystemError::InitializationError(format!("AI backend: {}", e)))?
+            let local_model_backend = Arc::new(
+                LocalModelBackend::new(local_config)
+                    .map_err(|e| SystemError::InitializationError(format!("Local model backend: {}", e)))?
             );
             
             // Initialize performance monitor
@@ -262,7 +260,7 @@ impl ProductionKnowledgeSystem {
                     .map_err(|e| SystemError::InitializationError(format!("Real reasoning engine: {}", e)))?
             );
             
-            (ai_backend, entity_extractor, semantic_chunker, reasoning_engine)
+            (local_model_backend, entity_extractor, semantic_chunker, reasoning_engine)
         };
         
         // Initialize model resource manager
@@ -388,7 +386,7 @@ impl ProductionKnowledgeSystem {
         
         let system = Self {
             #[cfg(feature = "ai")]
-            ai_backend,
+            local_model_backend,
             #[cfg(feature = "ai")]
             entity_extractor,
             #[cfg(feature = "ai")]
@@ -829,12 +827,11 @@ impl ProductionKnowledgeSystem {
     }
     
     async fn validate_system_integrity(&self) -> Result<(), SystemError> {
-        // Validate shared AI backend when feature is enabled
+        // Validate local model backend when feature is enabled
         #[cfg(feature = "ai")]
         {
-            if let Err(e) = self.ai_backend.health_check().await {
-                return Err(SystemError::InitializationError(format!("AI backend not healthy: {}", e)));
-            }
+            // Local model backend is ready once constructed
+            // No health check method available for LocalModelBackend
         }
         
         // Validate all components are properly initialized

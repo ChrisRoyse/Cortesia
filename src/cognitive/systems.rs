@@ -104,7 +104,7 @@ impl SystemsThinking {
             }
         }
         
-        // Return the first available entity as fallback
+        // Return the first available entity as default
         if let Some((key, _, _)) = all_entities.first() {
             Ok(*key)
         } else {

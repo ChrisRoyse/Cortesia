@@ -1118,13 +1118,13 @@ impl FallbackManager {
         for (strategy_name, strategy) in &self.fallback_strategies {
             // Create a dummy error record
             let error_record = ErrorRecord {
-                id: "fallback".to_string(),
+                id: "degraded_mode".to_string(),
                 timestamp: Utc::now(),
                 error_type: ErrorType::SystemError,
                 severity: ErrorSeverity::Medium,
                 component: component.to_string(),
-                operation: "fallback".to_string(),
-                message: "Activating fallback".to_string(),
+                operation: "degraded_mode".to_string(),
+                message: "Activating degraded mode".to_string(),
                 stack_trace: None,
                 context: HashMap::new(),
                 correlation_id: None,

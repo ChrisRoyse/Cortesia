@@ -11,7 +11,7 @@ use crate::enhanced_knowledge_storage::types::*;
 use crate::enhanced_knowledge_storage::model_management::*;
 use crate::enhanced_knowledge_storage::logging::LogContext;
 #[cfg(feature = "ai")]
-use crate::enhanced_knowledge_storage::ai_components::ai_model_backend::{AIModelBackend, AIBackendConfig};
+use crate::enhanced_knowledge_storage::ai_components::local_model_backend::{LocalModelBackend, LocalModelConfig};
 
 /// Central resource manager for model loading, caching, and task processing
 pub struct ModelResourceManager {
@@ -76,42 +76,17 @@ impl ModelResourceManager {
     pub async fn new(config: ModelResourceConfig) -> Result<Self> {
         let registry = Arc::new(RwLock::new(ModelRegistry::with_default_models()));
         
-        // Use hybrid backend that supports both local and remote models
+        // Initialize local model backend - only local models supported
         #[cfg(feature = "ai")]
         let backend: Arc<dyn ModelBackend> = {
-            // Check if we should use local models
-            let use_local = std::env::var("LLMKG_USE_LOCAL_MODELS")
-                .map(|v| v.to_lowercase() == "true")
-                .unwrap_or(false);
-            
-            if use_local {
-                // Try hybrid backend first
-                match crate::enhanced_knowledge_storage::ai_components::hybrid_model_backend::HybridModelBackend::new(
-                    crate::enhanced_knowledge_storage::ai_components::hybrid_model_backend::HybridModelConfig::default()
-                ).await {
-                    Ok(hybrid_backend) => {
-                        info!("Using hybrid model backend with local model support");
-                        Arc::new(hybrid_backend)
-                    }
-                    Err(e) => {
-                        warn!("Failed to initialize hybrid backend, falling back to remote: {}", e);
-                        let ai_config = AIBackendConfig::default();
-                        let ai_backend = AIModelBackend::new(ai_config).await
-                            .map_err(|e| EnhancedStorageError::ModelLoadingFailed(
-                                format!("Failed to initialize AI backend: {}", e)
-                            ))?;
-                        Arc::new(ai_backend)
-                    }
-                }
-            } else {
-                // Use standard AI backend
-                let ai_config = AIBackendConfig::default();
-                let ai_backend = AIModelBackend::new(ai_config).await
-                    .map_err(|e| EnhancedStorageError::ModelLoadingFailed(
-                        format!("Failed to initialize AI backend: {}", e)
-                    ))?;
-                Arc::new(ai_backend)
-            }
+            // Initialize local model backend with strict local-only operation
+            let local_config = LocalModelConfig::default();
+            let local_backend = LocalModelBackend::new(local_config)
+                .map_err(|e| EnhancedStorageError::ModelLoadingFailed(
+                    format!("Failed to initialize local model backend. Please download all required models to the model_weights directory: {}", e)
+                ))?;
+            info!("Using local model backend - all models must be pre-downloaded");
+            Arc::new(local_backend)
         };
         
         // Error when AI features are not enabled - no more mock fallback

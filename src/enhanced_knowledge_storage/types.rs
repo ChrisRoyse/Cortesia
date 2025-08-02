@@ -100,6 +100,33 @@ pub struct ModelMetadata {
     pub supported_tasks: Vec<String>,
 }
 
+/// Model capabilities  
+#[derive(Debug, Clone)]
+pub struct ModelCapabilities {
+    pub embeddings: bool,
+    pub text_generation: bool,
+    pub entity_extraction: bool,
+    pub max_sequence_length: usize,
+    pub embedding_dimensions: Option<usize>,
+}
+
+/// Model availability status
+#[derive(Debug, Clone)]
+pub struct ModelAvailability {
+    pub local_available: bool,
+    pub local_only: bool,  // System is configured for local-only operation
+    pub preferred_backend: BackendType,
+    pub last_checked: std::time::Instant,
+}
+
+/// Backend type for model loading
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BackendType {
+    Local,
+    Remote,
+    Mock,
+}
+
 /// Task complexity assessment
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TaskComplexity {
@@ -150,6 +177,16 @@ pub enum EnhancedStorageError {
     
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
+    
+    #[error("Candle error: {0}")]
+    CandleError(String),
+}
+
+#[cfg(feature = "ai")]
+impl From<candle_core::Error> for EnhancedStorageError {
+    fn from(err: candle_core::Error) -> Self {
+        EnhancedStorageError::CandleError(format!("{}", err))
+    }
 }
 
 pub type Result<T> = std::result::Result<T, EnhancedStorageError>;

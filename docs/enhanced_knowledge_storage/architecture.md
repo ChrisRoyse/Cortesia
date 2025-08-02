@@ -487,8 +487,8 @@ pub enum EnhancedStorageError {
 ### Error Recovery
 
 - **Graceful Degradation**:
-  - Fallback to simpler models
-  - Reduced quality processing
+  - Selection of simpler locally available models when resources are constrained
+  - Reduced quality processing when necessary
   - Partial result recovery
   - User notification of limitations
 

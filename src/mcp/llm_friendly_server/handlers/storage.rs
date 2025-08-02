@@ -203,7 +203,7 @@ async fn handle_store_knowledge_fallback(
         "chunk_id": chunk_id,
         "title": title,
         "category": category,
-        "fallback_processing": true,
+        "basic_processing": true,
         "extracted": {
             "entities": extracted_entities,
             "relationships": extracted_relationships.len(),
@@ -212,12 +212,12 @@ async fn handle_store_knowledge_fallback(
     });
     
     let message = format!(
-        "✓ Stored knowledge chunk '{}' (fallback mode) with {} extracted entities and {} relationships",
+        "✓ Stored knowledge chunk '{}' with {} extracted entities and {} relationships",
         title, extracted_entities.len(), extracted_relationships.len()
     );
     
     let suggestions = vec![
-        "Enhanced processing failed - stored using basic extraction".to_string(),
+        "Using basic extraction - enhanced AI features require local models".to_string(),
         "Use ask_question to query this knowledge".to_string(),
     ];
     

@@ -180,7 +180,7 @@ strip = true
 opt-level = "s"
 
 [features]
-default = ["native", "api"]
+default = ["native"]
 wasm = ["wasm-bindgen", "wasm-bindgen-futures", "console_error_panic_hook", "wee_alloc", "js-sys", "web-sys", "getrandom"]
 native = ["nalgebra"]
 api = ["axum", "tower", "tower-http", "axum-server", "utoipa", "utoipa-swagger-ui"]

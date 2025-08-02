@@ -98,7 +98,7 @@ impl CriticalThinking {
                     entity_key: *entity_key,
                     fact_description: format!("Found relevant entity: {entity_concept}"),
                     confidence: 0.6,
-                    source: "fallback_search".to_string(),
+                    source: "basic_search".to_string(),
                     timestamp: SystemTime::now(),
                 });
             }

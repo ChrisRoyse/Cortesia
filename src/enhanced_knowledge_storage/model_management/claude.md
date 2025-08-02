@@ -12,7 +12,7 @@ The `model_management` directory implements a comprehensive resource-constrained
 - **Serialization:** serde (JSON)
 - **Logging:** tracing ecosystem (structured logging)
 - **Error Handling:** thiserror
-- **External Services:** HuggingFace Model Hub
+- **Model Storage:** Local filesystem (model_weights directory)
 - **Testing:** Built-in Rust testing framework with tokio::test
 
 ## 3. Directory Structure
@@ -143,13 +143,13 @@ The directory contains 5 core modules that work together to provide model manage
 **No traditional database storage** - The system uses in-memory data structures:
 - **HashMap Collections:** Model metadata stored in memory
 - **LRU Cache:** Model instances cached in memory with automatic eviction
-- **External Model Storage:** Models loaded from HuggingFace Model Hub on demand
+- **Local Model Storage:** Models loaded from local filesystem (model_weights directory)
 
 ## 6. API Interfaces
 
-### External Service Integration:
-- **HuggingFace Model Hub:** Models loaded using HuggingFace IDs (e.g., "HuggingFaceTB/SmolLM2-135M")
-- **Model Loading:** Asynchronous loading from remote repositories
+### Local Model Integration:
+- **Local Filesystem:** Models loaded from local model_weights directory using model IDs
+- **Model Loading:** Asynchronous loading from local filesystem with validation
 - **No REST APIs:** Internal system with programmatic interfaces
 
 ### Key Traits:

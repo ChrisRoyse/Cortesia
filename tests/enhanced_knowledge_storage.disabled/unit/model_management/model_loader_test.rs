@@ -30,11 +30,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_model_loading_from_remote_url_placeholder() {
-        // Placeholder test for loading models from remote URLs
-        // TODO: Test downloading and loading models from remote sources
+    async fn test_model_loading_from_local_directory_placeholder() {
+        // Placeholder test for loading models from local directory structure
+        // TODO: Test loading models from pre-downloaded weights in model_weights/
         
-        assert!(true, "Model loading from remote URL test ready for implementation");
+        assert!(true, "Model loading from local directory test ready for implementation");
     }
 
     #[tokio::test]

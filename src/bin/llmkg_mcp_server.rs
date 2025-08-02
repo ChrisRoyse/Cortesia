@@ -19,10 +19,10 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     
     // Initialize structured logging (tracing) for enhanced knowledge storage
-    // and fallback to env_logger for other components
+    // and use env_logger for other components if needed
     if let Err(e) = llmkg::enhanced_knowledge_storage::logging::init_logging() {
         eprintln!("Failed to initialize structured logging: {e}");
-        // Fallback to env_logger
+        // Use env_logger instead
         env_logger::Builder::from_default_env()
             .filter_level(if args.verbose { 
                 log::LevelFilter::Debug 

@@ -185,3 +185,7 @@ tests/target/
 .mcp.json
 memory/sessions/*
 !memory/sessions/README.md
+model_weights/**/*.bin
+model_weights/**/*.safetensors
+model_weights/**/*.pt
+model_weights/**/*.pth

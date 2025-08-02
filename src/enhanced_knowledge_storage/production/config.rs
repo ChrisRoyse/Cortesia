@@ -17,7 +17,7 @@ pub struct ProductionConfig {
     
     // AI component configurations
     pub model_config: ModelConfig,
-    pub ai_backend_config: AIBackendConfig,
+    pub local_model_config: LocalModelConfig,
     pub entity_extraction_config: EntityExtractionConfig,
     pub chunking_config: ChunkingConfig,
     pub relationship_config: RelationshipConfig,
@@ -72,29 +72,26 @@ pub struct ModelConfig {
     pub preload_models: bool,
 }
 
-/// AI Backend configuration for real AI components
+/// Local Model Backend configuration for local-only AI components
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AIBackendConfig {
+pub struct LocalModelConfig {
+    pub model_weights_path: PathBuf,
     pub max_loaded_models: usize,
     pub memory_threshold: u64,
     pub load_timeout: Duration,
-    pub enable_quantization: bool,
     pub cache_dir: Option<String>,
-    pub enable_distributed: bool,
-    pub model_registry: Vec<AIModelRegistryEntry>,
+    pub model_registry: Vec<LocalModelRegistryEntry>,
 }
 
-/// AI Model registry entry
+/// Local Model registry entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AIModelRegistryEntry {
+pub struct LocalModelRegistryEntry {
     pub model_id: String,
     pub model_name: String,
     pub model_type: AIModelType,
-    pub huggingface_id: Option<String>,
-    pub local_path: Option<PathBuf>,
+    pub local_path: PathBuf,
     pub memory_requirement: u64,
     pub max_sequence_length: usize,
-    pub quantization: QuantizationType,
     pub device_preference: ModelDevicePreference,
 }
 
@@ -733,45 +730,38 @@ impl Default for ProductionConfig {
                 model_cache_size: 3,
                 preload_models: true,
             },
-            ai_backend_config: AIBackendConfig {
+            local_model_config: LocalModelConfig {
+                model_weights_path: PathBuf::from("./model_weights"),
                 max_loaded_models: 3,
                 memory_threshold: 8 * 1024 * 1024 * 1024, // 8GB
                 load_timeout: Duration::from_secs(300),
-                enable_quantization: true,
                 cache_dir: Some("./model_cache".to_string()),
-                enable_distributed: false,
                 model_registry: vec![
-                    AIModelRegistryEntry {
+                    LocalModelRegistryEntry {
                         model_id: "bert-base-uncased".to_string(),
                         model_name: "BERT Base Uncased".to_string(),
                         model_type: AIModelType::LanguageModel,
-                        huggingface_id: Some("bert-base-uncased".to_string()),
-                        local_path: None,
+                        local_path: PathBuf::from("./model_weights/bert-base-uncased"),
                         memory_requirement: 450_000_000, // ~450MB
                         max_sequence_length: 512,
-                        quantization: QuantizationType::None,
                         device_preference: ModelDevicePreference::Auto,
                     },
-                    AIModelRegistryEntry {
-                        model_id: "sentence-transformer".to_string(),
+                    LocalModelRegistryEntry {
+                        model_id: "minilm-l6-v2".to_string(),
                         model_name: "All MiniLM L6 v2".to_string(),
                         model_type: AIModelType::EmbeddingModel,
-                        huggingface_id: Some("sentence-transformers/all-MiniLM-L6-v2".to_string()),
-                        local_path: None,
+                        local_path: PathBuf::from("./model_weights/minilm-l6-v2"),
                         memory_requirement: 90_000_000, // ~90MB
                         max_sequence_length: 256,
-                        quantization: QuantizationType::None,
                         device_preference: ModelDevicePreference::Auto,
                     },
-                    AIModelRegistryEntry {
-                        model_id: "ner-model".to_string(),
+                    LocalModelRegistryEntry {
+                        model_id: "bert-large-ner".to_string(),
                         model_name: "BERT Large NER".to_string(),
                         model_type: AIModelType::ClassificationModel,
-                        huggingface_id: Some("dbmdz/bert-large-cased-finetuned-conll03-english".to_string()),
-                        local_path: None,
+                        local_path: PathBuf::from("./model_weights/bert-large-ner"),
                         memory_requirement: 1_360_000_000, // ~1.36GB
                         max_sequence_length: 512,
-                        quantization: QuantizationType::Float16,
                         device_preference: ModelDevicePreference::Auto,
                     },
                 ],
