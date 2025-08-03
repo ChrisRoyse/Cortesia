@@ -1,10 +1,12 @@
 //! Spiking cortical column implementation with TTFS dynamics
 
+pub mod activation;
 pub mod column;
 pub mod state;
 #[cfg(test)]
 mod tests;
 
+pub use activation::ActivationDynamics;
 pub use column::SpikingCorticalColumn;
 pub use state::{AtomicState, ColumnState};
 
