@@ -4,11 +4,13 @@ pub mod state;
 pub mod activation; 
 pub mod column;
 pub mod inhibition;
+pub mod grid;
 
 pub use state::{ColumnState, AtomicState};
 pub use activation::ActivationDynamics;
 pub use column::SpikingCorticalColumn;
 pub use inhibition::{LateralInhibitionNetwork, InhibitionConfig, CompetitionResult, InhibitionStats};
+pub use grid::{CorticalGrid, GridConfig, GridPosition, GridStats};
 
 use std::time::Duration;
 use thiserror::Error;

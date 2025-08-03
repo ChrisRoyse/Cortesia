@@ -3,7 +3,6 @@
 use super::{ColumnId, InhibitoryWeight, SpikingCorticalColumn};
 use dashmap::DashMap;
 use parking_lot::RwLock;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Configuration for lateral inhibition
