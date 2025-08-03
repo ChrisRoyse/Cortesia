@@ -348,6 +348,13 @@ impl TTFSEncoder {
     }
 }
 
+/// Clone implementation for TTFSEncoder to support batch building
+impl Clone for TTFSEncoder {
+    fn clone(&self) -> Self {
+        Self::new(self.config.clone())
+    }
+}
+
 /// Errors that can occur during encoding
 #[derive(Debug, thiserror::Error)]
 pub enum EncodingError {

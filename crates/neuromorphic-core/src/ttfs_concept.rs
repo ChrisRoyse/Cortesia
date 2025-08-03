@@ -2,12 +2,14 @@
 
 mod spike_pattern;
 mod encoding;
+mod builder;
 
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 pub use spike_pattern::{SpikePattern, SpikeEvent};
 pub use encoding::{TTFSEncoder, EncodingConfig, EncodingError};
+pub use builder::{ConceptBuilder, BatchConceptBuilder};
 
 /// Convert milliseconds to Duration
 pub fn ms_to_duration(ms: f32) -> Duration {
