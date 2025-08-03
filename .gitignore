@@ -105,6 +105,7 @@ target/release/.fingerprint/
 
 # WebAssembly artifacts
 /pkg/
+*.wasm
 *.wasm.map
 
 # Index and database files
@@ -162,3 +163,16 @@ Cargo.lock.bk
 .mcp.json
 memory/sessions/*
 !memory/sessions/README.md
+
+# Neural model weights (too large for git)
+/model_weights/*.bin
+/model_weights/*.safetensors
+/neural_checkpoints/
+
+# Benchmarking results
+/criterion_outputs/
+/test_outputs/
+/spike_patterns_cache/
+
+# Neural profiles
+/neural_profiles/

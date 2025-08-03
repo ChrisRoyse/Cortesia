@@ -1,0 +1,86 @@
+[workspace]
+members = [
+    "crates/neuromorphic-core",
+    "crates/snn-allocation-engine", 
+    "crates/temporal-memory",
+    "crates/neural-bridge",
+    "crates/neuromorphic-wasm",
+    "crates/snn-mocks",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["CortexKG Team"]
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+# Core async runtime and concurrency (ALL PHASES)
+tokio = { version = "1.35", features = ["full", "tracing"] }
+async-trait = "0.1"
+futures = "0.3"
+rayon = "1.8"
+crossbeam = "0.8"
+parking_lot = "0.12"
+once_cell = "1.19"
+dashmap = "5.5"
+
+# Serialization and data handling (ALL PHASES)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.3"
+uuid = { version = "1.7", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling and logging (ALL PHASES)
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+# Neural network framework - intelligently select 1-4 optimal types from available architectures
+ndarray = "0.15"                 # Linear algebra foundation
+# Note: Specialized neural network crates will be added in Phase 1 after foundation is stable
+
+# Graph storage and processing (PHASE_2-11) - Minimal for Phase 0
+petgraph = "0.6"                 # Core graph processing
+
+# Memory management and optimization (ALL PHASES)
+jemallocator = "0.5"
+mimalloc = "0.1"
+wee_alloc = "0.4"                # WASM allocator
+
+# WASM and SIMD support (PHASE_9-11)
+wasm-bindgen = { version = "0.2", features = ["spans"] }
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["console", "Performance", "Window"] }
+
+# Testing and benchmarking (ALL PHASES)
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.4"
+mockall = "0.12"
+tokio-test = "0.4"
+
+# Random number generation for testing
+rand = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.release.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.bench]
+inherits = "release"
+debug = true
