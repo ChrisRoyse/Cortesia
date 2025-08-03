@@ -1,0 +1,21 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Rust files
+*.rs text eol=lf
+*.toml text eol=lf
+
+# Web files
+*.js text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+
+# Documentation
+*.md text eol=lf
+
+# Binary files
+*.wasm binary
+*.bin binary
+*.safetensors binary
+*.onnx binary

@@ -1,0 +1,1 @@
+//! SNN allocator implementation

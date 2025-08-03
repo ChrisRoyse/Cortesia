@@ -1,0 +1,43 @@
+[package]
+name = "neuromorphic-core"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# Core dependencies from workspace
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+parking_lot.workspace = true
+dashmap.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+
+# Neuromorphic computing dependencies
+ndarray.workspace = true
+rayon.workspace = true
+
+# WASM compatibility
+wasm-bindgen.workspace = true
+js-sys.workspace = true
+web-sys.workspace = true
+
+# Crate-specific additions
+bincode.workspace = true
+once_cell.workspace = true
+
+[target.wasm32-unknown-unknown.dependencies]
+wee_alloc.workspace = true
+
+# WASM build configuration for neuromorphic optimization
+[package.metadata.wasm-pack]
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O3", "--enable-simd"]
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+tokio-test.workspace = true

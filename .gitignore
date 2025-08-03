@@ -1,178 +1,66 @@
 # Rust build artifacts
 /target/
-target/
+/Cargo.lock
 **/*.rs.bk
 *.pdb
 
-# Cargo lock file (include for applications, exclude for libraries)
-Cargo.lock
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-
-# Log files
-*.log
-logs/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Testing artifacts
-coverage/
-test-results/
-*.profraw
-
-# Documentation build
-book/
-
-# Python artifacts (from scripts)
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-
-# Backup files
-*.bak
-*.backup
-
-# Editor artifacts
-.vimrc.local
-.lvimrc
-
-# Package managers
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Distribution
-dist/
-build/
-
-# Cache directories
-.cache/
-.ccache/
-.cargo/registry/cache/
-
-# Performance profiling
-perf.data*
-flamegraph.svg
-
-# Test data cache
-test-data-cache/
-*.test-data
-
-# Simulation outputs
-simulation-results/
-test-reports/
-performance-baselines/
-
-# Project-specific generated files
-check_output.txt
-compilation_errors.txt
-src_contents.txt
-extract_src_contents.py
-
-# Build fingerprints and metadata (Rust specific)
-target/.rustc_info.json
-target/CACHEDIR.TAG
-target/.cargo-lock
-target/debug/.fingerprint/
-target/release/.fingerprint/
-**/.fingerprint/
-**/deps/
-
-# WebAssembly artifacts
+# WASM build artifacts
+/dist/
 /pkg/
+/wasm-pack.log
 *.wasm
-*.wasm.map
+*.js
+*.js.map
+/node_modules/
 
-# Index and database files
-*.idx
-*.db
-*.sqlite
-*.rocksdb/
-
-# Memory-mapped file caches
-*.mmap
-*.mmap.lock
-
-# Profiling and analysis
-*.prof
-*.heap
-*.trace
-valgrind-*.xml
-grcov*.profraw
-/perf-reports/
-
-# Security credentials
-*.key
-*.pem
-*.cert
-/secrets/
-/credentials/
-
-# Local configuration overrides
-config.local.toml
-settings.local.json
-*.local.yaml
-
-# Simulation state files
-*.sim-state
-*.sim-checkpoint
-/simulation-runs/
-
-# MCP server artifacts
-/mcp-server-logs/
-*.mcp-cache
-
-# Federation/distributed system artifacts
-/federation-cache/
-*.federation-state
-
-# Additional Rust artifacts and patterns
-*.exe
-*.lib
-Cargo.lock.bk
-**/*.orig
-**/*.rej
-
-# Claude Flow generated files
-.claude/settings.local.json
-.mcp.json
-memory/sessions/*
-!memory/sessions/README.md
-
-# Neural model weights (too large for git)
+# Neuromorphic model weights (too large for git)
 /model_weights/*.bin
 /model_weights/*.safetensors
 /neural_checkpoints/
+*.onnx
+*.pt
+*.pth
 
-# Benchmarking results
+# Development files
+*.swp
+*.swo
+.DS_Store
+.env
+.env.local
+.vscode/
+.idea/
+*.iml
+
+# Benchmarking and profiling
 /criterion_outputs/
+/target/criterion/
+/flamegraph.svg
+/neural_profiles/
+perf.data
+perf.data.old
+
+# Testing artifacts
 /test_outputs/
 /spike_patterns_cache/
+tarpaulin-report.html
+coverage.txt
 
-# Neural profiles
-/neural_profiles/
+# Documentation build
+/target/doc/
+/target/rdoc/
+
+# OS specific
+Thumbs.db
+desktop.ini
+
+# Python (for any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+
+# Logs
+*.log
+logs/
