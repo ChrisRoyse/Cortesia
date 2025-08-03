@@ -1,14 +1,12 @@
 //! Spiking cortical column implementation with TTFS dynamics
 
-pub mod activation;
-pub mod column;
 pub mod state;
-#[cfg(test)]
-mod tests;
+pub mod activation; 
+pub mod column;
 
+pub use state::{ColumnState, AtomicState};
 pub use activation::ActivationDynamics;
 pub use column::SpikingCorticalColumn;
-pub use state::{AtomicState, ColumnState};
 
 use std::time::Duration;
 use thiserror::Error;

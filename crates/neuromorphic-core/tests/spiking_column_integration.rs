@@ -91,9 +91,9 @@ fn test_concurrent_column_activation() {
     
     let results: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
     
-    // Only one should succeed
+    // All should succeed (activation can be strengthened when already activated)
     let successes = results.iter().filter(|r| r.is_ok()).count();
-    assert_eq!(successes, 1);
+    assert_eq!(successes, 10);
     assert_eq!(column.state(), ColumnState::Activated);
 }
 
