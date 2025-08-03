@@ -1,0 +1,88 @@
+{
+  "benchmark_name": "validation_20250803_173416",
+  "timestamp": "2025-08-03T17:34:16.249651",
+  "dataset_size": 2,
+  "performance_rating": "Poor",
+  "validation_metrics": {
+    "total_examples": 2,
+    "correct_predictions": 2,
+    "accuracy": 1.0,
+    "true_positives": 1,
+    "true_negatives": 1,
+    "false_positives": 0,
+    "false_negatives": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "specificity": 1.0,
+    "calibration_error": 0.2180801470588235,
+    "reliability_correlation": 0.0,
+    "overconfidence_rate": 0.0,
+    "underconfidence_rate": 0.0,
+    "avg_processing_time": 0.000499725341796875,
+    "throughput_items_per_sec": 2001.0992366412213,
+    "memory_usage_mb": 38.04296875,
+    "high_confidence_accuracy": 1.0,
+    "medium_confidence_accuracy": 0.0,
+    "low_confidence_accuracy": 1.0,
+    "language_accuracies": {
+      "python": 1.0
+    },
+    "difficulty_accuracies": {
+      "easy": 1.0,
+      "medium": 1.0
+    }
+  },
+  "regression_alerts": [
+    {
+      "metric_name": "calibration_error",
+      "current_value": 0.2180801470588235,
+      "baseline_value": 0.1,
+      "degradation_percentage": 118.08014705882348,
+      "severity": "critical",
+      "timestamp": "2025-08-03T17:34:16.249651",
+      "description": "calibration_error (0.218) failed absolute threshold (0.100)"
+    }
+  ],
+  "detailed_results": {
+    "processing_time_seconds": 0.0015032291412353516,
+    "examples_by_language": {
+      "python": 2
+    },
+    "examples_by_difficulty": {
+      "medium": 1,
+      "easy": 1
+    },
+    "false_positives": [],
+    "false_negatives": [],
+    "confidence_distribution": {
+      "mean": 0.4219198529411765,
+      "median": 0.4219198529411765,
+      "std_dev": 0.3986948795316403,
+      "min": 0.13999999999999999,
+      "max": 0.703839705882353,
+      "quartiles": {
+        "q1": 0.0,
+        "q2": 0.4219198529411765,
+        "q3": 0.0
+      },
+      "confidence_bands": {
+        "very_low_0_0.2": 1,
+        "low_0.2_0.4": 0,
+        "medium_0.4_0.6": 0,
+        "high_0.6_0.8": 1,
+        "very_high_0.8_1.0": 0
+      }
+    },
+    "performance_benchmark": {
+      "batch_1": {
+        "batch_size": 1,
+        "avg_total_time": 0.00016792615254720053,
+        "avg_time_per_item": 0.00016792615254720053,
+        "throughput_items_per_sec": 5954.9985802177,
+        "avg_memory_delta_mb": 0.0,
+        "std_total_time": 0.00029085662813131317
+      }
+    }
+  }
+}

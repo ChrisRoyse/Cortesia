@@ -1,0 +1,57 @@
+{
+  "version": "universal_1.0",
+  "indexed_at": "2025-08-03 15:24:27",
+  "stats": {
+    "total_files": 762,
+    "total_chunks": 11845,
+    "code_files": 45,
+    "doc_files": 709,
+    "config_files": 8,
+    "languages": {
+      "rust": 45
+    },
+    "chunk_types": {
+      "hierarchical_section": 9973,
+      "sliding_window": 1414,
+      "code_block": 19,
+      "function": 327,
+      "enum": 14,
+      "trait": 1,
+      "struct": 38,
+      "config_section": 59
+    },
+    "processing_time": 154.59189915657043,
+    "errors": []
+  },
+  "languages": {
+    "rust": 45
+  },
+  "chunk_types": {
+    "hierarchical_section": 9973,
+    "sliding_window": 1414,
+    "code_block": 19,
+    "function": 327,
+    "enum": 14,
+    "trait": 1,
+    "struct": 38,
+    "config_section": 59
+  },
+  "root_directory": "C:\\code\\LLMKG",
+  "db_directory": "chroma_db_llmkg",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "indexing_strategy": {
+    "code": "Pattern-based universal extraction",
+    "documentation": "Hierarchical + Semantic chunking",
+    "config": "Structure-aware chunking",
+    "fallback": "Intelligent boundary detection"
+  },
+  "features": [
+    "No external parser dependencies",
+    "Multi-language support",
+    "Context preservation",
+    "Sliding window with overlap",
+    "Method-level granularity",
+    "Production-ready resource management"
+  ]
+}

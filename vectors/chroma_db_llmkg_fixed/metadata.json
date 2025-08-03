@@ -1,0 +1,66 @@
+{
+  "version": "universal_fixed_1.0",
+  "indexed_at": "2025-08-03T15:49:44.711359",
+  "stats": {
+    "total_files": 872,
+    "code_files": 85,
+    "doc_files": 720,
+    "config_files": 23,
+    "total_chunks": 14920,
+    "languages": {
+      "python": 36,
+      "rust": 46,
+      "text": 3
+    },
+    "chunk_types": {
+      "hierarchical_section": 13685,
+      "sliding_window": 1,
+      "class": 57,
+      "method": 262,
+      "function": 486,
+      "code_block": 295,
+      "enum": 18,
+      "trait": 1,
+      "struct": 52,
+      "config_section": 63
+    },
+    "errors": [],
+    "processing_time": 212.1934938430786
+  },
+  "languages": {
+    "python": 36,
+    "rust": 46,
+    "text": 3
+  },
+  "chunk_types": {
+    "hierarchical_section": 13685,
+    "sliding_window": 1,
+    "class": 57,
+    "method": 262,
+    "function": 486,
+    "code_block": 295,
+    "enum": 18,
+    "trait": 1,
+    "struct": 52,
+    "config_section": 63
+  },
+  "root_directory": "C:/code/LLMKG",
+  "db_directory": "chroma_db_llmkg_fixed",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "indexing_strategy": {
+    "code": "Pattern-based universal extraction WITH documentation",
+    "documentation": "Hierarchical + Semantic chunking",
+    "config": "Structure-aware chunking",
+    "fallback": "Intelligent boundary detection"
+  },
+  "features": [
+    "FIXED: Rust /// documentation comments captured",
+    "No external parser dependencies",
+    "Multi-language support",
+    "Context preservation",
+    "Sliding window with overlap",
+    "Method-level granularity",
+    "Production-ready resource management"
+  ]
+}

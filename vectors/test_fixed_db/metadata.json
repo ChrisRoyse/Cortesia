@@ -1,0 +1,50 @@
+{
+  "version": "universal_fixed_1.0",
+  "indexed_at": "2025-08-03T15:45:04.121834",
+  "stats": {
+    "total_files": 8,
+    "code_files": 7,
+    "doc_files": 1,
+    "config_files": 0,
+    "total_chunks": 130,
+    "languages": {
+      "rust": 7
+    },
+    "chunk_types": {
+      "hierarchical_section": 16,
+      "struct": 11,
+      "function": 101,
+      "enum": 2
+    },
+    "errors": [],
+    "processing_time": 13.996000051498413
+  },
+  "languages": {
+    "rust": 7
+  },
+  "chunk_types": {
+    "hierarchical_section": 16,
+    "struct": 11,
+    "function": 101,
+    "enum": 2
+  },
+  "root_directory": "C:/code/LLMKG/crates/neuromorphic-core/src/spiking_column",
+  "db_directory": "test_fixed_db",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "indexing_strategy": {
+    "code": "Pattern-based universal extraction WITH documentation",
+    "documentation": "Hierarchical + Semantic chunking",
+    "config": "Structure-aware chunking",
+    "fallback": "Intelligent boundary detection"
+  },
+  "features": [
+    "FIXED: Rust /// documentation comments captured",
+    "No external parser dependencies",
+    "Multi-language support",
+    "Context preservation",
+    "Sliding window with overlap",
+    "Method-level granularity",
+    "Production-ready resource management"
+  ]
+}
