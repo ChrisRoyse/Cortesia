@@ -62,10 +62,16 @@ venv/
 env/
 
 # Vector databases (too large for git)
-/vectors/chroma_db/*.sqlite3
-/vectors/chroma_db/*/
+/vectors/chroma_db/
+/vectors/chroma_db_advanced/
+/vectors/chroma_db_advanced_v1_backup/
+/vectors/__pycache__/
+/vectors/indexer_advanced_v2.py
+*.sqlite3
 *.chroma
 *.faiss
+*.bin
+*.pickle
 
 # Logs
 *.log
