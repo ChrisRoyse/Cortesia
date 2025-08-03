@@ -26,7 +26,7 @@ pub struct SpikingCorticalColumn {
     state: AtomicState,
 
     /// Activation dynamics
-    activation: ActivationDynamics,
+    pub(super) activation: ActivationDynamics,
 
     /// Currently allocated concept name (if any)
     allocated_concept: RwLock<Option<String>>,

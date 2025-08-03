@@ -3,10 +3,12 @@
 pub mod state;
 pub mod activation; 
 pub mod column;
+pub mod inhibition;
 
 pub use state::{ColumnState, AtomicState};
 pub use activation::ActivationDynamics;
 pub use column::SpikingCorticalColumn;
+pub use inhibition::{LateralInhibitionNetwork, InhibitionConfig, CompetitionResult, InhibitionStats};
 
 use std::time::Duration;
 use thiserror::Error;
