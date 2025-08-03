@@ -14,7 +14,7 @@ pub mod ttfs_concept;
 pub use error::{NeuromorphicError, Result, ResultExt};
 pub use neural_branch::{BranchId, NeuromorphicMemoryBranch};
 pub use spiking_column::{ColumnError, ColumnId, ColumnState, SpikingCorticalColumn};
-pub use ttfs_concept::{NodeId, TTFSConcept};
+pub use ttfs_concept::{TTFSConcept, ConceptMetadata, SpikePattern, SpikeEvent};
 
 // Common types used across the neuromorphic system
 use std::time::Duration;

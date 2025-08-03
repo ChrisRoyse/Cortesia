@@ -1,49 +1,104 @@
-//! Time-to-First-Spike concept encoding
-//!
-//! This module implements TTFS-encoded concepts for neuromorphic
-//! knowledge representation with spike-based inheritance patterns.
+//! TTFS-encoded concept representation
+
+mod spike_pattern;
+mod encoding;
 
 use serde::{Deserialize, Serialize};
-// Future imports for full implementation
-// use std::collections::HashMap;
-// use std::time::Duration;
+use std::time::Duration;
 
-/// Unique identifier for a concept node
-pub type NodeId = u64;
+pub use spike_pattern::{SpikePattern, SpikeEvent};
+pub use encoding::{TTFSEncoder, EncodingConfig};
 
-/// Represents a concept encoded using Time-to-First-Spike timing
+/// Time-to-First-Spike encoded concept
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TTFSConcept {
-    id: NodeId,
-    name: String,
-    // Placeholder for future implementation
-    _phantom: std::marker::PhantomData<()>,
+    /// Unique identifier
+    pub id: uuid::Uuid,
+    
+    /// Human-readable name
+    pub name: String,
+    
+    /// Semantic features for neural encoding
+    pub semantic_features: Vec<f32>,
+    
+    /// Spike pattern representation
+    pub spike_pattern: SpikePattern,
+    
+    /// Concept metadata
+    pub metadata: ConceptMetadata,
+    
+    /// Creation timestamp
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Metadata associated with a concept
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConceptMetadata {
+    /// Source of the concept (e.g., "parsed", "inferred", "manual")
+    pub source: String,
+    
+    /// Confidence score (0.0 to 1.0)
+    pub confidence: f32,
+    
+    /// Parent concept ID if this is a specialized concept
+    pub parent_id: Option<uuid::Uuid>,
+    
+    /// Properties as key-value pairs
+    pub properties: std::collections::HashMap<String, String>,
+    
+    /// Tags for categorization
+    pub tags: Vec<String>,
 }
 
 impl TTFSConcept {
-    /// Creates a new TTFS-encoded concept
-    pub fn new(name: impl Into<String>, _relevance_score: f32) -> Self {
+    /// Create a new TTFS concept
+    pub fn new(name: &str) -> Self {
         Self {
-            id: Self::generate_id(),
-            name: name.into(),
-            _phantom: std::marker::PhantomData,
+            id: uuid::Uuid::new_v4(),
+            name: name.to_string(),
+            semantic_features: Vec::new(),
+            spike_pattern: SpikePattern::default(),
+            metadata: ConceptMetadata::default(),
+            created_at: chrono::Utc::now(),
         }
     }
-
-    /// Returns the concept ID
-    pub fn id(&self) -> NodeId {
-        self.id
+    
+    /// Create with semantic features
+    pub fn with_features(name: &str, features: Vec<f32>) -> Self {
+        let mut concept = Self::new(name);
+        
+        // Generate spike pattern from features before moving
+        let encoder = TTFSEncoder::default();
+        concept.spike_pattern = encoder.encode(&features);
+        concept.semantic_features = features;
+        
+        concept
     }
-
-    /// Returns the concept name
-    pub fn name(&self) -> &str {
-        &self.name
+    
+    /// Add a property to the concept
+    pub fn add_property(&mut self, key: String, value: String) {
+        self.metadata.properties.insert(key, value);
     }
+    
+    /// Set parent concept
+    pub fn set_parent(&mut self, parent_id: uuid::Uuid) {
+        self.metadata.parent_id = Some(parent_id);
+    }
+    
+    /// Get time-to-first-spike
+    pub fn time_to_first_spike(&self) -> Option<Duration> {
+        self.spike_pattern.first_spike_time()
+    }
+}
 
-    fn generate_id() -> NodeId {
-        // Simple ID generation - in production use UUID or similar
-        use std::sync::atomic::{AtomicU64, Ordering};
-        static COUNTER: AtomicU64 = AtomicU64::new(1);
-        COUNTER.fetch_add(1, Ordering::Relaxed)
+impl Default for ConceptMetadata {
+    fn default() -> Self {
+        Self {
+            source: "unknown".to_string(),
+            confidence: 1.0,
+            parent_id: None,
+            properties: std::collections::HashMap::new(),
+            tags: Vec::new(),
+        }
     }
 }
