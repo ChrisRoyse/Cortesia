@@ -49,7 +49,7 @@ Create detailed integration documentation covering project setup, dependency man
         async function initializeCortexKG() {
             try {
                 // Initialize WASM module
-                await wasmLoader.init({
+                await wasm_loader.init({
                     memorySize: 32 * 1024 * 1024, // 32MB
                     enableSIMD: true
                 });
@@ -85,10 +85,10 @@ npm install @types/cortex-kg
 
 ```javascript
 // ES6 Module Import
-import { wasmLoader, cortexWrapper, storageManager, cortexVisualizer } from 'cortex-kg';
+import { wasm_loader, cortexWrapper, storageManager, cortexVisualizer } from 'cortex-kg';
 
 // CommonJS Import
-const { wasmLoader, cortexWrapper } = require('cortex-kg');
+const { wasm_loader, cortexWrapper } = require('cortex-kg');
 
 // TypeScript with full type definitions
 import {
@@ -172,7 +172,7 @@ module.exports = {
 ```jsx
 // CortexKGProvider.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { wasmLoader, cortexWrapper } from 'cortex-kg';
+import { wasm_loader, cortexWrapper } from 'cortex-kg';
 
 const CortexKGContext = createContext();
 
@@ -183,7 +183,7 @@ export function CortexKGProvider({ children, config = {} }) {
   useEffect(() => {
     async function initializeCortexKG() {
       try {
-        await wasmLoader.init({
+        await wasm_loader.init({
           memorySize: 32 * 1024 * 1024,
           enableSIMD: true,
           ...config
@@ -201,7 +201,7 @@ export function CortexKGProvider({ children, config = {} }) {
     isLoaded,
     error,
     cortexWrapper,
-    wasmLoader
+    wasm_loader
   };
   
   return (
@@ -296,7 +296,7 @@ export default App;
 </template>
 
 <script>
-import { wasmLoader, cortexWrapper, cortexVisualizer } from 'cortex-kg';
+import { wasm_loader, cortexWrapper, cortexVisualizer } from 'cortex-kg';
 
 export default {
   name: 'CortexKG',
@@ -314,7 +314,7 @@ export default {
   },
   async mounted() {
     try {
-      await wasmLoader.init({
+      await wasm_loader.init({
         memorySize: 32 * 1024 * 1024,
         enableSIMD: true,
         ...this.config
@@ -410,7 +410,7 @@ export default {
 // cortex-kg.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { wasmLoader, cortexWrapper, Concept } from 'cortex-kg';
+import { wasm_loader, cortexWrapper, Concept } from 'cortex-kg';
 
 @Injectable({
   providedIn: 'root'
@@ -428,7 +428,7 @@ export class CortexKGService {
   
   private async initialize(): Promise<void> {
     try {
-      await wasmLoader.init({
+      await wasm_loader.init({
         memorySize: 32 * 1024 * 1024,
         enableSIMD: true
       });
@@ -519,7 +519,7 @@ export class CorticalVisualizationComponent implements OnInit {
 ### Node.js Integration (Server-side)
 ```javascript
 // server.js - Node.js backend integration
-const { wasmLoader, cortexWrapper } = require('cortex-kg/dist/cortex-kg-node');
+const { wasm_loader, cortexWrapper } = require('cortex-kg/dist/cortex-kg-node');
 const express = require('express');
 const cors = require('cors');
 
@@ -551,7 +551,7 @@ class CortexKGServer {
     this.app.post('/api/initialize', async (req, res) => {
       try {
         if (!this.isInitialized) {
-          await wasmLoader.init({
+          await wasm_loader.init({
             memorySize: 64 * 1024 * 1024, // Server can handle more memory
             enableSIMD: true
           });
@@ -591,8 +591,8 @@ class CortexKGServer {
     this.app.get('/api/memory', (req, res) => {
       try {
         this.ensureInitialized();
-        const memoryStats = wasmLoader.getMemoryUsage();
-        res.json({ success: true, memory: memoryStats });
+        const memory_stats = wasm_loader.getMemoryUsage();
+        res.json({ success: true, memory: memory_stats });
       } catch (error) {
         res.status(500).json({ success: false, error: error.message });
       }
@@ -608,7 +608,7 @@ class CortexKGServer {
   async start(port = 3000) {
     // Initialize CortexKG on server start
     try {
-      await wasmLoader.init({
+      await wasm_loader.init({
         memorySize: 64 * 1024 * 1024,
         enableSIMD: true
       });
@@ -655,7 +655,7 @@ const config = {
   timeout: 30000
 };
 
-await wasmLoader.init(config);
+await wasm_loader.init(config);
 ```
 
 ### Advanced Configuration
@@ -701,7 +701,7 @@ const advancedConfig = {
 };
 
 // Apply advanced configuration
-await wasmLoader.init(advancedConfig);
+await wasm_loader.init(advancedConfig);
 ```
 
 ### Environment-specific Configuration
@@ -758,7 +758,7 @@ class LazyCorRexKG {
   }
   
   async initialize() {
-    await wasmLoader.init({
+    await wasm_loader.init({
       memorySize: 32 * 1024 * 1024,
       enableSIMD: true
     });
@@ -807,7 +807,7 @@ class ManagedCortexKG {
   }
   
   async checkMemoryPressure() {
-    const stats = wasmLoader.getMemoryUsage();
+    const stats = wasm_loader.getMemoryUsage();
     
     if (stats.pressure > this.memoryThreshold) {
       console.warn('High memory pressure, starting cleanup');
@@ -1265,12 +1265,12 @@ http {
 4. **Create testing integration examples**
 ```javascript
 // tests/integration/cortexkg-integration.test.js
-const { wasmLoader, cortexWrapper } = require('cortex-kg');
+const { wasm_loader, cortexWrapper } = require('cortex-kg');
 
 describe('CortexKG Integration Tests', () => {
   beforeAll(async () => {
     // Initialize CortexKG before tests
-    await wasmLoader.init({
+    await wasm_loader.init({
       memorySize: 16 * 1024 * 1024,
       enableSIMD: true,
       debug: true
@@ -1279,7 +1279,7 @@ describe('CortexKG Integration Tests', () => {
 
   afterAll(async () => {
     // Cleanup after tests
-    const stats = wasmLoader.getMemoryUsage();
+    const stats = wasm_loader.getMemoryUsage();
     console.log('Final memory usage:', stats);
   });
 
@@ -1452,11 +1452,11 @@ class CortexKGDebugger {
   }
   
   setupMemoryMonitoring() {
-    const originalInit = wasmLoader.init;
+    const originalInit = wasm_loader.init;
     const originalAllocate = cortexWrapper.allocateConcept;
     const originalDeallocate = cortexWrapper.deallocateConcept;
     
-    wasmLoader.init = async (...args) => {
+    wasm_loader.init = async (...args) => {
       const result = await originalInit.apply(this, args);
       this.recordMemorySnapshot('init');
       return result;
@@ -1518,7 +1518,7 @@ class CortexKGDebugger {
   recordMemorySnapshot(operation, conceptId = null) {
     if (!this.isRecording) return;
     
-    const stats = wasmLoader.getMemoryUsage();
+    const stats = wasm_loader.getMemoryUsage();
     this.memoryHistory.push({
       timestamp: Date.now(),
       operation,

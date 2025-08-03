@@ -1,0 +1,27 @@
+{
+  "indexed_at": "2025-08-03 12:12:59",
+  "stats": {
+    "total_files": 760,
+    "total_chunks": 5066,
+    "code_files": 51,
+    "doc_files": 709,
+    "semantic_chunks": 4198,
+    "ast_chunks": 868,
+    "processing_time": 175.06523990631104
+  },
+  "root_directory": "C:\\code\\LLMKG",
+  "db_directory": "chroma_db_advanced",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "chunking_strategies": {
+    "documentation": "Semantic similarity-based chunking",
+    "code": "AST-based parsing with context preservation"
+  },
+  "features": [
+    "Semantic chunking",
+    "AST code parsing",
+    "Context preservation",
+    "Gitignore awareness",
+    "Hybrid chunking strategies"
+  ]
+}

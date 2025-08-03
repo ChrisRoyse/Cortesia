@@ -242,24 +242,28 @@ use std::time::Duration;
 
 pub type ColumnId = u32;
 
-pub struct EnhancedCorticalColumn {
+pub struct SpikingCorticalColumn {
     id: ColumnId,
-    atomic_state: EnhancedAtomicState,
-    
-    // Additional atomic counters for monitoring
-    successful_transitions: AtomicU64,
-    failed_transitions: AtomicU64,
-    total_activation_time_us: AtomicU64,
+    state: EnhancedAtomicState,
+    activation: ActivationDynamics,
+    allocated_concept: RwLock<Option<String>>,
+    lateral_connections: DashMap<ColumnId, InhibitoryWeight>,
+    last_spike_time: RwLock<Option<Instant>>,
+    allocation_time: RwLock<Option<Instant>>,
+    spike_count: AtomicU64,
 }
 
-impl EnhancedCorticalColumn {
+impl SpikingCorticalColumn {
     pub fn new(id: ColumnId) -> Self {
         Self {
             id,
-            atomic_state: EnhancedAtomicState::new(ColumnState::Available),
-            successful_transitions: AtomicU64::new(0),
-            failed_transitions: AtomicU64::new(0),
-            total_activation_time_us: AtomicU64::new(0),
+            state: EnhancedAtomicState::new(ColumnState::Available),
+            activation: ActivationDynamics::new(),
+            allocated_concept: RwLock::new(None),
+            lateral_connections: DashMap::new(),
+            last_spike_time: RwLock::new(None),
+            allocation_time: RwLock::new(None),
+            spike_count: AtomicU64::new(0),
         }
     }
     

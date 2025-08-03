@@ -86,24 +86,30 @@ pub fn current_time_us() -> u64 {
         .as_micros() as u64
 }
 
-/// Enhanced cortical column with atomic state management and thread safety
+/// Spiking cortical column with atomic state management and thread safety
 #[derive(Debug)]
-pub struct EnhancedCorticalColumn {
+pub struct SpikingCorticalColumn {
     id: ColumnId,
     state: std::sync::atomic::AtomicU8, // Atomic for thread-safe state transitions
-    activation_level: std::sync::atomic::AtomicU32, // f32 as u32 bits for atomic operations
-    transition_time: std::sync::Mutex<Instant>,
-    last_competition_time: std::sync::atomic::AtomicU64, // Microseconds since epoch
+    activation: ActivationDynamics,
+    allocated_concept: RwLock<Option<String>>,
+    lateral_connections: DashMap<ColumnId, InhibitoryWeight>,
+    last_spike_time: RwLock<Option<Instant>>,
+    allocation_time: RwLock<Option<Instant>>,
+    spike_count: AtomicU64,
 }
 
-impl EnhancedCorticalColumn {
+impl SpikingCorticalColumn {
     pub fn new(id: ColumnId) -> Self {
         Self {
             id,
             state: std::sync::atomic::AtomicU8::new(ColumnState::Available as u8),
-            activation_level: std::sync::atomic::AtomicU32::new(0), // 0.0f32.to_bits()
-            transition_time: std::sync::Mutex::new(Instant::now()),
-            last_competition_time: std::sync::atomic::AtomicU64::new(current_time_us()),
+            activation: ActivationDynamics::new(),
+            allocated_concept: RwLock::new(None),
+            lateral_connections: DashMap::new(),
+            last_spike_time: RwLock::new(None),
+            allocation_time: RwLock::new(None),
+            spike_count: AtomicU64::new(0),
         }
     }
     

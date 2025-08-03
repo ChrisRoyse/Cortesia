@@ -138,29 +138,38 @@ pub enum StateTransitionError {
 
 ```rust
 // src/cortical_column.rs
-use crate::{AtomicColumnState, ColumnState, StateTransitionError};
-use std::time::{SystemTime, Duration};
+use crate::{AtomicColumnState, ColumnState, StateTransitionError, ActivationDynamics};
+use std::time::{SystemTime, Duration, Instant};
+use std::sync::atomic::AtomicU64;
 use parking_lot::RwLock;
+use dashmap::DashMap;
+
+pub type InhibitoryWeight = f32;
 
 pub type ColumnId = u32;
 
-pub struct CorticalColumn {
+pub struct SpikingCorticalColumn {
     id: ColumnId,
     state: AtomicColumnState,
-    created_at: SystemTime,
-    last_transition: RwLock<SystemTime>,
-    transition_count: AtomicU64,
+    activation: ActivationDynamics,
+    allocated_concept: RwLock<Option<String>>,
+    lateral_connections: DashMap<ColumnId, InhibitoryWeight>,
+    last_spike_time: RwLock<Option<Instant>>,
+    allocation_time: RwLock<Option<Instant>>,
+    spike_count: AtomicU64,
 }
 
-impl CorticalColumn {
+impl SpikingCorticalColumn {
     pub fn new(id: ColumnId) -> Self {
-        let now = SystemTime::now();
         Self {
             id,
             state: AtomicColumnState::new(ColumnState::Available),
-            created_at: now,
-            last_transition: RwLock::new(now),
-            transition_count: AtomicU64::new(0),
+            activation: ActivationDynamics::new(),
+            allocated_concept: RwLock::new(None),
+            lateral_connections: DashMap::new(),
+            last_spike_time: RwLock::new(None),
+            allocation_time: RwLock::new(None),
+            spike_count: AtomicU64::new(0),
         }
     }
     

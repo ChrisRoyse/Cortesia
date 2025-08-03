@@ -12,7 +12,7 @@ pub mod ttfs_concept;
 
 // Re-export main types for convenience
 pub use error::{NeuromorphicError, Result, ResultExt};
-pub use neural_branch::{BranchId, NeuromorphicMemoryBranch};
+pub use neural_branch::{BranchId, NeuromorphicMemoryBranch, ConsolidationState};
 pub use spiking_column::{ColumnError, ColumnId, ColumnState, SpikingCorticalColumn};
 pub use ttfs_concept::{TTFSConcept, ConceptMetadata, SpikePattern, SpikeEvent, TTFSEncoder, EncodingConfig, EncodingError, ConceptBuilder, BatchConceptBuilder, ms_to_duration, duration_to_ms};
 

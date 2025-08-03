@@ -187,16 +187,16 @@ async function checkCortexKGStatus() {
     };
     
     try {
-        if (typeof wasmLoader !== 'undefined') {
+        if (typeof wasm_loader !== 'undefined') {
             status.loaded = true;
             
-            if (wasmLoader.isInitialized && wasmLoader.isInitialized()) {
+            if (wasm_loader.isInitialized && wasm_loader.isInitialized()) {
                 status.initialized = true;
-                status.memoryUsage = wasmLoader.getMemoryUsage();
+                status.memoryUsage = wasm_loader.getMemoryUsage();
             }
             
-            if (wasmLoader.getVersion) {
-                status.version = wasmLoader.getVersion();
+            if (wasm_loader.getVersion) {
+                status.version = wasm_loader.getVersion();
             }
         }
     } catch (error) {
@@ -234,7 +234,7 @@ performHealthCheck().then(results => {
     }
     
     if (results.cortexKG.loaded && !results.cortexKG.initialized) {
-        recommendations.push('⚠️ CortexKG not initialized - call wasmLoader.init()');
+        recommendations.push('⚠️ CortexKG not initialized - call wasm_loader.init()');
     }
     
     if (recommendations.length > 0) {
@@ -415,7 +415,7 @@ async function verifyWasmFile(url) {
 
 // Usage
 verifyWasmFile('./js/cortex-kg.wasm')
-    .then(() => wasmLoader.init())
+    .then(() => wasm_loader.init())
     .catch(error => console.error('Initialization failed:', error));
 ```
 
@@ -432,7 +432,7 @@ async function initializeWithFallback() {
     for (const config of configs) {
         try {
             console.log('Attempting initialization with config:', config);
-            await wasmLoader.init(config);
+            await wasm_loader.init(config);
             console.log('✅ Initialization successful');
             return;
         } catch (error) {
@@ -473,7 +473,7 @@ function getBrowserSpecificConfig() {
 
 // Usage
 const config = getBrowserSpecificConfig();
-await wasmLoader.init(config);
+await wasm_loader.init(config);
 ```
 
 ### Problem: Memory allocation errors
@@ -512,7 +512,7 @@ class MemoryMonitor {
     
     checkMemoryPressure() {
         try {
-            const stats = wasmLoader.getMemoryUsage();
+            const stats = wasm_loader.getMemoryUsage();
             
             if (stats.pressure > this.threshold) {
                 console.warn(`⚠️ High memory pressure: ${(stats.pressure * 100).toFixed(1)}%`);
@@ -729,7 +729,7 @@ self.onmessage = async function(e) {
     try {
         if (type === 'init') {
             if (!initialized) {
-                await wasmLoader.init(data);
+                await wasm_loader.init(data);
                 initialized = true;
             }
             self.postMessage({ type: 'init-complete', id });
@@ -1242,7 +1242,7 @@ async function safeAllocateConcept(name, size, metadata) {
         }
         
         // Check memory availability
-        const memoryStats = wasmLoader.getMemoryUsage();
+        const memoryStats = wasm_loader.getMemoryUsage();
         const availableMemory = memoryStats.freeSize;
         
         if (size > availableMemory * 0.8) { // Leave 20% buffer
@@ -1625,7 +1625,7 @@ class CortexKGDebugger {
     
     collectSystemMetrics() {
         try {
-            const memoryStats = wasmLoader.getMemoryUsage();
+            const memoryStats = wasm_loader.getMemoryUsage();
             this.recordSystemMetric('memory', memoryStats);
         } catch (error) {
             // Ignore if WASM not loaded
@@ -2004,7 +2004,7 @@ class PerformanceProfiler {
         this.memoryInterval = setInterval(() => {
             if (this.currentProfile) {
                 try {
-                    const stats = wasmLoader.getMemoryUsage();
+                    const stats = wasm_loader.getMemoryUsage();
                     const profile = this.profiles.get(this.currentProfile);
                     
                     profile.memorySnapshots.push({

@@ -68,13 +68,13 @@ impl CortexKGWasm {
 ```typescript
 // TypeScript web application layer
 class CortexKGWebApp {
-    private wasmModule: CortexKGWasm;
+    private wasm_module: CortexKGWasm;
     private visualizer: CorticalVisualizer;
     private interface: ResponsiveInterface;
     
     async initialize(): Promise<void> {
-        this.wasmModule = new CortexKGWasm();
-        this.visualizer = new CorticalVisualizer(this.wasmModule);
+        this.wasm_module = new CortexKGWasm();
+        this.visualizer = new CorticalVisualizer(this.wasm_module);
         this.interface = new ResponsiveInterface();
         
         await this.setupOfflineStorage();
@@ -550,24 +550,24 @@ impl IndexedDBStorage {
 ```typescript
 // Main application class
 export class CortexKGWebApp {
-    private wasmModule: CortexKGWasm | null = null;
+    private wasm_module: CortexKGWasm | null = null;
     private visualizer: CorticalVisualizer | null = null;
     private queryInterface: QueryInterface;
     private allocationInterface: AllocationInterface;
     
     async initialize(): Promise<void> {
         // Load WASM module
-        this.wasmModule = await CortexKGWasm.new();
+        this.wasm_module = await CortexKGWasm.new();
         
         // Initialize visualization
         this.visualizer = new CorticalVisualizer(
             document.getElementById('cortical-canvas') as HTMLCanvasElement,
-            this.wasmModule
+            this.wasm_module
         );
         
         // Setup interfaces
-        this.queryInterface = new QueryInterface(this.wasmModule);
-        this.allocationInterface = new AllocationInterface(this.wasmModule);
+        this.queryInterface = new QueryInterface(this.wasm_module);
+        this.allocationInterface = new AllocationInterface(this.wasm_module);
         
         // Setup event listeners
         this.setupEventListeners();
@@ -601,7 +601,7 @@ export class CortexKGWebApp {
     private async performQuery(query: string): Promise<void> {
         try {
             const startTime = performance.now();
-            const results = await this.wasmModule!.query(query);
+            const results = await this.wasm_module!.query(query);
             const endTime = performance.now();
             
             this.displayQueryResults(results, endTime - startTime);
@@ -620,7 +620,7 @@ export class CortexKGWebApp {
         }
         
         try {
-            const allocation = await this.wasmModule!.allocate_concept(content);
+            const allocation = await this.wasm_module!.allocate_concept(content);
             this.displayAllocationResult(allocation);
             this.visualizer!.animateAllocation(allocation.column_id);
         } catch (error) {
@@ -633,13 +633,13 @@ export class CortexKGWebApp {
 export class CorticalVisualizer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private wasmModule: CortexKGWasm;
+    private wasm_module: CortexKGWasm;
     private animationFrame: number | null = null;
     
-    constructor(canvas: HTMLCanvasElement, wasmModule: CortexKGWasm) {
+    constructor(canvas: HTMLCanvasElement, wasm_module: CortexKGWasm) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
-        this.wasmModule = wasmModule;
+        this.wasm_module = wasm_module;
         
         this.setupCanvas();
         this.startRenderLoop();
@@ -662,7 +662,7 @@ export class CorticalVisualizer {
     }
     
     private async renderCorticalColumns(): Promise<void> {
-        const columns = await this.wasmModule.getCorticalColumns();
+        const columns = await this.wasm_module.getCorticalColumns();
         
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -763,8 +763,8 @@ impl WasmOptimizations {
 async function benchmarkLoadTime(): Promise<number> {
     const startTime = performance.now();
     
-    const wasmModule = await CortexKGWasm.new();
-    await wasmModule.initialize();
+    const wasm_module = await CortexKGWasm.new();
+    await wasm_module.initialize();
     
     const endTime = performance.now();
     return endTime - startTime;

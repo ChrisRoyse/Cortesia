@@ -3,7 +3,7 @@
 pub mod types;
 pub mod state;
 
-pub use types::{MemoryBranch, BranchId, BranchMetadata, BranchRelationship, ConceptProperties, SpikeSignature, SemanticVersion};
+pub use types::{MemoryBranch, BranchMetadata, BranchRelationship};
 pub use state::{ConsolidationState, StateTransition};
 
 use std::time::Duration;

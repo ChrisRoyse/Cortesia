@@ -29,7 +29,7 @@ declare namespace CortexKG {
      * Get the current memory usage statistics
      * @returns Memory usage information
      */
-    getMemoryUsage(): MemoryStats;
+    get_memory_usage(): MemoryStats;
     
     /**
      * Reload the WASM module (for debugging/testing)
@@ -41,7 +41,7 @@ declare namespace CortexKG {
      * Get WASM exports for direct low-level access
      * @returns Object containing all WASM exported functions
      */
-    getExports(): Record<string, Function>;
+    get_exports(): Record<string, Function>;
   }
 
   interface CortexWrapper {
@@ -52,22 +52,22 @@ declare namespace CortexKG {
      * @param metadata - Optional metadata object
      * @returns Promise resolving to allocated concept
      */
-    allocateConcept(name: string, size: number, metadata?: ConceptMetadata): Promise<Concept>;
+    allocate_concept(name: string, size: number, metadata?: ConceptMetadata): Promise<Concept>;
     
     /**
      * Deallocate an existing concept and free its memory
-     * @param conceptId - ID of the concept to deallocate
+     * @param concept_id - ID of the concept to deallocate
      * @returns Promise resolving when deallocation is complete
      */
-    deallocateConcept(conceptId: string): Promise<void>;
+    deallocate_concept(concept_id: string): Promise<void>;
     
     /**
      * Perform spatial pooling operation on input pattern
-     * @param inputPattern - Binary array representing input pattern
+     * @param input_pattern - Binary array representing input pattern
      * @param options - Optional pooling configuration
      * @returns Promise resolving to spatial pooling result
      */
-    spatialPooling(inputPattern: number[], options?: SpatialPoolingOptions): Promise<SpatialResult>;
+    spatial_pooling(input_pattern: number[], options?: SpatialPoolingOptions): Promise<SpatialResult>;
     
     /**
      * Execute temporal memory sequence processing
@@ -75,7 +75,7 @@ declare namespace CortexKG {
      * @param prediction - Whether to return predictions
      * @returns Promise resolving to temporal memory result
      */
-    temporalMemory(sequence: number[][], prediction?: boolean): Promise<TemporalResult>;
+    temporal_memory(sequence: number[][], prediction?: boolean): Promise<TemporalResult>;
     
     /**
      * Query concepts using semantic search
@@ -83,14 +83,14 @@ declare namespace CortexKG {
      * @param options - Optional query configuration
      * @returns Promise resolving to array of matching concepts
      */
-    queryConcepts(query: string | number[], options?: QueryOptions): Promise<Concept[]>;
+    query_concepts(query: string | number[], options?: QueryOptions): Promise<Concept[]>;
     
     /**
      * Store arbitrary data in WASM memory
      * @param data - Data to store (Uint8Array)
      * @returns Memory address where data was stored
      */
-    storeInMemory(data: Uint8Array): number;
+    store_in_memory(data: Uint8Array): number;
     
     /**
      * Retrieve data from WASM memory
@@ -98,7 +98,7 @@ declare namespace CortexKG {
      * @param length - Number of bytes to read
      * @returns Retrieved data as Uint8Array
      */
-    retrieveFromMemory(address: number, length: number): Uint8Array;
+    retrieve_from_memory(address: number, length: number): Uint8Array;
   }
 
   interface StorageManager {
@@ -107,33 +107,33 @@ declare namespace CortexKG {
      * @param concept - Concept object to store
      * @returns Promise resolving when storage is complete
      */
-    storeConcept(concept: Concept): Promise<void>;
+    store_concept(concept: Concept): Promise<void>;
     
     /**
      * Retrieve concept data from persistent storage
-     * @param conceptId - ID of concept to retrieve
+     * @param concept_id - ID of concept to retrieve
      * @returns Promise resolving to concept or null if not found
      */
-    retrieveConcept(conceptId: string): Promise<Concept | null>;
+    retrieve_concept(concept_id: string): Promise<Concept | null>;
     
     /**
      * Delete concept from persistent storage
-     * @param conceptId - ID of concept to delete
+     * @param concept_id - ID of concept to delete
      * @returns Promise resolving when deletion is complete
      */
-    deleteConcept(conceptId: string): Promise<void>;
+    delete_concept(concept_id: string): Promise<void>;
     
     /**
      * Get storage usage statistics
      * @returns Promise resolving to storage stats
      */
-    getStorageStats(): Promise<StorageStats>;
+    get_storage_stats(): Promise<StorageStats>;
     
     /**
      * Clear all stored data (use with caution)
      * @returns Promise resolving when clear is complete
      */
-    clearAllData(): Promise<void>;
+    clear_all_data(): Promise<void>;
   }
 
   interface CorticalVisualizer {
@@ -152,28 +152,28 @@ declare namespace CortexKG {
     
     /**
      * Update visualization with new cortical data
-     * @param corticalData - New cortical state data
+     * @param cortical_data - New cortical state data
      */
-    updateCorticalData(corticalData: CorticalData): void;
+    update_cortical_data(cortical_data: CorticalData): void;
     
     /**
      * Set zoom level for the visualization
-     * @param zoomLevel - Zoom level (1.0 = 100%)
+     * @param zoom_level - Zoom level (1.0 = 100%)
      */
-    setZoom(zoomLevel: number): void;
+    set_zoom(zoom_level: number): void;
     
     /**
      * Pan the visualization to specific coordinates
      * @param x - X coordinate to pan to
      * @param y - Y coordinate to pan to
      */
-    panTo(x: number, y: number): void;
+    pan_to(x: number, y: number): void;
     
     /**
      * Highlight specific concepts in the visualization
-     * @param conceptIds - Array of concept IDs to highlight
+     * @param concept_ids - Array of concept IDs to highlight
      */
-    highlightConcepts(conceptIds: string[]): void;
+    highlight_concepts(concept_ids: string[]): void;
   }
 
   // Type definitions
@@ -196,9 +196,9 @@ declare namespace CortexKG {
     name: string;
     size: number;
     metadata?: ConceptMetadata;
-    createdAt: Date;
-    lastAccessed: Date;
-    activationLevel: number;
+    created_at: Date;
+    last_accessed: Date;
+    activation_level: number;
   }
 
   interface ConceptMetadata {
@@ -295,13 +295,13 @@ await wasmLoader.init({
 });
 
 // Verify initialization
-console.log('WASM loaded:', wasmLoader.getMemoryUsage());
+console.log('WASM loaded:', wasmLoader.get_memory_usage());
 ```
 
 ### Simple Concept Allocation
 ```javascript
 // Allocate a new concept
-const concept = await cortexWrapper.allocateConcept('user-preference', 1000, {
+const concept = await cortexWrapper.allocate_concept('user-preference', 1000, {
   description: 'User preference patterns',
   tags: ['user', 'behavior'],
   priority: 5
@@ -335,7 +335,7 @@ await wasmLoader.init({
 });
 ```
 
-#### `getMemoryUsage(): MemoryStats`
+#### `get_memory_usage(): MemoryStats`
 Returns current memory usage statistics.
 
 **Returns:** MemoryStats object containing:
@@ -346,7 +346,7 @@ Returns current memory usage statistics.
 
 **Example:**
 ```javascript
-const stats = wasmLoader.getMemoryUsage();
+const stats = wasmLoader.get_memory_usage();
 if (stats.pressure > 0.8) {
   console.warn('High memory pressure:', stats);
 }
@@ -356,7 +356,7 @@ if (stats.pressure > 0.8) {
 
 ### Core Operations
 
-#### `allocateConcept(name: string, size: number, metadata?: ConceptMetadata): Promise<Concept>`
+#### `allocate_concept(name: string, size: number, metadata?: ConceptMetadata): Promise<Concept>`
 Allocates a new concept in the cortical structure.
 
 **Parameters:**
@@ -368,18 +368,18 @@ Allocates a new concept in the cortical structure.
 
 **Example:**
 ```javascript
-const concept = await cortexWrapper.allocateConcept('product-category', 2048, {
+const concept = await cortexWrapper.allocate_concept('product-category', 2048, {
   description: 'E-commerce product categorization',
   tags: ['commerce', 'ml'],
   priority: 8
 });
 ```
 
-#### `spatialPooling(inputPattern: number[], options?: SpatialPoolingOptions): Promise<SpatialResult>`
+#### `spatial_pooling(input_pattern: number[], options?: SpatialPoolingOptions): Promise<SpatialResult>`
 Performs spatial pooling on an input pattern.
 
 **Parameters:**
-- `inputPattern`: Binary array representing the input pattern
+- `input_pattern`: Binary array representing the input pattern
 - `options` (optional): Spatial pooling configuration
   - `sparsity`: Target sparsity level (default: 0.02)
   - `boostStrength`: Boost strength for inactive columns (default: 2.0)
@@ -389,13 +389,13 @@ Performs spatial pooling on an input pattern.
 
 **Example:**
 ```javascript
-const inputPattern = new Array(2048).fill(0);
+const input_pattern = new Array(2048).fill(0);
 // Set some bits to 1 to represent active inputs
 for (let i = 0; i < 40; i++) {
-  inputPattern[Math.floor(Math.random() * 2048)] = 1;
+  input_pattern[Math.floor(Math.random() * 2048)] = 1;
 }
 
-const result = await cortexWrapper.spatialPooling(inputPattern, {
+const result = await cortexWrapper.spatial_pooling(input_pattern, {
   sparsity: 0.02,
   boostStrength: 2.0
 });
@@ -405,7 +405,7 @@ console.log('Active columns:', result.activeColumns.length);
 
 ### Query Operations
 
-#### `queryConcepts(query: string | number[], options?: QueryOptions): Promise<Concept[]>`
+#### `query_concepts(query: string | number[], options?: QueryOptions): Promise<Concept[]>`
 Searches for concepts using semantic similarity.
 
 **Parameters:**
@@ -420,14 +420,14 @@ Searches for concepts using semantic similarity.
 **Example:**
 ```javascript
 // Text-based query
-const textResults = await cortexWrapper.queryConcepts('machine learning', {
+const textResults = await cortexWrapper.query_concepts('machine learning', {
   maxResults: 5,
   threshold: 0.8
 });
 
 // Pattern-based query
 const pattern = [1, 0, 1, 1, 0, 0, 1, 0]; // Binary pattern
-const patternResults = await cortexWrapper.queryConcepts(pattern, {
+const patternResults = await cortexWrapper.query_concepts(pattern, {
   maxResults: 3,
   threshold: 0.6
 });
@@ -437,7 +437,7 @@ const patternResults = await cortexWrapper.queryConcepts(pattern, {
 
 ### Persistence Operations
 
-#### `storeConcept(concept: Concept): Promise<void>`
+#### `store_concept(concept: Concept): Promise<void>`
 Stores a concept persistently in IndexedDB.
 
 **Parameters:**
@@ -447,22 +447,22 @@ Stores a concept persistently in IndexedDB.
 
 **Example:**
 ```javascript
-const concept = await cortexWrapper.allocateConcept('user-session', 1024);
-await storageManager.storeConcept(concept);
+const concept = await cortexWrapper.allocate_concept('user-session', 1024);
+await storageManager.store_concept(concept);
 console.log('Concept stored persistently');
 ```
 
-#### `retrieveConcept(conceptId: string): Promise<Concept | null>`
+#### `retrieve_concept(concept_id: string): Promise<Concept | null>`
 Retrieves a concept from persistent storage.
 
 **Parameters:**
-- `conceptId`: Unique identifier of the concept
+- `concept_id`: Unique identifier of the concept
 
 **Returns:** Promise resolving to Concept object or null if not found
 
 **Example:**
 ```javascript
-const stored = await storageManager.retrieveConcept('user-session');
+const stored = await storageManager.retrieve_concept('user-session');
 if (stored) {
   console.log('Retrieved concept:', stored.name);
 } else {
@@ -496,15 +496,15 @@ cortexVisualizer.init(canvas, {
 });
 ```
 
-#### `updateCorticalData(corticalData: CorticalData): void`
+#### `update_cortical_data(cortical_data: CorticalData): void`
 Updates the visualization with new cortical state data.
 
 **Parameters:**
-- `corticalData`: Current cortical state including columns and activations
+- `cortical_data`: Current cortical state including columns and activations
 
 **Example:**
 ```javascript
-const corticalData = {
+const cortical_data = {
   columns: [
     { id: 0, x: 10, y: 10, isActive: true, isPredictive: false, boost: 1.0 },
     { id: 1, x: 16, y: 10, isActive: false, isPredictive: true, boost: 1.2 }
@@ -514,7 +514,7 @@ const corticalData = {
   timestamp: Date.now()
 };
 
-cortexVisualizer.updateCorticalData(corticalData);
+cortexVisualizer.update_cortical_data(cortical_data);
 cortexVisualizer.render();
 ```
 
@@ -523,7 +523,7 @@ cortexVisualizer.render();
 ### Common Error Types
 ```javascript
 try {
-  await cortexWrapper.allocateConcept('test', 1000000000); // Too large
+  await cortexWrapper.allocate_concept('test', 1000000000); // Too large
 } catch (error) {
   if (error.name === 'MemoryError') {
     console.error('Not enough memory:', error.message);
@@ -539,7 +539,7 @@ try {
 ```javascript
 // Monitor memory usage
 setInterval(() => {
-  const stats = wasmLoader.getMemoryUsage();
+  const stats = wasmLoader.get_memory_usage();
   if (stats.pressure > 0.9) {
     // Clean up unused concepts
     console.warn('High memory pressure, cleaning up...');
@@ -549,13 +549,13 @@ setInterval(() => {
 
 // Proper concept lifecycle
 async function processUserData(userData) {
-  const concept = await cortexWrapper.allocateConcept('temp-data', 1024);
+  const concept = await cortexWrapper.allocate_concept('temp-data', 1024);
   try {
     // Process data...
-    await cortexWrapper.spatialPooling(userData);
+    await cortexWrapper.spatial_pooling(userData);
   } finally {
     // Always clean up
-    await cortexWrapper.deallocateConcept(concept.id);
+    await cortexWrapper.deallocate_concept(concept.id);
   }
 }
 ```
@@ -566,9 +566,9 @@ async function processUserData(userData) {
 ```javascript
 // Instead of individual allocations
 const concepts = await Promise.all([
-  cortexWrapper.allocateConcept('concept1', 1024),
-  cortexWrapper.allocateConcept('concept2', 1024),
-  cortexWrapper.allocateConcept('concept3', 1024)
+  cortexWrapper.allocate_concept('concept1', 1024),
+  cortexWrapper.allocate_concept('concept2', 1024),
+  cortexWrapper.allocate_concept('concept3', 1024)
 ]);
 
 // Use bulk operations when available
@@ -586,7 +586,7 @@ let lastRender = 0;
 function updateVisualization(data) {
   const now = Date.now();
   if (now - lastRender > 16) { // ~60fps
-    cortexVisualizer.updateCorticalData(data);
+    cortexVisualizer.update_cortical_data(data);
     cortexVisualizer.render();
     lastRender = now;
   }
@@ -884,7 +884,7 @@ generator.generateMarkdown('./docs/api-reference.md');
                     description: 'Get current memory usage statistics',
                     parameters: [],
                     returns: 'MemoryStats',
-                    example: `const stats = wasmLoader.getMemoryUsage();
+                    example: `const stats = wasmLoader.get_memory_usage();
 console.log('Memory pressure:', stats.pressure);`
                 }
             },
@@ -897,7 +897,7 @@ console.log('Memory pressure:', stats.pressure);`
                         { name: 'metadata', type: 'ConceptMetadata', optional: true, default: '{}' }
                     ],
                     returns: 'Promise<Concept>',
-                    example: `const concept = await cortexWrapper.allocateConcept(
+                    example: `const concept = await cortexWrapper.allocate_concept(
   'user-preference',
   2048,
   { description: 'User behavior patterns' }
@@ -906,7 +906,7 @@ console.log('Memory pressure:', stats.pressure);`
                 spatialPooling: {
                     description: 'Perform spatial pooling on input pattern',
                     parameters: [
-                        { name: 'inputPattern', type: 'number[]', default: 'new Array(100).fill(0).map(() => Math.random() > 0.8 ? 1 : 0)' },
+                        { name: 'input_pattern', type: 'number[]', default: 'new Array(100).fill(0).map(() => Math.random() > 0.8 ? 1 : 0)' },
                         { name: 'options', type: 'SpatialPoolingOptions', optional: true, default: '{}' }
                     ],
                     returns: 'Promise<SpatialResult>',
@@ -914,7 +914,7 @@ console.log('Memory pressure:', stats.pressure);`
 for (let i = 0; i < 40; i++) {
   pattern[Math.floor(Math.random() * 2048)] = 1;
 }
-const result = await cortexWrapper.spatialPooling(pattern);`
+const result = await cortexWrapper.spatial_pooling(pattern);`
                 },
                 queryConcepts: {
                     description: 'Query concepts using semantic search',
@@ -923,7 +923,7 @@ const result = await cortexWrapper.spatialPooling(pattern);`
                         { name: 'options', type: 'QueryOptions', optional: true, default: '{ maxResults: 5 }' }
                     ],
                     returns: 'Promise<Concept[]>',
-                    example: `const results = await cortexWrapper.queryConcepts(
+                    example: `const results = await cortexWrapper.query_concepts(
   'artificial intelligence',
   { maxResults: 10, threshold: 0.8 }
 );`
@@ -936,16 +936,16 @@ const result = await cortexWrapper.spatialPooling(pattern);`
                         { name: 'concept', type: 'Concept', default: 'concept' }
                     ],
                     returns: 'Promise<void>',
-                    example: `const concept = await cortexWrapper.allocateConcept('data', 1024);
-await storageManager.storeConcept(concept);`
+                    example: `const concept = await cortexWrapper.allocate_concept('data', 1024);
+await storageManager.store_concept(concept);`
                 },
                 retrieveConcept: {
                     description: 'Retrieve concept from persistent storage',
                     parameters: [
-                        { name: 'conceptId', type: 'string', default: '"test-concept"' }
+                        { name: 'concept_id', type: 'string', default: '"test-concept"' }
                     ],
                     returns: 'Promise<Concept | null>',
-                    example: `const stored = await storageManager.retrieveConcept('user-preference');
+                    example: `const stored = await storageManager.retrieve_concept('user-preference');
 if (stored) {
   console.log('Found concept:', stored.name);
 }`
@@ -1093,10 +1093,10 @@ class BasicUsageExamples {
       });
       
       console.log('✓ WASM loaded successfully');
-      console.log('Memory stats:', wasmLoader.getMemoryUsage());
+      console.log('Memory stats:', wasmLoader.get_memory_usage());
       
       // Allocate a simple concept
-      const concept = await cortexWrapper.allocateConcept('hello-world', 1024, {
+      const concept = await cortexWrapper.allocate_concept('hello-world', 1024, {
         description: 'First concept allocation',
         tags: ['example', 'basic']
       });
@@ -1104,10 +1104,10 @@ class BasicUsageExamples {
       console.log('✓ Concept allocated:', concept);
       
       // Store the concept persistently
-      await storageManager.storeConcept(concept);
+      await storageManager.store_concept(concept);
       console.log('✓ Concept stored persistently');
       
-      return { success: true, conceptId: concept.id };
+      return { success: true, concept_id: concept.id };
       
     } catch (error) {
       console.error('❌ Error in basic setup:', error);
@@ -1125,20 +1125,20 @@ class BasicUsageExamples {
       // Create a meaningful input pattern (simulating image data)
       const imageWidth = 32;
       const imageHeight = 32;
-      const inputPattern = new Array(imageWidth * imageHeight).fill(0);
+      const input_pattern = new Array(imageWidth * imageHeight).fill(0);
       
       // Create a simple vertical line pattern
       for (let y = 8; y < 24; y++) {
         for (let x = 14; x < 18; x++) {
-          inputPattern[y * imageWidth + x] = 1;
+          input_pattern[y * imageWidth + x] = 1;
         }
       }
       
       console.log('Input pattern sparsity:', 
-        inputPattern.filter(x => x === 1).length / inputPattern.length);
+        input_pattern.filter(x => x === 1).length / input_pattern.length);
       
       // Perform spatial pooling
-      const result = await cortexWrapper.spatialPooling(inputPattern, {
+      const result = await cortexWrapper.spatial_pooling(input_pattern, {
         sparsity: 0.02,
         boostStrength: 2.0,
         dutyCyclePeriod: 1000
@@ -1217,7 +1217,7 @@ class AdvancedUsageExamples {
       const conceptPromises = [];
       for (let i = 0; i < 50; i++) {
         conceptPromises.push(
-          cortexWrapper.allocateConcept(`batch-concept-${i}`, 512 + (i * 10), {
+          cortexWrapper.allocate_concept(`batch-concept-${i}`, 512 + (i * 10), {
             description: `Batch allocated concept ${i}`,
             priority: Math.floor(i / 10),
             version: 1
@@ -1231,7 +1231,7 @@ class AdvancedUsageExamples {
       
       // Store all concepts persistently
       const storagePromises = concepts.map(concept => 
-        storageManager.storeConcept(concept)
+        storageManager.store_concept(concept)
       );
       await Promise.all(storagePromises);
       
@@ -1263,7 +1263,7 @@ class AdvancedUsageExamples {
     console.log('=== Example 5: Memory Management ===');
     
     try {
-      const initialStats = wasmLoader.getMemoryUsage();
+      const initialStats = wasmLoader.get_memory_usage();
       console.log('Initial memory:', initialStats);
       
       // Gradually increase memory usage
@@ -1271,13 +1271,13 @@ class AdvancedUsageExamples {
       let memoryPressure = 0;
       
       while (memoryPressure < 0.7) {
-        const concept = await cortexWrapper.allocateConcept(
+        const concept = await cortexWrapper.allocate_concept(
           `memory-test-${concepts.length}`,
           1024 * (concepts.length + 1) // Increasing size
         );
         concepts.push(concept);
         
-        const stats = wasmLoader.getMemoryUsage();
+        const stats = wasmLoader.get_memory_usage();
         memoryPressure = stats.pressure;
         
         console.log(`Concept ${concepts.length}: Memory pressure at ${(memoryPressure * 100).toFixed(1)}%`);
@@ -1291,10 +1291,10 @@ class AdvancedUsageExamples {
       const conceptsToRemove = concepts.filter((_, index) => index % 3 === 0); // Remove every 3rd concept
       
       for (const concept of conceptsToRemove) {
-        await cortexWrapper.deallocateConcept(concept.id);
+        await cortexWrapper.deallocate_concept(concept.id);
       }
       
-      const finalStats = wasmLoader.getMemoryUsage();
+      const finalStats = wasmLoader.get_memory_usage();
       console.log('✓ Memory cleanup completed');
       console.log('Final memory:', finalStats);
       
@@ -1361,14 +1361,14 @@ class AdvancedUsageExamples {
           }
         });
         
-        const corticalData = {
+        const cortical_data = {
           columns: columns,
           activations: columns.map(c => c.isActive ? 1.0 : 0.0),
           predictions: columns.map(c => c.isPredictive ? 1.0 : 0.0),
           timestamp: Date.now()
         };
         
-        cortexVisualizer.updateCorticalData(corticalData);
+        cortexVisualizer.update_cortical_data(cortical_data);
         cortexVisualizer.render();
         
         // Wait for next frame
@@ -1401,7 +1401,7 @@ class ErrorHandlingExamples {
     
     // Test 1: Invalid memory allocation
     try {
-      await cortexWrapper.allocateConcept('too-large', Number.MAX_SAFE_INTEGER);
+      await cortexWrapper.allocate_concept('too-large', Number.MAX_SAFE_INTEGER);
     } catch (error) {
       errors.push({ test: 'large-allocation', error: error.message });
       console.log('✓ Caught large allocation error:', error.message);
@@ -1409,7 +1409,7 @@ class ErrorHandlingExamples {
     
     // Test 2: Invalid concept ID
     try {
-      await cortexWrapper.deallocateConcept('non-existent-id');
+      await cortexWrapper.deallocate_concept('non-existent-id');
     } catch (error) {
       errors.push({ test: 'invalid-id', error: error.message });
       console.log('✓ Caught invalid ID error:', error.message);
@@ -1417,7 +1417,7 @@ class ErrorHandlingExamples {
     
     // Test 3: Invalid spatial pooling pattern
     try {
-      await cortexWrapper.spatialPooling([1, 2, 3, 'invalid']);
+      await cortexWrapper.spatial_pooling([1, 2, 3, 'invalid']);
     } catch (error) {
       errors.push({ test: 'invalid-pattern', error: error.message });
       console.log('✓ Caught invalid pattern error:', error.message);
@@ -1426,9 +1426,9 @@ class ErrorHandlingExamples {
     // Test 4: Storage failure simulation
     try {
       // Simulate IndexedDB quota exceeded
-      const largeConcept = await cortexWrapper.allocateConcept('large-storage-test', 1024);
+      const largeConcept = await cortexWrapper.allocate_concept('large-storage-test', 1024);
       // This would normally fail in a quota-limited environment
-      await storageManager.storeConcept(largeConcept);
+      await storageManager.store_concept(largeConcept);
     } catch (error) {
       errors.push({ test: 'storage-quota', error: error.message });
       console.log('✓ Caught storage error:', error.message);

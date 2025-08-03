@@ -1,76 +1,10 @@
 //! Consolidation state management for memory branches
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use thiserror::Error;
 
-/// States a memory branch can be in during its lifecycle
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ConsolidationState {
-    /// Branch is actively receiving new allocations
-    Active,
-    
-    /// Branch is in the process of consolidating
-    Consolidating,
-    
-    /// Branch has been successfully consolidated
-    Consolidated,
-    
-    /// Branch has conflicts that need resolution
-    Conflicted,
-}
-
-impl ConsolidationState {
-    /// Check if transition to new state is valid
-    pub fn can_transition_to(&self, new_state: ConsolidationState) -> bool {
-        use ConsolidationState::*;
-        
-        match (*self, new_state) {
-            // From Active
-            (Active, Consolidating) => true,
-            (Active, Conflicted) => true,
-            (Active, Active) => true,
-            
-            // From Consolidating
-            (Consolidating, Consolidated) => true,
-            (Consolidating, Conflicted) => true,
-            (Consolidating, Active) => true, // Can cancel
-            
-            // From Consolidated
-            (Consolidated, Active) => true, // Can reactivate
-            (Consolidated, Consolidated) => true,
-            
-            // From Conflicted
-            (Conflicted, Active) => true, // After resolution
-            (Conflicted, Consolidating) => true, // Retry
-            (Conflicted, Conflicted) => true,
-            
-            // All other transitions invalid
-            _ => false,
-        }
-    }
-    
-    /// Get human-readable description
-    pub fn description(&self) -> &'static str {
-        match self {
-            Self::Active => "Branch is actively receiving allocations",
-            Self::Consolidating => "Branch is being merged with parent",
-            Self::Consolidated => "Branch has been successfully merged",
-            Self::Conflicted => "Branch has conflicts requiring resolution",
-        }
-    }
-}
-
-impl fmt::Display for ConsolidationState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Active => write!(f, "Active"),
-            Self::Consolidating => write!(f, "Consolidating"),
-            Self::Consolidated => write!(f, "Consolidated"),
-            Self::Conflicted => write!(f, "Conflicted"),
-        }
-    }
-}
+// Re-export ConsolidationState from neuromorphic-core
+pub use neuromorphic_core::ConsolidationState;
 
 /// Manages state transitions with validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,13 +25,13 @@ pub struct StateChange {
 /// Errors that can occur during state transitions
 #[derive(Error, Debug)]
 pub enum StateError {
-    #[error("Invalid transition from {from} to {to}")]
+    #[error("Invalid transition from {from:?} to {to:?}")]
     InvalidTransition {
         from: ConsolidationState,
         to: ConsolidationState,
     },
     
-    #[error("Cannot perform operation in {0} state")]
+    #[error("Cannot perform operation in {0:?} state")]
     InvalidOperation(ConsolidationState),
     
     #[error("State validation failed: {0}")]
@@ -149,12 +83,12 @@ impl StateTransition {
     
     /// Check if in a terminal state
     pub fn is_terminal(&self) -> bool {
-        matches!(self.current, ConsolidationState::Consolidated)
+        matches!(self.current, ConsolidationState::LongTerm)
     }
     
     /// Check if can accept new allocations
     pub fn can_allocate(&self) -> bool {
-        matches!(self.current, ConsolidationState::Active)
+        self.current.is_active()
     }
 }
 
@@ -164,20 +98,20 @@ mod tests {
     
     #[test]
     fn test_valid_transitions() {
-        assert!(ConsolidationState::Active.can_transition_to(ConsolidationState::Consolidating));
-        assert!(ConsolidationState::Consolidating.can_transition_to(ConsolidationState::Consolidated));
-        assert!(ConsolidationState::Conflicted.can_transition_to(ConsolidationState::Active));
+        assert!(ConsolidationState::WorkingMemory.can_transition_to(ConsolidationState::Consolidating));
+        assert!(ConsolidationState::Consolidating.can_transition_to(ConsolidationState::LongTerm));
+        assert!(ConsolidationState::Conflicted.can_transition_to(ConsolidationState::WorkingMemory));
     }
     
     #[test]
     fn test_invalid_transitions() {
-        assert!(!ConsolidationState::Consolidated.can_transition_to(ConsolidationState::Conflicted));
-        assert!(!ConsolidationState::Active.can_transition_to(ConsolidationState::Consolidated));
+        assert!(!ConsolidationState::LongTerm.can_transition_to(ConsolidationState::Conflicted));
+        assert!(!ConsolidationState::WorkingMemory.can_transition_to(ConsolidationState::LongTerm));
     }
     
     #[test]
     fn test_state_manager() {
-        let mut sm = StateTransition::new(ConsolidationState::Active);
+        let mut sm = StateTransition::new(ConsolidationState::WorkingMemory);
         
         // Valid transition
         assert!(sm.transition_to(
@@ -188,17 +122,13 @@ mod tests {
         assert_eq!(sm.current(), ConsolidationState::Consolidating);
         assert_eq!(sm.history().len(), 1);
         
-        // Invalid transition
+        // Complete consolidation
         assert!(sm.transition_to(
-            ConsolidationState::Conflicted,
-            "Invalid".to_string()
-        ).is_ok()); // This should actually be valid according to the state machine
+            ConsolidationState::LongTerm,
+            "Completed".to_string()
+        ).is_ok());
         
-        // Test invalid transition
-        let mut sm2 = StateTransition::new(ConsolidationState::Active);
-        assert!(sm2.transition_to(
-            ConsolidationState::Consolidated,
-            "Invalid direct transition".to_string()
-        ).is_err());
+        assert_eq!(sm.current(), ConsolidationState::LongTerm);
+        assert!(sm.is_terminal());
     }
 }

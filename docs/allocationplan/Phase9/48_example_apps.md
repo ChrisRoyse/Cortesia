@@ -247,7 +247,7 @@ Develop comprehensive example applications showcasing different aspects of Corte
                 try {
                     document.getElementById('status').textContent = 'Loading WASM module...';
                     
-                    await wasmLoader.init({
+                    await wasm_loader.init({
                         memorySize: 32 * 1024 * 1024,
                         enableSIMD: true,
                         debug: false
@@ -563,7 +563,7 @@ Develop comprehensive example applications showcasing different aspects of Corte
                 document.getElementById('activeColumns').textContent = spatialResult.activeColumns.length;
                 document.getElementById('processTime').textContent = `${processTime.toFixed(1)}ms`;
                 
-                const memoryStats = wasmLoader.getMemoryUsage();
+                const memoryStats = wasm_loader.getMemoryUsage();
                 document.getElementById('memoryUsage').textContent = 
                     `${(memoryStats.usedSize / (1024 * 1024)).toFixed(1)}MB`;
                 
@@ -1071,7 +1071,7 @@ Develop comprehensive example applications showcasing different aspects of Corte
                 try {
                     this.updateStatus('Loading WASM module...', 'loading');
                     
-                    await wasmLoader.init({
+                    await wasm_loader.init({
                         memorySize: 64 * 1024 * 1024, // 64MB for larger knowledge base
                         enableSIMD: true,
                         debug: false
@@ -1502,7 +1502,7 @@ Develop comprehensive example applications showcasing different aspects of Corte
                 
                 // Update memory usage
                 if (this.isInitialized) {
-                    const memoryStats = wasmLoader.getMemoryUsage();
+                    const memoryStats = wasm_loader.getMemoryUsage();
                     document.getElementById('memoryUsage').textContent = 
                         `${(memoryStats.usedSize / (1024 * 1024)).toFixed(1)}MB`;
                 }
@@ -1553,7 +1553,7 @@ class MemoryVisualizationApp {
         try {
             this.updateStatus('Initializing CortexKG temporal memory system...');
             
-            await wasmLoader.init({
+            await wasm_loader.init({
                 memorySize: 64 * 1024 * 1024,
                 enableSIMD: true,
                 debug: false
@@ -2672,7 +2672,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="code-snippet">
 // Initialize CortexKG
-await wasmLoader.init({
+await wasm_loader.init({
     memorySize: 32 * 1024 * 1024,
     enableSIMD: true
 });
@@ -2906,7 +2906,7 @@ Examples are designed to be easily customizable:
 
 ```javascript
 // Modify initialization parameters
-await wasmLoader.init({
+await wasm_loader.init({
     memorySize: 64 * 1024 * 1024,  // Increase memory
     enableSIMD: true,
     enableThreads: false,          // Enable for better performance
@@ -2979,10 +2979,10 @@ if (!await checkFileExists(wasmPath)) {
 ```javascript
 // Solution: Reduce memory size or implement cleanup
 try {
-    await wasmLoader.init({ memorySize: 32 * 1024 * 1024 });
+    await wasm_loader.init({ memorySize: 32 * 1024 * 1024 });
 } catch (error) {
     // Fallback to smaller memory size
-    await wasmLoader.init({ memorySize: 16 * 1024 * 1024 });
+    await wasm_loader.init({ memorySize: 16 * 1024 * 1024 });
 }
 ```
 
@@ -3005,7 +3005,7 @@ if (!navigator.userAgent.includes('Chrome')) {
 Enable debug mode for detailed logging:
 
 ```javascript
-await wasmLoader.init({
+await wasm_loader.init({
     debug: true,
     logLevel: 'debug'  // 'debug', 'info', 'warn', 'error'
 });
