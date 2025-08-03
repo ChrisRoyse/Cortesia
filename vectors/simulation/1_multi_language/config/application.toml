@@ -1,0 +1,374 @@
+# Application configuration in TOML format
+# Comprehensive configuration for all application components
+
+[application]
+name = "E-commerce Platform"
+version = "1.0.0"
+environment = "development"
+debug = true
+timezone = "UTC"
+
+[server]
+host = "0.0.0.0"
+port = 8000
+workers = 4
+keep_alive = 75
+client_timeout = 60
+client_shutdown = 5
+max_connections = 25000
+max_connection_rate = 256
+enable_compression = true
+compression_level = 6
+
+[server.ssl]
+enabled = false
+cert_file = "/path/to/cert.pem"
+key_file = "/path/to/key.pem"
+ca_file = "/path/to/ca.pem"
+protocols = ["TLSv1.2", "TLSv1.3"]
+ciphers = [
+    "ECDHE-ECDSA-AES256-GCM-SHA384",
+    "ECDHE-RSA-AES256-GCM-SHA384",
+    "ECDHE-ECDSA-CHACHA20-POLY1305",
+    "ECDHE-RSA-CHACHA20-POLY1305"
+]
+
+[database]
+url = "postgresql://user:password@localhost:5432/ecommerce"
+max_connections = 100
+min_connections = 5
+acquire_timeout = 30
+idle_timeout = 600
+max_lifetime = 3600
+test_before_acquire = true
+migration_directory = "./migrations"
+auto_migrate = false
+
+[cache]
+# Redis configuration
+redis_url = "redis://localhost:6379/0"
+redis_pool_size = 50
+redis_timeout = 5
+redis_expire_time = 3600
+redis_key_prefix = "ecommerce:"
+
+# Memory cache configuration
+memory_cache_size = 1000
+memory_cache_ttl = 300
+memory_cache_cleanup_interval = 60
+
+# Cache strategies
+[cache.strategies]
+products = { ttl = 3600, strategy = "write-through" }
+users = { ttl = 1800, strategy = "write-around" }
+sessions = { ttl = 7200, strategy = "write-behind" }
+analytics = { ttl = 300, strategy = "cache-aside" }
+
+[authentication]
+# JWT configuration
+jwt_secret = "your-super-secret-jwt-key-change-in-production"
+jwt_expiration = 86400  # 24 hours
+jwt_refresh_expiration = 604800  # 7 days
+jwt_algorithm = "HS256"
+jwt_issuer = "ecommerce-platform"
+jwt_audience = "ecommerce-users"
+
+# Session configuration
+session_timeout = 3600
+session_cleanup_interval = 300
+max_concurrent_sessions = 5
+session_store = "redis"
+
+# Password policy
+[authentication.password_policy]
+min_length = 8
+max_length = 128
+require_uppercase = true
+require_lowercase = true
+require_digits = true
+require_special_chars = true
+special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+max_age_days = 90
+history_count = 5
+lockout_attempts = 5
+lockout_duration = 900
+
+[authorization]
+# Role-based access control
+enable_rbac = true
+default_role = "user"
+admin_roles = ["admin", "super_admin"]
+moderator_roles = ["moderator", "admin", "super_admin"]
+
+# Permissions
+[authorization.permissions]
+"products:read" = ["user", "moderator", "admin"]
+"products:write" = ["moderator", "admin"]
+"products:delete" = ["admin"]
+"users:read" = ["moderator", "admin"]
+"users:write" = ["admin"]
+"orders:read" = ["user", "moderator", "admin"]
+"orders:write" = ["user", "moderator", "admin"]
+"analytics:read" = ["moderator", "admin"]
+
+[cors]
+allowed_origins = ["http://localhost:3000", "http://localhost:8080"]
+allowed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+allowed_headers = ["Content-Type", "Authorization", "X-Requested-With"]
+expose_headers = ["X-Total-Count", "X-Page-Count"]
+allow_credentials = true
+max_age = 3600
+
+[rate_limiting]
+# Global rate limits
+global_requests_per_minute = 1000
+global_requests_per_hour = 50000
+
+# Per-endpoint rate limits
+[rate_limiting.endpoints]
+"/api/auth/login" = { requests_per_minute = 5, requests_per_hour = 50 }
+"/api/auth/register" = { requests_per_minute = 3, requests_per_hour = 20 }
+"/api/products" = { requests_per_minute = 100, requests_per_hour = 5000 }
+"/api/orders" = { requests_per_minute = 50, requests_per_hour = 2000 }
+
+# Per-user rate limits
+[rate_limiting.per_user]
+authenticated_requests_per_minute = 200
+unauthenticated_requests_per_minute = 20
+
+[logging]
+level = "info"
+format = "json"
+output = "stdout"
+include_request_id = true
+include_user_id = true
+include_timestamp = true
+
+# Log rotation
+[logging.rotation]
+enabled = true
+max_size = "100MB"
+max_files = 10
+compress = true
+
+# Structured logging fields
+[logging.fields]
+service = "ecommerce-backend"
+version = "1.0.0"
+environment = "development"
+
+[monitoring]
+# Health checks
+enable_health_checks = true
+health_check_interval = 30
+health_check_timeout = 5
+
+# Metrics
+enable_metrics = true
+metrics_endpoint = "/metrics"
+metrics_port = 9090
+
+# Tracing
+enable_tracing = true
+trace_sample_rate = 0.1
+trace_endpoint = "http://jaeger:14268/api/traces"
+
+[monitoring.alerts]
+# Alert thresholds
+error_rate_threshold = 0.05
+response_time_threshold = 2000
+memory_usage_threshold = 0.85
+cpu_usage_threshold = 0.80
+disk_usage_threshold = 0.90
+
+# Alert channels
+[monitoring.alerts.channels]
+email = ["admin@ecommerce.com", "ops@ecommerce.com"]
+slack = "#alerts"
+webhook = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+
+[email]
+# SMTP configuration
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+smtp_username = "noreply@ecommerce.com"
+smtp_password = "your-email-password"
+smtp_encryption = "tls"
+smtp_timeout = 30
+
+# Email templates
+[email.templates]
+welcome = "templates/welcome.html"
+password_reset = "templates/password_reset.html"
+order_confirmation = "templates/order_confirmation.html"
+shipping_notification = "templates/shipping_notification.html"
+
+# Email settings
+[email.settings]
+from_address = "E-commerce Platform <noreply@ecommerce.com>"
+reply_to = "support@ecommerce.com"
+max_retries = 3
+retry_delay = 5
+
+[storage]
+# File storage configuration
+default_storage = "local"
+upload_max_size = 10485760  # 10MB
+allowed_extensions = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"]
+image_quality = 85
+thumbnail_sizes = [100, 200, 400, 800]
+
+# Local storage
+[storage.local]
+upload_path = "./uploads"
+public_path = "/static/uploads"
+create_directories = true
+
+# AWS S3 storage
+[storage.s3]
+bucket = "ecommerce-uploads"
+region = "us-west-2"
+access_key_id = "YOUR_AWS_ACCESS_KEY"
+secret_access_key = "YOUR_AWS_SECRET_KEY"
+endpoint = ""  # Leave empty for AWS S3
+use_ssl = true
+path_style = false
+
+[payment]
+# Payment processors
+default_processor = "stripe"
+
+# Stripe configuration
+[payment.stripe]
+public_key = "pk_test_your_stripe_public_key"
+secret_key = "sk_test_your_stripe_secret_key"
+webhook_secret = "whsec_your_webhook_secret"
+currency = "usd"
+capture_method = "automatic"
+
+# PayPal configuration
+[payment.paypal]
+client_id = "your_paypal_client_id"
+client_secret = "your_paypal_client_secret"
+mode = "sandbox"  # sandbox or live
+currency = "USD"
+
+[search]
+# Elasticsearch configuration
+elasticsearch_url = "http://localhost:9200"
+elasticsearch_index = "ecommerce"
+elasticsearch_timeout = 30
+elasticsearch_max_retries = 3
+
+# Search settings
+[search.settings]
+fuzzy_search = true
+fuzzy_distance = 2
+boost_exact_matches = 2.0
+boost_partial_matches = 1.5
+min_score = 0.1
+max_results = 1000
+
+# Search fields and weights
+[search.fields]
+name = 3.0
+description = 1.0
+sku = 2.0
+category = 1.5
+tags = 1.2
+
+[analytics]
+# Analytics configuration
+enable_analytics = true
+track_pageviews = true
+track_events = true
+track_users = true
+track_sessions = true
+
+# Data retention
+[analytics.retention]
+pageviews = 365  # days
+events = 180
+users = 730
+sessions = 90
+
+# Real-time analytics
+[analytics.realtime]
+enabled = true
+update_interval = 5  # seconds
+max_concurrent_users = 10000
+
+[features]
+# Feature flags
+[features.flags]
+enable_recommendations = true
+enable_reviews = true
+enable_wishlist = true
+enable_coupons = false
+enable_loyalty_program = false
+enable_social_login = true
+enable_guest_checkout = true
+enable_multi_currency = false
+enable_inventory_tracking = true
+
+[third_party]
+# Google Analytics
+[third_party.google_analytics]
+tracking_id = "GA_TRACKING_ID"
+enhanced_ecommerce = true
+
+# Facebook Pixel
+[third_party.facebook_pixel]
+pixel_id = "FB_PIXEL_ID"
+advanced_matching = true
+
+# Google reCAPTCHA
+[third_party.recaptcha]
+site_key = "RECAPTCHA_SITE_KEY"
+secret_key = "RECAPTCHA_SECRET_KEY"
+version = "v3"
+score_threshold = 0.5
+
+[background_jobs]
+# Job queue configuration
+queue_backend = "redis"
+max_workers = 10
+max_retries = 3
+retry_delay = 5
+job_timeout = 300
+
+# Job types
+[background_jobs.jobs]
+email_sending = { priority = "high", timeout = 30 }
+image_processing = { priority = "medium", timeout = 120 }
+analytics_processing = { priority = "low", timeout = 600 }
+inventory_updates = { priority = "high", timeout = 60 }
+
+[maintenance]
+# Maintenance mode
+enable_maintenance_mode = false
+maintenance_message = "We're currently performing scheduled maintenance. Please check back soon."
+maintenance_allowed_ips = ["127.0.0.1", "::1"]
+
+# Cleanup tasks
+[maintenance.cleanup]
+cleanup_logs_days = 30
+cleanup_sessions_days = 7
+cleanup_temp_files_hours = 24
+cleanup_old_carts_days = 30
+
+[development]
+# Development-only settings
+auto_reload = true
+debug_toolbar = true
+fake_email = true
+disable_csrf = false
+log_sql_queries = true
+enable_test_data = true
+
+# Test data configuration
+[development.test_data]
+users = 100
+products = 1000
+orders = 500
+reviews = 2000

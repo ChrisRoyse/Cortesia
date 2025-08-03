@@ -1,0 +1,51 @@
+{
+  "version": "universal_1.0",
+  "indexed_at": "2025-08-03 13:37:22",
+  "stats": {
+    "total_files": 9,
+    "total_chunks": 126,
+    "code_files": 9,
+    "doc_files": 0,
+    "config_files": 0,
+    "languages": {
+      "python": 8,
+      "javascript": 1
+    },
+    "chunk_types": {
+      "class": 11,
+      "method": 86,
+      "function": 26,
+      "code_block": 3
+    },
+    "processing_time": 3.0403783321380615,
+    "errors": []
+  },
+  "languages": {
+    "python": 8,
+    "javascript": 1
+  },
+  "chunk_types": {
+    "class": 11,
+    "method": 86,
+    "function": 26,
+    "code_block": 3
+  },
+  "root_directory": "C:\\code\\LLMKG\\vectors\\simulation\\3_edge_cases",
+  "db_directory": "test_db_sim3_comprehensive",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "indexing_strategy": {
+    "code": "Pattern-based universal extraction",
+    "documentation": "Hierarchical + Semantic chunking",
+    "config": "Structure-aware chunking",
+    "fallback": "Intelligent boundary detection"
+  },
+  "features": [
+    "No external parser dependencies",
+    "Multi-language support",
+    "Context preservation",
+    "Sliding window with overlap",
+    "Method-level granularity",
+    "Production-ready resource management"
+  ]
+}

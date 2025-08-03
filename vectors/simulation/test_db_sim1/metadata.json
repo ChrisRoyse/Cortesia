@@ -1,0 +1,63 @@
+{
+  "version": "universal_1.0",
+  "indexed_at": "2025-08-03 13:29:42",
+  "stats": {
+    "total_files": 10,
+    "total_chunks": 416,
+    "code_files": 5,
+    "doc_files": 1,
+    "config_files": 4,
+    "languages": {
+      "python": 2,
+      "javascript": 1,
+      "typescript": 1,
+      "rust": 1
+    },
+    "chunk_types": {
+      "hierarchical_section": 106,
+      "class": 14,
+      "function": 32,
+      "method": 66,
+      "interface": 14,
+      "struct": 14,
+      "enum": 4,
+      "config_section": 166
+    },
+    "processing_time": 9.00097370147705,
+    "errors": []
+  },
+  "languages": {
+    "python": 2,
+    "javascript": 1,
+    "typescript": 1,
+    "rust": 1
+  },
+  "chunk_types": {
+    "hierarchical_section": 106,
+    "class": 14,
+    "function": 32,
+    "method": 66,
+    "interface": 14,
+    "struct": 14,
+    "enum": 4,
+    "config_section": 166
+  },
+  "root_directory": "C:\\code\\LLMKG\\vectors\\simulation\\1_multi_language",
+  "db_directory": "test_db_sim1",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dimensions": 384,
+  "indexing_strategy": {
+    "code": "Pattern-based universal extraction",
+    "documentation": "Hierarchical + Semantic chunking",
+    "config": "Structure-aware chunking",
+    "fallback": "Intelligent boundary detection"
+  },
+  "features": [
+    "No external parser dependencies",
+    "Multi-language support",
+    "Context preservation",
+    "Sliding window with overlap",
+    "Method-level granularity",
+    "Production-ready resource management"
+  ]
+}
