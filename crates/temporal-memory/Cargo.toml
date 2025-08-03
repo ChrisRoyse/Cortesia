@@ -16,6 +16,8 @@ serde_json.workspace = true
 parking_lot.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
+uuid = { version = "1.0", features = ["v4", "serde"] }
+rand = "0.8"
 
 [dev-dependencies]
 criterion.workspace = true

@@ -5,3 +5,6 @@
 
 pub mod branch;
 pub mod consolidation;
+
+pub use branch::{MemoryBranch, BranchId, BranchMetadata, BranchRelationship, ConsolidationState};
+pub use consolidation::{ConsolidationEngine, ConsolidationConfig, ConsolidationResult};
