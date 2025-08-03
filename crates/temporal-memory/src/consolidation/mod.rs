@@ -123,6 +123,7 @@ pub enum ConsolidationError {
 }
 
 /// Manages memory branch consolidation
+#[derive(Clone)]
 pub struct ConsolidationEngine {
     config: ConsolidationConfig,
 }
@@ -131,6 +132,11 @@ impl ConsolidationEngine {
     /// Create new consolidation engine
     pub fn new(config: ConsolidationConfig) -> Self {
         Self { config }
+    }
+    
+    /// Get consolidation configuration
+    pub fn config(&self) -> &ConsolidationConfig {
+        &self.config
     }
     
     /// Consolidate child branch into parent

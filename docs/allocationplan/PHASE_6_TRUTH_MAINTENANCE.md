@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This phase implements a comprehensive Truth Maintenance System (TMS) with belief revision capabilities integrated into the CortexKG neuromorphic knowledge graph. The system combines Justification-Based TMS (JTMS) and Assumption-Based TMS (ATMS) architectures with AGM-compliant belief revision, all implemented through neuromorphic spiking neural networks.
+This phase implements a comprehensive Truth Maintenance System (TMS) with belief revision capabilities integrated into the Cortesia neuromorphic knowledge graph. The system combines Justification-Based TMS (JTMS) and Assumption-Based TMS (ATMS) architectures with AGM-compliant belief revision, all implemented through neuromorphic spiking neural networks.
 
 ## SPARC Implementation
 

@@ -472,7 +472,7 @@ impl TTFSSpikeEncoder {
 
 ### CRITICAL: Neural Network Selection Philosophy
 
-**The ruv-FANN library provides access to 29 different neural network architectures as a comprehensive toolkit. However, the CortexKG system should intelligently SELECT only the most optimal architectures rather than implementing all available options.** Key principles:
+**The ruv-FANN library provides access to 29 different neural network architectures as a comprehensive toolkit. However, the Cortesia system should intelligently SELECT only the most optimal architectures rather than implementing all available options.** Key principles:
 
 - **1-4 network types are typically sufficient** for high-performance operation across the entire system
 - **Each cortical column can reuse the same optimal architecture** with task-specific parameters

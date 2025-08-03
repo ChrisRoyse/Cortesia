@@ -2,9 +2,11 @@
 
 pub mod types;
 pub mod state;
+pub mod manager;
 
-pub use types::{MemoryBranch, BranchMetadata, BranchRelationship};
+pub use types::{MemoryBranch, BranchMetadata, BranchRelationship, BranchId};
 pub use state::{ConsolidationState, StateTransition};
+pub use manager::{BranchManager, BranchEvent, BranchError, BranchStats};
 
 use std::time::Duration;
 
@@ -22,6 +24,9 @@ pub struct BranchConfig {
     
     /// Enable conflict detection
     pub detect_conflicts: bool,
+    
+    /// Interval for checking branches for auto-consolidation
+    pub auto_consolidation_check_interval: Duration,
 }
 
 impl Default for BranchConfig {
@@ -31,6 +36,7 @@ impl Default for BranchConfig {
             max_divergence: 0.3,
             auto_consolidate_threshold: 0.8,
             detect_conflicts: true,
+            auto_consolidation_check_interval: Duration::from_secs(300), // 5 minutes
         }
     }
 }

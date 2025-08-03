@@ -16,6 +16,8 @@ serde_json.workspace = true
 parking_lot.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
+tokio.workspace = true
+dashmap.workspace = true
 uuid = { version = "1.0", features = ["v4", "serde"] }
 rand = "0.8"
 

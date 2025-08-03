@@ -7,7 +7,7 @@
 
 ## Overview
 
-Phase 0 establishes the neuromorphic groundwork for CortexKG, implementing core spiking neural principles:
+Phase 0 establishes the neuromorphic groundwork for Cortesia, implementing core spiking neural principles:
 - **Time-to-First-Spike (TTFS) Encoding**: Sub-millisecond sparse neural representation
 - **Lateral Inhibition Networks**: Winner-take-all competition for allocation decisions
 - **Spiking Neural Allocation**: Biological plausibility with <1% neuron activation
@@ -31,7 +31,7 @@ Phase 0 establishes the neuromorphic groundwork for CortexKG, implementing core 
 **Infrastructure Dependencies for All Phases**:
 ```rust
 // Complete system architecture foundation
-pub struct CortexKGFoundation {
+pub struct CortesiaFoundation {
     // Phase 1-2: Cortical column infrastructure
     pub neural_architectures: HashMap<NetworkType, NeuralArchitecture>,
     pub cortical_columns: Vec<CorticalColumn>,
@@ -160,7 +160,7 @@ PROJECT_FOUNDATION:
 ### Architecture
 
 ```
-CortexKG/
+Cortesia/
 ├── Cargo.toml (neuromorphic workspace)
 ├── crates/
 │   ├── neuromorphic-core/     # SNN core structures
@@ -250,18 +250,18 @@ Phase complete when:
 ```toml
 [workspace]
 members = [
-    "crates/cortex-core",
-    "crates/allocation-engine",
+    "crates/neuromorphic-core",
+    "crates/snn-allocation-engine",
     "crates/temporal-memory",
     "crates/neural-bridge",
-    "crates/cortex-wasm",
-    "crates/mocks",
+    "crates/neuromorphic-wasm",
+    "crates/snn-mocks",
 ]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
-authors = ["CortexKG Team"]
+authors = ["Cortesia Team"]
 edition = "2021"
 license = "MIT"
 
@@ -373,7 +373,7 @@ rand = "0.8"                    # Random number generation for testing
 
 2. **Create Core Crate**:
 ```bash
-cargo new --lib crates/cortex-core
+cargo new --lib crates/neuromorphic-core
 ```
 
 **neuromorphic-core/Cargo.toml**:
@@ -1607,7 +1607,7 @@ jobs:
     
     - name: Build WASM
       run: |
-        cd crates/cortex-wasm
+        cd crates/neuromorphic-wasm
         wasm-pack build --target web
     
     - name: Benchmark
@@ -1664,7 +1664,7 @@ jobs:
 
 ## Intelligent Neural Network Selection Strategy
 
-**CRITICAL: The ruv-FANN library provides 29 neural network architecture options as a toolkit, but the CortexKG system should intelligently SELECT only 1-4 optimal types for efficient implementation.**
+**CRITICAL: The ruv-FANN library provides 29 neural network architecture options as a toolkit, but the Cortesia system should intelligently SELECT only 1-4 optimal types for efficient implementation.**
 
 **This is the foundation for all neural network selection decisions throughout the entire system - Phases 1-11 will reference this selection framework.**
 

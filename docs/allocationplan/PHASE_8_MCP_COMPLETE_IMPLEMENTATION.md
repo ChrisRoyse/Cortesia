@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This phase delivers a complete Model Context Protocol (MCP) server implementation that exposes the CortexKG neuromorphic memory system as a standardized tool for AI agents. The implementation provides sub-100ms response times while maintaining biological accuracy through 4-column cortical processing using intelligently selected optimal neural network architectures (1-4 types chosen from 29 available options).
+This phase delivers a complete Model Context Protocol (MCP) server implementation that exposes the Cortesia neuromorphic memory system as a standardized tool for AI agents. The implementation provides sub-100ms response times while maintaining biological accuracy through 4-column cortical processing using intelligently selected optimal neural network architectures (1-4 types chosen from 29 available options).
 
 ## SPARC Implementation
 
@@ -67,7 +67,7 @@ use zod::Schema;
 use tokio::sync::RwLock;
 use std::sync::Arc;
 
-pub struct CortexKGMCPServer {
+pub struct CortesiaMCPServer {
     // Neuromorphic cortical columns
     semantic_column: Arc<RwLock<SemanticColumn>>,
     structural_column: Arc<RwLock<StructuralColumn>>,
@@ -87,7 +87,7 @@ pub struct CortexKGMCPServer {
     metrics_collector: Arc<RwLock<MetricsCollector>>,
 }
 
-impl CortexKGMCPServer {
+impl CortesiaMCPServer {
     pub async fn new() -> Result<Self, ServerError> {
         let semantic_column = Arc::new(RwLock::new(
             SemanticColumn::new_with_networks(vec![
@@ -195,7 +195,7 @@ pub struct RetrieveMemoryOutput {
 #### Tool Implementation
 
 ```rust
-impl CortexKGMCPServer {
+impl CortesiaMCPServer {
     pub async fn store_memory(&self, input: StoreMemoryInput) -> Result<StoreMemoryOutput, ToolError> {
         let start_time = std::time::Instant::now();
         

@@ -1,6 +1,6 @@
 # Phase 0: Neuromorphic Foundation Setup - Micro-Phase Breakdown
 
-This directory contains the detailed micro-phase breakdown for Phase 0, which establishes the neuromorphic foundation for CortexKG. Each micro-phase is designed as a small, focused task that can be executed quickly by AI agents.
+This directory contains the detailed micro-phase breakdown for Phase 0, which establishes the neuromorphic foundation for Cortesia. Each micro-phase is designed as a small, focused task that can be executed quickly by AI agents.
 
 ## Overview
 
