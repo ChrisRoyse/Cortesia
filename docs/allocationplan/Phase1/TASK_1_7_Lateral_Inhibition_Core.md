@@ -86,22 +86,24 @@ pub fn current_time_us() -> u64 {
         .as_micros() as u64
 }
 
-/// Enhanced cortical column (placeholder for actual implementation)
+/// Enhanced cortical column with atomic state management and thread safety
 #[derive(Debug)]
 pub struct EnhancedCorticalColumn {
     id: ColumnId,
-    state: ColumnState,
-    activation_level: f32,
-    transition_time: Instant,
+    state: std::sync::atomic::AtomicU8, // Atomic for thread-safe state transitions
+    activation_level: std::sync::atomic::AtomicU32, // f32 as u32 bits for atomic operations
+    transition_time: std::sync::Mutex<Instant>,
+    last_competition_time: std::sync::atomic::AtomicU64, // Microseconds since epoch
 }
 
 impl EnhancedCorticalColumn {
     pub fn new(id: ColumnId) -> Self {
         Self {
             id,
-            state: ColumnState::Available,
-            activation_level: 0.0,
-            transition_time: Instant::now(),
+            state: std::sync::atomic::AtomicU8::new(ColumnState::Available as u8),
+            activation_level: std::sync::atomic::AtomicU32::new(0), // 0.0f32.to_bits()
+            transition_time: std::sync::Mutex::new(Instant::now()),
+            last_competition_time: std::sync::atomic::AtomicU64::new(current_time_us()),
         }
     }
     
@@ -110,30 +112,114 @@ impl EnhancedCorticalColumn {
     }
     
     pub fn current_state(&self) -> ColumnState {
-        self.state
+        let state_value = self.state.load(std::sync::atomic::Ordering::Acquire);
+        match state_value {
+            0 => ColumnState::Available,
+            1 => ColumnState::Competing,
+            2 => ColumnState::Allocated,
+            3 => ColumnState::Inhibited,
+            _ => ColumnState::Available, // Default fallback
+        }
     }
     
     pub fn activation_level(&self) -> f32 {
-        self.activation_level
+        let bits = self.activation_level.load(std::sync::atomic::Ordering::Acquire);
+        f32::from_bits(bits)
     }
     
     pub fn time_since_transition(&self) -> Duration {
-        self.transition_time.elapsed()
+        self.transition_time.lock().unwrap().elapsed()
     }
     
     pub fn try_activate_with_level(&self, level: f32) -> Result<(), &'static str> {
-        // Implementation would update internal state
+        let current_state = self.current_state();
+        if current_state != ColumnState::Available {
+            return Err("Column not available for activation");
+        }
+        
+        // Atomically update state and activation level
+        self.state.store(ColumnState::Competing as u8, std::sync::atomic::Ordering::Release);
+        self.activation_level.store(level.to_bits(), std::sync::atomic::Ordering::Release);
+        
+        // Update transition time (requires mutex)
+        if let Ok(mut time) = self.transition_time.try_lock() {
+            *time = Instant::now();
+        }
+        
         Ok(())
     }
     
     pub fn try_compete_with_strength(&self, strength: f32) -> Result<(), &'static str> {
-        // Implementation would update internal state
+        let current_state = self.current_state();
+        if current_state != ColumnState::Competing && current_state != ColumnState::Available {
+            return Err("Column not in valid state for competition");
+        }
+        
+        // Update state to competing if not already
+        self.state.store(ColumnState::Competing as u8, std::sync::atomic::Ordering::Release);
+        
+        // Update activation level with competition strength
+        let current_activation = self.activation_level();
+        let new_activation = (current_activation + strength).min(1.0);
+        self.activation_level.store(new_activation.to_bits(), std::sync::atomic::Ordering::Release);
+        
+        // Update competition time
+        self.last_competition_time.store(current_time_us(), std::sync::atomic::Ordering::Release);
+        
         Ok(())
     }
     
     pub fn try_allocate(&self) -> Result<(), &'static str> {
-        // Implementation would update internal state  
+        let current_state = self.current_state();
+        if current_state != ColumnState::Competing {
+            return Err("Column must be competing to be allocated");
+        }
+        
+        // Atomically transition to allocated state
+        self.state.store(ColumnState::Allocated as u8, std::sync::atomic::Ordering::Release);
+        
+        // Update transition time
+        if let Ok(mut time) = self.transition_time.try_lock() {
+            *time = Instant::now();
+        }
+        
         Ok(())
+    }
+    
+    /// Try to inhibit this column (used by lateral inhibition)
+    pub fn try_inhibit(&self) -> Result<(), &'static str> {
+        let current_state = self.current_state();
+        if current_state == ColumnState::Allocated {
+            return Err("Cannot inhibit allocated column");
+        }
+        
+        self.state.store(ColumnState::Inhibited as u8, std::sync::atomic::Ordering::Release);
+        
+        // Update transition time
+        if let Ok(mut time) = self.transition_time.try_lock() {
+            *time = Instant::now();
+        }
+        
+        Ok(())
+    }
+    
+    /// Reset column to available state
+    pub fn reset_to_available(&self) -> Result<(), &'static str> {
+        self.state.store(ColumnState::Available as u8, std::sync::atomic::Ordering::Release);
+        self.activation_level.store(0.0f32.to_bits(), std::sync::atomic::Ordering::Release);
+        
+        // Update transition time
+        if let Ok(mut time) = self.transition_time.try_lock() {
+            *time = Instant::now();
+        }
+        
+        Ok(())
+    }
+    
+    /// Get time since last competition in microseconds
+    pub fn time_since_last_competition_us(&self) -> u64 {
+        let last_competition = self.last_competition_time.load(std::sync::atomic::Ordering::Acquire);
+        current_time_us().saturating_sub(last_competition)
     }
 }
 ```
@@ -414,16 +500,41 @@ use std::collections::HashMap;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Placeholder for WTA types that will be provided by Task 1.8
+/// Winner-take-all configuration (will be extended by Task 1.8)
 #[derive(Debug, Clone)]
 pub struct WTAConfig {
+    /// Maximum number of winners to select
     pub max_winners: usize,
+    
+    /// Minimum activation threshold for consideration
+    pub activation_threshold: f32,
+    
+    /// Convergence epsilon for iterative algorithms
+    pub convergence_epsilon: f32,
+    
+    /// Maximum iterations for convergence
+    pub max_iterations: u32,
+    
+    /// Inhibition decay rate
+    pub inhibition_decay: f32,
+    
+    /// Winner margin threshold
+    pub winner_margin: f32,
+    
+    /// Enable SIMD acceleration
+    pub simd_enabled: bool,
 }
 
 impl Default for WTAConfig {
     fn default() -> Self {
         Self {
             max_winners: 1,
+            activation_threshold: 0.1,
+            convergence_epsilon: 0.001,
+            max_iterations: 25,
+            inhibition_decay: 0.95,
+            winner_margin: 0.02,
+            simd_enabled: true,
         }
     }
 }
@@ -464,7 +575,12 @@ pub struct WinnerTakeAllEngine {
 }
 
 impl WinnerTakeAllEngine {
-    pub fn new(config: WTAConfig, _inhibition_strength: f32, _inhibition_sigma: f32) -> Self {
+    pub fn new(config: WTAConfig) -> Self {
+        Self { config }
+    }
+    
+    /// Extended constructor for lateral inhibition integration (used internally)
+    pub fn with_inhibition_params(config: WTAConfig, _inhibition_strength: f32, _inhibition_sigma: f32) -> Self {
         Self { config }
     }
     
@@ -562,7 +678,8 @@ impl InhibitionConfig {
             base_inhibition_strength: bio_config.max_synaptic_weight * 0.6,
             spatial_sigma: 3.0,
             wta_config: WTAConfig {
-                min_activation_threshold: bio_config.activation_threshold * 0.8,
+                max_winners: 1,
+                activation_threshold: bio_config.activation_threshold * 0.8,
                 convergence_epsilon: 0.001,
                 max_iterations: 25,
                 inhibition_decay: 0.95,
@@ -579,7 +696,7 @@ impl InhibitionConfig {
 
 impl LateralInhibitionEngine {
     pub fn new(config: InhibitionConfig) -> Self {
-        let wta_engine = WinnerTakeAllEngine::new(
+        let wta_engine = WinnerTakeAllEngine::with_inhibition_params(
             config.wta_config.clone(),
             config.base_inhibition_strength,
             config.spatial_sigma,
@@ -991,7 +1108,7 @@ fn test_inhibitory_connection_map() {
 #[test]
 fn test_winner_take_all_engine() {
     let config = WTAConfig::default();
-    let mut engine = WinnerTakeAllEngine::new(config, 0.8, 2.0);
+    let mut engine = WinnerTakeAllEngine::with_inhibition_params(config, 0.8, 2.0);
     
     // Create competition participants
     let mut participants = vec![
@@ -1157,7 +1274,7 @@ fn test_competition_convergence() {
         convergence_epsilon: 0.001,
         ..Default::default()
     };
-    let mut engine = WinnerTakeAllEngine::new(config, 0.8, 2.0);
+    let mut engine = WinnerTakeAllEngine::with_inhibition_params(config, 0.8, 2.0);
     
     // Create competition with similar activations (harder to converge)
     let mut participants = vec![

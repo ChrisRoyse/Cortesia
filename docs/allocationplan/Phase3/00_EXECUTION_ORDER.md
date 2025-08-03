@@ -31,35 +31,57 @@ This document defines the execution order for all Phase 3 micro-tasks. Each task
 12. **02d_create_range_indices.md** - Create numeric range indices (7 min)
 13. **02e_create_relationship_indices.md** - Create relationship indices (6 min)
 
-**Task 03: Core Node Types** (8 micro-tasks)
+**Task 03: Core Node Types** (14 micro-tasks)
 14. **03a_create_concept_node_struct.md** - Create ConceptNode struct (8 min)
 15. **03b_create_memory_node_struct.md** - Create MemoryNode struct (8 min)
 16. **03c_create_property_node_struct.md** - Create PropertyNode struct (10 min)
 17. **03d_create_exception_node_struct.md** - Create ExceptionNode struct (7 min)
 18. **03e_create_version_node_struct.md** - Create VersionNode struct (8 min)
 19. **03f_create_neural_pathway_struct.md** - Create NeuralPathwayNode struct (9 min)
-20. **03g_create_node_trait_interface.md** - Create GraphNode trait (8 min)
-21. **03h_test_all_node_types.md** - Test node integration (10 min)
+20. **03g1_define_base_node_trait.md** - Define GraphNode trait (5 min)
+21. **03g2_implement_concept_node_trait.md** - Implement ConceptNode trait (6 min)
+22. **03g3_implement_memory_node_trait.md** - Implement MemoryNode trait (6 min)
+23. **03g4_implement_property_node_trait.md** - Implement PropertyNode trait (5 min)
+24. **03g5_implement_remaining_node_traits.md** - Implement Exception/Version/Neural traits (12 min)
+25. **03g6_test_polymorphic_node_operations.md** - Test polymorphic operations (8 min)
+26. **03h_test_all_node_types.md** - Test node integration (10 min)
 
-**Task 04: Relationship Types** (6 micro-tasks)
-22. **04a_create_inheritance_relationship.md** - Create inheritance relationships (8 min)
-23. **04b_create_property_relationship.md** - Create property relationships (7 min)
-24. **04c_create_semantic_relationship.md** - Create semantic relationships (8 min)
-25. **04d_create_temporal_relationship.md** - Create temporal relationships (7 min)
-26. **04e_create_neural_relationship.md** - Create neural relationships (8 min)
-27. **04f_create_relationship_trait.md** - Create GraphRelationship trait (9 min)
+**Task 04: Relationship Types** (13 micro-tasks)
+27. **04a_create_inheritance_relationship.md** - Create inheritance relationships (8 min)
+28. **04b_create_property_relationship.md** - Create property relationships (7 min)
+29. **04c_create_semantic_relationship.md** - Create semantic relationships (8 min)
+30. **04d_create_temporal_relationship.md** - Create temporal relationships (7 min)
+31. **04e_create_neural_relationship.md** - Create neural relationships (8 min)
+32. **04f1_define_base_relationship_trait.md** - Define GraphRelationship trait (5 min)
+33. **04f2_implement_inheritance_trait.md** - Implement inheritance trait (7 min)
+34. **04f3_implement_property_trait.md** - Implement property trait (7 min)
+35. **04f4_implement_semantic_trait.md** - Implement semantic trait (7 min)
+36. **04f5_implement_temporal_trait.md** - Implement temporal trait (7 min)
+37. **04f6_implement_neural_trait.md** - Implement neural trait (7 min)
+38. **04f7_test_polymorphic_operations.md** - Test polymorphic operations (8 min)
 
-**Task 05: Basic CRUD Operations** (8 micro-tasks)
-28. **05a_create_basic_node_operations.md** - Create CRUD foundation (10 min)
-29. **05b_implement_node_creation.md** - Implement node creation (12 min)
-30. **05c_implement_node_reading.md** - Implement node reading (10 min)
-31. **05d_implement_node_updating.md** - Implement node updating (12 min)
-32. **05e_implement_node_deletion.md** - Implement node deletion (8 min)
-33. **05f_implement_node_exists_check.md** - Implement existence checks (6 min)
-34. **05g_implement_node_listing.md** - Implement node listing (12 min)
-35. **05h_test_complete_crud_operations.md** - Test complete CRUD (10 min)
+**Task 05: Basic CRUD Operations** (18 micro-tasks)
+39. **05a_create_basic_node_operations.md** - Create CRUD foundation (10 min)
+40. **05b_implement_node_creation.md** - Implement node creation (12 min)
+41. **05c_implement_node_reading.md** - Implement node reading (10 min)
+42. **05d_implement_node_updating.md** - Implement node updating (12 min)
+43. **05e_implement_node_deletion.md** - Implement node deletion (8 min)
+44. **05f1_implement_single_node_exists.md** - Implement single node exists (6 min)
+45. **05f2_implement_batch_nodes_exist.md** - Implement batch node exists (8 min)
+46. **05f3_implement_property_exists_check.md** - Implement property exists check (9 min)
+47. **05f4_test_existence_functionality.md** - Test existence functionality (8 min)
+48. **05g1_implement_basic_node_listing.md** - Implement basic node listing (10 min)
+49. **05g2_add_filter_criteria_helpers.md** - Add filter criteria helpers (6 min)
+50. **05g3_implement_count_nodes_method.md** - Implement count nodes method (8 min)
+51. **05g4_test_listing_functionality.md** - Test listing functionality (10 min)
+52. **05h1_create_crud_test_structure.md** - Create CRUD test structure (5 min)
+53. **05h2_test_basic_crud_workflow.md** - Test basic CRUD workflow (8 min)
+54. **05h3_test_error_handling.md** - Test CRUD error handling (7 min)
+55. **05h4_test_node_type_compatibility.md** - Test node type compatibility (10 min)
+56. **05h5_test_filter_combinations.md** - Test filter combinations (8 min)
+57. **05h6_test_module_integration.md** - Test module integration (6 min)
 
-**Foundation Stage Total**: 35 micro-tasks, estimated 270 minutes (4.5 hours)
+**Foundation Stage Total**: 57 micro-tasks, estimated 420 minutes (7 hours)
 
 ### Stage 2: Neural Integration (Tasks 06-10)
 **Goal**: Integrate with Phase 2 allocation engine
@@ -126,13 +148,13 @@ Schema Setup (02a-02e):
 01h → 02a → 02b → 02c → 02d → 02e
 
 Node Types (03a-03h):
-02e → 03a → 03b → 03c → 03d → 03e → 03f → 03g → 03h
+02e → 03a → 03b → 03c → 03d → 03e → 03f → 03g1 → 03g2 → 03g3 → 03g4 → 03g5 → 03g6 → 03h
 
-Relationships (04a-04f):
-03h → 04a → 04b → 04c → 04d → 04e → 04f
+Relationships (04a-04f7):
+03h → 04a → 04b → 04c → 04d → 04e → 04f1 → 04f2 → 04f3 → 04f4 → 04f5 → 04f6 → 04f7
 
-CRUD Operations (05a-05h):
-04f → 05a → 05b → 05c → 05d → 05e → 05f → 05g → 05h
+CRUD Operations (05a-05h6):
+04f7 → 05a → 05b → 05c → 05d → 05e → 05f1 → 05f2 → 05f3 → 05f4 → 05g1 → 05g2 → 05g3 → 05g4 → 05h1 → 05h2 → 05h3 → 05h4 → 05h5 → 05h6
 ```
 
 ### Micro-Task Benefits

@@ -364,7 +364,7 @@ pub static SIMD_ALLOCATOR: SIMDAllocationProcessor = SIMDAllocationProcessor::ne
 // src/neural_allocation_engine.rs
 use crate::{
     BiologicalCorticalColumn, CorticalGrid3D, SIMDAllocationProcessor,
-    LateralInhibitionNetwork, WinnerTakeAllSelector, ConceptDeduplicator
+    LateralInhibitionEngine, WinnerTakeAllSelector, ConceptDeduplicator
 };
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -394,7 +394,7 @@ pub struct NeuralAllocationEngine {
     grid: Arc<CorticalGrid3D>,
     
     /// Lateral inhibition network
-    inhibition: Arc<LateralInhibitionNetwork>,
+    inhibition: Arc<LateralInhibitionEngine>,
     
     /// Winner-take-all selector
     winner_selector: Arc<WinnerTakeAllSelector>,
@@ -521,7 +521,7 @@ impl NeuralNetworkPool {
 impl NeuralAllocationEngine {
     pub fn new(
         grid: Arc<CorticalGrid3D>,
-        inhibition: Arc<LateralInhibitionNetwork>,
+        inhibition: Arc<LateralInhibitionEngine>,
         winner_selector: Arc<WinnerTakeAllSelector>,
         deduplicator: Arc<ConceptDeduplicator>,
     ) -> Self {
@@ -1081,7 +1081,7 @@ impl BatchAllocationProcessor {
 // tests/parallel_allocation_engine_test.rs
 use llmkg::{
     ParallelAllocationPipeline, NeuralAllocationEngine, ConceptAllocationRequest,
-    CorticalGrid3D, LateralInhibitionNetwork, WinnerTakeAllSelector, ConceptDeduplicator,
+    CorticalGrid3D, LateralInhibitionEngine, WinnerTakeAllSelector, ConceptDeduplicator,
     BatchAllocationProcessor, SIMD_ALLOCATOR
 };
 use std::sync::Arc;
@@ -1211,7 +1211,7 @@ fn test_simd_allocation_operations() {
 fn test_neural_allocation_engine() {
     // Create mock components
     let grid = Arc::new(CorticalGrid3D::new(10, 10, 10, 1.0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     
@@ -1279,7 +1279,7 @@ fn test_neural_allocation_engine() {
 fn test_parallel_allocation_pipeline() {
     // Create engine
     let grid = Arc::new(CorticalGrid3D::new(10, 10, 10, 1.0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     let engine = Arc::new(NeuralAllocationEngine::new(grid, inhibition, winner_selector, deduplicator));
@@ -1344,7 +1344,7 @@ fn test_parallel_allocation_pipeline() {
 fn test_allocation_performance_targets() {
     // Create high-performance configuration
     let grid = Arc::new(CorticalGrid3D::new(20, 20, 20, 1.0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     let engine = Arc::new(NeuralAllocationEngine::new(grid, inhibition, winner_selector, deduplicator));
@@ -1407,7 +1407,7 @@ fn test_allocation_performance_targets() {
 #[test]
 fn test_thread_scaling_performance() {
     let grid = Arc::new(CorticalGrid3D::new(15, 15, 15, 1.0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     let engine = Arc::new(NeuralAllocationEngine::new(grid, inhibition, winner_selector, deduplicator));
@@ -1453,7 +1453,7 @@ fn test_thread_scaling_performance() {
 #[test]
 fn test_neural_memory_integration() {
     let grid = Arc::new(CorticalGrid3D::new(5, 5, 5, 1.0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     let engine = NeuralAllocationEngine::new(grid, inhibition, winner_selector, deduplicator);

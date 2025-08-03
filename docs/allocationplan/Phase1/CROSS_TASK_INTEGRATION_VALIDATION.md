@@ -572,7 +572,7 @@ impl BiologicalProcessingStats {
 ```rust
 // integration_validation/inhibition_integration.rs
 use neuromorphic_core::{
-    LateralInhibitionNetwork, WinnerTakeAllSelector, ConceptDeduplicator,
+    LateralInhibitionEngine, WinnerTakeAllSelector, ConceptDeduplicator,
     BiologicalCorticalColumn, BiologicalConfig, InhibitionResult,
     CompetitionOutcome, DeduplicationResult
 };
@@ -588,7 +588,7 @@ fn validate_inhibition_competition_deduplication_pipeline() {
     ).collect();
     
     // Create competition network components
-    let inhibition_network = LateralInhibitionNetwork::new(
+    let inhibition_network = LateralInhibitionEngine::new(
         columns.iter().map(|c| c.base().id()).collect(),
         2.5 // inhibition radius
     );
@@ -762,7 +762,7 @@ fn validate_competition_determinism_and_stability() {
             Arc::new(BiologicalCorticalColumn::new(i, config.clone()))
         ).collect();
         
-        let inhibition_network = LateralInhibitionNetwork::new(
+        let inhibition_network = LateralInhibitionEngine::new(
             (0..column_count).collect(),
             3.0
         );
@@ -1213,7 +1213,7 @@ fn validate_spatial_boundary_conditions() {
 use neuromorphic_core::{
     ParallelAllocationEngine, NeuralAllocationEngine, AllocationRequest, AllocationResult,
     BiologicalCorticalColumn, BiologicalConfig, CorticalGrid3D,
-    LateralInhibitionNetwork, WinnerTakeAllSelector, ConceptDeduplicator,
+    LateralInhibitionEngine, WinnerTakeAllSelector, ConceptDeduplicator,
     SpatialIndexer, PerformanceMetrics, BatchAllocationProcessor
 };
 use std::sync::Arc;
@@ -1233,7 +1233,7 @@ async fn validate_complete_system_integration() {
     let init_start = Instant::now();
     
     let grid = Arc::new(CorticalGrid3D::new(grid_size.0, grid_size.1, grid_size.2));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     
@@ -1489,7 +1489,7 @@ fn create_complete_neural_engine(grid_size: i32) -> NeuralAllocationEngine {
     let config = BiologicalConfig::fast_processing();
     
     let grid = Arc::new(CorticalGrid3D::new(grid_size, grid_size, grid_size));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     

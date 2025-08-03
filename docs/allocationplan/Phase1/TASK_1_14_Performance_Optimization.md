@@ -675,7 +675,7 @@ impl OptimizedNeuromorphicSystem {
         
         // Create neural allocation engine with all components
         let grid = Arc::new(crate::CorticalGrid3D::new(100, 100, 10, 1.0));
-        let inhibition = Arc::new(crate::LateralInhibitionNetwork::new());
+        let inhibition = Arc::new(crate::LateralInhibitionEngine::new());
         let winner_selector = Arc::new(crate::WinnerTakeAllSelector::new());
         let deduplicator = Arc::new(crate::ConceptDeduplicator::new());
         

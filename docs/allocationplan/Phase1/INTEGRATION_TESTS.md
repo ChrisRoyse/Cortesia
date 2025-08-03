@@ -380,7 +380,7 @@ Tests the interaction between lateral inhibition, winner-take-all, and deduplica
 ```rust
 // integration_tests/inhibition_integration.rs
 use neuromorphic_core::{
-    LateralInhibitionNetwork, WinnerTakeAllSelector, ConceptDeduplicator,
+    LateralInhibitionEngine, WinnerTakeAllSelector, ConceptDeduplicator,
     BiologicalCorticalColumn, BiologicalConfig, InhibitionResult,
     CompetitionOutcome, DeduplicationResult
 };
@@ -394,7 +394,7 @@ fn test_lateral_inhibition_winner_take_all_pipeline() {
         Arc::new(BiologicalCorticalColumn::new(i, config.clone()))
     ).collect();
     
-    let inhibition_network = LateralInhibitionNetwork::new(
+    let inhibition_network = LateralInhibitionEngine::new(
         columns.iter().map(|c| c.base().id()).collect(),
         2.0 // inhibition radius
     );
@@ -525,7 +525,7 @@ fn test_inhibition_convergence_stability() {
         Arc::new(BiologicalCorticalColumn::new(i, config.clone()))
     ).collect();
     
-    let inhibition_network = LateralInhibitionNetwork::new(
+    let inhibition_network = LateralInhibitionEngine::new(
         (0..num_columns).collect(),
         3.0 // Larger inhibition radius
     );
@@ -582,7 +582,7 @@ fn test_competition_dynamics_performance() {
         column.stimulate(strength, 1.0);
     }
     
-    let inhibition_network = LateralInhibitionNetwork::new(
+    let inhibition_network = LateralInhibitionEngine::new(
         (0..num_columns).collect(),
         5.0 // Large radius for complex interactions
     );
@@ -899,7 +899,7 @@ Tests the complete system with all components working together.
 use neuromorphic_core::{
     ParallelAllocationEngine, AllocationRequest, AllocationResult,
     BiologicalCorticalColumn, BiologicalConfig, CorticalGrid3D,
-    LateralInhibitionNetwork, SpatialIndexer, PerformanceMetrics
+    LateralInhibitionEngine, SpatialIndexer, PerformanceMetrics
 };
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -1440,7 +1440,7 @@ use neuromorphic_core::{
     CorticalColumn, BiologicalCorticalColumn, BiologicalConfig,
     ParallelAllocationEngine, AllocationRequest, AllocationResult,
     CorticalGrid3D, SpatialIndexer, NeighborFinder, GridCoordinate,
-    LateralInhibitionNetwork, ConceptDeduplicator
+    LateralInhibitionEngine, ConceptDeduplicator
 };
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -1450,7 +1450,7 @@ use std::thread;
 fn test_empty_grid_allocation_attempts() {
     // Test allocation attempts on completely empty grid
     let grid = Arc::new(CorticalGrid3D::new(0, 0, 0));
-    let inhibition = Arc::new(LateralInhibitionNetwork::new());
+    let inhibition = Arc::new(LateralInhibitionEngine::new());
     let winner_selector = Arc::new(WinnerTakeAllSelector::new());
     let deduplicator = Arc::new(ConceptDeduplicator::new());
     let engine = ParallelAllocationEngine::new(0, BiologicalConfig::default());
