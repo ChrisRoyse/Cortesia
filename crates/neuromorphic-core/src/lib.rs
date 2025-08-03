@@ -13,7 +13,7 @@ pub mod ttfs_concept;
 // Re-export main types for convenience
 pub use error::{NeuromorphicError, Result, ResultExt};
 pub use neural_branch::{BranchId, NeuromorphicMemoryBranch};
-pub use spiking_column::{ColumnId, SpikingCorticalColumn};
+pub use spiking_column::{ColumnError, ColumnId, ColumnState, SpikingCorticalColumn};
 pub use ttfs_concept::{NodeId, TTFSConcept};
 
 // Common types used across the neuromorphic system
