@@ -61,6 +61,12 @@ __pycache__/
 venv/
 env/
 
+# Vector databases (too large for git)
+/vectors/chroma_db/*.sqlite3
+/vectors/chroma_db/*/
+*.chroma
+*.faiss
+
 # Logs
 *.log
 logs/

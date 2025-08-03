@@ -1,0 +1,14 @@
+{
+  "indexed_at": "2025-08-03 08:18:02",
+  "stats": {
+    "total_files": 694,
+    "total_chunks": 14993,
+    "total_chars": 12052071,
+    "processing_time": 191.89347529411316
+  },
+  "docs_directory": "C:\\code\\LLMKG\\docs",
+  "db_directory": "chroma_db",
+  "embedding_model": "all-MiniLM-L6-v2",
+  "chunk_size": 1000,
+  "chunk_overlap": 200
+}
