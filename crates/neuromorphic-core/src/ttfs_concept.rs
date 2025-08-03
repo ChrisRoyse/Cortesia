@@ -7,7 +7,17 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 pub use spike_pattern::{SpikePattern, SpikeEvent};
-pub use encoding::{TTFSEncoder, EncodingConfig};
+pub use encoding::{TTFSEncoder, EncodingConfig, EncodingError};
+
+/// Convert milliseconds to Duration
+pub fn ms_to_duration(ms: f32) -> Duration {
+    Duration::from_micros((ms * 1000.0) as u64)
+}
+
+/// Convert Duration to milliseconds
+pub fn duration_to_ms(duration: Duration) -> f32 {
+    duration.as_micros() as f32 / 1000.0
+}
 
 /// Time-to-First-Spike encoded concept
 #[derive(Debug, Clone, Serialize, Deserialize)]
