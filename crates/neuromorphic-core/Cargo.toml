@@ -28,6 +28,7 @@ web-sys.workspace = true
 # Crate-specific additions
 bincode.workspace = true
 once_cell.workspace = true
+rand = "0.8"
 
 [target.wasm32-unknown-unknown.dependencies]
 wee_alloc.workspace = true

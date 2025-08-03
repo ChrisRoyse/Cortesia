@@ -1,8 +1,9 @@
 //! TTFS-encoded concept representation
 
-mod spike_pattern;
-mod encoding;
-mod builder;
+pub mod spike_pattern;
+pub mod encoding;
+pub mod builder;
+pub mod similarity;
 
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -10,6 +11,7 @@ use std::time::Duration;
 pub use spike_pattern::{SpikePattern, SpikeEvent};
 pub use encoding::{TTFSEncoder, EncodingConfig, EncodingError};
 pub use builder::{ConceptBuilder, BatchConceptBuilder};
+pub use similarity::{ConceptSimilarity, SimilarityConfig, FastSimilarity};
 
 /// Convert milliseconds to Duration
 pub fn ms_to_duration(ms: f32) -> Duration {
