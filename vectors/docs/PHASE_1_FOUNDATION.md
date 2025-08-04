@@ -569,10 +569,10 @@ mod integration_tests {
 - [x] Windows compatibility designed
 
 ### Performance Targets ✅ DESIGN TARGETS SET
-- [x] Search latency < 10ms (Tantivy optimization target)
-- [x] Index rate > 500 docs/sec (design target)
-- [x] Memory usage < 200MB for 10K docs (design target)
-- [x] Designed to handle files up to 10MB
+- [x] Search latency target: < 10ms (based on Tantivy optimization potential)
+- [x] Index rate target: > 500 docs/sec (design estimate)
+- [x] Memory usage target: < 200MB for 10K docs (efficient design estimate)
+- [x] File size target: designed to handle files up to 10MB
 
 ### Quality Gates ✅ DESIGN COMPLETE
 - [x] All tests designed to pass

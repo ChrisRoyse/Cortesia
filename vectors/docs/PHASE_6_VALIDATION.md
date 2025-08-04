@@ -864,19 +864,19 @@ impl ValidationReport {
 - [x] Zero false negatives across all query types designed
 
 ### Performance Requirements (Windows-Optimized)
-- [x] P50 search latency < 50ms (Tantivy optimization target)
-- [x] P95 search latency < 100ms (design target)
-- [x] P99 search latency < 200ms (design target)
-- [x] Index rate > 1000 files/minute (Rayon parallel design target)
-- [x] Throughput > 100 QPS sustained (design target)
-- [x] Memory usage < 1GB for 100K documents (design target)
-- [x] Linear CPU scaling with Rayon (design target)
+- [x] P50 search latency target: < 50ms (based on Tantivy optimization potential)
+- [x] P95 search latency target: < 100ms (design estimate)
+- [x] P99 search latency target: < 200ms (design estimate)
+- [x] Index rate target: > 1000 files/minute (Rayon parallel design capability)
+- [x] Throughput target: > 100 QPS sustained (design estimate)
+- [x] Memory usage target: < 1GB for 100K documents (efficient design estimate)
+- [x] Linear CPU scaling target: with Rayon (design capability)
 
 ### Scale Requirements (Enterprise-Ready)
-- [x] Designed to handle 100,000+ documents
-- [x] Designed to support 100+ concurrent users
-- [x] Designed to handle 10MB+ individual files
-- [x] Memory usage < 2GB peak (design target)
+- [x] Document capacity target: 100,000+ documents (design goal)
+- [x] Concurrent users target: 100+ users (design goal)
+- [x] File size target: 10MB+ individual files (design capability)
+- [x] Memory usage target: < 2GB peak (design estimate)
 - [x] Windows path handling (spaces, unicode) designed
 - [x] ACID transaction consistency designed
 
@@ -990,18 +990,18 @@ A production-ready Rust-based vector indexing system that:
 - Zero false positives/negatives across all query types
 
 ### ✅ **Performance Design Targets**
-- Sub-50ms P50 search latency (Tantivy optimized)
-- 1000+ files/minute indexing (Rayon parallel)
-- 100+ QPS sustained throughput
-- <1GB memory usage for 100K documents
-- Linear scaling with CPU cores
+- P50 search latency target: < 50ms (based on Tantivy optimization potential)
+- Indexing rate target: > 1000 files/minute (Rayon parallel design)
+- Throughput target: > 100 QPS sustained (design estimate)
+- Memory usage target: < 1GB for 100K documents (efficient design)
+- CPU scaling target: linear with CPU cores (Rayon design capability)
 
 ### ✅ **Enterprise Scale Design Targets**
-- Handles 100,000+ documents efficiently
-- Supports 100+ concurrent users
-- Processes 10MB+ files without issues
-- ACID transaction consistency between text and vector
-- Full Windows compatibility with proper path handling
+- Document capacity target: 100,000+ documents efficiently
+- Concurrent users target: 100+ users (design goal)
+- File processing target: 10MB+ files without issues
+- ACID transaction consistency designed between text and vector
+- Windows compatibility target: full compatibility with proper path handling
 
 ### ✅ **Production Quality Design Targets**
 - Comprehensive error handling with anyhow

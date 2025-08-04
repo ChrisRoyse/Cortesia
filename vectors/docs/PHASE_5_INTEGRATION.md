@@ -532,10 +532,10 @@ mod performance_integration_tests {
 - [x] Proper error handling and rollback designed
 
 ### Performance Targets ✅ DESIGN TARGETS SET
-- [x] Hybrid search < 200ms (design target)
-- [x] Vector search < 100ms (design target)
-- [x] Transaction commit < 50ms (design target)
-- [x] Cache hit latency < 5ms (design target)
+- [x] Hybrid search target: < 200ms (LanceDB + Tantivy integration estimate)
+- [x] Vector search target: < 100ms (based on LanceDB benchmarks)
+- [x] Transaction commit target: < 50ms (LanceDB ACID design capability)
+- [x] Cache hit latency target: < 5ms (memory cache design estimate)
 
 ### Quality Gates ✅ DESIGN COMPLETE
 - [x] 100% transaction consistency designed

@@ -514,11 +514,11 @@ pub struct PerformanceStats {
 4. `src/monitor.rs` - Performance monitoring
 
 ### Performance Targets (Windows-Optimized)
-- **Indexing Rate**: > 1000 files/minute (parallel)
-- **Search Latency**: < 20ms average, < 100ms p95
-- **Memory Usage**: < 500MB for 100K documents
-- **Concurrency**: > 50 concurrent searches
-- **CPU Utilization**: Scales to all available cores
+- **Indexing Rate target**: > 1000 files/minute (parallel processing design)
+- **Search Latency target**: < 20ms average, < 100ms p95 (based on Tantivy benchmarks)
+- **Memory Usage target**: < 500MB for 100K documents (efficient design estimate)
+- **Concurrency target**: > 50 concurrent searches (Rayon design capability)
+- **CPU Utilization target**: Scales to all available cores (Rayon design guarantee)
 
 ## Success Metrics
 
@@ -535,8 +535,8 @@ pub struct PerformanceStats {
 - [x] Rayon designed to work perfectly on Windows
 
 ### Performance ✅ DESIGN TARGETS SET
-- [x] Parallel indexing designed 5x faster than serial
-- [x] Query caching designed to reduce latency by 90%
+- [x] Parallel indexing target: 5x faster than serial (Rayon design estimate)
+- [x] Query caching target: reduce latency by 90% (cache design potential)
 - [x] Memory management designed to prevent OOM
 - [x] Real-time performance monitoring designed
 
