@@ -1,7 +1,12 @@
 # Phase 5: Integration - LanceDB Vector Search with ACID Transactions
 
 ## Objective
-Integrate LanceDB for vector search with full ACID transaction support, solving the consistency problems that ChromaDB cannot handle.
+Integrate LanceDB for vector search with full ACID transaction support and OpenAI text-embedding-3-large for high-quality 3072-dimensional embeddings, solving the consistency problems that ChromaDB cannot handle.
+
+## Prerequisites
+- **OpenAI API Key**: Set `OPENAI_API_KEY` environment variable
+- **Dependencies**: OpenAI API client library for Rust
+- **Configuration**: Embedding dimension updated to 3072 (OpenAI text-embedding-3-large)
 
 ## Duration
 1 Day (8 hours) - LanceDB provides ACID transactions
@@ -40,7 +45,7 @@ impl TransactionalVectorStore {
             Field::new("chunk_index", DataType::Int32, false),
             Field::new("embedding", DataType::FixedSizeList(
                 Arc::new(Field::new("item", DataType::Float32, true)),
-                384 // Sentence transformer dimension
+                3072 // OpenAI text-embedding-3-large dimension
             ), false),
         ]));
         
@@ -61,8 +66,8 @@ impl TransactionalVectorStore {
         let mut transaction = self.table.begin_transaction().await?;
         
         for doc in documents {
-            // Generate embedding
-            let embedding = self.generate_embedding(&doc.content)?;
+            // Generate embedding using OpenAI text-embedding-3-large
+            let embedding = self.generate_openai_embedding(&doc.content).await?;
             
             // Create record batch
             let batch = RecordBatch::try_new(
@@ -73,7 +78,7 @@ impl TransactionalVectorStore {
                     Arc::new(StringArray::from(vec![doc.content.as_str()])),
                     Arc::new(arrow_array::Int32Array::from(vec![doc.chunk_index])),
                     Arc::new(arrow_array::FixedSizeListArray::from_iter_primitive::<arrow_array::types::Float32Type, _, _>(
-                        vec![Some(embedding)], 384
+                        vec![Some(embedding)], 3072
                     )),
                 ]
             )?;
@@ -89,8 +94,8 @@ impl TransactionalVectorStore {
     }
     
     pub async fn search_vector(&self, query: &str, limit: usize) -> anyhow::Result<Vec<VectorSearchResult>> {
-        // Generate query embedding
-        let query_embedding = self.generate_embedding(query)?;
+        // Generate query embedding using OpenAI text-embedding-3-large
+        let query_embedding = self.generate_openai_embedding(query).await?;
         
         // Perform vector similarity search
         let results = self.table
@@ -106,6 +111,23 @@ impl TransactionalVectorStore {
         }
         
         Ok(search_results)
+    }
+    
+    /// Generate embedding using OpenAI text-embedding-3-large
+    async fn generate_openai_embedding(&self, text: &str) -> anyhow::Result<Vec<f32>> {
+        use openai_api_rs::v1::api::Client;
+        use openai_api_rs::v1::embedding::{EmbeddingRequest, EmbeddingModel};
+        
+        let client = Client::new(std::env::var("OPENAI_API_KEY")?);
+        
+        let request = EmbeddingRequest::new(
+            EmbeddingModel::TextEmbedding3Large,
+            vec![text.to_string()]
+        );
+        
+        let response = client.embedding(request).await?;
+        
+        Ok(response.data[0].embedding.clone())
     }
 }
 

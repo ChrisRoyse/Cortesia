@@ -10,8 +10,15 @@ Set up Rust development environment, validate Tantivy and LanceDB work on Window
 - **Language**: Rust (cross-platform, no GIL, true parallelism)
 - **Text Search**: Tantivy (Rust-native, like Lucene but faster)
 - **Vector DB**: LanceDB (embedded, ACID transactions, Windows support)
+- **Embeddings**: OpenAI text-embedding-3-large (3072 dimensions)
 - **Parallelism**: Rayon (data parallelism that works on Windows)
 - **Chunking**: tree-sitter (AST-based, language-aware)
+
+## Environment Requirements
+- **OpenAI API Key**: Required for vector embeddings
+  - Set `OPENAI_API_KEY` environment variable
+  - Used for generating 3072-dimensional embeddings via OpenAI API
+  - Alternative: Mock embeddings for testing and development
 
 ## Critical Activities
 
@@ -31,6 +38,8 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+openai-api-rs = "4.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = "0.52"
@@ -314,7 +323,7 @@ mod validation_tests {
             Field::new("text", DataType::Utf8, true),
             Field::new("vector", DataType::FixedSizeList(
                 Arc::new(Field::new("item", DataType::Float32, true)),
-                384
+                3072
             ), true),
         ]));
         
