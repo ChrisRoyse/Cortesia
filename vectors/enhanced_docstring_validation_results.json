@@ -1,0 +1,321 @@
+{
+  "total_tests": 15,
+  "passed_tests": 15,
+  "failed_tests": 0,
+  "accuracy_percentage": 100.0,
+  "target_accuracy": 100.0,
+  "accuracy_achieved": true,
+  "test_results": {
+    "error_001": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Function without docstring should NOT be detected",
+        "code": "def some_function():\n    # This is just a comment, not documentation\n    pass",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_002": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Function with implementation comment should NOT be detected",
+        "code": "def _extract_enhanced_class_chunk(self, node, code, imports, global_vars):\n    # Extract class with full context including docstrings and type hints\n    lines = code.split('\\n')\n    return result",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_003": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Complex function signature without docstring should NOT be detected",
+        "code": "def complex_function_signature(\n    param1: str,\n    param2: Dict[str, Any],\n    param3: Optional[List[int]] = None\n) -> Tuple[bool, str]:\n    return True, \"result\"",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_004": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Class without docstring should NOT be detected",
+        "code": "class UniversalIndexer:\n    def __init__(self):\n        # Just initialization code\n        self.data = {}",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_005": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Function without docstring should NOT trigger even low confidence",
+        "code": "def query_codebase(query: str) -> List[str]:\n    # Implementation only\n    results = []\n    return results",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_006": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Anonymous function definition should NOT be detected",
+        "code": "def processing_function(data):\n    result = data.process()\n    return result",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_007": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Function with type hints but no docstring should NOT be detected",
+        "code": "def validate_chunk(chunk: Dict[str, Any]) -> bool:\n    if not chunk:\n        return False\n    return True",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_008": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Function at end of file should NOT be detected without docstring",
+        "code": "def final_cleanup():\n    gc.collect()",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_009": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Test function without docstring should NOT be detected",
+        "code": "def test_basic_functionality():\n    assert True",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_010": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Simple test function should NOT be detected",
+        "code": "def test_example():\n    data = load_test_data()\n    result = process(data)\n    assert result is not None",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_011": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Performance test function should NOT be detected",
+        "code": "def test_chunker_performance():\n    start_time = time.time()\n    chunks = chunker.process(large_file)\n    duration = time.time() - start_time\n    assert duration < MAX_PROCESSING_TIME",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "error_012": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": false,
+        "confidence": 0.0,
+        "docstring_count": 0,
+        "detection_method": "enhanced_ast_regex",
+        "ast_validated": true
+      },
+      "expected": {
+        "description": "Utility test function should NOT be detected",
+        "code": "def cleanup_test_environment():\n    if os.path.exists(TEST_DB_PATH):\n        os.remove(TEST_DB_PATH)\n    reset_global_state()",
+        "expected_has_documentation": false,
+        "expected_confidence_max": 0.0
+      }
+    },
+    "positive_001": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": true,
+        "confidence": 1.0,
+        "docstring_count": 2,
+        "docstring_types": [
+          "module",
+          "module"
+        ],
+        "multiline_count": 1,
+        "ast_validated": true,
+        "ast_validated_count": 2,
+        "declaration_count": 1,
+        "detection_method": "enhanced_ast_regex",
+        "docstring_details": [
+          {
+            "type": "module",
+            "parent": "documented_function",
+            "line_start": 2,
+            "line_end": 2,
+            "is_multiline": true,
+            "confidence": 1.0,
+            "ast_validated": true
+          },
+          {
+            "type": "module",
+            "parent": "documented_function",
+            "line_start": 2,
+            "line_end": 2,
+            "is_multiline": false,
+            "confidence": 0.9500000000000001,
+            "ast_validated": true
+          }
+        ]
+      },
+      "expected": {
+        "description": "Function with proper docstring SHOULD be detected",
+        "code": "def documented_function():\n    \"\"\"This is a proper docstring.\"\"\"\n    return True",
+        "expected_has_documentation": true,
+        "expected_confidence_min": 0.9
+      }
+    },
+    "positive_002": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": true,
+        "confidence": 1.0,
+        "docstring_count": 1,
+        "docstring_types": [
+          "module"
+        ],
+        "multiline_count": 1,
+        "ast_validated": true,
+        "ast_validated_count": 1,
+        "declaration_count": 2,
+        "detection_method": "enhanced_ast_regex",
+        "docstring_details": [
+          {
+            "type": "module",
+            "parent": "DocumentedClass",
+            "line_start": 2,
+            "line_end": 6,
+            "is_multiline": true,
+            "confidence": 1.0,
+            "ast_validated": true
+          }
+        ]
+      },
+      "expected": {
+        "description": "Class with multiline docstring SHOULD be detected",
+        "code": "class DocumentedClass:\n    \"\"\"\n    This is a proper class docstring.\n    \n    It has multiple lines and describes the class purpose.\n    \"\"\"\n    def __init__(self):\n        pass",
+        "expected_has_documentation": true,
+        "expected_confidence_min": 0.9
+      }
+    },
+    "positive_003": {
+      "passed": true,
+      "actual_result": {
+        "has_documentation": true,
+        "confidence": 1.0,
+        "docstring_count": 2,
+        "docstring_types": [
+          "module",
+          "module"
+        ],
+        "multiline_count": 1,
+        "ast_validated": true,
+        "ast_validated_count": 2,
+        "declaration_count": 1,
+        "detection_method": "enhanced_ast_regex",
+        "docstring_details": [
+          {
+            "type": "module",
+            "parent": "async_documented_function",
+            "line_start": 2,
+            "line_end": 2,
+            "is_multiline": true,
+            "confidence": 1.0,
+            "ast_validated": true
+          },
+          {
+            "type": "module",
+            "parent": "async_documented_function",
+            "line_start": 2,
+            "line_end": 2,
+            "is_multiline": false,
+            "confidence": 0.9500000000000001,
+            "ast_validated": true
+          }
+        ]
+      },
+      "expected": {
+        "description": "Async function with docstring SHOULD be detected",
+        "code": "async def async_documented_function():\n    \"\"\"This async function is properly documented.\"\"\"\n    await some_operation()\n    return result",
+        "expected_has_documentation": true,
+        "expected_confidence_min": 0.9
+      }
+    }
+  }
+}

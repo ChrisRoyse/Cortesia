@@ -1,0 +1,416 @@
+{
+  "validation_timestamp": 1754264676.3568294,
+  "total_validation_time": 0.18686485290527344,
+  "accuracy_results": {
+    "total_errors_tested": 16,
+    "errors_resolved": 16,
+    "accuracy_percentage": 100.0,
+    "target_accuracy": 99.9,
+    "target_achieved": true
+  },
+  "performance_results": {
+    "throughput_chars_per_sec": 705503.5815225004,
+    "target_throughput": 2000000,
+    "performance_target_met": false,
+    "average_detection_time": 0.06128152211507162
+  },
+  "system_health": {
+    "detectors_available": {
+      "python": true,
+      "rust": true
+    },
+    "cache_enabled": true,
+    "error_rate": 0.0
+  },
+  "detailed_results": {
+    "taxonomy_validation": {
+      "total_errors": 16,
+      "resolved_errors": 16,
+      "failed_errors": 0,
+      "accuracy_percentage": 100.0,
+      "target_accuracy": 99.9,
+      "error_details": {
+        "error_001": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_002": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_003": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_004": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "class_without_docstring",
+          "language": "python"
+        },
+        "error_005": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_006": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_007": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_008": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_009": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_010": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_011": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_012": {
+          "resolved": true,
+          "expected_has_docs": false,
+          "actual_has_docs": false,
+          "confidence": 0.0,
+          "consensus_strength": 1.0,
+          "primary_method": "pattern_based",
+          "disagreement_resolved": false,
+          "error_category": "false_positive",
+          "error_type": "function_without_docstring",
+          "language": "python"
+        },
+        "error_013": {
+          "resolved": true,
+          "expected_has_docs": true,
+          "actual_has_docs": true,
+          "confidence": 0.9333333333333332,
+          "consensus_strength": 1.0,
+          "primary_method": "rust_specialized",
+          "disagreement_resolved": false,
+          "error_category": "false_negative",
+          "error_type": "trait_implementation_docs",
+          "language": "rust"
+        },
+        "error_014": {
+          "resolved": true,
+          "expected_has_docs": true,
+          "actual_has_docs": true,
+          "confidence": 0.9333333333333332,
+          "consensus_strength": 1.0,
+          "primary_method": "rust_specialized",
+          "disagreement_resolved": false,
+          "error_category": "false_negative",
+          "error_type": "impl_block_documentation",
+          "language": "rust"
+        },
+        "error_015": {
+          "resolved": true,
+          "expected_has_docs": true,
+          "actual_has_docs": true,
+          "confidence": 0.9333333333333332,
+          "consensus_strength": 1.0,
+          "primary_method": "rust_specialized",
+          "disagreement_resolved": false,
+          "error_category": "false_negative",
+          "error_type": "impl_block_documentation",
+          "language": "rust"
+        },
+        "error_016": {
+          "resolved": true,
+          "expected_has_docs": true,
+          "actual_has_docs": true,
+          "confidence": 0.9333333333333332,
+          "consensus_strength": 1.0,
+          "primary_method": "rust_specialized",
+          "disagreement_resolved": false,
+          "error_category": "false_negative",
+          "error_type": "module_documentation",
+          "language": "rust"
+        }
+      },
+      "performance_stats": {
+        "total_detections": 16,
+        "total_time": 0.0030202865600585938,
+        "average_time": 0.0001887679100036621,
+        "throughput_per_sec": 5297.510577833912,
+        "cache_hit_rate": 0.0,
+        "error_rate": 0.0,
+        "method_stats": {
+          "pattern_based": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "ast_python": {
+            "count": 14,
+            "time": 0.058577219645182296
+          },
+          "rust_specialized": {
+            "count": 5,
+            "time": 0.003711064656575521
+          },
+          "confidence_weighted": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "contextual_analysis": {
+            "count": 0,
+            "time": 0.0
+          }
+        },
+        "language_stats": {
+          "python": {
+            "count": 14,
+            "time": 0.17573165893554688
+          },
+          "rust": {
+            "count": 5,
+            "time": 0.011133193969726562
+          },
+          "javascript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "typescript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "other": {
+            "count": 0,
+            "time": 0.0
+          }
+        }
+      },
+      "target_achieved": true,
+      "processing_time": 0.0030202865600585938
+    },
+    "performance_benchmark": {
+      "test_cases": 3,
+      "total_characters": 129703,
+      "total_time": 0.18384456634521484,
+      "throughput_chars_per_sec": 705503.5815225004,
+      "average_time_per_detection": 0.06128152211507162,
+      "cache_performance": {},
+      "method_performance": {},
+      "target_throughput": 2000000,
+      "performance_target_met": false,
+      "detailed_stats": {
+        "total_detections": 19,
+        "total_time": 0.18686485290527344,
+        "average_time": 0.009834992258172286,
+        "throughput_per_sec": 101.67776178665115,
+        "cache_hit_rate": 0.0,
+        "error_rate": 0.0,
+        "method_stats": {
+          "pattern_based": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "ast_python": {
+            "count": 14,
+            "time": 0.058577219645182296
+          },
+          "rust_specialized": {
+            "count": 5,
+            "time": 0.003711064656575521
+          },
+          "confidence_weighted": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "contextual_analysis": {
+            "count": 0,
+            "time": 0.0
+          }
+        },
+        "language_stats": {
+          "python": {
+            "count": 14,
+            "time": 0.17573165893554688
+          },
+          "rust": {
+            "count": 5,
+            "time": 0.011133193969726562
+          },
+          "javascript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "typescript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "other": {
+            "count": 0,
+            "time": 0.0
+          }
+        }
+      }
+    },
+    "system_statistics": {
+      "performance": {
+        "total_detections": 19,
+        "total_time": 0.18686485290527344,
+        "average_time": 0.009834992258172286,
+        "throughput_per_sec": 101.67776178665115,
+        "cache_hit_rate": 0.0,
+        "error_rate": 0.0,
+        "method_stats": {
+          "pattern_based": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "ast_python": {
+            "count": 14,
+            "time": 0.058577219645182296
+          },
+          "rust_specialized": {
+            "count": 5,
+            "time": 0.003711064656575521
+          },
+          "confidence_weighted": {
+            "count": 19,
+            "time": 0.06228828430175781
+          },
+          "contextual_analysis": {
+            "count": 0,
+            "time": 0.0
+          }
+        },
+        "language_stats": {
+          "python": {
+            "count": 14,
+            "time": 0.17573165893554688
+          },
+          "rust": {
+            "count": 5,
+            "time": 0.011133193969726562
+          },
+          "javascript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "typescript": {
+            "count": 0,
+            "time": 0.0
+          },
+          "other": {
+            "count": 0,
+            "time": 0.0
+          }
+        }
+      },
+      "cache_size": 19,
+      "method_weights": {
+        "ast_python": 0.4,
+        "rust_specialized": 0.35,
+        "pattern_based": 0.15,
+        "confidence_weighted": 0.1
+      },
+      "detectors_available": {
+        "python": true,
+        "rust": true
+      },
+      "configuration": {
+        "caching_enabled": true,
+        "max_workers": 4
+      }
+    }
+  },
+  "overall_status": "NEEDS_IMPROVEMENT",
+  "production_ready": false
+}
