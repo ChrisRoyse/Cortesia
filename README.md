@@ -479,6 +479,17 @@ cargo clippy --all-features -- -D warnings
 cargo doc --no-deps --open
 ```
 
+### Local Development Environment
+
+This project has been developed and tested with a **local mini 364-dimension LLM** for enhanced cognitive assistance and pattern recognition during implementation. The compact model provides:
+
+- Real-time code analysis and suggestions
+- Pattern detection across codebase components  
+- Neuromorphic architecture validation
+- Performance optimization recommendations
+
+While not required for development, similar AI-assisted environments can significantly accelerate understanding of the complex neuromorphic concepts implemented in LLMKG.
+
 ---
 
 ## 🏗️ Project Structure
