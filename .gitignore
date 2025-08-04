@@ -65,13 +65,49 @@ env/
 /vectors/chroma_db/
 /vectors/chroma_db_advanced/
 /vectors/chroma_db_advanced_v1_backup/
+/vectors/chroma_db_universal/
 /vectors/__pycache__/
 /vectors/indexer_advanced_v2.py
+
+# Vector test and temporary directories
+/vectors/*test*/
+/vectors/*temp*/
+/vectors/*cache*/
+/vectors/*index/
+/vectors/*validation*/
+/vectors/stress_test*/
+/vectors/singleton_test*/
+/vectors/perf_test*/
+/vectors/debug_*/
+/vectors/final_*/
+/vectors/integration_*/
+/vectors/lateral_*/
+/vectors/process_*/
+/vectors/manual_*/
+/vectors/full_project_*/
+
+# Database and index files
 *.sqlite3
+*.sqlite3-journal
 *.chroma
 *.faiss
 *.bin
 *.pickle
+*.db
+*.db-journal
+indexing_metadata.json
+
+# Embeddings and model files
+cached_model_test/
+exact_index.db
+metadata_index.db
+semantic/
+
+# Vector test reports and results
+/vectors/final_vector_accuracy_report.json
+/vectors/*_results.json
+/vectors/*_report.json
+/vectors/*_validation.json
 
 # Logs
 *.log

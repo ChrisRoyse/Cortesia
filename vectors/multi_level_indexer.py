@@ -30,6 +30,7 @@ from datetime import datetime
 
 from file_type_classifier import FileTypeClassifier, FileType, create_file_classifier
 from cached_embedding_manager import get_cached_embedding_function
+from enterprise_query_parser import create_enterprise_query_parser, QueryType as QueryParseType
 
 
 class IndexType(Enum):
@@ -85,6 +86,7 @@ class ExactIndexManager:
     def __init__(self, db_path: Path):
         self.db_path = db_path / "exact_index.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.query_parser = create_enterprise_query_parser()
         self._init_database()
     
     def _init_database(self):
