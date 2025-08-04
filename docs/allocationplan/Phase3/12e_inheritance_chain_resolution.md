@@ -1,6 +1,6 @@
 # Task 12e: Implement Inheritance Chain Resolution
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 12d_get_direct_properties.md
 **Stage**: Inheritance System
 

@@ -1,6 +1,6 @@
 # Task 11h: Implement Get Direct Children
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 11g_build_chain_from_db.md
 **Stage**: Inheritance System
 

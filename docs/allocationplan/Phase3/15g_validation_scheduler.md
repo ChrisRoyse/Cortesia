@@ -1,6 +1,6 @@
 # Task 15g: Implement Validation Scheduler
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 15f_validation_coordinator.md
 **Stage**: Inheritance System
 

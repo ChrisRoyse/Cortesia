@@ -1,6 +1,6 @@
 # Task 12d: Implement Get Direct Properties
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 12c_resolve_properties_method.md
 **Stage**: Inheritance System
 

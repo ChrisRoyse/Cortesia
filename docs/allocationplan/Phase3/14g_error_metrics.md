@@ -1,6 +1,6 @@
 # Task 14g: Implement Error Metrics
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 14f_error_recovery_strategies.md
 **Stage**: Inheritance System
 

@@ -1,6 +1,6 @@
 # Task 15j: Integrate Validation with Inheritance System
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 15i_validation_api.md
 **Stage**: Inheritance System
 

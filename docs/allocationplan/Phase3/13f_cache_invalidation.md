@@ -1,6 +1,6 @@
 # Task 13f: Implement Cache Invalidation
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 13e_cache_property_operations.md
 **Stage**: Inheritance System
 

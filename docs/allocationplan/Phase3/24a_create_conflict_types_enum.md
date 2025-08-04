@@ -1,5 +1,5 @@
 # Task 24a: Create Conflict Types Enum
-**Time**: 3 minutes
+**Time**: 3 minutes (45 sec read, 1.5 min implement, 45 sec verify)
 **Dependencies**: None
 **Stage**: Conflict Detection Foundation
 

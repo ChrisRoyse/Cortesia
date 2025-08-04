@@ -1,6 +1,6 @@
 # Task 11i: Implement Get All Descendants
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 11h_get_direct_children.md
 **Stage**: Inheritance System
 

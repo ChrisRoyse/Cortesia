@@ -45,7 +45,7 @@ Successfully transformed the worst disaster files from massive, fake "micro-task
 Each transformed file follows the pattern:
 ```
 # Task Xa: Specific Action
-**Time**: 3-5 minutes
+**Time**: 3-5 minutes (1 min read, 2-3 min implement, 1 min verify)
 **Dependencies**: Previous task
 **Stage**: Clear category
 

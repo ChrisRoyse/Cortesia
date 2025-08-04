@@ -1,6 +1,6 @@
 # Task 11f: Implement Get Inheritance Chain
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 11e_inheritance_database_creation.md
 **Stage**: Inheritance System
 

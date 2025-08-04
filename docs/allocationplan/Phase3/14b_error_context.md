@@ -1,6 +1,6 @@
 # Task 14b: Create Error Context and Recovery
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 14a_exception_handling_types.md
 **Stage**: Inheritance System
 

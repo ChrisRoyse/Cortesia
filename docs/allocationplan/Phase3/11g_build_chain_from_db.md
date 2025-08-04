@@ -1,6 +1,6 @@
 # Task 11g: Implement Build Chain From Database
 
-**Time**: 9 minutes
+**Time**: 9 minutes (2 min read, 5.5 min implement, 1.5 min verify)
 **Dependencies**: 11f_get_inheritance_chain.md
 **Stage**: Inheritance System
 

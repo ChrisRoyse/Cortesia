@@ -1,6 +1,6 @@
 # Task 12a: Create Property Inheritance Types
 
-**Time**: 4 minutes
+**Time**: 4 minutes (1 min read, 2 min implement, 1 min verify)
 **Dependencies**: 11j_cycle_detection.md
 **Stage**: Inheritance System
 

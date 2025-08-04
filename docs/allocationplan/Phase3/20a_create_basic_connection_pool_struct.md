@@ -1,5 +1,5 @@
 # Task 20a: Create Basic Connection Pool Struct
-**Time**: 4 minutes
+**Time**: 4 minutes (1 min read, 2 min implement, 1 min verify)
 **Dependencies**: None
 **Stage**: Resource Management Foundation
 

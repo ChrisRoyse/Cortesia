@@ -1,6 +1,6 @@
 # Task 12g: Implement Merge Properties
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 12f_resolve_inherited_properties.md
 **Stage**: Inheritance System
 

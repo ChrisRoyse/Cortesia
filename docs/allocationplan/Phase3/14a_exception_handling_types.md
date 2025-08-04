@@ -1,6 +1,6 @@
 # Task 14a: Create Exception Handling Types
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 13j_cache_mod_file.md
 **Stage**: Inheritance System
 

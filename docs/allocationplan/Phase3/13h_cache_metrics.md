@@ -1,6 +1,6 @@
 # Task 13h: Implement Cache Metrics
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 13g_cache_warming.md
 **Stage**: Inheritance System
 

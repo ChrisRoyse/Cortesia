@@ -1,6 +1,6 @@
 # Task 12k: Implement Get Property Exceptions
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 12j_exception_database_operations.md
 **Stage**: Inheritance System
 

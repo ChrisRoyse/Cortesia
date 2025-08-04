@@ -1,6 +1,6 @@
 # Task 11j: Implement Cycle Detection
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 11i_get_all_descendants.md
 **Stage**: Inheritance System
 

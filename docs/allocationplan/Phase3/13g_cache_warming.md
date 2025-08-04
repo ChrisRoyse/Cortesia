@@ -1,6 +1,6 @@
 # Task 13g: Implement Cache Warming
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 13f_cache_invalidation.md
 **Stage**: Inheritance System
 

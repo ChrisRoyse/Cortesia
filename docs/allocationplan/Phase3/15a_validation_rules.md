@@ -1,6 +1,6 @@
 # Task 15a: Create Validation Rules Types
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 14l_error_mod_file.md
 **Stage**: Inheritance System
 

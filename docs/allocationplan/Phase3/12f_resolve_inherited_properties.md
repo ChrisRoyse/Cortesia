@@ -1,6 +1,6 @@
 # Task 12f: Implement Resolve Inherited Properties
 
-**Time**: 8 minutes
+**Time**: 8 minutes (1.5 min read, 5 min implement, 1.5 min verify)
 **Dependencies**: 12e_inheritance_chain_resolution.md
 **Stage**: Inheritance System
 

@@ -1,6 +1,6 @@
 # Task 11a: Create Inheritance Data Types
 
-**Time**: 4 minutes
+**Time**: 4 minutes (1 min read, 2 min implement, 1 min verify)
 **Dependencies**: 10_spike_pattern_processing.md
 **Stage**: Inheritance System
 

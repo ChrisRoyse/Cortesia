@@ -1,6 +1,6 @@
 # Task 12b: Create Property Inheritance Engine
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 12a_property_inheritance_types.md
 **Stage**: Inheritance System
 

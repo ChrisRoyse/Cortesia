@@ -1,6 +1,6 @@
 # Task 12i: Create Property Exception Handler
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 12h_property_exceptions_types.md
 **Stage**: Inheritance System
 

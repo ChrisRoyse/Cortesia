@@ -1,5 +1,5 @@
 # Task 19a: Create Basic Monitoring Struct
-**Time**: 4 minutes
+**Time**: 4 minutes (1 min read, 2 min implement, 1 min verify)
 **Dependencies**: None
 **Stage**: Performance Foundation
 

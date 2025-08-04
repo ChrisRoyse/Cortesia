@@ -1,0 +1,33 @@
+[package]
+name = "vector-search"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# Workspace dependencies
+anyhow.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+# Vector search specific
+tantivy.workspace = true
+tree-sitter.workspace = true
+tree-sitter-rust.workspace = true
+tree-sitter-python.workspace = true
+walkdir.workspace = true
+regex.workspace = true
+
+# Additional vector search dependencies (to be enabled when protobuf setup is complete)
+# lancedb.workspace = true
+# arrow.workspace = true  
+# polars.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true
+tempfile.workspace = true

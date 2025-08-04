@@ -1,6 +1,6 @@
 # Task 15d: Implement Performance Validator
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 15c_semantic_validator.md
 **Stage**: Inheritance System
 

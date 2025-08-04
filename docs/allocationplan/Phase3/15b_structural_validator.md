@@ -1,6 +1,6 @@
 # Task 15b: Implement Structural Validator
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 15a_validation_rules.md
 **Stage**: Inheritance System
 

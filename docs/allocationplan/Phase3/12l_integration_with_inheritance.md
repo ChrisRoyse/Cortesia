@@ -1,6 +1,6 @@
 # Task 12l: Integrate Exceptions with Inheritance
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 12k_get_property_exceptions.md
 **Stage**: Inheritance System
 

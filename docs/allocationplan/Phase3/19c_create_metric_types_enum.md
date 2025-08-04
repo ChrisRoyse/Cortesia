@@ -1,5 +1,5 @@
 # Task 19c: Create Metric Types Enum
-**Time**: 3 minutes
+**Time**: 3 minutes (45 sec read, 1.5 min implement, 45 sec verify)
 **Dependencies**: 19b
 **Stage**: Performance Foundation
 

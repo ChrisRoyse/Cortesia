@@ -1,6 +1,6 @@
 # Task 15c: Implement Semantic Validator
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 15b_structural_validator.md
 **Stage**: Inheritance System
 

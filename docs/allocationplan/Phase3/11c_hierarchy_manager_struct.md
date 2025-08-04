@@ -1,6 +1,6 @@
 # Task 11c: Create Hierarchy Manager Struct
 
-**Time**: 5 minutes
+**Time**: 5 minutes (1 min read, 3 min implement, 1 min verify)
 **Dependencies**: 11b_inheritance_chain_types.md
 **Stage**: Inheritance System
 

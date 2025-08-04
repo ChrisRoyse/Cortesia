@@ -1,6 +1,6 @@
 # Task 14d: Implement Retry Logic
 
-**Time**: 7 minutes
+**Time**: 7 minutes (1.5 min read, 4 min implement, 1.5 min verify)
 **Dependencies**: 14c_error_handler_trait.md
 **Stage**: Inheritance System
 

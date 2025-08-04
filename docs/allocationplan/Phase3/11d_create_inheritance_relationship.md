@@ -1,6 +1,6 @@
 # Task 11d: Implement Create Inheritance Relationship
 
-**Time**: 8 minutes
+**Time**: 8 minutes (1.5 min read, 5 min implement, 1.5 min verify)
 **Dependencies**: 11c_hierarchy_manager_struct.md
 **Stage**: Inheritance System
 

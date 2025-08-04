@@ -1,6 +1,6 @@
 # Task 14f: Implement Error Recovery Strategies
 
-**Time**: 8 minutes
+**Time**: 8 minutes (1.5 min read, 5 min implement, 1.5 min verify)
 **Dependencies**: 14e_error_logging.md
 **Stage**: Inheritance System
 

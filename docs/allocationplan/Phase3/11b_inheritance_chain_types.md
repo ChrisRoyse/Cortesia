@@ -1,6 +1,6 @@
 # Task 11b: Create Inheritance Chain Types
 
-**Time**: 3 minutes
+**Time**: 3 minutes (45 sec read, 1.5 min implement, 45 sec verify)
 **Dependencies**: 11a_inheritance_types.md
 **Stage**: Inheritance System
 

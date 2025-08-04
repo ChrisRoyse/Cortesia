@@ -1,6 +1,6 @@
 # Task 12h: Create Property Exception Types
 
-**Time**: 4 minutes
+**Time**: 4 minutes (1 min read, 2 min implement, 1 min verify)
 **Dependencies**: 12g_merge_properties.md
 **Stage**: Inheritance System
 

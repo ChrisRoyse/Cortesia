@@ -111,4 +111,4 @@ semantic/
 
 # Logs
 *.log
-logs/
+logs/LightRAG/

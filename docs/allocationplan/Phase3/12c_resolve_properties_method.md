@@ -1,6 +1,6 @@
 # Task 12c: Implement Resolve Properties Method
 
-**Time**: 6 minutes
+**Time**: 6 minutes (1 min read, 4 min implement, 1 min verify)
 **Dependencies**: 12b_inheritance_engine_struct.md
 **Stage**: Inheritance System
 
