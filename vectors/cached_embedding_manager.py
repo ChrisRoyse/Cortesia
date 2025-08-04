@@ -11,9 +11,14 @@ Author: Claude (Sonnet 4)
 Date: 2025-08-04
 """
 
+import os
 from chromadb.utils import embedding_functions
 from pathlib import Path
 import time
+
+# Set cache directory for sentence transformers
+cache_dir = Path.home() / '.cache' / 'torch' / 'sentence_transformers'
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(cache_dir)
 
 
 class CachedEmbeddingManager:
