@@ -21,8 +21,8 @@ if sys.platform == "win32":
     if locale.getpreferredencoding().upper() != 'UTF-8':
         os.environ['PYTHONIOENCODING'] = 'utf-8'
 
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+import chromadb
+from chromadb.utils import embedding_functions
 import click
 
 
@@ -35,8 +35,8 @@ class UniversalQuerier:
         """Initialize universal querier"""
         self.db_dir = Path(db_dir)
         self.model_name = model_name
-        self.embeddings = None
-        self.vector_db = None
+        self.client = None
+        self.collection = None
         self.metadata = None
         
         # Cache for performance
@@ -46,12 +46,10 @@ class UniversalQuerier:
     def cleanup(self):
         """Cleanup resources"""
         try:
-            if self.vector_db is not None:
-                del self.vector_db
-                self.vector_db = None
-            if self.embeddings is not None:
-                del self.embeddings
-                self.embeddings = None
+            if self.collection is not None:
+                self.collection = None
+            if self.client is not None:
+                self.client = None
             import gc
             gc.collect()
         except Exception as e:
@@ -69,7 +67,7 @@ class UniversalQuerier:
                 self.metadata = json.load(f)
                 
     def initialize(self):
-        """Initialize embeddings and load database"""
+        """Initialize ChromaDB and load database"""
         # Check for database in current or vectors directory
         if not self.db_dir.exists():
             vectors_db = Path("vectors") / self.db_dir.name
@@ -86,17 +84,26 @@ class UniversalQuerier:
         print(f"Database: {self.db_dir}")
         print(f"Model: {self.model_name}")
         
-        # Initialize embeddings
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=self.model_name,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
+        # Initialize ChromaDB client with native embedding function
+        self.client = chromadb.PersistentClient(path=str(self.db_dir))
+        
+        # Get existing collection
+        collections = self.client.list_collections()
+        if not collections:
+            print("[ERROR] No collections found in database!")
+            sys.exit(1)
+        
+        collection_name = collections[0].name
+        print(f"Using collection: {collection_name}")
+        
+        # Use ChromaDB's native sentence transformer embedding
+        embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name=self.model_name
         )
         
-        # Load database
-        self.vector_db = Chroma(
-            persist_directory=str(self.db_dir),
-            embedding_function=self.embeddings
+        self.collection = self.client.get_collection(
+            name=collection_name,
+            embedding_function=embedding_function
         )
         
         # Load metadata
@@ -125,61 +132,91 @@ class UniversalQuerier:
                exact_match: bool = False) -> List[Dict]:
         """Advanced search with multi-factor reranking"""
         
+        if not self.collection:
+            raise Exception("Collection not initialized. Call initialize() first.")
+        
         # Check cache first
         cache_key = f"{query}:{k}:{filter_type}:{filter_language}:{rerank}"
         if cache_key in self.query_cache:
             return self.query_cache[cache_key]
             
         # Build filter
-        filter_dict = self._build_filter(filter_type, filter_language)
+        where_filter = self._build_chroma_filter(filter_type, filter_language)
         
         # Perform search
         start_time = time.time()
         
+        # Get more results for reranking
+        fetch_k = min(k * 3, 100) if rerank else k
+        
         if exact_match:
-            # For exact match, fetch more results and filter
-            results_with_scores = self._exact_match_search(query, k * 5, filter_dict)
+            # For exact match, also use document content filter
+            results = self.collection.query(
+                query_texts=[query],
+                n_results=fetch_k,
+                where=where_filter,
+                where_document={"$contains": query}
+            )
         else:
             # Semantic search
-            fetch_k = min(k * 3, 50) if rerank else k
-            results_with_scores = self.vector_db.similarity_search_with_relevance_scores(
-                query=query,
-                k=fetch_k,
-                filter=filter_dict
+            results = self.collection.query(
+                query_texts=[query],
+                n_results=fetch_k,
+                where=where_filter
             )
-            
-        # Rerank if requested
-        if rerank and len(results_with_scores) > k:
-            results_with_scores = self._multi_factor_rerank(
-                results_with_scores,
-                query,
-                k
-            )
-        else:
-            results_with_scores = results_with_scores[:k]
-            
+        
         search_time = time.time() - start_time
         
-        # Format results
-        results = []
-        for doc, score in results_with_scores:
-            result = {
-                "content": doc.page_content,
-                "metadata": doc.metadata,
-                "score": score,
-                "search_time": search_time
-            }
-            
-            # Add context if requested
-            if show_context:
-                result["context"] = self._get_enhanced_context(doc.metadata)
+        # Convert ChromaDB results to our format
+        formatted_results = []
+        if results['documents'] and results['documents'][0]:
+            for i in range(len(results['documents'][0])):
+                # Calculate score from distance (ChromaDB uses distance, we want similarity)
+                distance = results['distances'][0][i] if results['distances'] and results['distances'][0] else 0.0
+                score = 1.0 - distance  # Convert distance to similarity score
                 
-            results.append(result)
+                result = {
+                    "content": results['documents'][0][i],
+                    "metadata": results['metadatas'][0][i] if results['metadatas'] and results['metadatas'][0] else {},
+                    "score": score,
+                    "search_time": search_time
+                }
+                
+                # Add context if requested
+                if show_context:
+                    result["context"] = self._get_enhanced_context(result["metadata"])
+                    
+                formatted_results.append(result)
+        
+        # Apply reranking if requested
+        if rerank and len(formatted_results) > k:
+            formatted_results = self._rerank_results(formatted_results, query, k)
+        else:
+            formatted_results = formatted_results[:k]
             
         # Cache results
-        self.query_cache[cache_key] = results
+        self.query_cache[cache_key] = formatted_results
         
-        return results
+        return formatted_results
+        
+    def _build_chroma_filter(self, filter_type: Optional[str], filter_language: Optional[str]) -> Optional[Dict]:
+        """Build ChromaDB where filter"""
+        filters = {}
+        
+        if filter_type:
+            if filter_type == 'code':
+                filters["chunk_type"] = {"$in": ["function", "class", "method", "struct", "enum", "trait", "code_block"]}
+            elif filter_type == 'docs':
+                filters["chunk_type"] = {"$in": ["semantic", "hierarchical_section", "sliding_window"]}
+            elif filter_type == 'config':
+                filters["chunk_type"] = {"$eq": "config_section"}
+            else:
+                filters["chunk_type"] = {"$eq": filter_type}
+                
+        if filter_language:
+            filters["language"] = {"$eq": filter_language}
+            
+        return filters if filters else None
         
     def _build_filter(self, filter_type: Optional[str], filter_language: Optional[str]) -> Optional[Dict]:
         """Build filter dictionary based on criteria"""
@@ -235,6 +272,35 @@ class UniversalQuerier:
                 exact_results.append((doc, 1.0))  # Perfect score for exact match
                 
         return exact_results
+        
+    def _rerank_results(self, results: List[Dict], query: str, k: int) -> List[Dict]:
+        """Rerank ChromaDB results using multi-factor scoring"""
+        query_lower = query.lower()
+        query_terms = query_lower.split()
+        
+        for result in results:
+            content_lower = result['content'].lower()
+            metadata = result['metadata']
+            base_score = result['score']
+            
+            # Calculate reranking factors
+            exact_match_bonus = 0.3 if query_lower in content_lower else 0.0
+            term_frequency = sum(1 for term in query_terms if term in content_lower) / len(query_terms) if query_terms else 0.0
+            
+            # Boost code content for code-related queries
+            chunk_type = metadata.get('chunk_type', '')
+            code_bonus = 0.2 if any(word in query_lower for word in ['function', 'struct', 'impl', 'pub']) and 'function' in chunk_type else 0.0
+            
+            # File path relevance
+            file_path = metadata.get('relative_path', '').lower()
+            file_bonus = 0.1 if any(term in file_path for term in query_terms) else 0.0
+            
+            # Final score
+            result['score'] = min(1.0, base_score + exact_match_bonus + term_frequency * 0.2 + code_bonus + file_bonus)
+        
+        # Sort by final score and return top k
+        results.sort(key=lambda x: x['score'], reverse=True)
+        return results[:k]
         
     def _multi_factor_rerank(self, results: List[Tuple], query: str, k: int) -> List[Tuple]:
         """Advanced multi-factor reranking"""

@@ -1,39 +1,39 @@
 {
   "version": "universal_1.0",
-  "indexed_at": "2025-08-03 12:40:56",
+  "indexed_at": "2025-08-03 20:50:02",
   "stats": {
-    "total_files": 761,
-    "total_chunks": 11843,
-    "code_files": 44,
+    "total_files": 762,
+    "total_chunks": 11845,
+    "code_files": 45,
     "doc_files": 709,
     "config_files": 8,
     "languages": {
-      "rust": 44
+      "rust": 45
     },
     "chunk_types": {
       "hierarchical_section": 9973,
       "sliding_window": 1414,
       "code_block": 19,
+      "function": 327,
       "enum": 14,
-      "struct": 38,
-      "function": 325,
       "trait": 1,
+      "struct": 38,
       "config_section": 59
     },
-    "processing_time": 137.82677173614502,
+    "processing_time": 171.026447057724,
     "errors": []
   },
   "languages": {
-    "rust": 44
+    "rust": 45
   },
   "chunk_types": {
     "hierarchical_section": 9973,
     "sliding_window": 1414,
     "code_block": 19,
+    "function": 327,
     "enum": 14,
-    "struct": 38,
-    "function": 325,
     "trait": 1,
+    "struct": 38,
     "config_section": 59
   },
   "root_directory": "C:\\code\\LLMKG",

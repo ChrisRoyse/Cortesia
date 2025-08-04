@@ -26,12 +26,16 @@ if sys.platform == "win32":
     if locale.getpreferredencoding().upper() != 'UTF-8':
         os.environ['PYTHONIOENCODING'] = 'utf-8'
 
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
-from sklearn.metrics.pairwise import cosine_similarity
+import chromadb
+from chromadb.utils import embedding_functions
 import click
+
+
+@dataclass 
+class Document:
+    """Simple document class to replace LangChain Document"""
+    page_content: str
+    metadata: Dict[str, Any]
 
 
 @dataclass
@@ -936,12 +940,12 @@ class UniversalIndexer:
     def cleanup(self):
         """Cleanup resources with proper garbage collection"""
         try:
-            if hasattr(self, 'embeddings'):
-                del self.embeddings
+            if hasattr(self, 'embedding_function'):
+                del self.embedding_function
             if hasattr(self, 'document_chunker'):
                 del self.document_chunker
-            if hasattr(self, 'vector_db'):
-                del self.vector_db
+            if hasattr(self, 'client'):
+                del self.client
             gc.collect()
             print("[OK] Resources cleaned up")
         except Exception as e:
@@ -952,23 +956,22 @@ class UniversalIndexer:
         self.cleanup()
         
     def initialize_embeddings(self):
-        """Initialize embeddings and chunkers"""
+        """Initialize ChromaDB native embeddings and chunkers"""
         print(f"Initializing {self.model_name}...")
         
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=self.model_name,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={
-                'normalize_embeddings': True,
-                'batch_size': 32
-            }
+        # Use ChromaDB's native sentence transformer embedding function
+        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name=self.model_name
         )
         
-        # Initialize document chunker
-        self.document_chunker = UniversalDocumentChunker(self.embeddings)
+        # Initialize ChromaDB client
+        self.client = chromadb.PersistentClient(path=str(self.db_dir))
         
-        # Test embedding
-        test_embedding = self.embeddings.embed_query("test")
+        # Initialize document chunker (without embeddings dependency)
+        self.document_chunker = UniversalDocumentChunker(None)
+        
+        # Test embedding to get dimensions
+        test_embedding = self.embedding_function(["test"])[0]
         dimensions = len(test_embedding)
         print(f"[OK] Model loaded: {dimensions} dimensions")
         
@@ -1108,7 +1111,6 @@ class UniversalIndexer:
     def run(self):
         """Run the universal indexing pipeline"""
         start_time = time.time()
-        vector_db = None
         
         try:
             print("=" * 60)
@@ -1178,31 +1180,45 @@ class UniversalIndexer:
             
             print(f"\nCreating vector database with {len(all_documents)} chunks...")
             
-            # Create vector database with batching
+            # Create or get ChromaDB collection
+            try:
+                collection = self.client.create_collection(
+                    name="langchain",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"}
+                )
+            except Exception:
+                # Collection might already exist, get it
+                collection = self.client.get_collection(
+                    name="langchain",
+                    embedding_function=self.embedding_function
+                )
+            
+            # Prepare data for ChromaDB
+            documents = []
+            metadatas = []
+            ids = []
+            
+            for i, doc in enumerate(all_documents):
+                documents.append(doc.page_content)
+                metadatas.append(doc.metadata)
+                ids.append(f"doc_{i}")
+            
+            # Add documents in batches
             batch_size = 100
-            for i in range(0, len(all_documents), batch_size):
-                batch = all_documents[i:i+batch_size]
+            for i in range(0, len(documents), batch_size):
+                batch_docs = documents[i:i+batch_size]
+                batch_metas = metadatas[i:i+batch_size]
+                batch_ids = ids[i:i+batch_size]
                 
-                if vector_db is None:
-                    vector_db = Chroma.from_documents(
-                        documents=batch,
-                        embedding=self.embeddings,
-                        persist_directory=str(self.db_dir),
-                        collection_metadata={
-                            "hnsw:space": "cosine",
-                            "hnsw:construction_ef": 128,
-                            "hnsw:M": 32
-                        }
-                    )
-                else:
-                    vector_db.add_documents(batch)
+                collection.add(
+                    documents=batch_docs,
+                    metadatas=batch_metas,
+                    ids=batch_ids
+                )
                     
                 if (i + batch_size) % 500 == 0:
-                    print(f"  Added {min(i + batch_size, len(all_documents))}/{len(all_documents)} chunks")
-                    
-            # Persist database
-            if vector_db:
-                vector_db.persist()
+                    print(f"  Added {min(i + batch_size, len(documents))}/{len(documents)} chunks")
                 
             # Calculate processing time
             self.stats["processing_time"] = time.time() - start_time

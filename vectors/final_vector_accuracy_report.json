@@ -1,0 +1,233 @@
+{
+  "test_summary": {
+    "total_queries": 20,
+    "successful_tests": 20,
+    "average_accuracy": 17.436720560963394,
+    "high_quality_matches": 1,
+    "is_high_quality": false,
+    "test_timestamp": 1754272324.346789,
+    "spiking_system_accuracy": 16.666666666666668
+  },
+  "individual_results": [
+    {
+      "query": "SpikingCorticalColumn",
+      "query_type": "exact",
+      "description": "Exact class name search",
+      "accuracy_percentage": 50.0,
+      "grep_files_count": 8,
+      "vector_files_count": 4,
+      "matches_count": 4,
+      "missing_count": 4,
+      "extra_count": 0
+    },
+    {
+      "query": "spiking column",
+      "query_type": "semantic",
+      "description": "Semantic search for spiking column concepts",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 2,
+      "vector_files_count": 3,
+      "matches_count": 0,
+      "missing_count": 2,
+      "extra_count": 3
+    },
+    {
+      "query": "lateral inhibition",
+      "query_type": "semantic",
+      "description": "Neuromorphic lateral inhibition",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 7,
+      "vector_files_count": 1,
+      "matches_count": 0,
+      "missing_count": 7,
+      "extra_count": 1
+    },
+    {
+      "query": "cortical grid",
+      "query_type": "semantic",
+      "description": "Cortical grid system",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 2,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 2,
+      "extra_count": 0
+    },
+    {
+      "query": "pub fn",
+      "query_type": "exact",
+      "description": "Public function keyword",
+      "accuracy_percentage": 82.35294117647058,
+      "grep_files_count": 17,
+      "vector_files_count": 14,
+      "matches_count": 14,
+      "missing_count": 3,
+      "extra_count": 0
+    },
+    {
+      "query": "use std::",
+      "query_type": "exact",
+      "description": "Standard library imports",
+      "accuracy_percentage": 43.47826086956522,
+      "grep_files_count": 23,
+      "vector_files_count": 10,
+      "matches_count": 10,
+      "missing_count": 13,
+      "extra_count": 0
+    },
+    {
+      "query": "impl Default",
+      "query_type": "exact",
+      "description": "Default trait implementation",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 12,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 12,
+      "extra_count": 0
+    },
+    {
+      "query": "Result<",
+      "query_type": "exact",
+      "description": "Result type usage",
+      "accuracy_percentage": 11.11111111111111,
+      "grep_files_count": 9,
+      "vector_files_count": 1,
+      "matches_count": 1,
+      "missing_count": 8,
+      "extra_count": 0
+    },
+    {
+      "query": "Vec<",
+      "query_type": "exact",
+      "description": "Vector type usage",
+      "accuracy_percentage": 26.31578947368421,
+      "grep_files_count": 19,
+      "vector_files_count": 5,
+      "matches_count": 5,
+      "missing_count": 14,
+      "extra_count": 0
+    },
+    {
+      "query": "struct",
+      "query_type": "exact",
+      "description": "Struct definitions",
+      "accuracy_percentage": 15.789473684210526,
+      "grep_files_count": 19,
+      "vector_files_count": 3,
+      "matches_count": 3,
+      "missing_count": 16,
+      "extra_count": 0
+    },
+    {
+      "query": "enum",
+      "query_type": "exact",
+      "description": "Enum definitions",
+      "accuracy_percentage": 38.46153846153847,
+      "grep_files_count": 13,
+      "vector_files_count": 5,
+      "matches_count": 5,
+      "missing_count": 8,
+      "extra_count": 0
+    },
+    {
+      "query": "trait",
+      "query_type": "exact",
+      "description": "Trait definitions",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 1,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 1,
+      "extra_count": 0
+    },
+    {
+      "query": "/// ",
+      "query_type": "exact",
+      "description": "Rust documentation comments",
+      "accuracy_percentage": 18.181818181818183,
+      "grep_files_count": 22,
+      "vector_files_count": 4,
+      "matches_count": 4,
+      "missing_count": 18,
+      "extra_count": 0
+    },
+    {
+      "query": "#[derive",
+      "query_type": "exact",
+      "description": "Derive attributes",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 17,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 17,
+      "extra_count": 0
+    },
+    {
+      "query": "neuromorphic",
+      "query_type": "semantic",
+      "description": "Neuromorphic computing concepts",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 17,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 17,
+      "extra_count": 0
+    },
+    {
+      "query": "temporal memory",
+      "query_type": "semantic",
+      "description": "Temporal memory system",
+      "accuracy_percentage": 0.0,
+      "grep_files_count": 1,
+      "vector_files_count": 0,
+      "matches_count": 0,
+      "missing_count": 1,
+      "extra_count": 0
+    },
+    {
+      "query": "activation",
+      "query_type": "semantic",
+      "description": "Activation functions and patterns",
+      "accuracy_percentage": 11.11111111111111,
+      "grep_files_count": 9,
+      "vector_files_count": 1,
+      "matches_count": 1,
+      "missing_count": 8,
+      "extra_count": 0
+    },
+    {
+      "query": "encoding",
+      "query_type": "semantic",
+      "description": "Data encoding mechanisms",
+      "accuracy_percentage": 22.22222222222222,
+      "grep_files_count": 9,
+      "vector_files_count": 2,
+      "matches_count": 2,
+      "missing_count": 7,
+      "extra_count": 0
+    },
+    {
+      "query": "similarity",
+      "query_type": "semantic",
+      "description": "Similarity computations",
+      "accuracy_percentage": 16.666666666666664,
+      "grep_files_count": 6,
+      "vector_files_count": 1,
+      "matches_count": 1,
+      "missing_count": 5,
+      "extra_count": 0
+    },
+    {
+      "query": "mod ",
+      "query_type": "exact",
+      "description": "Module definitions",
+      "accuracy_percentage": 13.043478260869565,
+      "grep_files_count": 23,
+      "vector_files_count": 3,
+      "matches_count": 3,
+      "missing_count": 20,
+      "extra_count": 0
+    }
+  ]
+}
